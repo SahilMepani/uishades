@@ -1,23 +1,289 @@
 ---
-// Wave 0 placeholder. Wave 2b (astro-routing agent) will replace this with the
-// real hybrid page: pre-render the curated hex set from `lib/data/popular-hexes.ts`
-// and opt out of prerendering for arbitrary hexes via `export const prerender = false`.
-//
-// Returning an empty paths array keeps `output: 'static'` happy without
-// generating any pages from this route yet.
-export function getStaticPaths() {
-  return [];
+/**
+ * /[hex] — the main shade page. SSR-only (no pre-rendering).
+ *
+ * Why SSR-only:
+ *   Under `output: 'static'`, the only way to serve arbitrary hexes (not just
+ *   a pre-determined list) is to opt this route out of pre-rendering and let
+ *   the Cloudflare adapter handle it on-demand. The "pre-rendered set" win
+ *   from the plan is recovered at the edge: each rendered HTML response gets
+ *   a long edge-cache, the sitemap lists every popular hex so Googlebot warms
+ *   the cache early, and steady-state hits are served from cache in ~10ms.
+ *
+ * Validation: the route param is the bare 6-char canonical form (lowercased).
+ *   Anything else 404s. We canonicalize via `parseColor` so any input that
+ *   parses (3-char, 8-char-with-alpha) collapses to the same #rrggbb identity.
+ *
+ * Page chrome (this file) renders entirely server-side. The interactive bits
+ * are inside <ShadeTool>, a React island that hydrates on load. Crawlable
+ * neighbor links sit outside the island so Google sees them even when JS is
+ * disabled.
+ */
+export const prerender = false;
+
+import '../styles/global.css';
+import ShadeTool from '../components/ShadeTool';
+import { parseColor, ParseError } from '../lib/color/parse';
+import { oklchRamp } from '../lib/color/ramp';
+import { findByHex } from '../lib/data/named-colors';
+import type { Hex } from '../lib/color/types';
+
+// --- validate the URL param ----------------------------------------------
+const rawHex = Astro.params.hex ?? '';
+
+// Accept bare 3/6/8 hex chars. Block anything else early so we don't even
+// call into culori for obviously-bogus inputs (e.g., `/foo`, `/123`).
+const HEX_RE = /^[0-9a-f]{3}$|^[0-9a-f]{6}$|^[0-9a-f]{8}$/i;
+if (!HEX_RE.test(rawHex)) {
+  return new Response(null, { status: 404 });
 }
 
-const { hex } = Astro.params;
+let canonical: Hex;
+try {
+  // parseColor accepts a leading "#" or bare hex (and normalizes shorthand).
+  canonical = parseColor(rawHex);
+} catch (e) {
+  if (e instanceof ParseError) {
+    return new Response(null, { status: 404 });
+  }
+  throw e;
+}
+
+// --- derive everything we need for the page ------------------------------
+const ramp = oklchRamp(canonical);
+const named = findByHex(canonical);
+
+// Neighbor hexes for SEO: pull 3 above and 3 below the input's slot in the
+// OKLCH ramp. When the input sits close to an endpoint we cap with the
+// available slice (which naturally bottoms out at white or black) — that's
+// a fine SEO terminator for the crawl graph.
+const lighter: Hex[] = [];
+for (let i = ramp.inputIndex - 1; i >= Math.max(0, ramp.inputIndex - 3); i--) {
+  lighter.push(ramp.shades[i].hex);
+}
+const darker: Hex[] = [];
+for (let i = ramp.inputIndex + 1; i <= Math.min(ramp.shades.length - 1, ramp.inputIndex + 3); i++) {
+  darker.push(ramp.shades[i].hex);
+}
+
+const hexLabel = canonical.toUpperCase();
+const TITLE = named
+  ? `Hex Color ${hexLabel} Tints & Shades · ${named.name} | shades.dev`
+  : `Hex Color ${hexLabel} Tints & Shades | shades.dev`;
+
+// First-sentence description: "X is a {named.name}. Sample shades: a, b, c."
+// or for unnamed hexes: "{hex} ramp with sample shades a, b, c."
+const sampleShades = [...lighter.slice(0, 2), ...darker.slice(0, 2)]
+  .map((h) => h.toUpperCase())
+  .join(', ');
+const DESCRIPTION = named
+  ? `${hexLabel} is also known as ${named.name}. Browse tints and shades — sample: ${sampleShades}. Free Tailwind-ready exports.`
+  : `Tints and shades of hex color ${hexLabel}. Continuous OKLCH ramp, Tailwind-style 11-stop scale, and copy-ready exports. Sample shades: ${sampleShades}.`;
+
+const ogImage = `https://shades.dev/og/${canonical.slice(1)}.png`;
+const canonicalUrl = `https://shades.dev/${canonical.slice(1)}`;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Thing',
+  name: named?.name ?? `Hex color ${hexLabel}`,
+  description: DESCRIPTION,
+  url: canonicalUrl,
+  identifier: hexLabel,
+};
 ---
 
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>{hex} — shades.dev</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{TITLE}</title>
+    <meta name="description" content={DESCRIPTION} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content={TITLE} />
+    <meta property="og:description" content={DESCRIPTION} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={TITLE} />
+    <meta name="twitter:description" content={DESCRIPTION} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </head>
   <body>
-    <h1>{hex}</h1>
+    <main class="hex-page">
+      <header class="page-header">
+        <a href="/" class="back">&larr; shades.dev</a>
+        <h1>
+          <span class="swatch" style={`background:${canonical}`} aria-hidden="true"></span>
+          <span class="hex">{hexLabel}</span>
+          {named && <span class="named-label">· {named.name}</span>}
+        </h1>
+      </header>
+
+      <ShadeTool client:load initialHex={canonical} />
+
+      <noscript>
+        <p class="noscript-note">
+          Interactive tool requires JavaScript. The neighbor links below still
+          let you browse to related shades.
+        </p>
+      </noscript>
+
+      <section class="neighbors" aria-labelledby="neighbors-title">
+        <h2 id="neighbors-title">Nearby shades</h2>
+        {lighter.length > 0 && (
+          <div class="row">
+            <h3>Lighter</h3>
+            <ul>
+              {lighter.map((h) => (
+                <li>
+                  <a href={`/${h.slice(1)}`}>
+                    <span class="dot" style={`background:${h}`} aria-hidden="true"></span>
+                    <code>{h.toUpperCase()}</code>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {darker.length > 0 && (
+          <div class="row">
+            <h3>Darker</h3>
+            <ul>
+              {darker.map((h) => (
+                <li>
+                  <a href={`/${h.slice(1)}`}>
+                    <span class="dot" style={`background:${h}`} aria-hidden="true"></span>
+                    <code>{h.toUpperCase()}</code>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
+
+      <footer class="site-footer">
+        <p>
+          <a href="/">Home</a> · <a href="/colors/coral">Named colors</a>
+        </p>
+      </footer>
+    </main>
+
+    <style>
+      :root {
+        --ink: #0a0a0a;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+      }
+      html, body { margin: 0; padding: 0; }
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: var(--ink);
+        background: #fff;
+        line-height: 1.5;
+      }
+      .hex-page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+      }
+      .back {
+        font-size: 0.9rem;
+        color: var(--muted);
+        text-decoration: none;
+      }
+      .back:hover { color: var(--ink); text-decoration: underline; }
+      .page-header h1 {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin: 0.5rem 0 1.5rem;
+        font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      .page-header .swatch {
+        width: 1.6em; height: 1.6em;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        display: inline-block;
+      }
+      .page-header .hex {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85em;
+      }
+      .named-label { color: var(--muted); font-weight: 500; }
+      .noscript-note {
+        padding: 0.75rem 1rem;
+        border: 1px dashed var(--line);
+        border-radius: 8px;
+        color: var(--muted);
+      }
+      .neighbors { margin-top: 2.5rem; }
+      .neighbors h2 {
+        font-size: 1.25rem;
+        margin: 0 0 0.75rem;
+      }
+      .neighbors .row {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+        margin: 0.5rem 0;
+      }
+      .neighbors h3 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--muted);
+        margin: 0;
+        min-width: 64px;
+      }
+      .neighbors ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .neighbors a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.4rem 0.7rem;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        text-decoration: none;
+        color: var(--ink);
+        font-size: 0.85rem;
+      }
+      .neighbors a:hover { border-color: var(--ink); }
+      .neighbors .dot {
+        width: 14px; height: 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(0,0,0,0.1);
+      }
+      .neighbors code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .site-footer {
+        margin-top: 3rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .site-footer a { color: var(--ink); text-decoration: none; }
+      .site-footer a:hover { text-decoration: underline; }
+    </style>
   </body>
 </html>

@@ -1,19 +1,310 @@
 ---
-// Wave 0 placeholder. Wave 2b (astro-routing agent) will replace this with the
-// real named-color page, pre-rendering ~200 paths from `lib/data/named-colors.ts`.
-export function getStaticPaths() {
-  return [];
+/**
+ * /colors/[name] — named-color landing pages, pre-rendered.
+ *
+ * One page per entry in NAMED_COLORS (~209 entries). The page is mostly
+ * HTML/CSS (no React island until the user actually wants to manipulate the
+ * shades), per the plan's "Named-color pages: HTML/CSS only" target.
+ *
+ * Sections (top to bottom):
+ *   1. Header with name + canonical hex + a large swatch
+ *   2. The hand-authored 90-110 word blurb
+ *   3. The interactive <ShadeTool> island, hydrated on first interaction
+ *   4. Palette built around it (complementary, two triadic, two analogous)
+ *   5. Related-named-colors crawl links
+ *   6. Aliases (if any)
+ */
+import '../../styles/global.css';
+import ShadeTool from '../../components/ShadeTool';
+import { NAMED_COLORS, findBySlug } from '../../lib/data/named-colors';
+import { toOklch, oklchToHex } from '../../lib/color/parse';
+import type { Hex, OKLCH } from '../../lib/color/types';
+
+export async function getStaticPaths() {
+  return NAMED_COLORS.map((c) => ({
+    params: { name: c.slug },
+    props: { slug: c.slug },
+  }));
 }
 
-const { name } = Astro.params;
+const { slug } = Astro.props as { slug: string };
+const color = findBySlug(slug);
+if (!color) {
+  // Should be unreachable since getStaticPaths is the only entry point.
+  return new Response(null, { status: 404 });
+}
+
+// Rotate hue by `deg` degrees, keeping L and C. Used to construct the
+// "palette built around it" — complementary (+180), triadic (+/-120),
+// analogous (+/-30). When the input is achromatic we still rotate but the
+// chroma is ~0 so all rotations collapse to roughly the same gray.
+function rotate(input: Hex, deg: number): Hex {
+  const o: OKLCH = toOklch(input);
+  const h = (Number.isFinite(o.h) ? o.h : 0) + deg;
+  // Normalize to [0, 360).
+  const hh = ((h % 360) + 360) % 360;
+  return oklchToHex({ l: o.l, c: o.c, h: hh });
+}
+
+const palette: { label: string; hex: Hex }[] = [
+  { label: 'Complementary',  hex: rotate(color.hex, 180) },
+  { label: 'Triadic',         hex: rotate(color.hex, 120) },
+  { label: 'Triadic',         hex: rotate(color.hex, -120) },
+  { label: 'Analogous',       hex: rotate(color.hex, 30) },
+  { label: 'Analogous',       hex: rotate(color.hex, -30) },
+];
+
+// Related-color crawl links: resolve each slug to a NamedColor entry. Any
+// missing related slug is just dropped (data integrity is enforced in tests).
+const related = (color.related || [])
+  .map((s) => findBySlug(s))
+  .filter((c): c is NonNullable<typeof c> => !!c)
+  .slice(0, 3);
+
+const TITLE = `${color.name} (${color.hex.toUpperCase()}) Color Shades, Tints & Palette | shades.dev`;
+const firstSentence = color.blurb.split('. ')[0] + '.';
+const DESCRIPTION = firstSentence.length > 160
+  ? firstSentence.slice(0, 157) + '...'
+  : firstSentence;
+
+const canonicalUrl = `https://shades.dev/colors/${color.slug}`;
+const ogImage = `https://shades.dev/og/${color.hex.slice(1)}.png`;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Thing',
+  name: color.name,
+  alternateName: color.aliases ?? [],
+  description: color.blurb,
+  url: canonicalUrl,
+  identifier: color.hex.toUpperCase(),
+};
 ---
 
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>{name} — shades.dev</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{TITLE}</title>
+    <meta name="description" content={DESCRIPTION} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content={TITLE} />
+    <meta property="og:description" content={DESCRIPTION} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={TITLE} />
+    <meta name="twitter:description" content={DESCRIPTION} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </head>
   <body>
-    <h1>{name}</h1>
+    <main class="color-page">
+      <header class="page-header">
+        <a href="/" class="back">&larr; shades.dev</a>
+        <h1>
+          <span class="swatch" style={`background:${color.hex}`} aria-hidden="true"></span>
+          <span class="title-text">
+            {color.name}
+            <small><code>{color.hex.toUpperCase()}</code></small>
+          </span>
+        </h1>
+        {color.aliases && color.aliases.length > 0 && (
+          <p class="aliases">Also known as: {color.aliases.join(', ')}</p>
+        )}
+      </header>
+
+      <section class="blurb">
+        <p>{color.blurb}</p>
+      </section>
+
+      <ShadeTool client:load initialHex={color.hex} />
+
+      <section class="palette" aria-labelledby="palette-title">
+        <h2 id="palette-title">Palette built around {color.name}</h2>
+        <ul class="palette-grid">
+          {palette.map((p) => (
+            <li>
+              <a href={`/${p.hex.slice(1)}`} class="palette-swatch">
+                <span class="block" style={`background:${p.hex}`} aria-hidden="true"></span>
+                <span class="meta">
+                  <span class="label">{p.label}</span>
+                  <code>{p.hex.toUpperCase()}</code>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {related.length > 0 && (
+        <section class="related" aria-labelledby="related-title">
+          <h2 id="related-title">Related colors</h2>
+          <ul>
+            {related.map((c) => (
+              <li>
+                <a href={`/colors/${c.slug}`}>
+                  <span class="dot" style={`background:${c.hex}`} aria-hidden="true"></span>
+                  <span>{c.name}</span>
+                  <code>{c.hex.toUpperCase()}</code>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <footer class="site-footer">
+        <p>
+          <a href="/">Home</a> ·
+          <a href={`/${color.hex.slice(1)}`}>Open in tool</a> ·
+          <a href={`/api/${color.hex.slice(1)}.json`}>JSON</a>
+        </p>
+      </footer>
+    </main>
+
+    <style>
+      :root {
+        --ink: #0a0a0a;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+      }
+      html, body { margin: 0; padding: 0; }
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: var(--ink);
+        background: #fff;
+        line-height: 1.6;
+      }
+      .color-page {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+      }
+      .back {
+        font-size: 0.9rem;
+        color: var(--muted);
+        text-decoration: none;
+      }
+      .back:hover { color: var(--ink); text-decoration: underline; }
+      .page-header h1 {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0.5rem 0 0.25rem;
+        font-size: clamp(1.75rem, 4vw, 2.5rem);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      .page-header .swatch {
+        width: 1.4em; height: 1.4em;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        display: inline-block;
+        flex: 0 0 auto;
+      }
+      .page-header small {
+        display: block;
+        font-size: 0.5em;
+        font-weight: 500;
+        color: var(--muted);
+        margin-top: 0.25rem;
+      }
+      .aliases {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin: 0 0 1rem;
+      }
+      .blurb {
+        margin: 1rem 0 2rem;
+        max-width: 65ch;
+        font-size: 1.05rem;
+      }
+      .palette { margin: 2.5rem 0; }
+      .palette h2 { font-size: 1.25rem; margin: 0 0 1rem; }
+      .palette-grid {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 0.75rem;
+      }
+      .palette-swatch {
+        display: block;
+        text-decoration: none;
+        color: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .palette-swatch:hover { border-color: var(--ink); }
+      .palette-swatch .block {
+        display: block;
+        height: 80px;
+      }
+      .palette-swatch .meta {
+        display: block;
+        padding: 0.5rem 0.6rem;
+        font-size: 0.8rem;
+      }
+      .palette-swatch .label {
+        display: block;
+        color: var(--muted);
+      }
+      .palette-swatch code {
+        display: block;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85rem;
+      }
+      .related { margin: 2.5rem 0; }
+      .related h2 { font-size: 1.25rem; margin: 0 0 0.75rem; }
+      .related ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .related a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.8rem;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        text-decoration: none;
+        color: var(--ink);
+        font-size: 0.9rem;
+      }
+      .related a:hover { border-color: var(--ink); }
+      .related .dot {
+        width: 14px; height: 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(0,0,0,0.1);
+      }
+      .related code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      .site-footer {
+        margin-top: 3rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .site-footer a { color: var(--ink); text-decoration: none; margin: 0 0.25rem; }
+      .site-footer a:hover { text-decoration: underline; }
+    </style>
   </body>
 </html>

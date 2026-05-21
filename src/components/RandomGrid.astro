@@ -1,0 +1,117 @@
+---
+/**
+ * 204-tile random color grid for the homepage.
+ *
+ * - Deterministic: tiles are sampled from `POPULAR_HEXES` using a fixed-seed
+ *   xorshift32 RNG so every build emits the same grid. This keeps the home
+ *   page byte-identical across rebuilds and lets the CDN's strong ETag stay
+ *   stable, which matters for the cache-hit story.
+ * - Layout: CSS grid that switches from 12x17 on desktop down to 6x34 on
+ *   mobile via responsive columns. 12 * 17 == 6 * 34 == 204 either way.
+ * - Each tile is a static `<a>` to `/[hex]` so Googlebot can crawl the grid
+ *   as a link map even though the tool itself is JS.
+ */
+import { POPULAR_HEXES } from '../lib/data/popular-hexes';
+
+const TILES = 204;
+
+// Tiny xorshift32 PRNG. Fixed seed gives a stable visual identity for the home
+// page across builds. The output sequence has period ~2^32, which is way more
+// than the 204 draws we need.
+function xorshift32(seed: number) {
+  let s = seed >>> 0 || 0x9e3779b9;
+  return () => {
+    s ^= s << 13; s >>>= 0;
+    s ^= s >>> 17;
+    s ^= s << 5;  s >>>= 0;
+    return s / 0x100000000;
+  };
+}
+
+function pickTiles(): string[] {
+  const rng = xorshift32(0xc01ec01e);
+  const pool = POPULAR_HEXES;
+  const picked = new Set<string>();
+  const out: string[] = [];
+  // Sample without replacement so the grid doesn't show duplicate tiles.
+  let safety = 0;
+  while (out.length < TILES && safety < TILES * 8) {
+    const idx = Math.floor(rng() * pool.length);
+    const hex = pool[idx];
+    if (!picked.has(hex)) {
+      picked.add(hex);
+      out.push(hex);
+    }
+    safety++;
+  }
+  return out;
+}
+
+const tiles = pickTiles();
+---
+
+<section class="random-grid" aria-label="Browse popular colors">
+  <div class="grid">
+    {tiles.map((hex) => (
+      <a
+        class="tile"
+        href={`/${hex.slice(1)}`}
+        style={`--c:${hex}`}
+        aria-label={`Open shades for ${hex}`}
+      >
+        <span class="label">{hex}</span>
+      </a>
+    ))}
+  </div>
+</section>
+
+<style>
+  .random-grid {
+    margin: 1.5rem 0 2.5rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 2px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+  }
+  @media (min-width: 768px) {
+    .grid {
+      grid-template-columns: repeat(12, 1fr);
+    }
+  }
+  .tile {
+    position: relative;
+    background: var(--c);
+    aspect-ratio: 1 / 1;
+    text-decoration: none;
+    color: transparent;
+    transition: transform 120ms ease;
+  }
+  .tile:hover, .tile:focus-visible {
+    transform: scale(1.06);
+    z-index: 2;
+    outline: 2px solid #0a0a0a;
+    outline-offset: -2px;
+  }
+  .tile .label {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: 2px 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10px;
+    text-align: center;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+  .tile:hover .label, .tile:focus-visible .label {
+    opacity: 1;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tile, .tile .label { transition: none; }
+  }
+</style>
