@@ -175,7 +175,19 @@ function normalizeHexInput(input: string): Hex {
 
 function isDevHostingRoute(): boolean {
   if (typeof window === 'undefined') return false;
-  return window.location.pathname.startsWith('/_dev/');
+  return window.location.pathname.startsWith('/dev/');
+}
+
+// Bare-hex URL: /4040ff, /ff7f50 — i.e. /[hex]. We keep the pathname in
+// sync with the input on these routes (clicking a shade row navigates,
+// changing the input updates the path). On /colors/[name] and other
+// routes we do NOT change the pathname, since /colors/coral is the
+// canonical URL even though its content is the same as /ff7f50; rewriting
+// it would clobber the SEO-friendly name URL.
+const HEX_PATH_RE = /^\/[0-9a-f]{3}$|^\/[0-9a-f]{6}$|^\/[0-9a-f]{8}$/i;
+function isHexRoute(): boolean {
+  if (typeof window === 'undefined') return false;
+  return HEX_PATH_RE.test(window.location.pathname);
 }
 
 function syncUrl(hex: Hex) {
@@ -185,9 +197,14 @@ function syncUrl(hex: Hex) {
       const url = new URL(window.location.href);
       url.searchParams.set('c', hex.slice(1));
       window.history.replaceState(null, '', url.toString());
-    } else {
-      window.history.replaceState(null, '', '/' + hex.slice(1));
+    } else if (isHexRoute()) {
+      // Preserve search params on the path so ?view=scale survives a
+      // hex-input change.
+      const url = new URL(window.location.href);
+      url.pathname = '/' + hex.slice(1);
+      window.history.replaceState(null, '', url.toString());
     }
+    // Any other route (home, /colors/[name]) leaves the path alone.
   } catch {
     /* ignore — URL update is best-effort */
   }
