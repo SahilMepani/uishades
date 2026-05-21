@@ -29,6 +29,10 @@ export default defineConfig({
       customPages: POPULAR_HEXES.map(
         (h) => `https://shades.dev/${h.slice(1)}`
       ),
+      // Exclude the dev-only host page (`/dev/tool/`) from search engines.
+      // It carries `<meta name="robots" content="noindex,nofollow">` already
+      // but the sitemap is a stronger discovery signal we should not send.
+      filter: (page) => !page.includes('/dev/'),
       // 2131 popular hex URLs + 209 named-color URLs + home fits comfortably
       // under the 5000-URL split threshold without a sitemap-index roll.
       entryLimit: 5000,
