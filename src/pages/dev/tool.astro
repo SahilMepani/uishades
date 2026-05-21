@@ -1,0 +1,29 @@
+---
+// Development-only host for the React island. Wave 2b will own the public
+// `/[hex]` route; until then this page lets us E2E-test the tool in isolation
+// and lets the wave-2a agent iterate without conflicting with routing work.
+//
+// NOTE: we import the global stylesheet through Astro's pipeline rather than
+// linking to `/src/...` directly so Tailwind utilities compile cleanly under
+// `npm run build` (Playwright's webServer runs `npm run preview`).
+import '../../styles/global.css';
+import ShadeTool from '../../components/ShadeTool';
+
+const c = Astro.url.searchParams.get('c') ?? '4040ff';
+// Normalize: allow `c=#4040ff` or `c=4040ff`; pass through any other format
+// untouched so the React island's parser can have a crack at it.
+const cleaned = c.startsWith('#') ? c.slice(1) : c;
+const initialHex = `#${cleaned}`;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>shades.dev — tool (dev)</title>
+  </head>
+  <body class="m-0 bg-white text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100">
+    <ShadeTool client:load initialHex={initialHex} />
+  </body>
+</html>
