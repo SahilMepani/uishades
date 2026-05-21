@@ -93,9 +93,12 @@ describe('NAMED_COLORS', () => {
     expect(long, 'blurbs above 120 words').toEqual([]);
   });
 
-  it('flags exactly 50 entries with needsReview=true', () => {
+  it('has zero needsReview flags after the Wave 3b hand-edit pass', () => {
+    // The 50 originally-flagged entries were hand-edited in Wave 3b
+    // (seo-content). The `needsReview` field is kept on the type for future
+    // review queues but the generator no longer emits it by default.
     const flagged = NAMED_COLORS.filter((c) => c.needsReview === true);
-    expect(flagged).toHaveLength(50);
+    expect(flagged).toHaveLength(0);
   });
 
   it('has at least one entry per ColorFamily that we serve crawl-graph links from', () => {
