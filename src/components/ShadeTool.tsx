@@ -110,19 +110,25 @@ function usePersistedState<T extends string>(
   const urlHadValueAtBootRef = useRef<boolean>(false);
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    let hadUrl = false;
+    let urlValue: T | null = null;
     if (urlParam) {
       try {
         const fromUrl = new URL(window.location.href).searchParams.get(urlParam);
         if (fromUrl && (allowed as readonly string[]).includes(fromUrl)) {
-          hadUrl = true;
+          urlValue = fromUrl as T;
         }
       } catch {
         /* ignore */
       }
     }
-    urlHadValueAtBootRef.current = hadUrl;
-    if (!hadUrl) {
+    urlHadValueAtBootRef.current = urlValue !== null;
+    if (urlValue !== null) {
+      // URL wins. If the page rendered with a different initial (e.g.
+      // pre-rendered pages can't read query strings at build time), swap
+      // here so the deep-link is honoured.
+      if (urlValue !== initial) setValue(urlValue);
+    } else {
+      // No URL hint — fall back to localStorage.
       const stored = readStored(key, allowed, initial);
       if (stored !== initial) setValue(stored);
     }

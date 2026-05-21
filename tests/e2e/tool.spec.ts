@@ -102,6 +102,20 @@ test.describe('shade tool — smoke', () => {
     expect(text).toContain('colors:');
   });
 
+  test('deep-link `?view=scale` starts on the Tailwind scale view', async ({
+    page,
+  }) => {
+    // SSR-derived initial view: when the URL carries `?view=scale` we want
+    // the React island to mount in scale mode (not ramp), so a shared
+    // link to a specific stop preview lands the user on the right tab.
+    await page.goto('/dev/tool/?c=4040ff&view=scale');
+    // 11-stop scale should be rendered, not the 20-step ramp.
+    const rows = page.locator('[data-shade-row="true"]');
+    await expect(rows).toHaveCount(11);
+    // And the export dropdown (only in scale view) should be reachable.
+    await expect(page.getByLabel(/^Export as/)).toBeVisible();
+  });
+
   test('typing "coral" in the color input updates the preview hex', async ({
     page,
   }) => {
