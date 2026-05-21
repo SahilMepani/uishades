@@ -1,0 +1,39 @@
+{
+  "name": "color-shades",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "lhci": "lhci autorun"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^13.5.4",
+    "@astrojs/react": "^5.0.5",
+    "@astrojs/sitemap": "^3.7.2",
+    "astro": "^6.3.7",
+    "culori": "^4.0.2",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "workers-og": "^0.0.27"
+  },
+  "devDependencies": {
+    "@lhci/cli": "^0.15.1",
+    "@playwright/test": "^1.60.0",
+    "@tailwindcss/vite": "^4.3.0",
+    "@types/culori": "^4.0.1",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "@vitest/ui": "^4.1.7",
+    "playwright": "^1.60.0",
+    "tailwindcss": "^4.3.0",
+    "vitest": "^4.1.7"
+  }
+}

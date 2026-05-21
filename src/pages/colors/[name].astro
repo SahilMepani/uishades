@@ -1,0 +1,19 @@
+---
+// Wave 0 placeholder. Wave 2b (astro-routing agent) will replace this with the
+// real named-color page, pre-rendering ~200 paths from `lib/data/named-colors.ts`.
+export function getStaticPaths() {
+  return [];
+}
+
+const { name } = Astro.params;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{name} — shades.dev</title>
+  </head>
+  <body>
+    <h1>{name}</h1>
+  </body>
+</html>

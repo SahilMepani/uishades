@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+/*
+ * Tailwind v4 `@theme` block. Engaging the directive here makes Tailwind v4
+ * mode active and gives downstream agents (tool-ui, astro-routing) a place
+ * to register design tokens via CSS variables. Keep tokens minimal in Wave 0;
+ * Wave 2 will fill this out with the real brand/typography/spacing tokens.
+ */
+@theme {
+  --color-shades-ink: #0a0a0a;
+}

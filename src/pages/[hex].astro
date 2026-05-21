@@ -1,0 +1,23 @@
+---
+// Wave 0 placeholder. Wave 2b (astro-routing agent) will replace this with the
+// real hybrid page: pre-render the curated hex set from `lib/data/popular-hexes.ts`
+// and opt out of prerendering for arbitrary hexes via `export const prerender = false`.
+//
+// Returning an empty paths array keeps `output: 'static'` happy without
+// generating any pages from this route yet.
+export function getStaticPaths() {
+  return [];
+}
+
+const { hex } = Astro.params;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{hex} — shades.dev</title>
+  </head>
+  <body>
+    <h1>{hex}</h1>
+  </body>
+</html>
