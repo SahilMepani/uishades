@@ -1,17 +1,300 @@
 ---
+/**
+ * Homepage.
+ *
+ * Pure HTML/CSS — no React island. The 200-color grid is rendered server-side
+ * as static <a> tags pointing at /[hex] (good for crawl graph), and the hex
+ * input is a plain form that POSTs to the action URL; a small inline script
+ * intercepts the submit, parses+validates the input via the same parseColor
+ * the rest of the site uses, and client-side navigates to /[normalizedHex].
+ *
+ * SEO essentials: title, meta description, OG/Twitter cards, JSON-LD
+ * WebApplication schema.
+ */
 import '../styles/global.css';
+import RandomGrid from '../components/RandomGrid.astro';
+
+const TITLE = 'shades.dev — Free Tints and Shades of Any Hex Color';
+const DESCRIPTION =
+  'A free tool for finding lighter and darker shades of any hex color. OKLCH-based ramps, Tailwind-style 11-stop scales, and paste-ready exports.';
+const OG = 'https://shades.dev/og/777777.png'; // generic preview using a neutral
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'shades.dev',
+  url: 'https://shades.dev/',
+  description: DESCRIPTION,
+  applicationCategory: 'DesignApplication',
+  operatingSystem: 'Any',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+};
 ---
 
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
-    <title>shades.dev</title>
+    <title>{TITLE}</title>
+    <meta name="description" content={DESCRIPTION} />
+    <link rel="canonical" href="https://shades.dev/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={TITLE} />
+    <meta property="og:description" content={DESCRIPTION} />
+    <meta property="og:url" content="https://shades.dev/" />
+    <meta property="og:image" content={OG} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={TITLE} />
+    <meta name="twitter:description" content={DESCRIPTION} />
+    <meta name="twitter:image" content={OG} />
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </head>
   <body>
-    <h1>shades.dev</h1>
+    <main class="home">
+      <header class="hero">
+        <h1>
+          <span class="brand">shades.dev</span>
+          <span class="tag">Tints &amp; shades of any color, free.</span>
+        </h1>
+
+        <form id="hex-form" class="hex-form" action="/" method="get" novalidate>
+          <label for="hex" class="visually-hidden">Color (hex, rgb, hsl, oklch, or CSS name)</label>
+          <input
+            id="hex"
+            name="hex"
+            type="text"
+            placeholder="#4040ff or rgb(64 64 255) or coral"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            inputmode="text"
+            required
+          />
+          <button type="submit">Show shades</button>
+          <p id="hex-error" class="error" role="alert" aria-live="polite"></p>
+        </form>
+      </header>
+
+      <RandomGrid />
+
+      <section class="why" aria-labelledby="why-title">
+        <h2 id="why-title">Why shades.dev</h2>
+        <ul>
+          <li>
+            <strong>Free.</strong> No paywall, no signup, no ads. Permanent
+            URLs for every hex you'd ever want to share with a teammate.
+          </li>
+          <li>
+            <strong>Better algorithm.</strong> OKLCH-anchored ramps keep
+            perceived lightness and hue stable across the whole scale, so
+            yellows, browns, and olives don't muddy out at the mid-shades.
+            A "Classic" toggle reproduces the familiar RGB-walk output bit
+            for bit.
+          </li>
+          <li>
+            <strong>Tailwind-first exports.</strong> Drop-in 11-stop scales
+            with copy buttons for Tailwind v4 <code>@theme</code>, v3
+            config, plain CSS variables, W3C Design Tokens JSON, and
+            Figma Variables.
+          </li>
+        </ul>
+      </section>
+
+      <footer class="site-footer">
+        <nav aria-label="Footer">
+          <a href="/colors/coral">Named colors</a>
+          <span>·</span>
+          <a href="https://github.com/sponsors" rel="noopener">Sponsor</a>
+          <span>·</span>
+          <a href="https://ko-fi.com" rel="noopener">Ko-fi</a>
+        </nav>
+        <p class="attribution">
+          Built with <a href="https://astro.build" rel="noopener">Astro</a>.
+          Color math by <a href="https://culorijs.org" rel="noopener">culori</a>.
+        </p>
+      </footer>
+    </main>
+
+    <script is:inline>
+      // Lightweight hex/color input handler.
+      //
+      // We don't import the project's parseColor here on purpose: the home
+      // page is meant to ship zero JS and stay under the SEO/perf budget.
+      // Instead we duplicate the canonical-hex shape check inline; any input
+      // that doesn't match becomes a server-side parse problem on the next
+      // page, where the full parseColor runs.
+      (function () {
+        var form = document.getElementById('hex-form');
+        if (!form) return;
+        var input = document.getElementById('hex');
+        var err = document.getElementById('hex-error');
+
+        function toSlug(value) {
+          var v = value.trim().toLowerCase();
+          if (!v) return null;
+          // Strip a leading "#" if present.
+          if (v.charAt(0) === '#') v = v.slice(1);
+          // 6-digit hex.
+          if (/^[0-9a-f]{6}$/.test(v)) return v;
+          // 3-digit hex shorthand -> expand to 6.
+          if (/^[0-9a-f]{3}$/.test(v)) {
+            return v[0] + v[0] + v[1] + v[1] + v[2] + v[2];
+          }
+          // 8-digit hex (with alpha) -> drop alpha, keep first 6.
+          if (/^[0-9a-f]{8}$/.test(v)) return v.slice(0, 6);
+          return null;
+        }
+
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var slug = toSlug(input.value);
+          if (slug) {
+            err.textContent = '';
+            window.location.assign('/' + slug);
+            return;
+          }
+          // Non-hex inputs (rgb/hsl/oklch/named CSS colors) are handled by the
+          // homepage in place: we don't have a server-side endpoint that
+          // accepts non-canonical input, so we keep the user on `/` and tell
+          // them what we expected. The React island on each /[hex] page does
+          // accept these formats, but the home form needs a hex up front.
+          var raw = input.value.trim();
+          err.textContent = raw
+            ? 'Could not parse "' + raw + '" as hex. Try a 3 or 6 digit hex value.'
+            : 'Enter a hex, rgb(), hsl(), oklch(), or color name.';
+          input.focus();
+        });
+      })();
+    </script>
+
+    <style>
+      :root {
+        --ink: #0a0a0a;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --bg: #ffffff;
+        --accent: #4040ff;
+      }
+      html, body { margin: 0; padding: 0; }
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: var(--ink);
+        background: var(--bg);
+        line-height: 1.5;
+      }
+      .home {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem 4rem;
+      }
+      .hero h1 {
+        margin: 0 0 1rem;
+        font-size: clamp(1.75rem, 4vw, 2.75rem);
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+      }
+      .hero .brand { color: var(--ink); }
+      .hero .tag {
+        display: block;
+        font-size: clamp(1rem, 2vw, 1.25rem);
+        font-weight: 500;
+        color: var(--muted);
+        margin-top: 0.25rem;
+      }
+      .hex-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .hex-form input {
+        flex: 1 1 280px;
+        min-width: 0;
+        padding: 0.7rem 0.9rem;
+        font-size: 1rem;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .hex-form input:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+      .hex-form button {
+        padding: 0.7rem 1.2rem;
+        font-size: 1rem;
+        border: 0;
+        border-radius: 10px;
+        background: var(--ink);
+        color: #fff;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .hex-form button:hover { background: var(--accent); }
+      .error {
+        flex: 1 1 100%;
+        margin: 0.25rem 0 0;
+        color: #b91c1c;
+        font-size: 0.9rem;
+        min-height: 1.2em;
+      }
+      .visually-hidden {
+        position: absolute;
+        width: 1px; height: 1px;
+        padding: 0; margin: -1px;
+        overflow: hidden;
+        clip: rect(0,0,0,0);
+        white-space: nowrap;
+        border: 0;
+      }
+      .why h2 {
+        font-size: 1.5rem;
+        margin: 0 0 0.75rem;
+      }
+      .why ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 720px) {
+        .why ul { grid-template-columns: repeat(3, 1fr); }
+      }
+      .why li {
+        padding: 1rem;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+      .why code {
+        background: #f6f6f6;
+        padding: 0 0.25rem;
+        border-radius: 4px;
+        font-size: 0.95em;
+      }
+      .site-footer {
+        margin-top: 3rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .site-footer nav a {
+        color: var(--ink);
+        text-decoration: none;
+        margin: 0 0.25rem;
+      }
+      .site-footer nav a:hover { text-decoration: underline; }
+      .site-footer .attribution { margin: 0.5rem 0 0; }
+      .site-footer .attribution a { color: var(--muted); }
+    </style>
   </body>
 </html>
