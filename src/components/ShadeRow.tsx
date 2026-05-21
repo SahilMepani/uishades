@@ -47,7 +47,11 @@ export default function ShadeRow({
 }: ShadeRowProps) {
   const fg = useMemo(() => pickForeground(shade.hex), [shade.hex]);
   const fgClass = fg === 'white' ? 'text-white' : 'text-black';
-  const subtleFgClass = fg === 'white' ? 'text-white/70' : 'text-black/70';
+  // Push the secondary label to 90% opacity. 70% was failing WCAG AA on
+  // some mid-lightness shades (the badge text fell below 4.5:1 vs the
+  // washed-out badge background). 90% keeps the visual hierarchy intact
+  // while clearing the audit threshold.
+  const subtleFgClass = fg === 'white' ? 'text-white/90' : 'text-black/90';
   const ringHoverClass = fg === 'white' ? 'ring-white/40' : 'ring-black/30';
 
   const ratioW = contrastRatio(shade.hex, WHITE);
@@ -105,12 +109,18 @@ export default function ShadeRow({
     [shade.hex, handleCopy, onNavigate],
   );
 
-  const ariaLabel = [
-    shade.stop ? `Stop ${shade.stop}, ` : '',
-    `Color ${shade.hex}.`,
-    shade.isInput ? ' Pinned input color.' : '',
-    ' Click to copy, double-click to open page.',
-  ].join('');
+  // WCAG 2.5.3 (Label in Name) requires the accessible name to start with
+  // the visible label text. The visible label on this row is the hex
+  // string; the supplemental description follows it. Stop / input badge
+  // tokens are also visible text on the row, so we include them up-front.
+  const visibleLabel = [
+    shade.hex,
+    shade.stop !== undefined ? String(shade.stop) : '',
+    shade.isInput ? 'input' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const ariaLabel = `${visibleLabel} — click to copy, double-click to open page${shade.isInput ? ' (pinned input)' : ''}`;
 
   return (
     <div
@@ -215,7 +225,11 @@ function ContrastBadge({
       title={`Contrast vs ${against}: ${ratio.toFixed(2)}:1 (${level})`}
       className={
         'inline-flex items-center gap-1 rounded px-1.5 py-0.5 ' +
-        (fg === 'white' ? 'bg-white/10' : 'bg-black/10')
+        // Strengthen the badge background so the level text clears WCAG AA
+        // against the row's underlying shade. 10% opacity barely tinted
+        // the parent on light/medium shades and Lighthouse correctly
+        // flagged it; 25% keeps the badge calm but readable.
+        (fg === 'white' ? 'bg-white/25' : 'bg-black/20')
       }
     >
       <span
