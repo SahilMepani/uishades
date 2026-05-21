@@ -159,17 +159,16 @@ const jsonLd = {
             window.location.assign('/' + slug);
             return;
           }
-          // For non-hex inputs (rgb/hsl/oklch/named) we send through the SSR
-          // route as a query, letting the server-side parser handle it.
+          // Non-hex inputs (rgb/hsl/oklch/named CSS colors) are handled by the
+          // homepage in place: we don't have a server-side endpoint that
+          // accepts non-canonical input, so we keep the user on `/` and tell
+          // them what we expected. The React island on each /[hex] page does
+          // accept these formats, but the home form needs a hex up front.
           var raw = input.value.trim();
-          if (raw) {
-            window.location.assign('/?hex=' + encodeURIComponent(raw));
-            // Server-side: the [hex] route is bare-segment only, so if we
-            // landed back here with ?hex=..., we surface an error instead.
-            err.textContent = 'Could not parse "' + raw + '" as a color.';
-          } else {
-            err.textContent = 'Enter a hex, rgb(), hsl(), oklch(), or color name.';
-          }
+          err.textContent = raw
+            ? 'Could not parse "' + raw + '" as hex. Try a 3 or 6 digit hex value.'
+            : 'Enter a hex, rgb(), hsl(), oklch(), or color name.';
+          input.focus();
         });
       })();
     </script>
