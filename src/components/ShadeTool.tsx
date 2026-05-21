@@ -388,19 +388,22 @@ function ShadeToolInner({
  * to keep the page from jumping once the chunk finishes (CLS).
  */
 function TailwindScaleFallback() {
+  // Tailwind's `motion-safe:animate-pulse` skips the pulse when the user
+  // has `prefers-reduced-motion: reduce` set. Static placeholders still
+  // reserve the same vertical space, so CLS protection is unaffected.
   return (
     <div
       aria-hidden="true"
       className="flex flex-col gap-4"
       style={{ minHeight: '52rem' }}
     >
-      <div className="h-8 w-48 animate-pulse rounded bg-neutral-200 dark:bg-neutral-800" />
-      <div className="h-64 animate-pulse rounded-md bg-neutral-100 dark:bg-neutral-900" />
+      <div className="h-8 w-48 rounded bg-neutral-200 motion-safe:animate-pulse dark:bg-neutral-800" />
+      <div className="h-64 rounded-md bg-neutral-100 motion-safe:animate-pulse dark:bg-neutral-900" />
       <div className="overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800">
         {Array.from({ length: 11 }).map((_, i) => (
           <div
             key={i}
-            className="h-12 animate-pulse border-b border-neutral-100 bg-neutral-50 last:border-b-0 dark:border-neutral-900 dark:bg-neutral-900/40"
+            className="h-12 border-b border-neutral-100 bg-neutral-50 last:border-b-0 motion-safe:animate-pulse dark:border-neutral-900 dark:bg-neutral-900/40"
           />
         ))}
       </div>

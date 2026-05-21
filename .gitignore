@@ -26,6 +26,8 @@ pnpm-debug.log*
 playwright-report/
 test-results/
 .lighthouseci/
+# Local Lighthouse JSON runs collected by `npm run build && npx lighthouse ...`
+.lh-out/
 
 # macOS-specific files
 .DS_Store

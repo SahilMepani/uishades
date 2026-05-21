@@ -179,9 +179,28 @@ const jsonLd = {
         --muted: #6b7280;
         --line: #e5e7eb;
         --bg: #ffffff;
+        --code-bg: #f6f6f6;
         --accent: #4040ff;
       }
+      /* Match the React island's dark surface (neutral-950 / neutral-100).
+         The page chrome around the tool gets the same dark inversion when
+         the OS reports a dark preference; the colour-content itself is
+         never altered. */
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ink: #f5f5f5;
+          --muted: #9ca3af;
+          --line: #262626;
+          --bg: #0a0a0a;
+          --code-bg: #171717;
+        }
+      }
       html, body { margin: 0; padding: 0; }
+      html {
+        /* Tell the UA which colour scheme our chrome targets so native form
+           controls and scrollbars pick the matching system rendering. */
+        color-scheme: light dark;
+      }
       body {
         font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
         color: var(--ink);
@@ -222,6 +241,8 @@ const jsonLd = {
         border: 1px solid var(--line);
         border-radius: 10px;
         font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        background: var(--bg);
+        color: var(--ink);
       }
       .hex-form input:focus-visible {
         outline: 2px solid var(--accent);
@@ -275,7 +296,7 @@ const jsonLd = {
         border-radius: 12px;
       }
       .why code {
-        background: #f6f6f6;
+        background: var(--code-bg);
         padding: 0 0.25rem;
         border-radius: 4px;
         font-size: 0.95em;
