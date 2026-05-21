@@ -1,7 +1,10 @@
 import {
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type Dispatch,
   type SetStateAction,
@@ -19,8 +22,16 @@ import { buildScale } from '../lib/color/scale';
 import { findByHex } from '../lib/data/named-colors';
 import ColorInput from './ColorInput';
 import ContinuousRamp from './ContinuousRamp';
-import TailwindScale from './TailwindScale';
 import { ToastProvider, useToast } from './Toast';
+
+// Lazy-load the Tailwind scale view + its export panel + serializers. They
+// form the heaviest leaf of the React island (Tailwind scale, five export-
+// format serializers, the export-dropdown UI) and most first visits only
+// need the continuous ramp. Splitting them into a separate chunk keeps the
+// initial-load JS smaller; the Suspense fallback below reserves a
+// placeholder roughly the same height as the rendered scale so switching
+// tabs does not produce a CLS spike.
+const TailwindScale = lazy(() => import('./TailwindScale'));
 
 /**
  * Top-level React island for the shade tool.
@@ -67,28 +78,88 @@ function readStored<T extends string>(
   return fallback;
 }
 
+/**
+ * Hook that owns a single user-preference value with URL > localStorage >
+ * server-supplied default precedence.
+ *
+ * Why this layered shape:
+ *   1. The SSR-rendered HTML must match the first client render exactly to
+ *      avoid hydration mismatches. We get this by always seeding state from
+ *      the same value the server saw — `initial`, derived in the page from
+ *      the URL where present and a fallback otherwise.
+ *   2. After hydration, we read localStorage. If it disagrees with the URL,
+ *      the URL wins (the user explicitly chose this URL by linking or
+ *      pasting). If the URL did not carry the preference, localStorage
+ *      takes over and we swap in the stored value.
+ *   3. From then on, every change writes both localStorage AND the URL so
+ *      a deep-link rebuilds the same view on next visit.
+ *
+ * `urlParam = null` opts a preference out of URL sync (e.g., copy format,
+ * which is too noisy to put in the URL on every change).
+ */
 function usePersistedState<T extends string>(
   key: string,
   allowed: readonly T[],
-  fallback: T,
+  initial: T,
+  urlParam: string | null,
 ): [T, Dispatch<SetStateAction<T>>] {
-  // Initial render returns the fallback so SSR and the first client render
-  // match. A follow-up effect hydrates the real value from localStorage.
-  const [value, setValue] = useState<T>(fallback);
+  // Seed with the server-supplied default so SSR + first client paint match.
+  const [value, setValue] = useState<T>(initial);
+  // Track whether the URL already carried this preference at boot. If yes,
+  // we do NOT defer to localStorage on hydration (URL wins).
+  const urlHadValueAtBootRef = useRef<boolean>(false);
   useEffect(() => {
-    const stored = readStored(key, allowed, fallback);
-    if (stored !== fallback) setValue(stored);
-    // intentionally only on mount — `key`, `allowed`, `fallback` are stable
+    if (typeof window === 'undefined') return;
+    let hadUrl = false;
+    if (urlParam) {
+      try {
+        const fromUrl = new URL(window.location.href).searchParams.get(urlParam);
+        if (fromUrl && (allowed as readonly string[]).includes(fromUrl)) {
+          hadUrl = true;
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    urlHadValueAtBootRef.current = hadUrl;
+    if (!hadUrl) {
+      const stored = readStored(key, allowed, initial);
+      if (stored !== initial) setValue(stored);
+    }
+    // intentionally only on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    // Always mirror the current value to localStorage.
     try {
       window.localStorage.setItem(key, value);
     } catch {
       /* ignore */
     }
-  }, [key, value]);
+    // Mirror to the URL too once the user has either deep-linked OR changed
+    // the value at runtime. The very first paint with an unstyled URL leaves
+    // the URL clean — only an interaction writes the param.
+    if (urlParam) {
+      try {
+        const url = new URL(window.location.href);
+        const hasNow = url.searchParams.get(urlParam) === value;
+        if (urlHadValueAtBootRef.current || !hasNow) {
+          if (value === initial && !urlHadValueAtBootRef.current) {
+            // Keep the URL clean when the value is the default and the user
+            // hasn't deep-linked the param.
+            url.searchParams.delete(urlParam);
+          } else {
+            url.searchParams.set(urlParam, value);
+            urlHadValueAtBootRef.current = true;
+          }
+          window.history.replaceState(null, '', url.toString());
+        }
+      } catch {
+        /* ignore — URL update is best-effort */
+      }
+    }
+  }, [key, value, urlParam, initial]);
   return [value, setValue];
 }
 
@@ -124,37 +195,67 @@ function syncUrl(hex: Hex) {
 
 export interface ShadeToolProps {
   initialHex: Hex;
+  /**
+   * Preference seeds read from the request URL at SSR time. They MUST match
+   * the values the page rendered, so the first client paint does not differ
+   * from the server's HTML (otherwise React 19 warns and the layout shifts).
+   * Each is optional with a sensible default.
+   */
+  initialView?: View;
+  initialRampMode?: RampMode;
+  initialExportFormat?: ExportFormat;
 }
 
-export default function ShadeTool({ initialHex }: ShadeToolProps) {
+export default function ShadeTool({
+  initialHex,
+  initialView,
+  initialRampMode,
+  initialExportFormat,
+}: ShadeToolProps) {
   return (
     <ToastProvider>
-      <ShadeToolInner initialHex={initialHex} />
+      <ShadeToolInner
+        initialHex={initialHex}
+        initialView={initialView}
+        initialRampMode={initialRampMode}
+        initialExportFormat={initialExportFormat}
+      />
     </ToastProvider>
   );
 }
 
-function ShadeToolInner({ initialHex }: ShadeToolProps) {
+function ShadeToolInner({
+  initialHex,
+  initialView = 'ramp',
+  initialRampMode = 'oklch',
+  initialExportFormat = 'tailwind-v4',
+}: ShadeToolProps) {
   const [hex, setHex] = useState<Hex>(() => normalizeHexInput(initialHex));
   const [view, setView] = usePersistedState<View>(
     STORAGE_KEYS.view,
     ['ramp', 'scale'] as const,
-    'ramp',
+    initialView,
+    'view',
   );
   const [rampMode, setRampMode] = usePersistedState<RampMode>(
     STORAGE_KEYS.rampMode,
     ['oklch', 'classic'] as const,
-    'oklch',
+    initialRampMode,
+    'mode',
   );
+  // Copy format is too noisy to put in the URL — every dropdown change would
+  // mutate the URL. Keep it localStorage-only.
   const [copyFormat, setCopyFormat] = usePersistedState<CopyFormat>(
     STORAGE_KEYS.copyFormat,
     ['hex', 'rgb', 'hsl', 'oklch', 'cssVar', 'tailwindClass'] as const,
     'hex',
+    null,
   );
   const [exportFormat, setExportFormat] = usePersistedState<ExportFormat>(
     STORAGE_KEYS.exportFormat,
     ['tailwind-v4', 'tailwind-v3', 'css-vars', 'w3c-tokens', 'figma-vars'] as const,
-    'tailwind-v4',
+    initialExportFormat,
+    'fmt',
   );
 
   const { pushToast } = useToast();
@@ -262,18 +363,46 @@ function ShadeToolInner({ initialHex }: ShadeToolProps) {
               onNavigate={handleNavigate}
             />
           ) : (
-            <TailwindScale
-              scale={scale}
-              copyFormat={copyFormat}
-              exportFormat={exportFormat}
-              brandName={brandName}
-              onCopy={handleCopyShade}
-              onNavigate={handleNavigate}
-              onExportCopy={handleExportCopy}
-              onExportFormatChange={setExportFormat}
-            />
+            <Suspense fallback={<TailwindScaleFallback />}>
+              <TailwindScale
+                scale={scale}
+                copyFormat={copyFormat}
+                exportFormat={exportFormat}
+                brandName={brandName}
+                onCopy={handleCopyShade}
+                onNavigate={handleNavigate}
+                onExportCopy={handleExportCopy}
+                onExportFormatChange={setExportFormat}
+              />
+            </Suspense>
           )}
         </section>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Height-stable placeholder shown while the lazy TailwindScale chunk loads.
+ * Reserves enough vertical space (export preview + dropdown + 11 rows worth)
+ * to keep the page from jumping once the chunk finishes (CLS).
+ */
+function TailwindScaleFallback() {
+  return (
+    <div
+      aria-hidden="true"
+      className="flex flex-col gap-4"
+      style={{ minHeight: '52rem' }}
+    >
+      <div className="h-8 w-48 animate-pulse rounded bg-neutral-200 dark:bg-neutral-800" />
+      <div className="h-64 animate-pulse rounded-md bg-neutral-100 dark:bg-neutral-900" />
+      <div className="overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800">
+        {Array.from({ length: 11 }).map((_, i) => (
+          <div
+            key={i}
+            className="h-12 animate-pulse border-b border-neutral-100 bg-neutral-50 last:border-b-0 dark:border-neutral-900 dark:bg-neutral-900/40"
+          />
+        ))}
       </div>
     </div>
   );

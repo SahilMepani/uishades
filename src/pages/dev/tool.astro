@@ -8,12 +8,14 @@
 // `npm run build` (Playwright's webServer runs `npm run preview`).
 import '../../styles/global.css';
 import ShadeTool from '../../components/ShadeTool';
+import { readInitialPrefs } from '../../lib/url-prefs';
 
 const c = Astro.url.searchParams.get('c') ?? '4040ff';
 // Normalize: allow `c=#4040ff` or `c=4040ff`; pass through any other format
 // untouched so the React island's parser can have a crack at it.
 const cleaned = c.startsWith('#') ? c.slice(1) : c;
 const initialHex = `#${cleaned}`;
+const prefs = readInitialPrefs(Astro.url);
 ---
 
 <html lang="en">
@@ -24,6 +26,12 @@ const initialHex = `#${cleaned}`;
     <title>shades.dev — tool (dev)</title>
   </head>
   <body class="m-0 bg-white text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100">
-    <ShadeTool client:load initialHex={initialHex} />
+    <ShadeTool
+      client:load
+      initialHex={initialHex}
+      initialView={prefs.view}
+      initialRampMode={prefs.mode}
+      initialExportFormat={prefs.fmt}
+    />
   </body>
 </html>

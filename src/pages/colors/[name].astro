@@ -18,6 +18,7 @@ import '../../styles/global.css';
 import ShadeTool from '../../components/ShadeTool';
 import { NAMED_COLORS, findBySlug } from '../../lib/data/named-colors';
 import { toOklch, oklchToHex } from '../../lib/color/parse';
+import { readInitialPrefs } from '../../lib/url-prefs';
 import type { Hex, OKLCH } from '../../lib/color/types';
 
 export async function getStaticPaths() {
@@ -79,6 +80,16 @@ const jsonLd = {
   url: canonicalUrl,
   identifier: color.hex.toUpperCase(),
 };
+
+// Named-color pages are pre-rendered, so at build time `Astro.url` has no
+// search params and this call is effectively a no-op — the React island
+// boots with its defaults. The canonical URL for these pages has no
+// preferences in it (the param-bearing variants share the same HTML, just
+// hydrate to a different view), so this is the correct behaviour for SEO.
+// A user who lands on `/colors/coral?view=scale` will briefly see the ramp
+// before the post-hydration swap; that cost is bounded to the deep-link
+// case which is rarely the entry point for a name-canonical URL.
+const prefs = readInitialPrefs(Astro.url);
 ---
 
 <!doctype html>
@@ -125,7 +136,13 @@ const jsonLd = {
         <p>{color.blurb}</p>
       </section>
 
-      <ShadeTool client:load initialHex={color.hex} />
+      <ShadeTool
+        client:load
+        initialHex={color.hex}
+        initialView={prefs.view}
+        initialRampMode={prefs.mode}
+        initialExportFormat={prefs.fmt}
+      />
 
       <section class="palette" aria-labelledby="palette-title">
         <h2 id="palette-title">Palette built around {color.name}</h2>

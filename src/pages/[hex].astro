@@ -26,6 +26,7 @@ import ShadeTool from '../components/ShadeTool';
 import { parseColor, ParseError } from '../lib/color/parse';
 import { oklchRamp } from '../lib/color/ramp';
 import { findByHex } from '../lib/data/named-colors';
+import { readInitialPrefs } from '../lib/url-prefs';
 import type { Hex } from '../lib/color/types';
 
 // --- validate the URL param ----------------------------------------------
@@ -91,6 +92,10 @@ const jsonLd = {
   url: canonicalUrl,
   identifier: hexLabel,
 };
+
+// Honour ?view=scale&mode=classic&fmt=tailwind-v3 deep-links so the SSR
+// HTML matches the same view the React island will render on hydration.
+const prefs = readInitialPrefs(Astro.url);
 ---
 
 <!doctype html>
@@ -128,7 +133,13 @@ const jsonLd = {
         </h1>
       </header>
 
-      <ShadeTool client:load initialHex={canonical} />
+      <ShadeTool
+        client:load
+        initialHex={canonical}
+        initialView={prefs.view}
+        initialRampMode={prefs.mode}
+        initialExportFormat={prefs.fmt}
+      />
 
       <noscript>
         <p class="noscript-note">
