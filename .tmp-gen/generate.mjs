@@ -410,19 +410,17 @@ for (const cu of CURATED) {
 /*  needsReview flagging                                               */
 /* ------------------------------------------------------------------ */
 
-const TW_500_SLUGS = TW_22_HUES.map((hue) => `tailwind-${hue}-500`);
-const TOP_CSS_NAMES = [
-  // 28 most-searched CSS named colors — the task's heuristic list.
-  // After alias-fold: aqua→cyan, fuchsia→magenta — both still in 28 as 'cyan' and 'magenta'.
-  'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink', 'black',
-  'white', 'gray', 'brown', 'cyan', 'magenta', 'teal', 'indigo', 'violet',
-  'coral', 'salmon', 'gold', 'silver', 'beige', 'ivory', 'khaki', 'lime',
-  'navy', 'olive', 'maroon', 'crimson',
-];
-const NEEDS_REVIEW_SLUGS = new Set([...TW_500_SLUGS, ...TOP_CSS_NAMES]);
+// Wave 3b (seo-content) removed the post-launch review queue once the
+// hand-edit pass was complete. The field is preserved on the type so future
+// reviewers can re-introduce a queue without touching the schema.
+//
+// Historical: the original flag list mismatched what shipped (TW-600 in the
+// data, TW-500 in the generator); the inconsistency is now retired entirely
+// rather than reconciled in either direction. If a new review pass is needed,
+// reintroduce a Set here and the loop below.
 
 for (const s of staging) {
-  if (NEEDS_REVIEW_SLUGS.has(s.slug)) s.needsReview = true;
+  delete s.needsReview;
 }
 
 /* ------------------------------------------------------------------ */

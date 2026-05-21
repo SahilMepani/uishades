@@ -63,33 +63,75 @@ const related = (color.related || [])
   .slice(0, 3);
 
 const TITLE = `${color.name} (${color.hex.toUpperCase()}) Color Shades, Tints & Palette | shades.dev`;
-const firstSentence = color.blurb.split('. ')[0] + '.';
-const DESCRIPTION = firstSentence.length > 160
-  ? firstSentence.slice(0, 157) + '...'
-  : firstSentence;
+
+// Meta description target: 120-160 chars. A naive first-sentence split often
+// returns 60-90 chars on these blurbs, which falls below the 120-char floor
+// search engines prefer; we glue on additional sentences until the total
+// clears 120, then hard-truncate at 160. The blurbs are written so the
+// first two sentences carry the color name plus a concrete hook.
+function buildDescription(blurb: string): string {
+  const parts = blurb.split('. ');
+  let out = '';
+  for (let i = 0; i < parts.length; i++) {
+    const piece = parts[i].endsWith('.') ? parts[i] : parts[i] + '.';
+    out = out ? out + ' ' + piece : piece;
+    if (out.length >= 120) break;
+  }
+  // Strip inline `code` backticks; meta descriptions render as plain text.
+  out = out.replace(/`([^`]+)`/g, '$1');
+  if (out.length <= 160) return out;
+  // Truncate at last word boundary before 157, append ellipsis.
+  const trimmed = out.slice(0, 157);
+  const lastSpace = trimmed.lastIndexOf(' ');
+  return (lastSpace > 100 ? trimmed.slice(0, lastSpace) : trimmed) + '...';
+}
+const DESCRIPTION = buildDescription(color.blurb);
 
 const canonicalUrl = `https://shades.dev/colors/${color.slug}`;
 const ogImage = `https://shades.dev/og/${color.hex.slice(1)}.png`;
+
+// Strip inline markdown `code` ticks from the structured-data description —
+// JSON-LD consumers render this as plain text, so the backticks would leak.
+const plainBlurb = color.blurb.replace(/`([^`]+)`/g, '$1');
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Thing',
   name: color.name,
   alternateName: color.aliases ?? [],
-  description: color.blurb,
+  description: plainBlurb,
   url: canonicalUrl,
   identifier: color.hex.toUpperCase(),
+  // 'color' is a valid Thing property in many product/style schemas; the hex
+  // makes it programmatically consumable by color-aware crawlers.
+  color: color.hex,
 };
 
 // Named-color pages are pre-rendered, so at build time `Astro.url` has no
 // search params and this call is effectively a no-op — the React island
-// boots with its defaults. The canonical URL for these pages has no
-// preferences in it (the param-bearing variants share the same HTML, just
-// hydrate to a different view), so this is the correct behaviour for SEO.
-// A user who lands on `/colors/coral?view=scale` will briefly see the ramp
-// before the post-hydration swap; that cost is bounded to the deep-link
-// case which is rarely the entry point for a name-canonical URL.
+// boots with its defaults. The canonical URL has no preferences in it (the
+// param-bearing variants share the same HTML, just hydrate to a different
+// view), so this is the correct behaviour for SEO. A user who lands on
+// `/colors/coral?view=scale` will briefly see the ramp before the
+// post-hydration swap; that cost is bounded to the deep-link case which is
+// rarely the entry point for a name-canonical URL.
 const prefs = readInitialPrefs(Astro.url);
+
+// Render the blurb with markdown-style `code` spans converted to <code>.
+// The blurbs are author-controlled (no user input) and the regex only matches
+// the limited subset we use, so the only escape we have to do is for HTML
+// metacharacters before substituting <code> wrappers.
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+const blurbHtml = escapeHtml(color.blurb).replace(
+  /`([^`]+)`/g,
+  (_m, inner) => `<code>${inner}</code>`,
+);
 ---
 
 <!doctype html>
@@ -133,7 +175,7 @@ const prefs = readInitialPrefs(Astro.url);
       </header>
 
       <section class="blurb">
-        <p>{color.blurb}</p>
+        <p set:html={blurbHtml}></p>
       </section>
 
       <ShadeTool
