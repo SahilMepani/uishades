@@ -1,5 +1,9 @@
 name = "shades-dev"
 compatibility_date = "2026-05-01"
-pages_build_output_dir = "./dist"
+compatibility_flags = ["nodejs_compat"]
 
-# Custom domain set in Cloudflare dashboard post-deploy.
+# Astro's @astrojs/cloudflare adapter generates dist/server/wrangler.json with
+# the real `main` and `assets` bindings; this file only declares
+# project-level metadata. Deploy with:
+#   npx wrangler deploy --config dist/server/wrangler.json
+# Custom domain is configured in the Cloudflare dashboard post-deploy.
