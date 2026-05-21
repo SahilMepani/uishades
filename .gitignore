@@ -32,3 +32,10 @@ test-results/
 
 # jetbrains setting folder
 .idea/
+
+# Data generator intermediates — see .tmp-gen/generate.mjs. Authored sources
+# (.tmp-gen/blurbs.json, .tmp-gen/generate.mjs) ARE committed; intermediate
+# JSON artifacts and ad-hoc dumps are not.
+.tmp-gen/named-colors.partial.json
+.tmp-gen/popular-hexes.json
+.tmp-gen/slugs.txt
