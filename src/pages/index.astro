@@ -11,6 +11,7 @@
  */
 import '../styles/global.css';
 import RandomGrid from '../components/RandomGrid.astro';
+import { safeJsonForScript } from '../lib/safe-json';
 
 const TITLE = 'shades.dev — Free Tints and Shades of Any Hex Color';
 const DESCRIPTION =
@@ -56,7 +57,7 @@ const ISSUE_DATE = new Date().toLocaleDateString('en-US', {
     <meta name="twitter:description" content={DESCRIPTION} />
     <meta name="twitter:image" content={OG} />
 
-    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(jsonLd)} />
   </head>
   <body class="bg-paper text-ink">
     <!-- Masthead strip -->

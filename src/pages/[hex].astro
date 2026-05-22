@@ -14,6 +14,7 @@ import { parseColor, ParseError, toOklch } from '../lib/color/parse';
 import { oklchRamp } from '../lib/color/ramp';
 import { findByHex } from '../lib/data/named-colors';
 import { readInitialPrefs } from '../lib/url-prefs';
+import { safeJsonForScript } from '../lib/safe-json';
 import type { Hex } from '../lib/color/types';
 
 // --- validate the URL param ----------------------------------------------
@@ -96,7 +97,7 @@ const prefs = readInitialPrefs(Astro.url);
     <meta name="twitter:description" content={DESCRIPTION} />
     <meta name="twitter:image" content={ogImage} />
 
-    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(jsonLd)} />
   </head>
   <body class="bg-paper text-ink">
     <!-- Masthead strip -->

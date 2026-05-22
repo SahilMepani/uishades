@@ -11,6 +11,7 @@ import ShadeTool from '../../components/ShadeTool';
 import { NAMED_COLORS, findBySlug } from '../../lib/data/named-colors';
 import { toOklch, oklchToHex } from '../../lib/color/parse';
 import { readInitialPrefs } from '../../lib/url-prefs';
+import { safeJsonForScript } from '../../lib/safe-json';
 import type { Hex, OKLCH } from '../../lib/color/types';
 
 export async function getStaticPaths() {
@@ -120,7 +121,7 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
     <meta name="twitter:description" content={DESCRIPTION} />
     <meta name="twitter:image" content={ogImage} />
 
-    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(jsonLd)} />
   </head>
   <body class="bg-paper text-ink">
     <!-- Masthead strip -->
