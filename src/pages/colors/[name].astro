@@ -166,7 +166,7 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
       </section>
 
       <!-- Editorial blurb (drop cap optional via CSS) -->
-      <section class="mt-16 border-t border-ink/80 pt-8">
+      <section class="mt-16 border-t border-hairline pt-8">
         <div class="grid gap-8 lg:grid-cols-[1fr_3fr]">
           <p class="eyebrow lg:pt-2">Notes</p>
           <div class="prose-editorial" set:html={`<p>${blurbHtml}</p>`}></div>
@@ -174,11 +174,7 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
       </section>
 
       <!-- Tool -->
-      <section class="mt-16 border-t border-ink/80 pt-8">
-        <div class="mb-6 flex items-baseline justify-between">
-          <span class="eyebrow">The data sheet</span>
-          <span class="font-display text-2xl text-ink">Shades &amp; scale</span>
-        </div>
+      <section class="mt-16 border-t border-hairline pt-8">
         <ShadeTool
           client:load
           initialHex={color.hex}
@@ -189,7 +185,7 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
       </section>
 
       <!-- Numbered palette plate -->
-      <section class="mt-20 border-t border-ink/80 pt-8" aria-labelledby="palette-title">
+      <section class="mt-20 border-t border-hairline pt-8" aria-labelledby="palette-title">
         <div class="mb-6 flex items-baseline justify-between">
           <span class="eyebrow">Plate 02</span>
           <h2 id="palette-title" class="font-display text-2xl text-ink">
@@ -216,7 +212,7 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
 
       <!-- Related -->
       {related.length > 0 && (
-        <section class="mt-20 border-t border-ink/80 pt-8" aria-labelledby="related-title">
+        <section class="mt-20 border-t border-hairline pt-8" aria-labelledby="related-title">
           <div class="mb-6 flex items-baseline justify-between">
             <span class="eyebrow">Cross-reference</span>
             <h2 id="related-title" class="font-display text-2xl text-ink">Related colors</h2>
@@ -237,15 +233,14 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
       )}
 
       <!-- Footer / colophon -->
-      <footer class="mt-20 border-t border-ink/80 pt-6">
+      <footer class="mt-20 border-t border-hairline pt-6">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between">
           <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/80">
-            uishades.com — {color.name}
+            <a href="/" class="text-ink hover:text-accent">uishades.com</a> — {color.name}
           </p>
           <nav aria-label="Footer" class="flex gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
             <a href="/" class="text-ink hover:text-accent">Home</a>
             <a href={`/${color.hex.slice(1)}`} class="text-ink hover:text-accent">Open in tool</a>
-            <a href={`/api/${color.hex.slice(1)}.json`} class="text-ink hover:text-accent">JSON</a>
           </nav>
         </div>
       </footer>

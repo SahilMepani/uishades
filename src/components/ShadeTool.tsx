@@ -26,6 +26,7 @@ import { buildScale } from '../lib/color/scale';
 import { findByHexSlim as findByHex } from '../lib/data/named-colors-slim';
 import ContinuousRamp from './ContinuousRamp';
 import { ToastProvider, useToast } from './Toast';
+import ColorPicker from './ColorPicker';
 
 // Lazy-load the Tailwind scale view + its export panel + serializers. They
 // form the heaviest leaf of the React island (Tailwind scale, five export-
@@ -419,7 +420,11 @@ function ShadeToolInner({
           </div>
 
           <div className="flex items-baseline justify-between gap-4 border-b border-hairline pb-2">
-            <span className="eyebrow">{view === 'ramp' ? 'Shades' : 'Scale'}</span>
+            {view === 'ramp' ? (
+              <a href="/" className="eyebrow hover:text-accent">UISHADES.COM</a>
+            ) : (
+              <span className="eyebrow">Scale</span>
+            )}
             <div className="flex items-baseline gap-2 font-mono text-[11px] uppercase tracking-[0.16em]">
               <span className="text-mute">
                 {view === 'ramp' ? `${ramp.shades.length} stops · ${ramp.mode}` : `11 stops · anchor ${scale.anchorStop}`}
@@ -502,23 +507,21 @@ function PreviewBlock({
   const hslString = useMemo(() => formatForCopy(hex, 'hsl'), [hex]);
   return (
     <div className="flex flex-col gap-4">
-      <label
-        className="group relative inline-flex h-[100px] w-[100px] cursor-pointer items-center justify-center ring-1 ring-ink/10"
-        title="Pick a color"
-        style={{ backgroundColor: hex }}
-        aria-label={`Color ${hex} — open color picker`}
+      <ColorPicker
+        hex={hex}
+        onChange={onChange}
+        triggerLabel={`Color ${hex} — open color picker`}
       >
-        <span className="pointer-events-none inline-flex h-7 w-7 items-center justify-center rounded-full bg-paper/85 text-ink ring-1 ring-ink/15 shadow-sm">
-          <PickerIcon className="h-4 w-4" />
+        <span
+          title="Pick a color"
+          className="relative inline-flex h-[100px] w-[100px] items-center justify-center ring-1 ring-ink/10"
+          style={{ backgroundColor: hex }}
+        >
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-paper/85 text-ink ring-1 ring-ink/15 shadow-sm">
+            <PickerIcon className="h-4 w-4" />
+          </span>
         </span>
-        <input
-          type="color"
-          value={hex}
-          onChange={(e) => onChange(e.target.value as Hex)}
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-          aria-label="Open color picker"
-        />
-      </label>
+      </ColorPicker>
       {named && (
         <div className="border-b border-hairline pb-2">
           <span className="font-display text-base text-ink-2">{named.name}</span>

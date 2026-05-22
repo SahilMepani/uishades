@@ -11,6 +11,7 @@
  */
 import '../styles/global.css';
 import BaseHead from '../components/BaseHead.astro';
+import HomeColorPicker from '../components/HomeColorPicker';
 import { NAMED_COLORS } from '../lib/data/named-colors';
 import { safeJsonForScript } from '../lib/safe-json';
 
@@ -62,25 +63,25 @@ const jsonLd = {
     <script type="application/ld+json" set:html={safeJsonForScript(jsonLd)} />
   </head>
   <body class="bg-paper text-ink">
-    <main class="mx-auto max-w-6xl px-6 pb-24 pt-6 lg:pt-8">
+    <main class="mx-auto max-w-6xl px-6 pb-24">
       <!-- Hero -->
-      <section class="grid gap-10 lg:grid-cols-[7fr_5fr] lg:gap-16">
-        <div>
-          <p class="eyebrow mb-6">A replacement for 0to255 — free, fast, OKLCH</p>
-          <h1 class="display text-[clamp(2.25rem,6.5vw,5.25rem)]">
-            Tints &amp; shades<br />
-            <span class="text-accent">of any color</span>,<br />
-            free.
-          </h1>
-          <p class="mt-8 max-w-[44ch] font-display text-xl leading-snug text-ink-2">
-            Paste a hex or a CSS color name. <code class="font-mono not-italic text-base text-ink">rgb()</code>,
-            <code class="font-mono not-italic text-base text-ink">hsl()</code>, and
-            <code class="font-mono not-italic text-base text-ink">oklch()</code> work too — open the tool to use them.
-          </p>
+      <section class="mx-auto flex min-h-svh max-w-3xl flex-col items-center justify-center py-10 text-center">
+        <p class="eyebrow mb-6">A replacement for 0to255 — free, fast, OKLCH</p>
+        <h1 class="display text-[clamp(2.5rem,8vw,6rem)]">
+          Tints &amp; shades<br />
+          <span class="text-accent">of any color</span>.
+        </h1>
+        <p class="mt-8 max-w-[44ch] font-display text-xl leading-snug text-ink-2">
+          Paste a hex or a CSS color name. <code class="font-mono not-italic text-base text-ink">rgb()</code>,
+          <code class="font-mono not-italic text-base text-ink">hsl()</code>, and
+          <code class="font-mono not-italic text-base text-ink">oklch()</code> work too — open the tool to use them.
+        </p>
 
-          <form id="hex-form" class="mt-10 flex flex-col gap-2 max-w-xl" action="/" method="get" novalidate>
-            <label for="hex" class="visually-hidden">Color (hex, name, rgb, hsl, or oklch)</label>
-            <div class="flex flex-col sm:flex-row border border-ink/80 bg-paper">
+        <form id="hex-form" class="mt-10 flex w-full max-w-xl flex-col gap-2 text-left" action="/" method="get" novalidate>
+          <label for="hex" class="visually-hidden">Color (hex, name, rgb, hsl, or oklch)</label>
+          <div class="flex flex-col sm:flex-row border border-ink/80 bg-paper">
+            <div class="flex flex-1">
+              <HomeColorPicker client:idle />
               <input
                 id="hex"
                 name="hex"
@@ -93,50 +94,21 @@ const jsonLd = {
                 required
                 class="flex-1 bg-transparent px-4 py-3.5 font-mono text-base tracking-tight text-ink placeholder:text-mute focus:outline-none"
               />
-              <button
-                type="submit"
-                class="border-t sm:border-l sm:border-t-0 border-ink/80 bg-ink px-6 py-3.5 font-mono text-[12px] uppercase tracking-[0.18em] text-paper hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
-              >
-                Open →
-              </button>
             </div>
-            <p id="hex-error" class="error" role="alert" aria-live="polite"></p>
-          </form>
-        </div>
-
-        <!-- Right column: editorial "table of contents" -->
-        <aside class="hidden lg:flex lg:flex-col lg:items-end lg:pt-4">
-          <p class="eyebrow mb-3 self-start">Index</p>
-          <ol class="w-full divide-y divide-hairline border-y border-hairline">
-            <li class="flex items-baseline justify-between py-3">
-              <span class="font-display text-xl">The shades tool</span>
-              <span class="font-mono text-xs text-mute">№ 01</span>
-            </li>
-            <li class="flex items-baseline justify-between py-3">
-              <span class="font-display text-xl">Tailwind scale</span>
-              <span class="font-mono text-xs text-mute">№ 02</span>
-            </li>
-            <li class="flex items-baseline justify-between py-3">
-              <span class="font-display text-xl">Named colors</span>
-              <span class="font-mono text-xs text-mute">№ 03</span>
-            </li>
-            <li class="flex items-baseline justify-between py-3">
-              <span class="font-display text-xl">JSON API</span>
-              <span class="font-mono text-xs text-mute">№ 04</span>
-            </li>
-          </ol>
-          <p class="mt-6 max-w-[28ch] text-right font-display text-base text-mute">
-            Same URL pattern as 0to255, OKLCH math underneath, no paywall.
-          </p>
-        </aside>
+            <button
+              type="submit"
+              class="cursor-pointer border-t sm:border-l sm:border-t-0 border-ink/80 bg-ink px-6 py-3.5 font-mono text-[12px] uppercase tracking-[0.18em] text-paper hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+            >
+              Open →
+            </button>
+          </div>
+          <p id="hex-error" class="error" role="alert" aria-live="polite"></p>
+        </form>
       </section>
 
       <!-- Editorial "Why" -->
       <section class="mt-20 lg:mt-28" aria-labelledby="why-title">
-        <div class="mb-10 flex items-baseline justify-between border-b border-ink/80 pb-2">
-          <span class="eyebrow">Department</span>
-          <h2 id="why-title" class="font-display text-3xl text-ink">Why uishades.com</h2>
-        </div>
+        <h2 id="why-title" class="sr-only">Why uishades.com</h2>
         <div class="grid gap-x-10 gap-y-12 lg:grid-cols-3">
           <article>
             <p class="idx mb-2">№ 01</p>
@@ -170,15 +142,13 @@ const jsonLd = {
       </section>
 
       <!-- Footer / colophon -->
-      <footer class="mt-24 border-t border-ink/80 pt-6">
+      <footer class="mt-24 border-t border-hairline pt-6">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-baseline sm:justify-between">
           <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/80">
-            uishades.com · A free design tool
+            <a href="/" class="text-ink hover:text-accent">uishades.com</a> · A free design tool
           </p>
           <nav aria-label="Footer" class="flex gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
             <a href="/colors/coral" class="text-ink hover:text-accent">Named colors</a>
-            <a href="https://github.com/sponsors" rel="noopener" class="text-ink hover:text-accent">Sponsor</a>
-            <a href="https://ko-fi.com" rel="noopener" class="text-ink hover:text-accent">Ko-fi</a>
           </nav>
         </div>
         <p class="mt-2 font-display text-sm text-mute">

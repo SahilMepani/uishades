@@ -144,6 +144,44 @@ a { color: inherit; }
   padding: 1.25rem 0 0;
 }
 
+/* Tailwind v4's preflight resets buttons to `cursor: default`. Restore the
+   pointer for anything interactive so clickable affordance is consistent. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+summary,
+label[for],
+select:not(:disabled),
+[type="submit"]:not(:disabled),
+[type="button"]:not(:disabled),
+[type="reset"]:not(:disabled),
+[type="checkbox"]:not(:disabled),
+[type="radio"]:not(:disabled) {
+  cursor: pointer;
+}
+
+/* react-colorful overrides — strip the default rounded corners and shrink
+   the picker to match the popover width. We don't import react-colorful's
+   stylesheet; it auto-injects, so these rules win by ordering. */
+.react-colorful {
+  width: 100% !important;
+  height: auto !important;
+  gap: 0.5rem;
+}
+.react-colorful__saturation {
+  border-radius: 0 !important;
+  height: 160px;
+  border-bottom: none !important;
+}
+.react-colorful__hue {
+  border-radius: 0 !important;
+  height: 12px;
+}
+.react-colorful__pointer {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
 /* Hover-only reveal: elements tagged `.pointer-fine-hide` start hidden on
    devices whose primary input device can hover (mice, trackpads), then
    fade in when the parent `.group` is hovered or focus is inside it.
