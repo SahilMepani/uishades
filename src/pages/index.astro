@@ -10,6 +10,7 @@
  * inline JS canonicalizes the value and client-side navigates.
  */
 import '../styles/global.css';
+import BaseHead from '../components/BaseHead.astro';
 import RandomGrid from '../components/RandomGrid.astro';
 import { NAMED_COLORS } from '../lib/data/named-colors';
 
@@ -47,11 +48,7 @@ const ISSUE_DATE = new Date().toLocaleDateString('en-US', {
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="generator" content={Astro.generator} />
+    <BaseHead />
     <title>{TITLE}</title>
     <meta name="description" content={DESCRIPTION} />
     <link rel="canonical" href="https://shades.dev/" />

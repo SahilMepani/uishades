@@ -15,9 +15,8 @@
  * we already had that rule, but now the chrome doesn't invert either.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* Google Fonts are loaded via <link> tags in BaseHead.astro so they
+ * don't render-block on CSS parsing. See that file for the rationale. */
 
 @theme {
   --color-paper:        #faf8f3;
