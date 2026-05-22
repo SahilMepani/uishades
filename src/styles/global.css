@@ -145,3 +145,22 @@ a { color: inherit; }
   border-top: 1px solid var(--color-hairline);
   padding: 1.25rem 0 0;
 }
+
+/* Hover-only reveal: elements tagged `.pointer-fine-hide` start hidden on
+   devices whose primary input device can hover (mice, trackpads), then
+   fade in when the parent `.group` is hovered or focus is inside it.
+   Touch-only devices (`(hover: none)`) get the icons immediately so the
+   affordance is discoverable. Pairs with `lg:hidden` patterns being
+   replaced — the right axis here is "does this device hover?" not
+   "is the screen wide?". Honors prefers-reduced-motion via `motion-safe`
+   on the consumer where appropriate. */
+@media (hover: hover) {
+  .pointer-fine-hide {
+    opacity: 0;
+    transition: opacity 150ms ease;
+  }
+  .group:hover .pointer-fine-hide,
+  .group:focus-within .pointer-fine-hide {
+    opacity: 1;
+  }
+}

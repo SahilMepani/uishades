@@ -158,8 +158,9 @@ export default function ShadeRow({
       <div
         className={[
           'flex items-center gap-1',
-          'opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100',
-          'motion-safe:transition-opacity',
+          // Always visible on touch-only devices; faded-in on hover-capable
+          // ones via the .pointer-fine-hide CSS utility in global.css.
+          'pointer-fine-hide',
         ].join(' ')}
       >
         <button
