@@ -11,7 +11,6 @@
  */
 import '../styles/global.css';
 import BaseHead from '../components/BaseHead.astro';
-import RandomGrid from '../components/RandomGrid.astro';
 import { NAMED_COLORS } from '../lib/data/named-colors';
 import { safeJsonForScript } from '../lib/safe-json';
 
@@ -24,26 +23,22 @@ const HOME_NAMED_COLORS = NAMED_COLORS
   .filter((c) => c.source === 'css')
   .map((c) => ({ slug: c.slug, name: c.name, hex: c.hex }));
 
-const TITLE = 'shades.dev — Free Tints and Shades of Any Hex Color';
+const TITLE = 'uishades.com — Free Tints and Shades of Any Hex Color';
 const DESCRIPTION =
   'A free tool for finding lighter and darker shades of any hex color. OKLCH-based ramps, Tailwind-style 11-stop scales, and paste-ready exports.';
-const OG = 'https://shades.dev/og/777777.png';
+const OG = 'https://uishades.com/og/777777.png';
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebApplication',
-  name: 'shades.dev',
-  url: 'https://shades.dev/',
+  name: 'uishades.com',
+  url: 'https://uishades.com/',
   description: DESCRIPTION,
   applicationCategory: 'DesignApplication',
   operatingSystem: 'Any',
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
 };
 
-const ISSUE_DATE = new Date().toLocaleDateString('en-US', {
-  year: 'numeric',
-  month: 'long',
-});
 ---
 
 <!doctype html>
@@ -52,12 +47,12 @@ const ISSUE_DATE = new Date().toLocaleDateString('en-US', {
     <BaseHead />
     <title>{TITLE}</title>
     <meta name="description" content={DESCRIPTION} />
-    <link rel="canonical" href="https://shades.dev/" />
+    <link rel="canonical" href="https://uishades.com/" />
 
     <meta property="og:type" content="website" />
     <meta property="og:title" content={TITLE} />
     <meta property="og:description" content={DESCRIPTION} />
-    <meta property="og:url" content="https://shades.dev/" />
+    <meta property="og:url" content="https://uishades.com/" />
     <meta property="og:image" content={OG} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={TITLE} />
@@ -67,26 +62,17 @@ const ISSUE_DATE = new Date().toLocaleDateString('en-US', {
     <script type="application/ld+json" set:html={safeJsonForScript(jsonLd)} />
   </head>
   <body class="bg-paper text-ink">
-    <!-- Masthead strip -->
-    <header class="border-b border-ink/90 bg-paper">
-      <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-3 font-mono text-[11px] uppercase tracking-[0.18em] text-ink/80">
-        <span>Shades — A free design tool</span>
-        <span class="hidden sm:inline">Issue Nº 01 · {ISSUE_DATE}</span>
-        <span class="text-accent">Open access</span>
-      </div>
-    </header>
-
-    <main class="mx-auto max-w-6xl px-6 pb-24 pt-14 lg:pt-20">
+    <main class="mx-auto max-w-6xl px-6 pb-24 pt-6 lg:pt-8">
       <!-- Hero -->
       <section class="grid gap-10 lg:grid-cols-[7fr_5fr] lg:gap-16">
         <div>
           <p class="eyebrow mb-6">A replacement for 0to255 — free, fast, OKLCH</p>
-          <h1 class="display text-[clamp(3rem,9vw,7.5rem)]">
+          <h1 class="display text-[clamp(2.25rem,6.5vw,5.25rem)]">
             Tints &amp; shades<br />
             <span class="text-accent">of any color</span>,<br />
             free.
           </h1>
-          <p class="mt-8 max-w-[44ch] font-display italic text-xl leading-snug text-ink-2">
+          <p class="mt-8 max-w-[44ch] font-display text-xl leading-snug text-ink-2">
             Paste a hex or a CSS color name. <code class="font-mono not-italic text-base text-ink">rgb()</code>,
             <code class="font-mono not-italic text-base text-ink">hsl()</code>, and
             <code class="font-mono not-italic text-base text-ink">oklch()</code> work too — open the tool to use them.
@@ -123,47 +109,38 @@ const ISSUE_DATE = new Date().toLocaleDateString('en-US', {
           <p class="eyebrow mb-3 self-start">Index</p>
           <ol class="w-full divide-y divide-hairline border-y border-hairline">
             <li class="flex items-baseline justify-between py-3">
-              <span class="font-display italic text-xl">The shades tool</span>
+              <span class="font-display text-xl">The shades tool</span>
               <span class="font-mono text-xs text-mute">№ 01</span>
             </li>
             <li class="flex items-baseline justify-between py-3">
-              <span class="font-display italic text-xl">Tailwind scale</span>
+              <span class="font-display text-xl">Tailwind scale</span>
               <span class="font-mono text-xs text-mute">№ 02</span>
             </li>
             <li class="flex items-baseline justify-between py-3">
-              <span class="font-display italic text-xl">Named colors</span>
+              <span class="font-display text-xl">Named colors</span>
               <span class="font-mono text-xs text-mute">№ 03</span>
             </li>
             <li class="flex items-baseline justify-between py-3">
-              <span class="font-display italic text-xl">JSON API</span>
+              <span class="font-display text-xl">JSON API</span>
               <span class="font-mono text-xs text-mute">№ 04</span>
             </li>
           </ol>
-          <p class="mt-6 max-w-[28ch] text-right font-display italic text-base text-mute">
+          <p class="mt-6 max-w-[28ch] text-right font-display text-base text-mute">
             Same URL pattern as 0to255, OKLCH math underneath, no paywall.
           </p>
         </aside>
-      </section>
-
-      <!-- Color grid section -->
-      <section class="mt-20 lg:mt-28">
-        <div class="mb-4 flex items-baseline justify-between border-b border-ink/80 pb-2">
-          <span class="eyebrow">Plate 01 — Sampler</span>
-          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">204 hexes · click to open</span>
-        </div>
-        <RandomGrid />
       </section>
 
       <!-- Editorial "Why" -->
       <section class="mt-20 lg:mt-28" aria-labelledby="why-title">
         <div class="mb-10 flex items-baseline justify-between border-b border-ink/80 pb-2">
           <span class="eyebrow">Department</span>
-          <h2 id="why-title" class="font-display italic text-3xl text-ink">Why shades.dev</h2>
+          <h2 id="why-title" class="font-display text-3xl text-ink">Why uishades.com</h2>
         </div>
         <div class="grid gap-x-10 gap-y-12 lg:grid-cols-3">
           <article>
             <p class="idx mb-2">№ 01</p>
-            <h3 class="font-display italic text-2xl text-ink leading-tight">Free, forever.</h3>
+            <h3 class="font-display text-2xl text-ink leading-tight">Free, forever.</h3>
             <p class="mt-3 text-ink-2 leading-relaxed">
               No paywall, no signup, no ads. Permanent URLs for every hex you'd ever
               want to share with a teammate — pattern-identical to the one you've
@@ -172,17 +149,17 @@ const ISSUE_DATE = new Date().toLocaleDateString('en-US', {
           </article>
           <article>
             <p class="idx mb-2">№ 02</p>
-            <h3 class="font-display italic text-2xl text-ink leading-tight">Better algorithm.</h3>
+            <h3 class="font-display text-2xl text-ink leading-tight">Better algorithm.</h3>
             <p class="mt-3 text-ink-2 leading-relaxed">
               OKLCH-anchored ramps keep perceived lightness and hue stable across
               the whole scale, so yellows, browns, and olives don't muddy out
-              at the mids. A <em class="font-display italic">Classic</em> toggle reproduces the familiar
+              at the mids. A <em>Classic</em> toggle reproduces the familiar
               RGB-walk output, bit for bit.
             </p>
           </article>
           <article>
             <p class="idx mb-2">№ 03</p>
-            <h3 class="font-display italic text-2xl text-ink leading-tight">Tailwind-first exports.</h3>
+            <h3 class="font-display text-2xl text-ink leading-tight">Tailwind-first exports.</h3>
             <p class="mt-3 text-ink-2 leading-relaxed">
               Drop-in 11-stop scales with copy buttons for Tailwind v4
               <code>@theme</code>, v3 config, plain CSS variables, W3C Design
@@ -196,7 +173,7 @@ const ISSUE_DATE = new Date().toLocaleDateString('en-US', {
       <footer class="mt-24 border-t border-ink/80 pt-6">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-baseline sm:justify-between">
           <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/80">
-            shades.dev · A free design tool
+            uishades.com · A free design tool
           </p>
           <nav aria-label="Footer" class="flex gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
             <a href="/colors/coral" class="text-ink hover:text-accent">Named colors</a>
@@ -204,8 +181,8 @@ const ISSUE_DATE = new Date().toLocaleDateString('en-US', {
             <a href="https://ko-fi.com" rel="noopener" class="text-ink hover:text-accent">Ko-fi</a>
           </nav>
         </div>
-        <p class="mt-2 font-display italic text-sm text-mute">
-          Set in Instrument Serif, Geist, and JetBrains Mono. Built with
+        <p class="mt-2 font-display text-sm text-mute">
+          Set in Geist and JetBrains Mono. Built with
           <a href="https://astro.build" rel="noopener" class="underline decoration-hairline underline-offset-2 hover:text-accent">Astro</a>.
           Color math by <a href="https://culorijs.org" rel="noopener" class="underline decoration-hairline underline-offset-2 hover:text-accent">culori</a>.
         </p>

@@ -11,8 +11,7 @@ export const prerender = false;
 import '../styles/global.css';
 import BaseHead from '../components/BaseHead.astro';
 import ShadeTool from '../components/ShadeTool';
-import { parseColor, ParseError, toOklch } from '../lib/color/parse';
-import { oklchRamp } from '../lib/color/ramp';
+import { parseColor, ParseError } from '../lib/color/parse';
 import { findByHex } from '../lib/data/named-colors';
 import { readInitialPrefs } from '../lib/url-prefs';
 import { safeJsonForScript } from '../lib/safe-json';
@@ -36,33 +35,19 @@ try {
 }
 
 // --- derive everything we need for the page ------------------------------
-const ramp = oklchRamp(canonical);
 const named = findByHex(canonical);
-const oklch = toOklch(canonical);
-
-const lighter: Hex[] = [];
-for (let i = ramp.inputIndex - 1; i >= Math.max(0, ramp.inputIndex - 3); i--) {
-  lighter.push(ramp.shades[i].hex);
-}
-const darker: Hex[] = [];
-for (let i = ramp.inputIndex + 1; i <= Math.min(ramp.shades.length - 1, ramp.inputIndex + 3); i++) {
-  darker.push(ramp.shades[i].hex);
-}
 
 const hexLabel = canonical.toUpperCase();
 const TITLE = named
-  ? `Hex Color ${hexLabel} Tints & Shades · ${named.name} | shades.dev`
-  : `Hex Color ${hexLabel} Tints & Shades | shades.dev`;
+  ? `Hex Color ${hexLabel} Tints & Shades · ${named.name} | uishades.com`
+  : `Hex Color ${hexLabel} Tints & Shades | uishades.com`;
 
-const sampleShades = [...lighter.slice(0, 2), ...darker.slice(0, 2)]
-  .map((h) => h.toUpperCase())
-  .join(', ');
 const DESCRIPTION = named
-  ? `${hexLabel} is also known as ${named.name}. Browse tints and shades — sample: ${sampleShades}. Free Tailwind-ready exports.`
-  : `Tints and shades of hex color ${hexLabel}. Continuous OKLCH ramp, Tailwind-style 11-stop scale, and copy-ready exports. Sample shades: ${sampleShades}.`;
+  ? `${hexLabel} is also known as ${named.name}. Browse tints and shades — free Tailwind-ready exports.`
+  : `Tints and shades of hex color ${hexLabel}. Continuous OKLCH ramp, Tailwind-style 11-stop scale, and copy-ready exports.`;
 
-const ogImage = `https://shades.dev/og/${canonical.slice(1)}.png`;
-const canonicalUrl = `https://shades.dev/${canonical.slice(1)}`;
+const ogImage = `https://uishades.com/og/${canonical.slice(1)}.png`;
+const canonicalUrl = `https://uishades.com/${canonical.slice(1)}`;
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -108,55 +93,7 @@ Astro.response.headers.set(
     <script type="application/ld+json" set:html={safeJsonForScript(jsonLd)} />
   </head>
   <body class="bg-paper text-ink">
-    <!-- Masthead strip -->
-    <header class="border-b border-ink/90">
-      <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-3 font-mono text-[11px] uppercase tracking-[0.18em]">
-        <a href="/" class="text-ink hover:text-accent">← shades.dev</a>
-        <span class="hidden sm:inline text-mute">Plate · {hexLabel}</span>
-        <a href={`/api/${canonical.slice(1)}.json`} class="text-ink hover:text-accent">JSON</a>
-      </div>
-    </header>
-
     <main class="mx-auto max-w-6xl px-6 pt-10 pb-24 lg:pt-14">
-      <!-- Page header — typeset display title with metadata strip -->
-      <section class="mb-10 border-b border-ink/80 pb-8">
-        <p class="eyebrow mb-3">{named ? 'Named color' : 'Hex color'}</p>
-        <div class="flex flex-wrap items-baseline justify-between gap-4">
-          <h1 class="display text-[clamp(2.5rem,7vw,5rem)]">
-            {named ? (
-              <>
-                {named.name}
-                <span class="ml-3 font-mono text-2xl tracking-tight text-mute not-italic">
-                  {hexLabel}
-                </span>
-              </>
-            ) : (
-              <span class="font-mono not-italic tracking-tight">{hexLabel}</span>
-            )}
-          </h1>
-          <dl class="grid grid-cols-3 gap-x-8 font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
-            <div>
-              <dt>L</dt>
-              <dd class="mt-1 text-base normal-case tracking-tight text-ink">
-                {Number.isFinite(oklch.l) ? oklch.l.toFixed(3) : '—'}
-              </dd>
-            </div>
-            <div>
-              <dt>C</dt>
-              <dd class="mt-1 text-base normal-case tracking-tight text-ink">
-                {Number.isFinite(oklch.c) ? oklch.c.toFixed(3) : '—'}
-              </dd>
-            </div>
-            <div>
-              <dt>H</dt>
-              <dd class="mt-1 text-base normal-case tracking-tight text-ink">
-                {Number.isFinite(oklch.h) ? `${oklch.h.toFixed(0)}°` : '—'}
-              </dd>
-            </div>
-          </dl>
-        </div>
-      </section>
-
       <ShadeTool
         client:load
         initialHex={canonical}
@@ -166,57 +103,16 @@ Astro.response.headers.set(
       />
 
       <noscript>
-        <p class="mx-auto max-w-6xl border border-hairline bg-paper-2 px-5 py-4 font-display italic text-mute">
-          Interactive tool requires JavaScript. The neighbor links below still let you
-          browse to related shades.
+        <p class="mx-auto max-w-6xl border border-hairline bg-paper-2 px-5 py-4 font-display text-mute">
+          Interactive tool requires JavaScript.
         </p>
       </noscript>
-
-      <!-- Neighbors as a typeset index -->
-      <section class="mt-20 border-t border-ink/80 pt-8" aria-labelledby="neighbors-title">
-        <div class="mb-6 flex items-baseline justify-between">
-          <span class="eyebrow">Nearby</span>
-          <h2 id="neighbors-title" class="font-display italic text-2xl text-ink">Shades along the ramp</h2>
-        </div>
-
-        {lighter.length > 0 && (
-          <div class="border-t border-hairline pt-5">
-            <p class="idx mb-3">Lighter</p>
-            <ul class="flex flex-wrap gap-3">
-              {lighter.map((h) => (
-                <li>
-                  <a href={`/${h.slice(1)}`} class="group inline-flex items-center gap-2.5 border border-hairline px-3 py-2 hover:border-ink">
-                    <span class="block h-4 w-4 ring-1 ring-ink/10" style={`background:${h}`} aria-hidden="true"></span>
-                    <code class="font-mono text-xs tracking-tight">{h.toUpperCase()}</code>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {darker.length > 0 && (
-          <div class="border-t border-hairline pt-5 mt-6">
-            <p class="idx mb-3">Darker</p>
-            <ul class="flex flex-wrap gap-3">
-              {darker.map((h) => (
-                <li>
-                  <a href={`/${h.slice(1)}`} class="group inline-flex items-center gap-2.5 border border-hairline px-3 py-2 hover:border-ink">
-                    <span class="block h-4 w-4 ring-1 ring-ink/10" style={`background:${h}`} aria-hidden="true"></span>
-                    <code class="font-mono text-xs tracking-tight">{h.toUpperCase()}</code>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </section>
 
       <!-- Footer -->
       <footer class="mt-20 border-t border-ink/80 pt-6">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between">
           <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/80">
-            shades.dev — Plate · {hexLabel}
+            uishades.com — Plate · {hexLabel}
           </p>
           <nav aria-label="Footer" class="flex gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
             <a href="/" class="text-ink hover:text-accent">Home</a>

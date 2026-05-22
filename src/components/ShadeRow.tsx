@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import type { Shade, CopyFormat, Hex } from '../lib/color/types';
 import { contrastRatio } from '../lib/color/contrast';
 import { formatForCopy } from '../lib/color/format';
@@ -57,6 +57,20 @@ export default function ShadeRow({
 
   const navHref = `/${shade.hex.slice(1)}`;
 
+  // What the row actually shows. Mirrors the user's "Copy as" preference so
+  // the displayed value matches what the click puts on the clipboard.
+  // `cssVar` / `tailwindClass` need a stop to be meaningful — in the
+  // continuous ramp (no stops) we fall back to hex so the column isn't a
+  // wall of identical labels.
+  const displayValue = useMemo(() => {
+    const needsStop = copyFormat === 'cssVar' || copyFormat === 'tailwindClass';
+    if (needsStop && shade.stop === undefined) return shade.hex;
+    return formatForCopy(shade.hex, copyFormat, {
+      name: brandName,
+      stop: shade.stop,
+    });
+  }, [shade.hex, shade.stop, copyFormat, brandName]);
+
   const { pushToast } = useToast();
 
   // Feature-detect clipboard availability after hydration. SSR can't tell —
@@ -74,6 +88,19 @@ export default function ShadeRow({
       setCanCopy(false);
     }
   }, []);
+
+  const [justCopied, setJustCopied] = useState(false);
+  const rowRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!justCopied) return;
+    const onDocPointerDown = (e: Event) => {
+      const target = e.target as Node | null;
+      if (target && rowRef.current && rowRef.current.contains(target)) return;
+      setJustCopied(false);
+    };
+    document.addEventListener('pointerdown', onDocPointerDown);
+    return () => document.removeEventListener('pointerdown', onDocPointerDown);
+  }, [justCopied]);
 
   const handleCopy = useCallback(() => {
     const text = formatForCopy(shade.hex, copyFormat, {
@@ -96,6 +123,7 @@ export default function ShadeRow({
         // still useful as a "row was successfully copied" signal.
         pushToast(`Copied ${shade.hex}`);
         onCopy(shade.hex);
+        setJustCopied(true);
       },
       () => {
         // Common rejection causes: insecure (HTTP) context, document not
@@ -147,20 +175,21 @@ export default function ShadeRow({
   );
 
   // WCAG 2.5.3 (Label in Name) requires the accessible name to start with
-  // the visible label text — hex + (optional) stop + (optional) "input".
+  // the visible label text — formatted value + (optional) stop + (optional) "source".
   const visibleLabel = [
-    shade.hex,
+    displayValue,
     shade.stop !== undefined ? String(shade.stop) : '',
-    shade.isInput ? 'input' : '',
+    shade.isInput ? 'source' : '',
   ]
     .filter(Boolean)
     .join(' ');
   const ariaLabel = canCopy
-    ? `${visibleLabel}. Click to copy, double-click to open page${shade.isInput ? ' (pinned input)' : ''}`
-    : `${visibleLabel}. Click to open page${shade.isInput ? ' (pinned input)' : ''}`;
+    ? `${visibleLabel}. Click to copy, double-click to open page${shade.isInput ? ' (pinned source)' : ''}`
+    : `${visibleLabel}. Click to open page${shade.isInput ? ' (pinned source)' : ''}`;
 
   return (
     <div
+      ref={rowRef}
       data-shade-row="true"
       data-hex={shade.hex}
       role="button"
@@ -186,7 +215,7 @@ export default function ShadeRow({
             {shade.stop}
           </span>
         )}
-        <span className="tracking-tight tabular-nums">{shade.hex}</span>
+        <span className="truncate tracking-tight tabular-nums">{displayValue}</span>
         {shade.isInput && (
           <span
             className={
@@ -194,36 +223,28 @@ export default function ShadeRow({
               (fg === 'white' ? 'bg-white text-black' : 'bg-black text-white')
             }
           >
-            Input
+            Source
           </span>
         )}
       </div>
 
       <div
         className={[
-          'flex items-center gap-1',
+          'flex items-center gap-2',
           // Always visible on touch-only devices; faded-in on hover-capable
           // ones via the .pointer-fine-hide CSS utility in global.css.
           'pointer-fine-hide',
         ].join(' ')}
       >
-        {canCopy && (
-          <button
-            type="button"
-            aria-label={`Copy ${shade.hex}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleCopy();
-            }}
-            className={[
-              'rounded p-1',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
-              fg === 'white' ? 'hover:bg-white/15' : 'hover:bg-black/10',
-            ].join(' ')}
-          >
-            <CopyIcon />
-          </button>
-        )}
+        <span
+          aria-hidden="true"
+          className={[
+            'rounded-sm px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em]',
+            fg === 'white' ? 'bg-white/15 text-white' : 'bg-black/10 text-black',
+          ].join(' ')}
+        >
+          {canCopy ? (justCopied ? 'Copied' : 'Click to copy') : 'Click to open'}
+        </span>
         <a
           href={navHref}
           aria-label={`Open page for ${shade.hex}`}
@@ -238,15 +259,6 @@ export default function ShadeRow({
         </a>
       </div>
     </div>
-  );
-}
-
-function CopyIcon() {
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true" className="h-4 w-4">
-      <rect x="4" y="4" width="9" height="10" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M3 11V3.5A1.5 1.5 0 0 1 4.5 2H11" fill="none" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
   );
 }
 

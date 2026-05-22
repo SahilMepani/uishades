@@ -17,7 +17,7 @@ import { POPULAR_HEXES } from './src/lib/data/popular-hexes.ts';
 // on-demand by the adapter. This gives us the same hybrid behavior the plan
 // asked for (pre-rendered curated set + SSR for arbitrary hexes at the edge).
 export default defineConfig({
-  site: 'https://shades.dev',
+  site: 'https://uishades.com',
   output: 'static',
   adapter: cloudflare(),
   integrations: [
@@ -27,7 +27,7 @@ export default defineConfig({
       // up on the first crawl. The static integration auto-includes the
       // pre-rendered pages on top of this list.
       customPages: POPULAR_HEXES.map(
-        (h) => `https://shades.dev/${h.slice(1)}`
+        (h) => `https://uishades.com/${h.slice(1)}`
       ),
       // Exclude the dev-only host page (`/dev/tool/`) from search engines.
       // It carries `<meta name="robots" content="noindex,nofollow">` already

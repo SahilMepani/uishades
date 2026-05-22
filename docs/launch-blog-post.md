@@ -10,7 +10,7 @@ since the late 2000s now landed on a login wall. Google results began routing
 traffic to a page that asked for a credit card before showing the colour you
 typed into the address bar.
 
-We built **[shades.dev](https://shades.dev)** to take that traffic back.
+We built **[uishades.com](https://uishades.com)** to take that traffic back.
 
 The site is free. There are no ads, no signup, no upgrade prompts. Type any
 hex into the box and you get the same kind of gradient 0to255 used to give
@@ -100,7 +100,7 @@ that does one thing well.
 
 ## Open source
 
-The full source is on GitHub: **[github.com/shades-dev/shades.dev](https://github.com/)**
+The full source is on GitHub: **[github.com/sahilmepani/uishades](https://github.com/sahilmepani/uishades)**
 (placeholder — link will be live at launch). MIT licensed. The Astro setup,
 the colour math, the export templates, the OG image renderer — all of it
 ready to fork or learn from.
@@ -113,7 +113,7 @@ the tool.
 
 ## Try it
 
-[shades.dev](https://shades.dev). Free, fast, no signup. Drop in any hex,
+[uishades.com](https://uishades.com). Free, fast, no signup. Drop in any hex,
 any rgb(), any hsl(), any oklch(), or any CSS colour name. Bookmark the
 specific shades you use most. If you find it useful, share it with someone
 who used to bookmark 0to255.

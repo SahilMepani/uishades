@@ -1,4 +1,4 @@
-name = "shades-dev"
+name = "uishades"
 compatibility_date = "2026-05-01"
 compatibility_flags = ["nodejs_compat"]
 

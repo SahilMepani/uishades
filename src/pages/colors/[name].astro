@@ -48,7 +48,7 @@ const related = (color.related || [])
   .filter((c): c is NonNullable<typeof c> => !!c)
   .slice(0, 3);
 
-const TITLE = `${color.name} (${color.hex.toUpperCase()}) Color Shades, Tints & Palette | shades.dev`;
+const TITLE = `${color.name} (${color.hex.toUpperCase()}) Color Shades, Tints & Palette | uishades.com`;
 
 function buildDescription(blurb: string): string {
   const parts = blurb.split('. ');
@@ -66,8 +66,8 @@ function buildDescription(blurb: string): string {
 }
 const DESCRIPTION = buildDescription(color.blurb);
 
-const canonicalUrl = `https://shades.dev/colors/${color.slug}`;
-const ogImage = `https://shades.dev/og/${color.hex.slice(1)}.png`;
+const canonicalUrl = `https://uishades.com/colors/${color.slug}`;
+const ogImage = `https://uishades.com/og/${color.hex.slice(1)}.png`;
 
 const plainBlurb = color.blurb.replace(/`([^`]+)`/g, '$1');
 
@@ -121,15 +121,6 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
     <script type="application/ld+json" set:html={safeJsonForScript(jsonLd)} />
   </head>
   <body class="bg-paper text-ink">
-    <!-- Masthead strip -->
-    <header class="border-b border-ink/90">
-      <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-3 font-mono text-[11px] uppercase tracking-[0.18em]">
-        <a href="/" class="text-ink hover:text-accent">← shades.dev</a>
-        <span class="hidden sm:inline text-mute">Index · {familyLabel}</span>
-        <a href={`/${color.hex.slice(1)}`} class="text-ink hover:text-accent">Open in tool</a>
-      </div>
-    </header>
-
     <main class="mx-auto max-w-5xl px-6 pt-10 pb-24 lg:pt-16">
       <!-- Editorial cover -->
       <section class="grid gap-10 lg:grid-cols-[5fr_4fr] lg:gap-14">
@@ -138,7 +129,7 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
           <h1 class="display text-[clamp(3rem,8vw,6.5rem)]">{color.name}</h1>
           <p class="mt-4 font-mono text-base tracking-tight text-ink">{color.hex.toUpperCase()}</p>
           {color.aliases && color.aliases.length > 0 && (
-            <p class="mt-2 font-display italic text-mute">
+            <p class="mt-2 font-mono text-sm uppercase tracking-[0.14em] text-mute">
               also known as <span class="text-ink-2">{color.aliases.join(', ')}</span>
             </p>
           )}
@@ -186,7 +177,7 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
       <section class="mt-16 border-t border-ink/80 pt-8">
         <div class="mb-6 flex items-baseline justify-between">
           <span class="eyebrow">The data sheet</span>
-          <span class="font-display italic text-2xl text-ink">Shades &amp; scale</span>
+          <span class="font-display text-2xl text-ink">Shades &amp; scale</span>
         </div>
         <ShadeTool
           client:load
@@ -201,7 +192,7 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
       <section class="mt-20 border-t border-ink/80 pt-8" aria-labelledby="palette-title">
         <div class="mb-6 flex items-baseline justify-between">
           <span class="eyebrow">Plate 02</span>
-          <h2 id="palette-title" class="font-display italic text-2xl text-ink">
+          <h2 id="palette-title" class="font-display text-2xl text-ink">
             Palette built around {color.name}
           </h2>
         </div>
@@ -211,7 +202,7 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
               <a href={`/${p.hex.slice(1)}`} class="block group">
                 <span class="block aspect-square w-full" style={`background:${p.hex}`} aria-hidden="true"></span>
                 <span class="flex items-baseline justify-between gap-2 border-t border-hairline px-3 py-2">
-                  <span class="font-display italic text-sm text-ink-2">{p.label}</span>
+                  <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2">{p.label}</span>
                   <span class="idx">№ 0{i + 1}</span>
                 </span>
                 <span class="block px-3 pb-3 font-mono text-xs tracking-tight text-ink group-hover:text-accent">
@@ -228,7 +219,7 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
         <section class="mt-20 border-t border-ink/80 pt-8" aria-labelledby="related-title">
           <div class="mb-6 flex items-baseline justify-between">
             <span class="eyebrow">Cross-reference</span>
-            <h2 id="related-title" class="font-display italic text-2xl text-ink">Related colors</h2>
+            <h2 id="related-title" class="font-display text-2xl text-ink">Related colors</h2>
           </div>
           <ul class="divide-y divide-hairline border-y border-hairline">
             {related.map((c, i) => (
@@ -236,7 +227,7 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
                 <a href={`/colors/${c.slug}`} class="flex items-center gap-5 py-4 group hover:bg-paper-2 px-2">
                   <span class="idx">№ 0{i + 1}</span>
                   <span class="block h-6 w-6 ring-1 ring-ink/10 shrink-0" style={`background:${c.hex}`} aria-hidden="true"></span>
-                  <span class="font-display italic text-xl text-ink group-hover:text-accent">{c.name}</span>
+                  <span class="font-display text-xl text-ink group-hover:text-accent">{c.name}</span>
                   <span class="ml-auto font-mono text-xs tracking-tight text-mute">{c.hex.toUpperCase()}</span>
                 </a>
               </li>
@@ -249,7 +240,7 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
       <footer class="mt-20 border-t border-ink/80 pt-6">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between">
           <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/80">
-            shades.dev — {color.name}
+            uishades.com — {color.name}
           </p>
           <nav aria-label="Footer" class="flex gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
             <a href="/" class="text-ink hover:text-accent">Home</a>

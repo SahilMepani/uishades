@@ -15,7 +15,8 @@ import type {
   Hex,
   RampMode,
 } from '../lib/color/types';
-import { parseColor, toOklch } from '../lib/color/parse';
+import { parseColor } from '../lib/color/parse';
+import { formatForCopy } from '../lib/color/format';
 import { oklchRamp } from '../lib/color/ramp';
 import { classicRamp } from '../lib/color/classic';
 import { buildScale } from '../lib/color/scale';
@@ -23,7 +24,6 @@ import { buildScale } from '../lib/color/scale';
 // blurb-bearing NAMED_COLORS module into its bundle. The page chrome
 // only reads `named.name` and `named.slug` from the result.
 import { findByHexSlim as findByHex } from '../lib/data/named-colors-slim';
-import ColorInput from './ColorInput';
 import ContinuousRamp from './ContinuousRamp';
 import { ToastProvider, useToast } from './Toast';
 
@@ -377,22 +377,17 @@ function ShadeToolInner({
           <div className="min-w-0 flex-1">
             <div className="truncate font-mono text-sm tracking-tight">{hex}</div>
             {named && (
-              <div className="truncate font-display italic text-sm text-mute">{named.name}</div>
+              <div className="truncate font-display text-sm text-mute">{named.name}</div>
             )}
           </div>
-        </div>
-        <div className="px-4 pb-3">
-          <ColorInput value={hex} onChange={handleChangeHex} />
         </div>
       </div>
 
       <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-8 lg:grid-cols-[5fr_7fr] lg:gap-14 lg:px-8 lg:py-12">
         {/* Left rail: preview + input + controls (sticky on desktop) */}
         <aside className="hidden lg:block lg:sticky lg:top-8 lg:self-start">
-          <PreviewBlock hex={hex} named={named} />
+          <PreviewBlock hex={hex} named={named} onChange={handleChangeHex} />
           <div className="mt-6 flex flex-col gap-5">
-            <ColorInput value={hex} onChange={handleChangeHex} />
-
             <div className="border-t border-hairline pt-5">
               <ViewToggle view={view} onChange={setView} />
             </div>
@@ -423,11 +418,20 @@ function ShadeToolInner({
             />
           </div>
 
-          <div className="flex items-baseline justify-between border-b border-hairline pb-2">
+          <div className="flex items-baseline justify-between gap-4 border-b border-hairline pb-2">
             <span className="eyebrow">{view === 'ramp' ? 'Shades' : 'Scale'}</span>
-            <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-              {view === 'ramp' ? `${ramp.shades.length} stops · ${ramp.mode}` : `11 stops · anchor ${scale.anchorStop}`}
-            </span>
+            <div className="flex items-baseline gap-2 font-mono text-[11px] uppercase tracking-[0.16em]">
+              <span className="text-mute">
+                {view === 'ramp' ? `${ramp.shades.length} stops · ${ramp.mode}` : `11 stops · anchor ${scale.anchorStop}`}
+              </span>
+              <span aria-hidden="true" className="text-mute">·</span>
+              <a
+                href={`/api/${hex.slice(1)}.json`}
+                className="text-ink hover:text-accent"
+              >
+                View JSON
+              </a>
+            </div>
           </div>
 
           {view === 'ramp' ? (
@@ -484,53 +488,107 @@ function TailwindScaleFallback() {
   );
 }
 
-function PreviewBlock({ hex, named }: { hex: Hex; named: ReturnType<typeof findByHex> }) {
-  // OKLCH coordinates for the metadata strip below the swatch — gives the
-  // page chrome a "data sheet" feel without competing with the color block.
-  const oklchTriple = useMemo(() => {
-    try {
-      return toOklch(hex);
-    } catch {
-      return null;
-    }
-  }, [hex]);
+function PreviewBlock({
+  hex,
+  named,
+  onChange,
+}: {
+  hex: Hex;
+  named: ReturnType<typeof findByHex>;
+  onChange: (next: Hex) => void;
+}) {
+  const oklchString = useMemo(() => formatForCopy(hex, 'oklch'), [hex]);
+  const rgbString = useMemo(() => formatForCopy(hex, 'rgb'), [hex]);
+  const hslString = useMemo(() => formatForCopy(hex, 'hsl'), [hex]);
   return (
     <div className="flex flex-col gap-4">
-      <div
-        role="img"
-        aria-label={`Color ${hex}`}
-        className="aspect-[5/6] w-full ring-1 ring-ink/10"
+      <label
+        className="group relative inline-flex h-[100px] w-[100px] cursor-pointer items-center justify-center ring-1 ring-ink/10"
+        title="Pick a color"
         style={{ backgroundColor: hex }}
-      />
-      <div className="flex items-baseline justify-between border-b border-hairline pb-2">
-        <span className="font-mono text-sm tracking-tight text-ink">{hex}</span>
-        {named && (
-          <span className="font-display italic text-base text-ink-2">{named.name}</span>
-        )}
-      </div>
-      {oklchTriple && Number.isFinite(oklchTriple.l) && (
-        <dl className="grid grid-cols-3 gap-4 font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
-          <div>
-            <dt>L</dt>
-            <dd className="mt-1 text-base normal-case tracking-tight text-ink">
-              {oklchTriple.l.toFixed(3)}
-            </dd>
-          </div>
-          <div>
-            <dt>C</dt>
-            <dd className="mt-1 text-base normal-case tracking-tight text-ink">
-              {oklchTriple.c.toFixed(3)}
-            </dd>
-          </div>
-          <div>
-            <dt>H</dt>
-            <dd className="mt-1 text-base normal-case tracking-tight text-ink">
-              {Number.isFinite(oklchTriple.h) ? `${oklchTriple.h.toFixed(0)}°` : '—'}
-            </dd>
-          </div>
-        </dl>
+        aria-label={`Color ${hex} — open color picker`}
+      >
+        <span className="pointer-events-none inline-flex h-7 w-7 items-center justify-center rounded-full bg-paper/85 text-ink ring-1 ring-ink/15 shadow-sm">
+          <PickerIcon className="h-4 w-4" />
+        </span>
+        <input
+          type="color"
+          value={hex}
+          onChange={(e) => onChange(e.target.value as Hex)}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          aria-label="Open color picker"
+        />
+      </label>
+      {named && (
+        <div className="border-b border-hairline pb-2">
+          <span className="font-display text-base text-ink-2">{named.name}</span>
+        </div>
       )}
+      <dl className="flex flex-col gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
+        <CopyableValueRow label="HEX" value={hex} />
+        <CopyableValueRow label="OKLCH" value={oklchString} />
+        <CopyableValueRow label="RGB" value={rgbString} />
+        <CopyableValueRow label="HSL" value={hslString} />
+      </dl>
     </div>
+  );
+}
+
+function CopyableValueRow({ label, value }: { label: string; value: string }) {
+  const { pushToast } = useToast();
+
+  const handleCopy = useCallback(() => {
+    if (
+      typeof navigator === 'undefined' ||
+      !navigator.clipboard ||
+      typeof navigator.clipboard.writeText !== 'function'
+    ) {
+      pushToast("Couldn't copy — clipboard is unavailable in this browser.");
+      return;
+    }
+    navigator.clipboard.writeText(value).then(
+      () => {
+        pushToast(`Copied ${value}`);
+      },
+      () => {
+        pushToast("Couldn't copy — check browser permissions.");
+      },
+    );
+  }, [value, pushToast]);
+
+  return (
+    <div className="flex items-baseline justify-between gap-4">
+      <dt>{label}</dt>
+      <div className="flex items-center gap-2">
+        <dd className="font-mono text-sm normal-case tracking-tight text-ink">{value}</dd>
+        <button
+          type="button"
+          onClick={handleCopy}
+          aria-label={`Copy ${label} value`}
+          className="inline-flex h-6 w-6 items-center justify-center rounded text-mute hover:bg-paper-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+        >
+          <CopyIcon className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CopyIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" className={className ?? 'h-4 w-4'}>
+      <rect x="4" y="4" width="9" height="10" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M3 11V3.5A1.5 1.5 0 0 1 4.5 2H11" fill="none" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function PickerIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" className={className ?? 'h-4 w-4'}>
+      <path d="M11.2 1.6a2.2 2.2 0 0 1 3.1 3.1l-1.4 1.4-3.1-3.1 1.4-1.4Z" fill="currentColor"/>
+      <path d="m9.1 3.7 3.1 3.1-6.6 6.6-3.1-.5L2 9.8 9.1 3.7Z" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round"/>
+    </svg>
   );
 }
 
@@ -579,12 +637,24 @@ function RampModeToggle({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="eyebrow">Algorithm</span>
+      <div className="flex items-center gap-2">
+        <span className="eyebrow">Algorithm</span>
+        <AlgorithmInfoButton />
+      </div>
       <div
         role="tablist"
         aria-label="Ramp algorithm"
-        className="inline-flex border border-ink/20"
+        className="relative inline-grid w-full grid-cols-2 rounded-full bg-paper-2 p-1 ring-1 ring-ink/10"
       >
+        {/* Sliding indicator */}
+        <span
+          aria-hidden="true"
+          className={[
+            'absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-ink shadow-sm',
+            'transition-transform duration-200 ease-out motion-reduce:transition-none',
+            mode === 'classic' ? 'translate-x-full' : 'translate-x-0',
+          ].join(' ')}
+        />
         {(['oklch', 'classic'] as const).map(m => {
           const active = mode === m;
           return (
@@ -595,11 +665,9 @@ function RampModeToggle({
               aria-selected={active}
               onClick={() => onChange(m)}
               className={[
-                'px-3 py-1.5 text-xs font-medium tracking-tight',
-                'focus-visible:outline-none focus-visible:bg-accent-soft',
-                active
-                  ? 'bg-ink text-paper'
-                  : 'bg-paper text-ink/70 hover:bg-paper-2',
+                'relative z-10 rounded-full px-4 py-2 text-sm font-medium tracking-tight',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
+                active ? 'text-paper' : 'text-ink/70 hover:text-ink',
               ].join(' ')}
             >
               {m === 'oklch' ? 'OKLCH' : 'Classic'}
@@ -607,6 +675,75 @@ function RampModeToggle({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function AlgorithmInfoButton() {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const id = 'algorithm-info-popover';
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: globalThis.MouseEvent) => {
+      if (!wrapRef.current) return;
+      if (!wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={wrapRef} className="relative inline-flex">
+      <button
+        type="button"
+        aria-label="About these algorithms"
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen(o => !o)}
+        className={
+          'inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] ' +
+          'font-semibold leading-none text-mute ring-1 ring-ink/20 ' +
+          'hover:text-ink hover:ring-ink/40 ' +
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60'
+        }
+      >
+        ?
+      </button>
+      {open && (
+        <div
+          id={id}
+          role="dialog"
+          aria-label="Algorithm info"
+          className={
+            'absolute left-0 top-full z-40 mt-2 w-72 max-w-[calc(100vw-2rem)] ' +
+            'border border-hairline bg-paper p-3 text-xs leading-relaxed text-ink ' +
+            'shadow-[0_10px_30px_rgba(17,17,16,0.12)]'
+          }
+        >
+          <p className="mb-2">
+            <span className="font-mono font-semibold">OKLCH</span> walks the ramp in a
+            perceptually uniform color space. Lightness steps feel evenly spaced and
+            chroma stays controlled, which keeps mid-tones from going muddy. Best
+            choice for new design systems.
+          </p>
+          <p>
+            <span className="font-mono font-semibold">Classic</span> reproduces the
+            0to255-style RGB walk used by many legacy palette tools and older
+            Tailwind scales. Channels step by 17 toward white and walk down toward
+            black. Useful when you need shades that match existing assets built with
+            those tools.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -629,27 +766,66 @@ function CopyFormatPicker({
   onChange: (f: CopyFormat) => void;
   hasStop: boolean;
 }) {
-  return (
-    <label className="flex items-center gap-3 text-sm">
-      <span className="eyebrow shrink-0">Copy as</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value as CopyFormat)}
-        className={
-          'min-w-0 flex-1 border border-ink/15 bg-paper px-2 py-1 font-mono text-xs text-ink ' +
-          'focus-visible:outline-none focus-visible:border-accent'
-        }
-      >
-        {(Object.keys(COPY_FORMAT_LABELS) as CopyFormat[]).map(k => {
-          const requiresStop = k === 'cssVar' || k === 'tailwindClass';
-          if (requiresStop && !hasStop) return null;
-          return (
+  const formats = (Object.keys(COPY_FORMAT_LABELS) as CopyFormat[]).filter(k => {
+    const requiresStop = k === 'cssVar' || k === 'tailwindClass';
+    return !(requiresStop && !hasStop);
+  });
+  // Tailwind-scale view has 6 formats — too many to fit in a single pill
+  // row at readable sizes, so render a dropdown there. The continuous-ramp
+  // view only has 4 short formats and stays as a single-row segmented
+  // control.
+  if (formats.length > 4) {
+    return (
+      <label className="flex flex-col gap-2 text-base">
+        <span className="eyebrow">Copy as</span>
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value as CopyFormat)}
+          className={
+            'w-full border border-ink/20 bg-paper px-3 py-2.5 font-mono text-sm text-ink ' +
+            'focus-visible:outline-none focus-visible:border-accent'
+          }
+        >
+          {formats.map(k => (
             <option key={k} value={k}>
               {COPY_FORMAT_LABELS[k]}
             </option>
+          ))}
+        </select>
+      </label>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="eyebrow">Copy as</span>
+      <div
+        role="tablist"
+        aria-label="Copy format"
+        className="grid grid-cols-4 gap-1 rounded-full bg-paper-2 p-1 ring-1 ring-ink/10"
+      >
+        {formats.map(k => {
+          const active = value === k;
+          return (
+            <button
+              key={k}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => onChange(k)}
+              className={[
+                'min-w-0 rounded-full px-2 py-1.5 text-center font-mono text-xs tracking-tight whitespace-nowrap',
+                'transition-colors duration-150 motion-reduce:transition-none',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
+                active
+                  ? 'bg-ink text-paper shadow-sm'
+                  : 'text-ink/70 hover:text-ink',
+              ].join(' ')}
+            >
+              {COPY_FORMAT_LABELS[k]}
+            </button>
           );
         })}
-      </select>
-    </label>
+      </div>
+    </div>
   );
 }

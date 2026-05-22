@@ -11,7 +11,7 @@
  *   - Top 60%: full-bleed solid swatch of the input hex
  *   - Bottom 40%: a strip of 5 sampled shades (extremes, lighter, mid, darker)
  *   - The hex value, large, centered on the swatch in a contrasting color
- *   - "shades.dev" wordmark, bottom-right, also contrast-picked
+ *   - "uishades.com" wordmark, bottom-right, also contrast-picked
  */
 export const prerender = false;
 
@@ -98,7 +98,7 @@ export const GET: APIRoute = async ({ params }) => {
         ${stripCells}
         <div style="position:absolute; right: 32px; bottom: 24px; color:${wordmarkInk};
                     font-size: 28px; font-weight: 700; letter-spacing: -0.01em;">
-          shades.dev
+          uishades.com
         </div>
       </div>
     </div>

@@ -16,7 +16,6 @@ import {
   NAMED_COLORS_SLIM,
   type NamedColorSlim,
 } from '../lib/data/named-colors-slim';
-import { POPULAR_HEXES } from '../lib/data/popular-hexes';
 
 /**
  * Smart parser input.
@@ -27,10 +26,6 @@ import { POPULAR_HEXES } from '../lib/data/popular-hexes';
  * debounced 250ms, then `parseColor` is attempted. On success we call
  * `onChange(newHex)`. On parse failure we ring the input red but do not
  * fire a toast — failures during in-progress typing are very common.
- *
- * Companion controls (laid out adjacent to the text input):
- *   - A native `<input type="color">` swatch
- *   - A "Random" button that picks from `POPULAR_HEXES`
  *
  * Autocomplete: once ≥ 2 chars match a named-color slug prefix we render
  * a small dropdown. Arrow keys move focus; Enter / click accepts.
@@ -159,21 +154,6 @@ export default function ColorInput({ value, onChange }: ColorInputProps) {
     [showSuggestions, suggestions, activeSuggestion, acceptSuggestion, tryEmit, text],
   );
 
-  const onRandom = useCallback(() => {
-    const n = POPULAR_HEXES.length;
-    if (n === 0) return;
-    const pick = POPULAR_HEXES[Math.floor(Math.random() * n)];
-    onChange(pick);
-  }, [onChange]);
-
-  const onPicker = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      // <input type="color"> always returns lowercase '#rrggbb'.
-      onChange(e.target.value as Hex);
-    },
-    [onChange],
-  );
-
   const inputBorderClass = hasError
     ? 'border-accent'
     : 'border-ink/20 focus-within:border-ink';
@@ -185,22 +165,6 @@ export default function ColorInput({ value, onChange }: ColorInputProps) {
       <div className="flex flex-col gap-2">
         <span className="eyebrow">Color</span>
         <div className={`flex items-stretch gap-0 border ${inputBorderClass} bg-paper transition-colors`}>
-          {/* Native color swatch (left) */}
-          <label
-            className="flex w-12 shrink-0 cursor-pointer items-center justify-center border-r border-ink/15"
-            title="Pick a color"
-            style={{ backgroundColor: value }}
-          >
-            <span className="sr-only">Color picker</span>
-            <input
-              type="color"
-              value={value}
-              onChange={onPicker}
-              className="h-0 w-0 opacity-0"
-              aria-label="Open color picker"
-            />
-          </label>
-
           <div className="relative flex-1">
             <input
               id={inputId}
@@ -224,20 +188,6 @@ export default function ColorInput({ value, onChange }: ColorInputProps) {
               }
             />
           </div>
-
-          <button
-            type="button"
-            onClick={onRandom}
-            title="Random color"
-            aria-label="Random color"
-            className={
-              'flex w-12 shrink-0 items-center justify-center border-l border-ink/15 ' +
-              'text-ink/70 hover:text-accent hover:bg-paper-2 ' +
-              'focus-visible:outline-none focus-visible:bg-accent-soft'
-            }
-          >
-            <DiceIcon />
-          </button>
         </div>
 
         {showSuggestions && suggestions.length > 0 && (
@@ -265,7 +215,7 @@ export default function ColorInput({ value, onChange }: ColorInputProps) {
                   className="inline-block h-5 w-5 rounded-sm ring-1 ring-ink/10"
                   style={{ backgroundColor: s.hex }}
                 />
-                <span className="font-display italic text-ink">{s.name ?? s.slug}</span>
+                <span className="font-display text-ink">{s.name ?? s.slug}</span>
                 <span className="ml-auto font-mono text-xs text-mute">{s.hex}</span>
               </li>
             ))}
@@ -276,15 +226,3 @@ export default function ColorInput({ value, onChange }: ColorInputProps) {
   );
 }
 
-function DiceIcon() {
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true" className="h-4 w-4">
-      <rect x="2.5" y="2.5" width="11" height="11" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.25" />
-      <circle cx="5.5" cy="5.5" r="0.9" fill="currentColor" />
-      <circle cx="10.5" cy="5.5" r="0.9" fill="currentColor" />
-      <circle cx="8" cy="8" r="0.9" fill="currentColor" />
-      <circle cx="5.5" cy="10.5" r="0.9" fill="currentColor" />
-      <circle cx="10.5" cy="10.5" r="0.9" fill="currentColor" />
-    </svg>
-  );
-}

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright configuration for shades.dev end-to-end tests.
+ * Playwright configuration for uishades.com end-to-end tests.
  *
  * We E2E against the production build via `npm run preview` (not `dev`) so the
  * suite exercises the exact bundles that ship to Cloudflare Pages.

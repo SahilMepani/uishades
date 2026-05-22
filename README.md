@@ -1,4 +1,4 @@
-# shades.dev
+# uishades.com
 
 A free, fast, ad-free shade generator. Mirrors the URL structure of
 `0to255.com` (`/[hex]`, `/colors/[name]`) and ships an OKLCH-based algorithm
@@ -148,7 +148,7 @@ All inline JSON-LD payloads pass through `safeJsonForScript()` (`src/lib/safe-js
 
 Deployment is automatic: pushes to `main` trigger the
 `.github/workflows/deploy.yml` workflow, which builds and ships to
-Cloudflare Pages (project `shades-dev`).
+Cloudflare Pages (project `uishades`).
 
 Required repository secrets:
 

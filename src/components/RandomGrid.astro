@@ -1,23 +1,23 @@
 ---
 /**
- * 204-tile random color grid for the homepage.
+ * 48-tile random color grid for the homepage.
  *
  * - Deterministic: tiles are sampled from `POPULAR_HEXES` using a fixed-seed
  *   xorshift32 RNG so every build emits the same grid. This keeps the home
  *   page byte-identical across rebuilds and lets the CDN's strong ETag stay
  *   stable, which matters for the cache-hit story.
- * - Layout: CSS grid that switches from 12x17 on desktop down to 6x34 on
- *   mobile via responsive columns. 12 * 17 == 6 * 34 == 204 either way.
+ * - Layout: CSS grid that switches from 12 cols x 4 rows on desktop down to
+ *   8 cols x 6 rows on mobile. 12 * 4 == 8 * 6 == 48 either way.
  * - Each tile is a static `<a>` to `/[hex]` so Googlebot can crawl the grid
  *   as a link map even though the tool itself is JS.
  */
 import { POPULAR_HEXES } from '../lib/data/popular-hexes';
 
-const TILES = 204;
+const TILES = 48;
 
 // Tiny xorshift32 PRNG. Fixed seed gives a stable visual identity for the home
 // page across builds. The output sequence has period ~2^32, which is way more
-// than the 204 draws we need.
+// than the 48 draws we need.
 function xorshift32(seed: number) {
   let s = seed >>> 0 || 0x9e3779b9;
   return () => {
@@ -81,7 +81,8 @@ const tiles = pickTiles();
   }
   .grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    /* Mobile: 8 cols x 6 rows = 48 tiles. */
+    grid-template-columns: repeat(8, 1fr);
     gap: 0;
     overflow: hidden;
     background: var(--color-paper);
@@ -89,6 +90,7 @@ const tiles = pickTiles();
   }
   @media (min-width: 768px) {
     .grid {
+      /* Desktop: 12 cols x 4 rows = 48 tiles. */
       grid-template-columns: repeat(12, 1fr);
     }
   }
