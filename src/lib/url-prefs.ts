@@ -25,8 +25,6 @@ const COPY_VALUES: readonly CopyFormat[] = [
   'hex',
   'rgb',
   'hsl',
-  'hsv',
-  'hwb',
   'oklch',
   'cssVar',
   'tailwindClass',

@@ -41,6 +41,6 @@ export interface ColorPageData {
   neighbors: { lighter: Hex[]; darker: Hex[] }; // 3 each, for SEO crawl graph
 }
 
-export type CopyFormat = 'hex' | 'rgb' | 'hsl' | 'hsv' | 'hwb' | 'oklch' | 'cssVar' | 'tailwindClass';
+export type CopyFormat = 'hex' | 'rgb' | 'hsl' | 'oklch' | 'cssVar' | 'tailwindClass';
 
 export type ExportFormat = 'tailwind-v4' | 'tailwind-v3' | 'css-vars' | 'w3c-tokens' | 'figma-vars';

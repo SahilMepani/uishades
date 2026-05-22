@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { HexColorPicker, HexColorInput } from 'react-colorful';
+import { HexColorPicker } from 'react-colorful';
 import type { Hex } from '../lib/color/types';
+import { parseColor } from '../lib/color/parse';
 
 /**
  * Custom popover color picker, replacing the native `<input type="color">`.
@@ -8,7 +9,8 @@ import type { Hex } from '../lib/color/types';
  * Trigger: the 100×100 swatch (rendered by the parent), which we wrap so its
  * click toggles the popover. The popover hosts:
  *   - react-colorful's HexColorPicker (saturation square + hue strip)
- *   - a hex text input (HexColorInput, auto-normalized to #rrggbb)
+ *   - a smart text input that accepts hex, rgb(), hsl(), oklch(), and CSS
+ *     named colors — parsed through the shared `parseColor` (culori)
  *   - an EyeDropper button when the browser supports the API (Chromium)
  *
  * Styling: react-colorful's default rounded look is overridden via CSS in
@@ -56,18 +58,30 @@ export default function ColorPicker({
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
   const popoverId = 'color-picker-popover';
 
   useEffect(() => {
     if (open) {
       setMounted(true);
-      const raf = requestAnimationFrame(() => setVisible(true));
-      return () => cancelAnimationFrame(raf);
+      return;
     }
     setVisible(false);
     const t = window.setTimeout(() => setMounted(false), 160);
     return () => window.clearTimeout(t);
   }, [open]);
+
+  // Once the popover is mounted with `data-open="false"`, force a reflow so
+  // the browser locks in the closed-state computed style; then flip
+  // `visible` so the CSS transition has a real start → end delta to animate.
+  // Without the reflow, React commits both the mount and the data-open
+  // change in the same paint, and the open animation is silently collapsed.
+  useEffect(() => {
+    if (!mounted) return;
+    const node = popoverRef.current;
+    if (node) void node.offsetHeight;
+    setVisible(true);
+  }, [mounted]);
 
   useEffect(() => {
     if (!open) return;
@@ -93,6 +107,54 @@ export default function ColorPicker({
     },
     [onChange],
   );
+
+  // Smart text input — accepts hex (`#rrggbb`, `#rgb`, bare `rrggbb`),
+  // `rgb()`, `hsl()`, `oklch()`, and CSS named colors. We hold a separate
+  // `inputValue` so the user's in-progress typing isn't clobbered each time
+  // `onChange` updates the parent's hex (and thus the `hex` prop here).
+  const [inputValue, setInputValue] = useState<string>(() => hex.slice(1));
+
+  // Sync from the parent only when `hex` changes from outside (e.g. the
+  // saturation/hue control). If the user's typed value already resolves to
+  // the new hex, leave it alone so we preserve case and format.
+  useEffect(() => {
+    let derived: string | null = null;
+    try {
+      derived = parseColor(inputValue);
+    } catch {
+      /* unparseable — fall through and sync */
+    }
+    if (derived !== hex) {
+      setInputValue(hex.slice(1));
+    }
+    // intentionally only on hex change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hex]);
+
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const raw = e.target.value;
+      setInputValue(raw);
+      try {
+        onChange(parseColor(raw));
+      } catch {
+        /* partial or invalid input — wait for more keystrokes */
+      }
+    },
+    [onChange],
+  );
+
+  const handleInputBlur = useCallback(() => {
+    // On blur, snap the field back to the canonical hex if the user left it
+    // in an unparseable state (e.g. half-typed "rgb(255"). Parseable values
+    // stay as the user typed them — useful when entering, say, "coral" or
+    // "rgb(255 0 0)" and wanting to see what you typed.
+    try {
+      parseColor(inputValue);
+    } catch {
+      setInputValue(hex.slice(1));
+    }
+  }, [inputValue, hex]);
 
   const handleEyeDropper = useCallback(async () => {
     const Ctor = getEyeDropperCtor();
@@ -125,6 +187,7 @@ export default function ColorPicker({
 
       {mounted && (
         <div
+          ref={popoverRef}
           id={popoverId}
           role="dialog"
           aria-label="Color picker"
@@ -154,15 +217,19 @@ export default function ColorPicker({
               </button>
             )}
             <div className="flex flex-1 items-center border border-ink/20 bg-paper focus-within:border-ink">
-              <span aria-hidden="true" className="px-2 font-mono text-sm text-mute">#</span>
-              <HexColorInput
-                color={hex.slice(1)}
-                onChange={(v) => onChange(('#' + v) as Hex)}
-                prefixed={false}
-                aria-label="Hex value"
+              <input
+                type="text"
+                value={inputValue}
+                onChange={handleInputChange}
+                onBlur={handleInputBlur}
+                spellCheck={false}
+                autoCapitalize="off"
+                autoCorrect="off"
+                aria-label="Color value (hex, rgb, hsl, oklch, or name)"
+                placeholder="hex, rgb, hsl, oklch"
                 className={
-                  'h-9 w-full bg-transparent pr-2 font-mono text-sm tracking-tight text-ink ' +
-                  'placeholder:text-mute/70 focus:outline-none uppercase'
+                  'h-9 w-full bg-transparent px-2 font-mono text-sm tracking-tight text-ink ' +
+                  'placeholder:text-mute/70 focus:outline-none'
                 }
               />
             </div>

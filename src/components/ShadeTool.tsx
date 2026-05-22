@@ -276,7 +276,7 @@ function ShadeToolInner({
   );
   const [copyFormat, setCopyFormat] = usePersistedState<CopyFormat>(
     STORAGE_KEYS.copyFormat,
-    ['hex', 'oklch', 'rgb', 'hsl', 'hsv', 'hwb', 'cssVar', 'tailwindClass'] as const,
+    ['hex', 'oklch', 'rgb', 'hsl', 'cssVar', 'tailwindClass'] as const,
     initialCopyFormat,
     'copy',
   );
@@ -509,8 +509,45 @@ function PreviewBlock({
   const oklchString = useMemo(() => formatForCopy(hex, 'oklch'), [hex]);
   const rgbString = useMemo(() => formatForCopy(hex, 'rgb'), [hex]);
   const hslString = useMemo(() => formatForCopy(hex, 'hsl'), [hex]);
-  const hsvString = useMemo(() => formatForCopy(hex, 'hsv'), [hex]);
-  const hwbString = useMemo(() => formatForCopy(hex, 'hwb'), [hex]);
+
+  // Stacked layers for the swatch cross-fade. Each color change pushes a new
+  // layer that starts at opacity 0 and animates to 1; older layers stay
+  // beneath it until the transition ends, then they're swept away.
+  const [layers, setLayers] = useState<{ id: number; hex: Hex; visible: boolean }[]>(
+    () => [{ id: 0, hex, visible: true }],
+  );
+  const layerIdRef = useRef(0);
+  const topHexRef = useRef<Hex>(hex);
+  useEffect(() => {
+    if (topHexRef.current === hex) return;
+    topHexRef.current = hex;
+    layerIdRef.current += 1;
+    const id = layerIdRef.current;
+    setLayers((prev) => [...prev, { id, hex, visible: false }]);
+    const sweep = window.setTimeout(() => {
+      setLayers((prev) => prev.filter((l) => l.id === id));
+    }, 360);
+    return () => {
+      window.clearTimeout(sweep);
+    };
+  }, [hex]);
+  // Flipping a freshly-added layer from opacity:0 to opacity:1 must happen
+  // AFTER the browser has painted the opacity:0 state — otherwise React
+  // batches both updates into one commit, the browser paints once at
+  // opacity:1, and the CSS transition has no start→end delta to animate
+  // (the cross-fade silently collapses). `useEffect` is documented to run
+  // after paint, so a separate effect that watches `layers` and flips any
+  // not-yet-visible entry gives the transition a real delta. The picker
+  // drag historically masked this because rapid onChange spam piled up new
+  // layers over a still-visible base; a single shade-row click exposed it.
+  useEffect(() => {
+    const pending = layers.find((l) => !l.visible);
+    if (!pending) return;
+    setLayers((prev) =>
+      prev.map((l) => (l.id === pending.id ? { ...l, visible: true } : l)),
+    );
+  }, [layers]);
+
   return (
     <div className="flex flex-col gap-4">
       <ColorPicker
@@ -521,10 +558,17 @@ function PreviewBlock({
       >
         <span
           title="Pick a color"
-          className="relative flex h-[140px] w-full items-center justify-center ring-1 ring-ink/10 transition-[background-color] duration-150 ease-out motion-reduce:transition-none"
-          style={{ backgroundColor: hex }}
+          className="relative flex h-[140px] w-full items-center justify-center overflow-hidden ring-1 ring-ink/10"
         >
-          <span className="inline-flex h-[42px] w-[42px] items-center justify-center rounded-full bg-paper/85 text-ink ring-1 ring-ink/15 shadow-sm">
+          {layers.map((l) => (
+            <span
+              key={l.id}
+              aria-hidden="true"
+              className="absolute inset-0 transition-opacity duration-300 ease-out motion-reduce:transition-none"
+              style={{ backgroundColor: l.hex, opacity: l.visible ? 1 : 0 }}
+            />
+          ))}
+          <span className="relative inline-flex h-[42px] w-[42px] items-center justify-center rounded-full bg-paper/85 text-ink ring-1 ring-ink/15 shadow-sm">
             <PickerIcon className="h-6 w-6" />
           </span>
           <span className="absolute top-2 left-2 bg-paper/90 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-ink">
@@ -537,13 +581,11 @@ function PreviewBlock({
           <span className="font-display text-base text-ink-2">{named.name}</span>
         </div>
       )}
-      <dl className="flex flex-col gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
+      <dl className="flex flex-col font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
         <CopyableValueRow label="HEX" value={hex} />
         <CopyableValueRow label="OKLCH" value={oklchString} />
         <CopyableValueRow label="RGB" value={rgbString} />
         <CopyableValueRow label="HSL" value={hslString} />
-        <CopyableValueRow label="HSV" value={hsvString} />
-        <CopyableValueRow label="HWB" value={hwbString} />
       </dl>
     </div>
   );
@@ -571,19 +613,28 @@ function CopyableValueRow({ label, value }: { label: string; value: string }) {
     );
   }, [value, pushToast]);
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleCopy();
+    }
+  };
+
   return (
-    <div className="flex items-baseline justify-between gap-4">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={handleCopy}
+      onKeyDown={handleKeyDown}
+      aria-label={`Copy ${label} value`}
+      className="-mx-2 flex cursor-pointer items-baseline justify-between gap-4 rounded-sm px-2 py-1 transition-colors duration-200 ease-out hover:bg-paper-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+    >
       <dt>{label}</dt>
       <div className="flex items-center gap-2">
         <dd className="font-mono text-sm normal-case tracking-tight text-ink">{value}</dd>
-        <button
-          type="button"
-          onClick={handleCopy}
-          aria-label={`Copy ${label} value`}
-          className="inline-flex h-6 w-6 items-center justify-center rounded text-mute hover:bg-paper-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
-        >
+        <span aria-hidden="true" className="inline-flex h-6 w-6 items-center justify-center text-mute">
           <CopyIcon className="h-3.5 w-3.5" />
-        </button>
+        </span>
       </div>
     </div>
   );
@@ -767,8 +818,6 @@ const COPY_FORMAT_LABELS: Record<CopyFormat, string> = {
   oklch: 'oklch()',
   rgb: 'rgb()',
   hsl: 'hsl()',
-  hsv: 'hsv()',
-  hwb: 'hwb()',
   cssVar: 'var(--name)',
   tailwindClass: 'bg-name-500',
 };
