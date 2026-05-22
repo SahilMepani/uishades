@@ -425,7 +425,7 @@ function ShadeToolInner({
 
           <div className={`flex items-baseline justify-between gap-4${view === 'scale' ? ' border-b border-hairline pb-2' : ''}`}>
             {view === 'ramp' ? (
-              <a href="/" className="eyebrow hover:text-accent">UISHADES.COM</a>
+              <span className="eyebrow">SHADES</span>
             ) : (
               <span className="eyebrow">Scale</span>
             )}
@@ -521,7 +521,7 @@ function PreviewBlock({
       >
         <span
           title="Pick a color"
-          className="relative flex h-[140px] w-full items-center justify-center ring-1 ring-ink/10"
+          className="relative flex h-[140px] w-full items-center justify-center ring-1 ring-ink/10 transition-[background-color] duration-150 ease-out motion-reduce:transition-none"
           style={{ backgroundColor: hex }}
         >
           <span className="inline-flex h-[42px] w-[42px] items-center justify-center rounded-full bg-paper/85 text-ink ring-1 ring-ink/15 shadow-sm">

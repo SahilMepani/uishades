@@ -182,6 +182,28 @@ select:not(:disabled),
   border-width: 2px;
 }
 
+/* ColorPicker popover scale+fade transition. We keep the node mounted during
+   exit so the closing animation can play; `data-open` flips the end state.
+   The wrapper component handles the mount/unmount + rAF flip. */
+.popover-anim {
+  opacity: 0;
+  transform: scale(0.95);
+  transform-origin: top left;
+  transition: opacity 150ms ease-out, transform 150ms ease-out;
+}
+.popover-anim[data-open="true"] {
+  opacity: 1;
+  transform: scale(1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .popover-anim,
+  .popover-anim[data-open="true"] {
+    transition: none;
+    transform: none;
+    opacity: 1;
+  }
+}
+
 /* Hover-only reveal: elements tagged `.pointer-fine-hide` start hidden on
    devices whose primary input device can hover (mice, trackpads), then
    fade in when the parent `.group` is hovered or focus is inside it.

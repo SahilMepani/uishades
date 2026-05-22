@@ -101,7 +101,7 @@ export default function HomeColorPicker() {
     >
       <span
         aria-hidden="true"
-        className="relative inline-flex h-[52px] w-[52px] items-center justify-center border-r border-ink/80"
+        className="relative inline-flex h-[52px] w-[52px] items-center justify-center border-r border-ink/80 transition-[background-color] duration-150 ease-out motion-reduce:transition-none"
         style={picked ? { backgroundColor: hex } : undefined}
       >
         {picked ? (

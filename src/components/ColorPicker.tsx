@@ -49,8 +49,25 @@ export default function ColorPicker({
   children,
 }: ColorPickerProps) {
   const [open, setOpen] = useState(false);
+  // Keep the popover node mounted during the closing animation so the
+  // scale+fade-out transition can play. `mounted` controls DOM presence;
+  // `visible` flips on the next frame after mount to drive the transition
+  // end-state via the `data-open` attribute and `.popover-anim` styles.
+  const [mounted, setMounted] = useState(false);
+  const [visible, setVisible] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const popoverId = 'color-picker-popover';
+
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      const raf = requestAnimationFrame(() => setVisible(true));
+      return () => cancelAnimationFrame(raf);
+    }
+    setVisible(false);
+    const t = window.setTimeout(() => setMounted(false), 160);
+    return () => window.clearTimeout(t);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -106,13 +123,15 @@ export default function ColorPicker({
         {children}
       </button>
 
-      {open && (
+      {mounted && (
         <div
           id={popoverId}
           role="dialog"
           aria-label="Color picker"
+          data-open={visible ? 'true' : 'false'}
+          aria-hidden={!visible}
           className={
-            'absolute left-0 top-full z-40 mt-2 flex w-[232px] flex-col gap-3 ' +
+            'popover-anim absolute left-0 top-full z-40 mt-2 flex w-[232px] flex-col gap-3 ' +
             'border border-hairline bg-paper p-3 ' +
             'shadow-[0_12px_32px_rgba(17,17,16,0.14)]'
           }

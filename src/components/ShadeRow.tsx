@@ -136,6 +136,9 @@ export default function ShadeRow({
   const handleClick = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
       if ((e.target as HTMLElement).closest('a')) return;
+      // The second click of a double-click also fires `click`, so without
+      // this guard we'd copy twice (and toast twice) before dblclick runs.
+      if (e.detail > 1) return;
       // Without clipboard the row needs *some* affordance — fall the click
       // back to navigation so it isn't a dead element.
       if (!canCopy) {
@@ -249,35 +252,37 @@ export default function ShadeRow({
         >
           {canCopy ? (justCopied ? 'Copied' : 'Click to copy') : 'Click to open'}
         </span>
-        <a
-          href={navHref}
-          aria-label={`Open page for ${shade.hex}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            // Let the browser handle modifier/middle-click so cmd/ctrl-click
-            // still opens the shade in a new tab — see the file's behavior
-            // contract above. Plain left-click stays on the page and lets
-            // the parent swap the hex in place.
-            if (
-              e.metaKey ||
-              e.ctrlKey ||
-              e.shiftKey ||
-              e.altKey ||
-              e.button !== 0
-            ) {
-              return;
-            }
-            e.preventDefault();
-            onNavigate(shade.hex);
-          }}
-          className={[
-            'rounded p-1',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
-            fg === 'white' ? 'bg-white/15' : 'bg-black/10',
-          ].join(' ')}
-        >
-          <OpenIcon />
-        </a>
+        {!shade.isInput && (
+          <a
+            href={navHref}
+            aria-label={`Open page for ${shade.hex}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              // Let the browser handle modifier/middle-click so cmd/ctrl-click
+              // still opens the shade in a new tab — see the file's behavior
+              // contract above. Plain left-click stays on the page and lets
+              // the parent swap the hex in place.
+              if (
+                e.metaKey ||
+                e.ctrlKey ||
+                e.shiftKey ||
+                e.altKey ||
+                e.button !== 0
+              ) {
+                return;
+              }
+              e.preventDefault();
+              onNavigate(shade.hex);
+            }}
+            className={[
+              'rounded p-1',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
+              fg === 'white' ? 'bg-white/15' : 'bg-black/10',
+            ].join(' ')}
+          >
+            <OpenIcon />
+          </a>
+        )}
       </div>
     </div>
   );
