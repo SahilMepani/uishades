@@ -94,14 +94,14 @@ export default function ColorPicker({
   const hasEyeDropper = getEyeDropperCtor() !== null;
 
   return (
-    <div ref={wrapRef} className={`relative inline-block ${className ?? ''}`}>
+    <div ref={wrapRef} className={`relative ${className ?? 'inline-block'}`}>
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
         aria-label={triggerLabel}
         aria-expanded={open}
         aria-controls={popoverId}
-        className="block cursor-pointer p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+        className="block w-full cursor-pointer p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
       >
         {children}
       </button>

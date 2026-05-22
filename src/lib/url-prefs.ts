@@ -8,7 +8,7 @@
  * undefined and the React component falls back to its own default — which
  * matches the localStorage-only behaviour from before this change.
  */
-import type { ExportFormat, RampMode } from './color/types';
+import type { CopyFormat, ExportFormat, RampMode } from './color/types';
 
 type View = 'ramp' | 'scale';
 
@@ -20,6 +20,16 @@ const FMT_VALUES: readonly ExportFormat[] = [
   'css-vars',
   'w3c-tokens',
   'figma-vars',
+] as const;
+const COPY_VALUES: readonly CopyFormat[] = [
+  'hex',
+  'rgb',
+  'hsl',
+  'hsv',
+  'hwb',
+  'oklch',
+  'cssVar',
+  'tailwindClass',
 ] as const;
 
 function pick<T extends string>(
@@ -34,6 +44,7 @@ export interface InitialPrefs {
   view?: View;
   mode?: RampMode;
   fmt?: ExportFormat;
+  copy?: CopyFormat;
 }
 
 export function readInitialPrefs(url: URL): InitialPrefs {
@@ -41,5 +52,6 @@ export function readInitialPrefs(url: URL): InitialPrefs {
     view: pick(url.searchParams.get('view'), VIEW_VALUES),
     mode: pick(url.searchParams.get('mode'), MODE_VALUES),
     fmt: pick(url.searchParams.get('fmt'), FMT_VALUES),
+    copy: pick(url.searchParams.get('copy'), COPY_VALUES),
   };
 }

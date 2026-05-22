@@ -95,7 +95,7 @@ export default function ExportDropdown({
 
   return (
     <div className="flex flex-col gap-3" data-export-format={format}>
-      <div className="flex items-center justify-between gap-3 border-b border-hairline pb-3">
+      <div className="flex items-center justify-between gap-3">
         <label className="flex items-center gap-3 text-sm text-ink/80">
           <span className="eyebrow">Export as</span>
           <select
@@ -134,7 +134,7 @@ export default function ExportDropdown({
         <pre
           data-export-preview="true"
           className={
-            'max-h-80 overflow-auto bg-paper-2 p-4 pr-20 font-mono text-[12px] ' +
+            'max-h-[200px] overflow-auto bg-paper-2 p-4 pr-20 font-mono text-[12px] ' +
             'leading-relaxed text-ink-2 border border-hairline'
           }
         >

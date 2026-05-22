@@ -196,7 +196,8 @@ select:not(:disabled),
     transition: opacity 150ms ease;
   }
   .group:hover .pointer-fine-hide,
-  .group:focus-within .pointer-fine-hide {
+  .group:focus-visible .pointer-fine-hide,
+  .group:has(:focus-visible) .pointer-fine-hide {
     opacity: 1;
   }
 }

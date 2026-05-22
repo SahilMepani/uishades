@@ -231,6 +231,7 @@ export interface ShadeToolProps {
   initialView?: View;
   initialRampMode?: RampMode;
   initialExportFormat?: ExportFormat;
+  initialCopyFormat?: CopyFormat;
 }
 
 export default function ShadeTool({
@@ -238,6 +239,7 @@ export default function ShadeTool({
   initialView,
   initialRampMode,
   initialExportFormat,
+  initialCopyFormat,
 }: ShadeToolProps) {
   return (
     <ToastProvider>
@@ -246,6 +248,7 @@ export default function ShadeTool({
         initialView={initialView}
         initialRampMode={initialRampMode}
         initialExportFormat={initialExportFormat}
+        initialCopyFormat={initialCopyFormat}
       />
     </ToastProvider>
   );
@@ -256,6 +259,7 @@ function ShadeToolInner({
   initialView = 'ramp',
   initialRampMode = 'oklch',
   initialExportFormat = 'tailwind-v4',
+  initialCopyFormat = 'hex',
 }: ShadeToolProps) {
   const [hex, setHex] = useState<Hex>(() => normalizeHexInput(initialHex));
   const [view, setView] = usePersistedState<View>(
@@ -270,13 +274,11 @@ function ShadeToolInner({
     initialRampMode,
     'mode',
   );
-  // Copy format is too noisy to put in the URL — every dropdown change would
-  // mutate the URL. Keep it localStorage-only.
   const [copyFormat, setCopyFormat] = usePersistedState<CopyFormat>(
     STORAGE_KEYS.copyFormat,
-    ['hex', 'rgb', 'hsl', 'oklch', 'cssVar', 'tailwindClass'] as const,
-    'hex',
-    null,
+    ['hex', 'oklch', 'rgb', 'hsl', 'hsv', 'hwb', 'cssVar', 'tailwindClass'] as const,
+    initialCopyFormat,
+    'copy',
   );
   const [exportFormat, setExportFormat] = usePersistedState<ExportFormat>(
     STORAGE_KEYS.exportFormat,
@@ -355,10 +357,12 @@ function ShadeToolInner({
     // intentionally no-op; row owns the toast
   }, []);
 
+  // Update in place instead of full navigation. The `hex` effect calls
+  // syncUrl which rewrites the path on /[hex] routes, so the URL still
+  // updates — just without reloading the page. Mirrors the color-picker
+  // flow so the arrow link behaves the same as the top-left color box.
   const handleNavigate = useCallback((h: Hex) => {
-    if (typeof window !== 'undefined') {
-      window.location.href = '/' + h.slice(1);
-    }
+    setHex(h);
   }, []);
 
   const handleExportCopy = useCallback((_text: string) => {
@@ -419,7 +423,7 @@ function ShadeToolInner({
             />
           </div>
 
-          <div className="flex items-baseline justify-between gap-4 border-b border-hairline pb-2">
+          <div className={`flex items-baseline justify-between gap-4${view === 'scale' ? ' border-b border-hairline pb-2' : ''}`}>
             {view === 'ramp' ? (
               <a href="/" className="eyebrow hover:text-accent">UISHADES.COM</a>
             ) : (
@@ -505,20 +509,26 @@ function PreviewBlock({
   const oklchString = useMemo(() => formatForCopy(hex, 'oklch'), [hex]);
   const rgbString = useMemo(() => formatForCopy(hex, 'rgb'), [hex]);
   const hslString = useMemo(() => formatForCopy(hex, 'hsl'), [hex]);
+  const hsvString = useMemo(() => formatForCopy(hex, 'hsv'), [hex]);
+  const hwbString = useMemo(() => formatForCopy(hex, 'hwb'), [hex]);
   return (
     <div className="flex flex-col gap-4">
       <ColorPicker
         hex={hex}
         onChange={onChange}
         triggerLabel={`Color ${hex} — open color picker`}
+        className="block w-full"
       >
         <span
           title="Pick a color"
-          className="relative inline-flex h-[100px] w-[100px] items-center justify-center ring-1 ring-ink/10"
+          className="relative flex h-[140px] w-full items-center justify-center ring-1 ring-ink/10"
           style={{ backgroundColor: hex }}
         >
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-paper/85 text-ink ring-1 ring-ink/15 shadow-sm">
-            <PickerIcon className="h-4 w-4" />
+          <span className="inline-flex h-[42px] w-[42px] items-center justify-center rounded-full bg-paper/85 text-ink ring-1 ring-ink/15 shadow-sm">
+            <PickerIcon className="h-6 w-6" />
+          </span>
+          <span className="absolute top-2 left-2 bg-paper/90 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-ink">
+            Pick a color
           </span>
         </span>
       </ColorPicker>
@@ -532,6 +542,8 @@ function PreviewBlock({
         <CopyableValueRow label="OKLCH" value={oklchString} />
         <CopyableValueRow label="RGB" value={rgbString} />
         <CopyableValueRow label="HSL" value={hslString} />
+        <CopyableValueRow label="HSV" value={hsvString} />
+        <CopyableValueRow label="HWB" value={hwbString} />
       </dl>
     </div>
   );
@@ -551,7 +563,7 @@ function CopyableValueRow({ label, value }: { label: string; value: string }) {
     }
     navigator.clipboard.writeText(value).then(
       () => {
-        pushToast(`Copied ${value}`);
+        pushToast('Copied');
       },
       () => {
         pushToast("Couldn't copy — check browser permissions.");
@@ -735,15 +747,14 @@ function AlgorithmInfoButton() {
           <p className="mb-2">
             <span className="font-mono font-semibold">OKLCH</span> walks the ramp in a
             perceptually uniform color space. Lightness steps feel evenly spaced and
-            chroma stays controlled, which keeps mid-tones from going muddy. Best
-            choice for new design systems.
+            chroma stays controlled, so mid-tones don't go muddy. Use this for new
+            design systems.
           </p>
           <p>
             <span className="font-mono font-semibold">Classic</span> reproduces the
-            0to255-style RGB walk used by many legacy palette tools and older
-            Tailwind scales. Channels step by 17 toward white and walk down toward
-            black. Useful when you need shades that match existing assets built with
-            those tools.
+            0to255-style RGB walk that older palette tools and Tailwind scales use —
+            channels step by 17 toward white, then walk down toward black. Pick this
+            when you need to match shades from assets built with those older tools.
           </p>
         </div>
       )}
@@ -753,9 +764,11 @@ function AlgorithmInfoButton() {
 
 const COPY_FORMAT_LABELS: Record<CopyFormat, string> = {
   hex: 'hex',
+  oklch: 'oklch()',
   rgb: 'rgb()',
   hsl: 'hsl()',
-  oklch: 'oklch()',
+  hsv: 'hsv()',
+  hwb: 'hwb()',
   cssVar: 'var(--name)',
   tailwindClass: 'bg-name-500',
 };

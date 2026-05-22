@@ -12,6 +12,8 @@ import type { CopyFormat, Hex } from './types';
 
 const rgbConv = converter('rgb');
 const hslConv = converter('hsl');
+const hsvConv = converter('hsv');
+const hwbConv = converter('hwb');
 const oklchConv = converter('oklch');
 
 function round(n: number, digits: number): number {
@@ -45,6 +47,23 @@ export function formatForCopy(
       const s = round((c.s ?? 0) * 100, 1);
       const l = round((c.l ?? 0) * 100, 1);
       return `hsl(${h} ${s}% ${l}%)`;
+    }
+    case 'hsv': {
+      // Not a CSS color function; emitted as a readable form for designer tools.
+      const c = hsvConv(hex);
+      if (!c) return hex;
+      const h = round(c.h ?? 0, 1);
+      const s = round((c.s ?? 0) * 100, 1);
+      const v = round((c.v ?? 0) * 100, 1);
+      return `hsv(${h} ${s}% ${v}%)`;
+    }
+    case 'hwb': {
+      const c = hwbConv(hex);
+      if (!c) return hex;
+      const h = round(c.h ?? 0, 1);
+      const w = round((c.w ?? 0) * 100, 1);
+      const b = round((c.b ?? 0) * 100, 1);
+      return `hwb(${h} ${w}% ${b}%)`;
     }
     case 'oklch': {
       const c = oklchConv(hex);

@@ -200,3 +200,18 @@ describe('formatForCopy', () => {
     expect(formatForCopy('#3b82f6', 'tailwindClass', { name: 'brand', stop: 500 })).toBe('bg-brand-500');
   });
 });
+
+describe('formatForCopy — hsv and hwb', () => {
+  it('emits hsv() for representative colors', () => {
+    expect(formatForCopy('#4040ff', 'hsv')).toMatchInlineSnapshot(`"hsv(240 74.9% 100%)"`);
+    expect(formatForCopy('#ffffff', 'hsv')).toMatchInlineSnapshot(`"hsv(0 0% 100%)"`);
+    expect(formatForCopy('#808080', 'hsv')).toMatchInlineSnapshot(`"hsv(0 0% 50.2%)"`);
+    expect(formatForCopy('#ff7f50', 'hsv')).toMatchInlineSnapshot(`"hsv(16.1 68.6% 100%)"`);
+  });
+  it('emits hwb() for representative colors', () => {
+    expect(formatForCopy('#4040ff', 'hwb')).toMatchInlineSnapshot(`"hwb(240 25.1% 0%)"`);
+    expect(formatForCopy('#ffffff', 'hwb')).toMatchInlineSnapshot(`"hwb(0 100% 0%)"`);
+    expect(formatForCopy('#808080', 'hwb')).toMatchInlineSnapshot(`"hwb(0 50.2% 49.8%)"`);
+    expect(formatForCopy('#ff7f50', 'hwb')).toMatchInlineSnapshot(`"hwb(16.1 31.4% 0%)"`);
+  });
+});

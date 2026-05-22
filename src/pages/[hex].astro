@@ -43,8 +43,8 @@ const TITLE = named
   : `Hex Color ${hexLabel} Tints & Shades | uishades.com`;
 
 const DESCRIPTION = named
-  ? `${hexLabel} is also known as ${named.name}. Browse tints and shades — free Tailwind-ready exports.`
-  : `Tints and shades of hex color ${hexLabel}. Continuous OKLCH ramp, Tailwind-style 11-stop scale, and copy-ready exports.`;
+  ? `${hexLabel}, also known as ${named.name}. Browse tints and shades, with Tailwind-ready exports. Free.`
+  : `Tints and shades of ${hexLabel}. OKLCH ramp, 11-stop Tailwind scale, copy-ready exports.`;
 
 const ogImage = `https://uishades.com/og/${canonical.slice(1)}.png`;
 const canonicalUrl = `https://uishades.com/${canonical.slice(1)}`;
@@ -100,11 +100,12 @@ Astro.response.headers.set(
         initialView={prefs.view}
         initialRampMode={prefs.mode}
         initialExportFormat={prefs.fmt}
+        initialCopyFormat={prefs.copy}
       />
 
       <noscript>
         <p class="mx-auto max-w-6xl border border-hairline bg-paper-2 px-5 py-4 font-display text-mute">
-          Interactive tool requires JavaScript.
+          This tool needs JavaScript to run.
         </p>
       </noscript>
 

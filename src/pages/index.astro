@@ -26,7 +26,7 @@ const HOME_NAMED_COLORS = NAMED_COLORS
 
 const TITLE = 'uishades.com — Free Tints and Shades of Any Hex Color';
 const DESCRIPTION =
-  'A free tool for finding lighter and darker shades of any hex color. OKLCH-based ramps, Tailwind-style 11-stop scales, and paste-ready exports.';
+  'Find tints and shades of any hex color, free. OKLCH ramps, Tailwind 11-stop scales, exports you can paste straight into your code.';
 const OG = 'https://uishades.com/og/777777.png';
 
 const jsonLd = {
@@ -66,15 +66,15 @@ const jsonLd = {
     <main class="mx-auto max-w-6xl px-6 pb-24">
       <!-- Hero -->
       <section class="mx-auto flex min-h-svh max-w-3xl flex-col items-center justify-center py-10 text-center">
-        <p class="eyebrow mb-6">A replacement for 0to255 — free, fast, OKLCH</p>
+        <p class="eyebrow mb-6">UISHADES.COM — free, fast, OKLCH</p>
         <h1 class="display text-[clamp(2.5rem,8vw,6rem)]">
           Tints &amp; shades<br />
           <span class="text-accent">of any color</span>.
         </h1>
         <p class="mt-8 max-w-[44ch] font-display text-xl leading-snug text-ink-2">
-          Paste a hex or a CSS color name. <code class="font-mono not-italic text-base text-ink">rgb()</code>,
-          <code class="font-mono not-italic text-base text-ink">hsl()</code>, and
-          <code class="font-mono not-italic text-base text-ink">oklch()</code> work too — open the tool to use them.
+          Paste a hex, <code class="not-italic text-base text-ink">rgb()</code>,
+          <code class="not-italic text-base text-ink">hsl()</code>,
+          <code class="not-italic text-base text-ink">oklch()</code> or a CSS color name.
         </p>
 
         <form id="hex-form" class="mt-10 flex w-full max-w-xl flex-col gap-2 text-left" action="/" method="get" novalidate>
@@ -99,10 +99,9 @@ const jsonLd = {
               type="submit"
               class="cursor-pointer border-t sm:border-l sm:border-t-0 border-ink/80 bg-ink px-6 py-3.5 font-mono text-[12px] uppercase tracking-[0.18em] text-paper hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
             >
-              Open →
+              Submit
             </button>
           </div>
-          <p id="hex-error" class="error" role="alert" aria-live="polite"></p>
         </form>
       </section>
 
@@ -114,19 +113,18 @@ const jsonLd = {
             <p class="idx mb-2">№ 01</p>
             <h3 class="font-display text-2xl text-ink leading-tight">Free, forever.</h3>
             <p class="mt-3 text-ink-2 leading-relaxed">
-              No paywall, no signup, no ads. Permanent URLs for every hex you'd ever
-              want to share with a teammate — pattern-identical to the one you've
-              had bookmarked for a decade.
+              No paywall, no signup, no ads. Every hex gets a permanent URL —
+              the same one you've had bookmarked for a decade.
             </p>
           </article>
           <article>
             <p class="idx mb-2">№ 02</p>
             <h3 class="font-display text-2xl text-ink leading-tight">Better algorithm.</h3>
             <p class="mt-3 text-ink-2 leading-relaxed">
-              OKLCH-anchored ramps keep perceived lightness and hue stable across
-              the whole scale, so yellows, browns, and olives don't muddy out
-              at the mids. A <em>Classic</em> toggle reproduces the familiar
-              RGB-walk output, bit for bit.
+              OKLCH-anchored ramps keep lightness and hue stable across the
+              scale, so yellows, browns, and olives don't muddy out in the
+              middle. Want the old behavior? A <em>Classic</em> toggle
+              reproduces the RGB-walk output bit for bit.
             </p>
           </article>
           <article>
@@ -164,7 +162,6 @@ const jsonLd = {
         var form = document.getElementById('hex-form');
         if (!form) return;
         var input = document.getElementById('hex');
-        var err = document.getElementById('hex-error');
 
         // Build a normalized lookup once. Keys are lowercased + whitespace
         // stripped so "Alice Blue" and "aliceblue" both hit.
@@ -194,7 +191,6 @@ const jsonLd = {
           e.preventDefault();
           var raw = input.value;
           if (!raw || !raw.trim()) {
-            err.textContent = 'Enter a hex, color name, rgb(), hsl(), or oklch().';
             input.focus();
             return;
           }
@@ -202,7 +198,6 @@ const jsonLd = {
           // 1. Hex shape — fast path.
           var slug = hexShape(raw);
           if (slug) {
-            err.textContent = '';
             window.location.assign('/' + slug);
             return;
           }
@@ -210,7 +205,6 @@ const jsonLd = {
           // 2. CSS named color (baked at build).
           var hex = nameToHex[normName(raw)];
           if (hex) {
-            err.textContent = '';
             // hex is already canonical lowercase `#rrggbb`.
             window.location.assign('/' + hex.slice(1));
             return;
@@ -220,7 +214,6 @@ const jsonLd = {
           // hand off to the React island via `?seed=`. The island will
           // try to parse it and either swap to the resolved hex (and
           // strip the param) or surface a toast.
-          err.textContent = '';
           window.location.assign(
             '/4040ff?seed=' + encodeURIComponent(raw.trim()),
           );
@@ -237,13 +230,6 @@ const jsonLd = {
         clip: rect(0,0,0,0);
         white-space: nowrap;
         border: 0;
-      }
-      .error {
-        margin: 0.25rem 0 0;
-        color: var(--color-accent);
-        font-family: var(--font-mono);
-        font-size: 0.8rem;
-        min-height: 1.2em;
       }
     </style>
   </body>

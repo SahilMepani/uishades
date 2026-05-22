@@ -26,7 +26,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'neutral',
     source: 'css',
     related: ['ghostwhite', 'bootstrap-light', 'whitesmoke'],
-    blurb: 'Named after a steamship hue popular in the 1880s rather than after Lewis Carroll\'s heroine, Alice Blue is barely a colour at all. The hex sits one step from pure white with a faint cyan cast, the kind of background a hospital intranet uses when designers decide #ffffff feels too clinical. It works best as a page wash behind charcoal `#1f2937` body text, where contrast clears AAA without any visual fatigue. Nesting two Alice Blue surfaces side by side is a waste; the eye averages them into a single field within seconds. Treat it as off-white with a personality, not as a real accent.',
+    blurb: 'Named after a steamship hue popular in the 1880s, not Lewis Carroll\'s heroine. Alice Blue is barely a colour. The hex sits one step from pure white with a faint cyan cast — the kind of background a hospital intranet picks when its designers decide #ffffff feels too clinical. Behind charcoal `#1f2937` body text it works as a page wash, contrast clearing AAA without visual fatigue. Nest two Alice Blue surfaces side by side and the eye averages them into a single field within seconds. Off-white with a hint of personality, not an accent.',
   },
   {
     slug: 'antiquewhite',
@@ -35,7 +35,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'css',
     related: ['papayawhip', 'blanchedalmond', 'champagne'],
-    blurb: 'Antique White carries the warmth of old paper and varnished wood. The CSS spec inherited it from a Pantone-era palette aimed at interior decorators, and its yellow undertone separates it cleanly from cooler whites like Ghost White or pure white. On screens it works as a calm document background, especially for long-form reading where pure white feels harsh under tungsten light. Pair it with deep brown or matte black type. Avoid putting it next to bright yellows; the warmth gets pulled out and the surface starts to read as dingy rather than considered.',
+    blurb: 'Antique White carries the warmth of old paper and varnished wood. The CSS spec inherited it from a Pantone-era palette aimed at interior decorators, and its yellow undertone separates it cleanly from cooler whites like Ghost White or pure white. On screens it works as a calm document background, especially for long-form reading where pure white feels harsh under tungsten light. Deep brown or matte black type sits naturally on top. Place it next to bright yellows and the warmth gets pulled out, the surface starting to read as dingy rather than considered.',
   },
   {
     slug: 'aquamarine',
@@ -44,7 +44,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'css',
     related: ['seafoam', 'palegreen', 'lightgreen'],
-    blurb: 'Aquamarine names a pale cyan with a green lean, descending from the gem and the Latin words for sea water. The CSS value mixed in 1987 for X11 is brighter than the real mineral but still reads as tropical shallows. It shows up often in beauty and travel branding where a refreshing-but-soft tone is needed. Use it as a flood color for hero sections or as a tint behind dark navy type. Against white it carries low contrast and should not be used for body text; reserve it for surfaces and decorative shapes.',
+    blurb: 'Aquamarine names a pale cyan with a green lean, descending from the gem and the Latin for sea water. The CSS value mixed in 1987 for X11 is brighter than the real mineral but still reads as tropical shallows. Common in beauty and travel branding where a soft, refreshing tone is needed. Works as a flood color in hero sections or as a tint behind dark navy type. Against white the contrast is too low for body text — keep it for surfaces and decorative shapes.',
   },
   {
     slug: 'azure',
@@ -53,7 +53,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'neutral',
     source: 'css',
     related: ['mintcream', 'bootstrap-light', 'aliceblue'],
-    blurb: 'Azure in CSS is almost pure white with a breath of cyan, not the saturated medieval-manuscript blue the name suggests. The discrepancy traces back to X11\'s color list, which already had a separate slot for the deeper blue. As a background it reads as cool but barely there, useful for tech-product canvases where pure white feels sterile. The historical association is heraldic, so the word still carries authority even when the rendered color is faint. Pair with darker steel blues or charcoal for legible text. Two azure surfaces side by side will appear identical in low light.',
+    blurb: 'Azure in CSS is almost pure white with a breath of cyan, not the saturated medieval-manuscript blue the name suggests. The discrepancy traces back to X11\'s color list, which already had a separate slot for the deeper blue. As a background it reads as cool but barely there, useful for tech-product canvases where pure white feels sterile. The historical association is heraldic, so the word still carries authority even when the rendered color is faint. Darker steel blues or charcoal make for legible type. Two azure surfaces side by side will appear identical in low light.',
   },
   {
     slug: 'beige',
@@ -62,7 +62,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'css',
     related: ['cornsilk', 'papayawhip', 'lightgoldenrodyellow'],
-    blurb: 'Beige is the color of unbleached wool and, for a stretch of the late twentieth century, almost every office computer. Its undertone is yellow-green, which is why it ages better than pinker neutrals when seen in daylight. Used in editorial and interior design as a warm canvas for richer accents like terracotta or muted navy. On screens, beige softens the eye strain that pure white can cause during extended reading, which is why it shows up in long-form reading apps and reader views. The undertone means cool grays placed next to it will look slightly dirty by comparison.',
+    blurb: 'Beige is the color of unbleached wool and, for a stretch of the late twentieth century, almost every office computer. Its undertone is yellow-green, which is why it ages better than pinker neutrals when seen in daylight. Editorial and interior design use it as a warm canvas for richer accents like terracotta or muted navy. On screens, beige softens the eye strain that pure white can cause during extended reading, which is why it shows up in long-form reading apps and reader views. The undertone means cool grays placed next to it will look slightly dirty by comparison.',
   },
   {
     slug: 'bisque',
@@ -71,7 +71,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'orange',
     source: 'css',
     related: ['peachpuff', 'burlywood', 'tan'],
-    blurb: 'Cooks know bisque as the rust-pink of lobster shellfish stock, and the CSS value lands in the same family: a warm, slightly orange off-cream. Cosmetics brands like Glossier built entire packaging systems around tones in this band because the warmth photographs as skin rather than as paper. Try it as a card background paired with deep espresso `#3d2817` type and a single accent of muted teal; the trio reads as editorial without leaning twee. Avoid putting Bisque against a cool grey like Slate 500 — the yellow undertone clashes and the surface starts to look like a colour-management mistake rather than a choice.',
+    blurb: 'Cooks know bisque as the rust-pink of lobster shellfish stock, and the CSS value lands in the same family: a warm, slightly orange off-cream. Cosmetics brands like Glossier built entire packaging systems around tones in this band because the warmth photographs as skin rather than as paper. Try it as a card background paired with deep espresso `#3d2817` type and a single accent of muted teal; the trio reads as editorial without leaning twee. Against a cool grey like Slate 500 the yellow undertone clashes and the surface starts to look like a colour-management mistake rather than a choice.',
   },
   {
     slug: 'black',
@@ -89,7 +89,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'css',
     related: ['papayawhip', 'antiquewhite', 'champagne'],
-    blurb: 'Strip an almond of its papery brown skin and the kernel is exactly this colour: pale, faintly pink, faintly yellow. CSS pulled the name from a 1980s X11 swatch list curated by graphics researcher Paul Raveling, who borrowed liberally from sample books. It rarely earns a place in modern UI palettes but shows up constantly in food photography because cameras render it as warm without going beige. Pair it with a dark cocoa `#2c1810` for menu copy and you have a bakery brand in two colours. Place it next to any cool grey and it loses identity completely, reading as cream that got dirty rather than an intentional surface.',
+    blurb: 'Strip an almond of its papery brown skin and the kernel is exactly this colour: pale, faintly pink, faintly yellow. CSS pulled the name from a 1980s X11 swatch list curated by graphics researcher Paul Raveling, who borrowed liberally from sample books. It rarely earns a place in modern UI palettes but shows up constantly in food photography because cameras render it as warm without going beige. Drop a dark cocoa `#2c1810` on top for menu copy and you have a bakery brand in two colours. Place it next to any cool grey and it loses identity completely, reading as cream that got dirty rather than an intentional surface.',
   },
   {
     slug: 'blue',
@@ -98,7 +98,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'css',
     related: ['mediumblue', 'tailwind-indigo-600', 'tailwind-blue-600'],
-    blurb: 'Blue is the most-searched color name on the web by a wide margin. The CSS value #0000ff is pure-channel blue, the bluest blue an sRGB display can show, and it is too saturated and dark for most modern interfaces. Designers usually reach for a softer mid-blue around #2563eb or #3b82f6 instead. Cultural associations are unusually consistent across regions: trust, depth, water, sky, sleep. Use the CSS value sparingly at full saturation. Against dark gray text it can vibrate; against white the contrast is high enough to feel sharp rather than friendly.',
+    blurb: 'Blue is the most-searched color name on the web by a wide margin. The CSS value #0000ff is pure-channel blue, the bluest blue an sRGB display can show, and it is too saturated and dark for most modern interfaces. Designers usually reach for a softer mid-blue around #2563eb or #3b82f6 instead. Cultural associations are unusually consistent across regions: trust, depth, water, sky, sleep. The full-saturation value is best used sparingly. Against dark gray text it can vibrate; against white the contrast is high enough to feel sharp rather than friendly.',
   },
   {
     slug: 'blueviolet',
@@ -107,7 +107,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'indigo',
     source: 'css',
     related: ['darkviolet', 'tailwind-purple-600', 'darkorchid'],
-    blurb: 'Blue Violet is the colour Prince might have specified for a stage cyc light — high chroma, deep enough to feel weighted, bright enough to throb under tungsten. The CSS hex was lifted from the X11 rgb.txt master file and has never been retuned. It carries enough visual mass to function as a heading colour or single accent, but flooding a large area with it tires the eye within a screen-height. Body text against white passes AA at standard sizes thanks to the depth. Pair it with a warm cream `#fdf6e3` for a Solarized-adjacent palette, or with mustard for poster work in the Bauhaus tradition.',
+    blurb: 'Blue Violet is the colour Prince might have specified for a stage cyc light: high chroma, deep enough to feel weighted, bright enough to throb under tungsten. The CSS hex was lifted from the X11 rgb.txt master file and has never been retuned. It carries enough visual mass to function as a heading colour or single accent, but flooding a large area with it tires the eye within a screen-height. Body text against white passes AA at standard sizes thanks to the depth. Try a warm cream `#fdf6e3` alongside for a Solarized-adjacent palette, or mustard for poster work in the Bauhaus tradition.',
   },
   {
     slug: 'bootstrap-danger',
@@ -116,7 +116,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'red',
     source: 'bootstrap',
     related: ['crimson', 'tailwind-rose-600', 'tailwind-red-600'],
-    blurb: 'Bootstrap Danger is the red used for error alerts, destructive buttons, and validation warnings in Bootstrap 5. It is brighter and slightly cooler than the framework\'s red counterpart in the v4 release, tuned to maintain WCAG AA against white text at common button sizes. Because Bootstrap is still embedded in vast amounts of enterprise and admin software, this exact red has become a de facto convention for irreversible actions across the web. If your design system needs a destructive color, this hex is a defensible starting point. Pair with neutral grays for type so the red stays readable rather than alarming.',
+    blurb: 'Bootstrap Danger is the red used for error alerts, destructive buttons, and validation warnings in Bootstrap 5. It is brighter and slightly cooler than the framework\'s red counterpart in the v4 release, tuned to maintain WCAG AA against white text at common button sizes. Because Bootstrap is still embedded in vast amounts of enterprise and admin software, this exact red has become a de facto convention for irreversible actions across the web. If your design system needs a destructive color, this hex is a defensible starting point. Neutral grays for type keep the red readable rather than alarming.',
   },
   {
     slug: 'bootstrap-dark',
@@ -125,7 +125,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'gray',
     source: 'bootstrap',
     related: ['tailwind-neutral-600', 'tailwind-zinc-600', 'tailwind-stone-600'],
-    blurb: 'Bootstrap Dark is the framework\'s near-black, used for the default navbar in dark mode and for emphasized text on light backgrounds. It is not pure black; the slight blue cast keeps it from feeling oppressive against neutral grays and softens edges in long blocks of text. The hex is shared across many shipped Bootstrap sites, so users have learned to read it as header chrome even without conscious recognition. Pair it with white or near-white for body text. A saturated accent color works for primary actions; avoid stacking two near-blacks of similar lightness, which loses hierarchy.',
+    blurb: 'Bootstrap Dark is the framework\'s near-black, used for the default navbar in dark mode and for emphasized text on light backgrounds. It is not pure black; the slight blue cast keeps it from feeling oppressive against neutral grays and softens edges in long blocks of text. The hex is shared across many shipped Bootstrap sites, so users have learned to read it as header chrome even without conscious recognition. White or near-white works for body text on top. A saturated accent color works for primary actions; stacking two near-blacks of similar lightness loses hierarchy.',
   },
   {
     slug: 'bootstrap-indigo',
@@ -134,7 +134,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'indigo',
     source: 'bootstrap',
     related: ['tailwind-violet-600', 'blueviolet', 'material-deep-purple-500'],
-    blurb: 'Bootstrap Indigo is a vibrant purple-blue used as an accent in the framework\'s extended palette. It is more saturated than the framework\'s primary blue and is typically reserved for marketing pages or specialty components rather than core UI chrome. The hex landed in Bootstrap 5 along with a refreshed accent set aimed at making default theming look less generic. Against white surfaces it carries enough contrast for buttons. For body text it is too thin and should be reserved for headings or links rather than long-form paragraphs, where eye strain becomes a problem within a page or two.',
+    blurb: 'Bootstrap Indigo is a vibrant purple-blue used as an accent in the framework\'s extended palette. It is more saturated than the framework\'s primary blue and is typically reserved for marketing pages or specialty components rather than core UI chrome. The hex landed in Bootstrap 5 along with a refreshed accent set aimed at making default theming look less generic. Against white surfaces it carries enough contrast for buttons. For body text it is too thin, so headings or links suit it better than long-form paragraphs, where eye strain becomes a problem within a page or two.',
   },
   {
     slug: 'bootstrap-info',
@@ -143,7 +143,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'bootstrap',
     related: ['deepskyblue', 'tailwind-cyan-500', 'skyblue'],
-    blurb: 'Bootstrap Info is the cyan-leaning blue used for non-critical informational alerts and badges. The framework picked a bright tone so that info messages would feel distinct from primary actions without competing with warnings or errors for attention. The color is too pale for white text at small sizes; Bootstrap\'s components rely on dark text overlays for the alert variants. If you are theming a system, treat this as a hint color rather than a primary, and reserve a deeper blue for actions that need to be obeyed. The semantic separation matters more than the exact hue.',
+    blurb: 'Bootstrap Info is the cyan-leaning blue used for non-critical informational alerts and badges. The framework picked a bright tone so that info messages would feel distinct from primary actions without competing with warnings or errors for attention. The color is too pale for white text at small sizes; Bootstrap\'s components rely on dark text overlays for the alert variants. If you are theming a system, treat this as a hint color rather than a primary, and keep a deeper blue for actions that need to be obeyed. The semantic separation matters more than the exact hue.',
   },
   {
     slug: 'bootstrap-light',
@@ -152,7 +152,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'neutral',
     source: 'bootstrap',
     related: ['ghostwhite', 'snow', 'whitesmoke'],
-    blurb: 'Bootstrap Light is the framework\'s near-white surface color, used for backgrounds in card variants, footer bars, and table stripes. It sits warmer than pure white, which prevents the sterile-printer-paper effect that pure #ffffff can produce next to colored elements. The hex has become so widespread that a casual web user can subconsciously identify a Bootstrap-themed site by the specific off-white. Pair it with dark text and a single saturated accent. Use a slightly darker neutral for cards layered on top of it so the surface hierarchy stays readable without relying on shadows alone.',
+    blurb: 'Bootstrap Light is the framework\'s near-white surface color, used for backgrounds in card variants, footer bars, and table stripes. It sits warmer than pure white, which prevents the sterile-printer-paper effect that pure #ffffff can produce next to colored elements. The hex has become so widespread that a casual web user can subconsciously identify a Bootstrap-themed site by the specific off-white. Dark text with a single saturated accent sits naturally on top. A slightly darker neutral for cards layered above keeps the surface hierarchy readable without relying on shadows alone.',
   },
   {
     slug: 'bootstrap-primary',
@@ -161,7 +161,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'bootstrap',
     related: ['tailwind-blue-600', 'royalblue', 'tailwind-blue-500'],
-    blurb: 'Bootstrap Primary is the default action color across the framework: links, primary buttons, focused inputs, and active navigation items all default to this blue. It is calibrated to pass WCAG AA against white at standard button heights, which is why it tends to feel slightly darker than fashion-forward blues in newer design systems. Because billions of sessions have trained users to expect this exact hue as the thing to click, replacing it in a Bootstrap codebase requires updating user mental models as well as CSS variables. Treat it as a load-bearing convention rather than a stylistic choice.',
+    blurb: 'Bootstrap Primary is the default action color across the framework: links, primary buttons, focused inputs, and active navigation items all default to this blue. It is calibrated to pass WCAG AA against white at standard button heights, which is why it tends to feel slightly darker than fashion-forward blues in newer design systems. Because billions of sessions have trained users to expect this exact hue as the thing to click, replacing it in a Bootstrap codebase requires updating user mental models as well as CSS variables. It is a load-bearing convention rather than a stylistic choice.',
   },
   {
     slug: 'bootstrap-secondary',
@@ -179,7 +179,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'bootstrap',
     related: ['seagreen', 'tailwind-emerald-600', 'forestgreen'],
-    blurb: 'Bootstrap Success is the green used for confirmation alerts, completed-state badges, and primary call-to-action buttons in financial or onboarding flows. It is darker and more saturated than Material\'s success green, which gives it better contrast against white at small sizes but can feel slightly stiff in marketing contexts. The semantic load is universal across the framework\'s components, so users do not need a legend to know that a green Bootstrap badge means this thing worked. Use it for confirmations rather than for general decorative greens; the convention is strong enough that breaking it feels like a bug.',
+    blurb: 'Bootstrap Success is the green used for confirmation alerts, completed-state badges, and primary call-to-action buttons in financial or onboarding flows. It is darker and more saturated than Material\'s success green, which gives it better contrast against white at small sizes but can feel slightly stiff in marketing contexts. The semantic load is universal across the framework\'s components, so users do not need a legend to know that a green Bootstrap badge means this thing worked. Confirmations are its proper job; the convention against general decorative greens is strong enough that breaking it feels like a bug.',
   },
   {
     slug: 'bootstrap-teal',
@@ -188,7 +188,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'bootstrap',
     related: ['tailwind-emerald-500', 'mediumaquamarine', 'mediumseagreen'],
-    blurb: 'Bootstrap Teal is a brighter, more saturated accent color introduced in Bootstrap 5\'s extended palette. It sits between Success green and Info cyan, and is typically used in marketing components, dashboards, and data visualization rather than core UI chrome. The hex reads as fresh against both white and dark surfaces, and works well for charts and graphs where it can carry data alongside other accent colors without competing for foreground attention. Pair with a deep navy or charcoal for type contrast. Body text contrast against white passes AA at headline sizes but is borderline below 14px.',
+    blurb: 'Bootstrap Teal is a brighter, more saturated accent color introduced in Bootstrap 5\'s extended palette. It sits between Success green and Info cyan, and is typically used in marketing components, dashboards, and data visualization rather than core UI chrome. The hex reads as fresh against both white and dark surfaces, and works well for charts and graphs where it can carry data alongside other accent colors without competing for foreground attention. A deep navy or charcoal handles type contrast. Body text contrast against white passes AA at headline sizes but is borderline below 14px.',
   },
   {
     slug: 'bootstrap-warning',
@@ -197,7 +197,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'bootstrap',
     related: ['tailwind-yellow-500', 'gold', 'mustard'],
-    blurb: 'Bootstrap Warning is the framework\'s yellow, used for caution alerts, partial-state badges, and attention-required chips. It is bright enough that dark text on top is mandatory for accessibility; light text disappears entirely against it. The hex matches what most users have learned to read as caution but not danger across web interfaces. Use it for non-blocking warnings, validation hints, and visual flags that something needs review. For destructive or irreversible operations, use the red Danger color instead; mixing the two semantically confuses users who have learned to react differently to each.',
+    blurb: 'Bootstrap Warning is the framework\'s yellow, used for caution alerts, partial-state badges, and attention-required chips. It is bright enough that dark text on top is mandatory for accessibility; light text disappears entirely against it. The hex matches what most users have learned to read as caution but not danger across web interfaces. Non-blocking warnings, validation hints, and visual flags that something needs review are its natural job. For destructive or irreversible operations, the red Danger color belongs instead; mixing the two semantically confuses users who have learned to react differently to each.',
   },
   {
     slug: 'brown',
@@ -206,7 +206,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'brown',
     source: 'css',
     related: ['saddlebrown', 'sienna', 'darkred'],
-    blurb: 'Brown is the CSS named color closest to the dictionary definition of the word: a deep, warm, reddish-tan. Despite the name, the hex sits in the red family by hue, just at low enough lightness to register as earthen rather than fiery. Brown shows up in heritage branding for coffee, leather goods, and outdoor equipment as the dominant tone. It pairs well with cream and brass accents, also with sage green for a vintage palette. On the web it is rare as a primary action color because it competes with red for attention without the same urgency cues, which can confuse users.',
+    blurb: 'Brown is the CSS named color closest to the dictionary definition of the word: a deep, warm, reddish-tan. Despite the name, the hex sits in the red family by hue, just at low enough lightness to register as earthen rather than fiery. Brown shows up in heritage branding for coffee, leather goods, and outdoor equipment as the dominant tone. Cream and brass accents sit well alongside, as does sage green for a vintage palette. On the web it is rare as a primary action color because it competes with red for attention without the same urgency cues, which can confuse users.',
   },
   {
     slug: 'burlywood',
@@ -215,7 +215,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'orange',
     source: 'css',
     related: ['tan', 'dusty-rose', 'sandybrown'],
-    blurb: 'Burlywood takes its name from the chunky, knotted outgrowths called burls that woodworkers prize for their unpredictable grain. The CSS value reads as raw pine after a season of sun: warm, slightly drained of saturation, more honest than honey. West Elm and Muji both use tones in this band as default surfaces in furniture catalogues because it suggests craft without naming a specific timber. Drop deep walnut `#3e2817` text on top and the layout starts to feel like a Kinfolk spread. The colour is too pale to function as type against white; reserve it for surfaces and hero washes that benefit from a warm fill.',
+    blurb: 'Burlywood takes its name from the chunky, knotted outgrowths called burls that woodworkers prize for their unpredictable grain. The CSS value reads as raw pine after a season of sun: warm, slightly drained of saturation, more honest than honey. West Elm and Muji both use tones in this band as default surfaces in furniture catalogues because it suggests craft without naming a specific timber. Drop deep walnut `#3e2817` text on top and the layout starts to feel like a Kinfolk spread. The colour is too pale to function as type against white; keep it for surfaces and hero washes that benefit from a warm fill.',
   },
   {
     slug: 'burnt-orange',
@@ -224,7 +224,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'brown',
     source: 'curated',
     related: ['chocolate', 'indianred', 'tailwind-amber-600'],
-    blurb: 'Burnt Orange is the rust-tinted orange of autumn leaves and 1970s upholstery. The exact value sits between true orange and red-brown, deep enough to feel earthy but bright enough to register as a hot color rather than a brown. It enjoyed a major revival in branding around 2018 when warm minimalism became fashionable in lifestyle and fashion. Use it as a primary accent against cream and charcoal. Pair with sage green for a vintage palette, or with deep teal for richer contrast. Reserve large areas for editorial layouts; in UI contexts it can be mistaken for a hover state on an orange button.',
+    blurb: 'Burnt Orange is the rust-tinted orange of autumn leaves and 1970s upholstery. The exact value sits between true orange and red-brown, deep enough to feel earthy but bright enough to register as a hot color rather than a brown. It enjoyed a major revival in branding around 2018 when warm minimalism became fashionable in lifestyle and fashion. As a primary accent it sits well against cream and charcoal. Sage green alongside gives a vintage palette; deep teal yields richer contrast. Large areas suit editorial layouts; in UI contexts it can be mistaken for a hover state on an orange button.',
   },
   {
     slug: 'cadetblue',
@@ -233,7 +233,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'teal',
     source: 'css',
     related: ['lightseagreen', 'material-teal-500', 'tailwind-teal-600'],
-    blurb: 'Cadet Blue is a desaturated blue-green, named after the dark teal of British naval cadet uniforms. The CSS hex is dustier than the historical dye, sitting in muted-teal territory. It is one of the rare CSS colors that ages well in modern flat-design palettes because its low chroma keeps it from looking dated. Use it as a secondary surface color for marine or heritage brands, or as a calming background for content-heavy pages where stronger blues would distract. Pair with cream or warm white for type contrast. Body text against white passes AA at headline sizes; verify smaller sizes carefully.',
+    blurb: 'Cadet Blue is a desaturated blue-green, named after the dark teal of British naval cadet uniforms. The CSS hex is dustier than the historical dye, sitting in muted-teal territory. It is one of the rare CSS colors that ages well in modern flat-design palettes because its low chroma keeps it from looking dated. As a secondary surface color it suits marine or heritage brands, or works as a calming background for content-heavy pages where stronger blues would distract. Cream or warm white handles type contrast. Body text against white passes AA at headline sizes; smaller sizes need careful verification.',
   },
   {
     slug: 'champagne',
@@ -242,7 +242,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'curated',
     related: ['antiquewhite', 'blanchedalmond', 'papayawhip'],
-    blurb: 'Champagne is a curated pale gold-yellow named after the wine. It is lighter and less saturated than true gold and reads as a sophisticated cream, common in luxury fashion, hospitality, and event branding. Use it as a background for invitations, wedding sites, or premium product pages, paired with deep burgundy type. On displays it can shift toward green under daylight color profiles, so verify the rendered color on both calibrated and uncalibrated screens before committing it to a brand. Two champagne surfaces of slightly different value can look like a calibration error rather than a tonal choice.',
+    blurb: 'Champagne is a curated pale gold-yellow named after the wine. It is lighter and less saturated than true gold and reads as a sophisticated cream, common in luxury fashion, hospitality, and event branding. As a background for invitations, wedding sites, or premium product pages it pairs with deep burgundy type. On displays it can shift toward green under daylight color profiles, so verify the rendered color on both calibrated and uncalibrated screens before committing it to a brand. Two champagne surfaces of slightly different value can look like a calibration error rather than a tonal choice.',
   },
   {
     slug: 'chartreuse',
@@ -251,7 +251,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'css',
     related: ['lawngreen', 'greenyellow', 'lime'],
-    blurb: 'Chartreuse is the brilliant yellow-green named after the French herbal liqueur first distilled by Carthusian monks in the eighteenth century. The CSS value is exactly halfway between green and yellow at full saturation, which makes it one of the most aggressive colors a screen can produce. It signals warning in safety contexts and youth-energy in beverage or gaming branding. Reserve it for accent only; full-area chartreuse causes eye fatigue quickly and rarely passes accessibility checks against white. Body text contrast against white fails AA at every size, so it must be used with dark text overlays whenever it appears as a surface.',
+    blurb: 'Chartreuse is the brilliant yellow-green named after the French herbal liqueur first distilled by Carthusian monks in the eighteenth century. The CSS value is exactly halfway between green and yellow at full saturation, which makes it one of the most aggressive colors a screen can produce. It signals warning in safety contexts and youth-energy in beverage or gaming branding. Accent only — full-area chartreuse causes eye fatigue quickly and rarely passes accessibility checks against white. Body text contrast against white fails AA at every size, so it must be used with dark text overlays whenever it appears as a surface.',
   },
   {
     slug: 'chocolate',
@@ -260,7 +260,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'brown',
     source: 'css',
     related: ['tailwind-amber-600', 'burnt-orange', 'peru'],
-    blurb: 'Chocolate sits in the brown family at moderate lightness with a strong red-orange undertone. The CSS name was chosen to mark this exact warm cocoa tone, distinct from cooler browns like Saddle Brown or pure Brown. Food and outdoor brands use it as a primary in autumn and holiday campaigns. Pair with cream for a hot-drink palette, or with brass and matte black for luxury packaging. As a UI color it works well for warm-themed buttons but loses contrast quickly on white. Body text against white passes AA at body-text sizes; below 14px it is borderline and should be checked carefully.',
+    blurb: 'Chocolate sits in the brown family at moderate lightness with a strong red-orange undertone. The CSS name was chosen to mark this exact warm cocoa tone, distinct from cooler browns like Saddle Brown or pure Brown. Food and outdoor brands use it as a primary in autumn and holiday campaigns. Cream alongside gives a hot-drink palette; brass and matte black push it into luxury packaging territory. As a UI color it works well for warm-themed buttons but loses contrast quickly on white. Body text against white passes AA at body-text sizes; below 14px it is borderline and should be checked carefully.',
   },
   {
     slug: 'coral',
@@ -269,7 +269,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'orange',
     source: 'css',
     related: ['tailwind-orange-500', 'darkorange', 'darksalmon'],
-    blurb: 'Coral is the warm pink-orange named after the living reef organism. The CSS value is brighter than what most coral actually looks like underwater but matches the popular interior-design tone that took off in the 2000s and again in 2019 as Pantone\'s color of the year. Designers use it for energetic accent buttons, calls to action, and editorial palettes that want warmth without aggression. Against white the contrast is borderline for body text and reliable for headlines. Pair it with deep navy or charcoal for type-heavy layouts; the contrast between the cool dark type and warm coral surface reads as intentional rather than accidental.',
+    blurb: 'Coral is the warm pink-orange named after the living reef organism. The CSS value is brighter than what most coral actually looks like underwater but matches the popular interior-design tone that took off in the 2000s and again in 2019 as Pantone\'s color of the year. Designers reach for it for energetic accent buttons, calls to action, and editorial palettes that want warmth without aggression. Against white the contrast is borderline for body text and reliable for headlines. Deep navy or charcoal handles type-heavy layouts; the contrast between cool dark type and warm coral surface reads as intentional rather than accidental.',
   },
   {
     slug: 'cornflowerblue',
@@ -278,7 +278,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'css',
     related: ['material-blue-500', 'dodgerblue', 'tailwind-sky-500'],
-    blurb: 'Cornflower Blue is the colour of the European cornflower, Centaurea cyanus, and famously of the bottle Bombay Sapphire chose in 1986 to differentiate itself from clear-glass competitors. On the web it carries a 2000s nostalgia — early Blogger themes shipped it as a default link colour — but the hue holds up. Use it as a friendly secondary accent against charcoal `#1f2937` text or as a hero wash beneath cream copy. Contrast against white sits just below AA at body sizes, so reserve it for headlines 18px and above or large UI elements. Pair it with terracotta for a Mediterranean palette that avoids the obvious navy-and-orange cliché.',
+    blurb: 'Cornflower Blue is the colour of the European cornflower, Centaurea cyanus, and famously of the bottle Bombay Sapphire chose in 1986 to differentiate itself from clear-glass competitors. On the web it carries a 2000s nostalgia — early Blogger themes shipped it as a default link colour, but the hue holds up. As a friendly secondary accent it works against charcoal `#1f2937` text, or as a hero wash beneath cream copy. Contrast against white sits just below AA at body sizes, so headlines 18px and above or large UI elements are its natural job. Terracotta alongside makes a Mediterranean palette that avoids the obvious navy-and-orange cliché.',
   },
   {
     slug: 'cornsilk',
@@ -287,7 +287,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'css',
     related: ['beige', 'lightyellow', 'lightgoldenrodyellow'],
-    blurb: 'Cornsilk is the pale, dry yellow of dried corn husks, almost off-white. It is one of CSS\'s quieter cream tones, sitting between Floral White and Lemon Chiffon. Stationery, food-blog, and craft-product designs use it as a soft background that warms a page without committing to a real yellow accent. It pairs with browns and deep greens for harvest palettes, or with charcoal for type. Against pure white it reads as faintly yellow; against a yellow accent it can disappear into the background. Layer it as a single-surface tone rather than stacking it against other pale yellows, where the distinction gets lost.',
+    blurb: 'Cornsilk is the pale, dry yellow of dried corn husks, almost off-white. It is one of CSS\'s quieter cream tones, sitting between Floral White and Lemon Chiffon. Stationery, food-blog, and craft-product designs use it as a soft background that warms a page without committing to a real yellow accent. Browns and deep greens give a harvest palette, and charcoal handles the type. Against pure white it reads as faintly yellow; against a yellow accent it can disappear into the background. Layer it as a single-surface tone rather than stacking it against other pale yellows, where the distinction gets lost.',
   },
   {
     slug: 'crimson',
@@ -296,7 +296,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'red',
     source: 'css',
     related: ['tailwind-rose-600', 'bootstrap-danger', 'tailwind-red-600'],
-    blurb: 'Crimson is a deep, slightly blue-leaning red with strong cultural weight, historically associated with royalty, academia, and ceremony. The CSS value is darker and richer than pure red, which makes it a more legible choice for buttons and links because contrast against white holds up at small sizes. Use it as a primary action color where the brand needs gravitas rather than urgency. It pairs well with cream, deep navy, and warm gold, and reads especially well in long-form editorial layouts. Body text in Crimson against white passes AA comfortably at every size and is one of the more accessible saturated reds in the spec.',
+    blurb: 'Crimson is a deep, slightly blue-leaning red with strong cultural weight, historically associated with royalty, academia, and ceremony. The CSS value is darker and richer than pure red, which makes it a more legible choice for buttons and links because contrast against white holds up at small sizes. As a primary action color it suits brands that need gravitas rather than urgency. Cream, deep navy, and warm gold all sit well alongside, and it reads especially well in long-form editorial layouts. Body text in Crimson against white passes AA comfortably at every size and is one of the more accessible saturated reds in the spec.',
   },
   {
     slug: 'cyan',
@@ -315,7 +315,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'css',
     related: ['navy', 'midnightblue', 'mediumblue'],
-    blurb: 'Dark Blue in CSS predates the spec by decades; it came in through the original X11 rgb.txt list assembled at MIT in the 1980s and has barely moved since. The hex is a shade darker than CSS Navy and reads as the kind of authoritative blue a 1996 IBM annual report would have specified for heading typography. Body text in Dark Blue against white passes AAA at every size, which makes it one of the very few CSS named colours that work confidently as long-form copy. Pair it with a warm cream `#fef3c7` or with brushed brass for a heritage palette that nods to Penguin Classics.',
+    blurb: 'Dark Blue in CSS predates the spec by decades; it came in through the original X11 rgb.txt list assembled at MIT in the 1980s and has barely moved since. The hex is a shade darker than CSS Navy and reads as authoritative — a 1996 IBM annual report would have specified it for heading typography. Body text in Dark Blue against white passes AAA at every size, which makes it one of the very few CSS named colours that work confidently as long-form copy. A warm cream `#fef3c7` alongside, or brushed brass, gives a heritage palette that nods to Penguin Classics.',
   },
   {
     slug: 'darkcyan',
@@ -324,7 +324,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'teal',
     source: 'css',
     related: ['tailwind-teal-600', 'teal', 'material-teal-500'],
-    blurb: 'Dark Cyan is the deep blue-green of mineral pools and oxidized copper. The CSS hex sits at low-to-mid lightness with full saturation, which gives it strong presence against pale backgrounds. It enjoys steady use in environmental, scientific, and medical branding where the calmer cousin of teal feels too pale. Pair it with cream and warm wood tones for a natural palette, or with bright coral for high-contrast editorial layouts. On screens it can read as black on some dim displays; check rendering before committing. Body text contrast against white passes AAA at standard sizes.',
+    blurb: 'Dark Cyan is the deep blue-green of mineral pools and oxidized copper. The CSS hex sits at low-to-mid lightness with full saturation, which gives it strong presence against pale backgrounds. It enjoys steady use in environmental, scientific, and medical branding where the calmer cousin of teal feels too pale. Cream and warm wood tones make a natural palette alongside; bright coral pushes it toward high-contrast editorial layouts. On screens it can read as black on some dim displays, so check rendering before committing. Body text contrast against white passes AAA at standard sizes.',
   },
   {
     slug: 'darkgoldenrod',
@@ -333,7 +333,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'css',
     related: ['olive', 'goldenrod', 'darkkhaki'],
-    blurb: 'Dark Goldenrod is a deep mustard-yellow with brown undertones, named after the late-summer wildflower. The CSS hex is darker and richer than the actual flower, sitting closer to bronze. It works as a heritage accent in food, beverage, and outdoor brands where its warmth carries connotations of harvest and craft. Pair with deep green or burgundy for a vintage palette. Against white the contrast is adequate for headlines but borderline for body text; reserve it for display use. The closest analog in modern systems is Tailwind Amber 600 or Yellow 700, both of which sit at similar perceived lightness.',
+    blurb: 'Dark Goldenrod is a deep mustard-yellow with brown undertones, named after the late-summer wildflower. The CSS hex is darker and richer than the actual flower, sitting closer to bronze. It works as a heritage accent in food, beverage, and outdoor brands where its warmth carries connotations of harvest and craft. Deep green or burgundy alongside gives a vintage palette. Against white the contrast is adequate for headlines but borderline for body text, so display use is its natural job. The closest analog in modern systems is Tailwind Amber 600 or Yellow 700, both of which sit at similar perceived lightness.',
   },
   {
     slug: 'darkgray',
@@ -343,7 +343,7 @@ export const NAMED_COLORS: NamedColor[] = [
     source: 'css',
     aliases: ['darkgrey'],
     related: ['silver', 'lightgray', 'gray'],
-    blurb: 'Dark Gray in CSS is, confusingly, lighter than CSS Gray. The X11 palette swapped the lightness scale at some point and the spec inherited the result, so a designer expecting a deeper neutral may be surprised. Despite the misnomer, the hex is a useful mid-light gray for secondary UI text, borders, and disabled states. It has enough warmth in its undertone to feel less clinical than pure neutral grays. Pair with deep charcoal for primary text and an off-white surface. Body text against white falls below AA at body sizes; reserve it for secondary roles where reduced legibility is intentional.',
+    blurb: 'Dark Gray in CSS is, confusingly, lighter than CSS Gray. The X11 palette swapped the lightness scale at some point and the spec inherited the result, so a designer expecting a deeper neutral may be surprised. Despite the misnomer, the hex is a useful mid-light gray for secondary UI text, borders, and disabled states. It has enough warmth in its undertone to feel less clinical than pure neutral grays. Deep charcoal handles primary text on an off-white surface. Body text against white falls below AA at body sizes; the secondary roles where reduced legibility is intentional suit it best.',
   },
   {
     slug: 'darkgreen',
@@ -352,7 +352,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'css',
     related: ['green', 'darkolivegreen', 'forestgreen'],
-    blurb: 'Dark Green is the CSS value closest to the green of a healthy forest canopy under daylight. It carries strong heritage, conservation, and finance associations across cultures. The hex is dark enough to function as type against pale backgrounds and as a primary brand color for environmentally-positioned products. Pair with cream and warm beige for a natural palette, or with bright coral for a high-contrast pairing. Avoid placing it directly next to pure red, which produces strong visual vibration that fatigues the eye. Body text against white passes AAA at all standard sizes, so it works for long-form display use.',
+    blurb: 'Dark Green is the CSS value closest to the green of a healthy forest canopy under daylight. It carries strong heritage, conservation, and finance associations across cultures. The hex is dark enough to function as type against pale backgrounds and as a primary brand color for environmentally-positioned products. Cream and warm beige give a natural palette; bright coral makes a high-contrast pairing. Placing it directly next to pure red produces strong visual vibration that fatigues the eye. Body text against white passes AAA at all standard sizes, so it works for long-form display use.',
   },
   {
     slug: 'darkkhaki',
@@ -361,7 +361,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'css',
     related: ['goldenrod', 'tailwind-yellow-500', 'bootstrap-warning'],
-    blurb: 'Dark Khaki is a muted yellow-brown named after the dust-toned uniforms of late nineteenth century British forces in South Asia. The CSS hex is desaturated and slightly olive, distinct from the lighter Khaki entry. Outdoor gear and earthy interior palettes use it as a primary or secondary tone. Pair with deep navy for type contrast, or with cream and warm wood for a calmer outdoor palette. The low chroma makes it easy on the eye for large-area surfaces; long-form reading against a Dark Khaki background feels less fatiguing than against pure white under tungsten light at evening hours.',
+    blurb: 'Dark Khaki is a muted yellow-brown named after the dust-toned uniforms of late nineteenth century British forces in South Asia. The CSS hex is desaturated and slightly olive, distinct from the lighter Khaki entry. Outdoor gear and earthy interior palettes use it as a primary or secondary tone. Deep navy handles type contrast; cream and warm wood push it toward a calmer outdoor palette. The low chroma makes it easy on the eye for large-area surfaces. Long-form reading against a Dark Khaki background feels less fatiguing than against pure white under tungsten light at evening hours.',
   },
   {
     slug: 'darkmagenta',
@@ -370,7 +370,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'purple',
     source: 'css',
     related: ['purple', 'material-purple-500', 'tailwind-fuchsia-600'],
-    blurb: 'Dark Magenta is a deep, slightly red-leaning purple, sitting between true purple and magenta. The CSS hex is rich enough for legible button states and small text against white. Cultural associations are mixed: religious, theatrical, and luxurious depending on context. Use it as a brand accent for cosmetics, premium services, or arts organizations. It pairs well with chartreuse for complementary tension, or with deep cream for an editorial palette. Reserve full-area use for hero sections; over large UI surfaces it feels heavy and can compete with the type for foreground attention. Body text against white passes AAA at standard sizes.',
+    blurb: 'Dark Magenta is a deep, slightly red-leaning purple, sitting between true purple and magenta. The CSS hex is rich enough for legible button states and small text against white. Cultural associations are mixed: religious, theatrical, and luxurious depending on context. Cosmetics, premium services, and arts organizations use it as a brand accent. Chartreuse alongside gives complementary tension; deep cream makes an editorial palette. Hero sections suit full-area use; over large UI surfaces it feels heavy and can compete with the type for foreground attention. Body text against white passes AAA at standard sizes.',
   },
   {
     slug: 'darkolivegreen',
@@ -379,7 +379,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'css',
     related: ['bootstrap-success', 'darkgreen', 'seagreen'],
-    blurb: 'Dark Olive Green is the deep gray-green of preserved olives and military field jackets. The CSS hex is desaturated and earthy, distinct from the brighter Olive Drab. Outdoor brands and natural-product packaging use it as a primary or grounding color. Pair with cream and brass for a heritage palette, or with bright coral for unexpected warmth. The low chroma makes it suitable for large surfaces without fatigue and works well as a background for cream-colored type. Body text against white passes AAA at all standard sizes; the chroma is low enough that adjacent text rarely vibrates.',
+    blurb: 'Dark Olive Green is the deep gray-green of preserved olives and military field jackets. The CSS hex is desaturated and earthy, distinct from the brighter Olive Drab. Outdoor brands and natural-product packaging use it as a primary or grounding color. Cream and brass alongside give a heritage palette; bright coral provides unexpected warmth. The low chroma makes it suitable for large surfaces without fatigue and works well as a background for cream-colored type. Body text against white passes AAA at all standard sizes; the chroma is low enough that adjacent text rarely vibrates.',
   },
   {
     slug: 'darkorange',
@@ -388,7 +388,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'orange',
     source: 'css',
     related: ['tailwind-amber-500', 'orange', 'coral'],
-    blurb: 'Dark Orange is the saturated, slightly red-leaning orange of late autumn pumpkins. The CSS hex is brighter than burnt orange and more saturated than CSS Orange, carrying high energy without tipping into red. It is a strong call-to-action color for energetic brands in sports, e-commerce, and food delivery. Pair with deep navy or charcoal for type contrast; pairing with red creates visual confusion. Against white it passes contrast for headlines but should be checked at body-text sizes. Body text against white in Dark Orange falls below AA at sizes under 18px and should be reserved for emphasis.',
+    blurb: 'Dark Orange is the saturated, slightly red-leaning orange of late autumn pumpkins. The CSS hex is brighter than burnt orange and more saturated than CSS Orange, carrying high energy without tipping into red. It is a strong call-to-action color for energetic brands in sports, e-commerce, and food delivery. Deep navy or charcoal handles type contrast; pairing with red creates visual confusion. Against white it passes contrast for headlines but should be checked at body-text sizes. Body text against white in Dark Orange falls below AA at sizes under 18px and works best for emphasis.',
   },
   {
     slug: 'darkorchid',
@@ -397,7 +397,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'indigo',
     source: 'css',
     related: ['darkviolet', 'blueviolet', 'tailwind-purple-600'],
-    blurb: 'Dark Orchid is a vivid mid-purple named after the bloom rather than the leaf. The CSS hex has high chroma at mid-low lightness and reads as theatrical purple. Cosmetics, music, and arts branding use it as a primary accent. Pair with deep teal or gold for a luxury palette, or with pale cream for a softer contrast. It is too saturated for large surfaces but works well as a button color, link state, or display heading on white backgrounds. Body text contrast against white passes AA at standard sizes; the saturation level can feel intense in long blocks of text and is best for headlines.',
+    blurb: 'Dark Orchid is a vivid mid-purple named after the bloom rather than the leaf. The CSS hex has high chroma at mid-low lightness and reads as theatrical purple. Cosmetics, music, and arts branding use it as a primary accent. Deep teal or gold alongside gives a luxury palette; pale cream softens the contrast. It is too saturated for large surfaces but works well as a button color, link state, or display heading on white backgrounds. Body text contrast against white passes AA at standard sizes; the saturation level can feel intense in long blocks of text and suits headlines best.',
   },
   {
     slug: 'darkred',
@@ -406,7 +406,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'brown',
     source: 'css',
     related: ['maroon', 'brown', 'saddlebrown'],
-    blurb: 'Dark Red is the deep, slightly brown-leaning red of dried blood and aged wine. The CSS hex is one of the most legible red shades on white because the depth pushes it firmly above AA contrast thresholds for normal text. It is a workhorse for financial, automotive, and luxury brands where seriousness matters more than energy. Pair with cream for editorial palettes, or with deep navy for a richer tonal stack. Use sparingly: large fields of dark red read as heavy and can feel ominous in unintended contexts. Body text against white passes AAA at all standard sizes.',
+    blurb: 'Dark Red is the deep, slightly brown-leaning red of dried blood and aged wine. The CSS hex is one of the most legible red shades on white because the depth pushes it firmly above AA contrast thresholds for normal text. It is a workhorse for financial, automotive, and luxury brands where seriousness matters more than energy. Cream alongside gives editorial palettes; deep navy makes a richer tonal stack. Use sparingly — large fields of dark red read as heavy and can feel ominous in unintended contexts. Body text against white passes AAA at all standard sizes.',
   },
   {
     slug: 'darksalmon',
@@ -415,7 +415,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'orange',
     source: 'css',
     related: ['lightsalmon', 'sandybrown', 'dusty-rose'],
-    blurb: 'Dark Salmon is a muted pink-orange named after the slightly darker flesh of fresh-caught Atlantic salmon. The CSS hex sits between Salmon and Peach Puff, with low chroma and warm undertones. Beauty, wellness, and food brands use it as a soft accent that suggests warmth without bright energy. Pair with deep teal for complementary contrast, or with charcoal for type. Avoid pairing with bright reds, which will pull the warmth out and make it look muddy by comparison. Body text against white falls below AA at every size; reserve it for backgrounds and accents.',
+    blurb: 'Dark Salmon is a muted pink-orange named after the slightly darker flesh of fresh-caught Atlantic salmon. The CSS hex sits between Salmon and Peach Puff, with low chroma and warm undertones. Beauty, wellness, and food brands use it as a soft accent that suggests warmth without bright energy. Deep teal alongside gives complementary contrast; charcoal handles type. Bright reds will pull the warmth out and make it look muddy by comparison. Body text against white falls below AA at every size, so its proper home is backgrounds and accents.',
   },
   {
     slug: 'darkseagreen',
@@ -424,7 +424,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'css',
     related: ['mediumaquamarine', 'bootstrap-teal', 'mediumseagreen'],
-    blurb: 'Dark Sea Green is a muted, dusty mid-green named after the deeper shade of seaweed. The CSS hex has low chroma and a slight blue cast, distinct from the warmer mid-greens in the spec. It enjoys steady use in wellness, organic-food, and home-decor branding where a calmer green is preferred to brighter alternatives. Pair with cream and terracotta for a natural palette, or with off-white and charcoal for a modern minimalist look. It works well as a large surface tone without fatiguing the eye. Body text against white passes AA at headline sizes but is borderline below 14px.',
+    blurb: 'Dark Sea Green is a muted, dusty mid-green named after the deeper shade of seaweed. The CSS hex has low chroma and a slight blue cast, distinct from the warmer mid-greens in the spec. It enjoys steady use in wellness, organic-food, and home-decor branding where a calmer green is preferred to brighter alternatives. Cream and terracotta alongside give a natural palette; off-white and charcoal push it toward a modern minimalist look. It works well as a large surface tone without fatiguing the eye. Body text against white passes AA at headline sizes but is borderline below 14px.',
   },
   {
     slug: 'darkslateblue',
@@ -433,7 +433,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'indigo',
     source: 'css',
     related: ['rebeccapurple', 'material-deep-purple-500', 'indigo'],
-    blurb: 'Dark Slate Blue is a deep, slightly violet-leaning blue-gray with strong heritage associations. The CSS hex is dark enough to function as type against pale backgrounds and works well as a primary brand color for financial, legal, or editorial products. It pairs well with cream and warm gold for an editorial palette, or with rust accents for a heritage look. Against white the contrast holds at small sizes. Against off-white it produces a calm library-shelf feel that suits long-form reading layouts. Body text against white passes AAA at every size, making it one of the more accessible blue-purples in the spec.',
+    blurb: 'Dark Slate Blue is a deep, slightly violet-leaning blue-gray with strong heritage associations. The CSS hex is dark enough to function as type against pale backgrounds and works well as a primary brand color for financial, legal, or editorial products. Cream and warm gold alongside give an editorial palette; rust accents push it toward a heritage look. Against white the contrast holds at small sizes. Against off-white it produces a calm library-shelf feel that suits long-form reading layouts. Body text against white passes AAA at every size, making it one of the more accessible blue-purples in the spec.',
   },
   {
     slug: 'darkslategray',
@@ -443,7 +443,7 @@ export const NAMED_COLORS: NamedColor[] = [
     source: 'css',
     aliases: ['darkslategrey'],
     related: ['teal', 'darkcyan', 'tailwind-teal-600'],
-    blurb: 'Dark Slate Gray is a deep, slightly green-blue charcoal. The CSS hex is darker than most modern UI grays and has enough chroma to feel intentional rather than neutral. Architecture, interior, and editorial design use it as a sophisticated alternative to pure charcoal because the cool undertone reads as considered rather than default. Pair with cream and warm wood for interior palettes, or with bright coral for high-contrast layouts. As body text on white it passes AAA comfortably. The chroma is low enough that adjacent saturated accent colors will not produce visual vibration against it.',
+    blurb: 'Dark Slate Gray is a deep, slightly green-blue charcoal. The CSS hex is darker than most modern UI grays and has enough chroma to feel intentional rather than neutral. Architecture, interior, and editorial design use it as a sophisticated alternative to pure charcoal because the cool undertone reads as considered rather than default. Cream and warm wood alongside give interior palettes; bright coral makes a high-contrast layout. As body text on white it passes AAA comfortably. The chroma is low enough that adjacent saturated accent colors will not produce visual vibration against it.',
   },
   {
     slug: 'darkturquoise',
@@ -452,7 +452,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'teal',
     source: 'css',
     related: ['mediumturquoise', 'material-cyan-500', 'turquoise'],
-    blurb: 'Dark Turquoise is the saturated mid-cyan of swimming-pool tiles and turquoise jewelry. The CSS hex is brighter than the actual mineral, sitting closer to a fluorescent aqua. Travel, beauty, and wellness brands use it as a fresh primary; it carries strong tropical and aquatic associations across cultures. Pair with cream for a beach palette, or with deep navy for tonal depth. Reserve large-area use for hero sections; full-saturation turquoise can vibrate against white at smaller sizes. Body text contrast against white falls below AA at every size; the value works as a surface or button color only, not as text.',
+    blurb: 'Dark Turquoise is the saturated mid-cyan of swimming-pool tiles and turquoise jewelry. The CSS hex is brighter than the actual mineral, sitting closer to a fluorescent aqua. Travel, beauty, and wellness brands use it as a fresh primary; it carries strong tropical and aquatic associations across cultures. Cream alongside gives a beach palette; deep navy adds tonal depth. Hero sections suit large-area use — full-saturation turquoise can vibrate against white at smaller sizes. Body text contrast against white falls below AA at every size; the value works as a surface or button color only, not as text.',
   },
   {
     slug: 'darkviolet',
@@ -461,7 +461,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'indigo',
     source: 'css',
     related: ['darkorchid', 'blueviolet', 'tailwind-purple-600'],
-    blurb: 'Dark Violet is a saturated mid-purple with strong red-leaning undertones, distinct from the cooler Blue Violet. The CSS hex carries enough chroma to function as a primary accent against white at headline sizes. Cosmetic, arts, and premium-service branding use it for visual emphasis. Pair with chartreuse for complementary tension, or with deep gold for luxury contexts. Reserve body-text application for larger sizes; at small sizes the contrast against white is on the borderline. Body text contrast against white passes AA at sizes 16px and above, just barely below AAA at body sizes.',
+    blurb: 'Dark Violet is a saturated mid-purple with strong red-leaning undertones, distinct from the cooler Blue Violet. The CSS hex carries enough chroma to function as a primary accent against white at headline sizes. Cosmetic, arts, and premium-service branding use it for visual emphasis. Chartreuse alongside gives complementary tension; deep gold pushes it toward luxury contexts. Larger sizes suit body-text application; at small sizes the contrast against white is on the borderline. Body text contrast against white passes AA at sizes 16px and above, just barely below AAA at body sizes.',
   },
   {
     slug: 'deeppink',
@@ -470,7 +470,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'pink',
     source: 'css',
     related: ['tailwind-pink-500', 'tailwind-pink-600', 'material-pink-500'],
-    blurb: 'Deep Pink is the high-chroma magenta-pink that powered early 2000s pop branding and shows no sign of fading. The CSS hex is one of the most saturated pink values an sRGB display can produce. Use it for energetic accent only; large fields of Deep Pink fatigue the eye within seconds. It pairs well with deep teal for a 90s pop palette, or with cream for a romantic editorial look. Against white the contrast is sufficient for headlines but the saturation can feel aggressive at body text sizes. Body text contrast against white passes AA at headline sizes; below 14px it is borderline.',
+    blurb: 'Deep Pink is the high-chroma magenta-pink that powered early 2000s pop branding and shows no sign of fading. The CSS hex is one of the most saturated pink values an sRGB display can produce. Energetic accent only — large fields of Deep Pink fatigue the eye within seconds. Deep teal alongside gives a 90s pop palette; cream pushes it toward a romantic editorial look. Against white the contrast is sufficient for headlines but the saturation can feel aggressive at body text sizes. Body text contrast against white passes AA at headline sizes; below 14px it is borderline.',
   },
   {
     slug: 'deepskyblue',
@@ -479,7 +479,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'css',
     related: ['bootstrap-info', 'material-light-blue-500', 'tailwind-cyan-500'],
-    blurb: 'Deep Sky Blue is the saturated cyan-blue of a cloudless midday sky at altitude. The CSS hex carries strong association with technology, communications, and travel brands. It is bright enough to feel energetic without veering into childish primary blue. Pair with cream and warm coral for an open-air palette, or with deep navy for tonal depth. At full saturation it reads as a primary accent against white. The contrast for body text is borderline at small sizes, so reserve it for headlines, buttons, and decorative elements rather than long paragraphs. Body text against white falls below AA at body sizes.',
+    blurb: 'Deep Sky Blue is the saturated cyan-blue of a cloudless midday sky at altitude. The CSS hex carries strong association with technology, communications, and travel brands. It is bright enough to feel energetic without veering into childish primary blue. Cream and warm coral alongside give an open-air palette; deep navy adds tonal depth. At full saturation it reads as a primary accent against white. The contrast for body text is borderline at small sizes, so headlines, buttons, and decorative elements suit it better than long paragraphs. Body text against white falls below AA at body sizes.',
   },
   {
     slug: 'dimgray',
@@ -489,7 +489,7 @@ export const NAMED_COLORS: NamedColor[] = [
     source: 'css',
     aliases: ['dimgrey'],
     related: ['tailwind-neutral-500', 'tailwind-zinc-500', 'tailwind-stone-500'],
-    blurb: 'Dim Gray is a mid-charcoal that sits between true gray and dark charcoal. The CSS hex is calibrated to feel low-energy without disappearing into black, which makes it a steady choice for secondary type, borders, and de-emphasized labels in interface design. The lack of color cast keeps it neutral against any accent color. Against white it passes AAA contrast comfortably; against light gray surfaces it remains readable but loses some impact, so consider stepping down to a darker shade if needed. Body text on Dim Gray surfaces should use white or near-white type to maintain legible contrast.',
+    blurb: 'Dim Gray is a mid-charcoal that sits between true gray and dark charcoal. The CSS hex is calibrated to feel low-energy without disappearing into black, which makes it a steady choice for secondary type, borders, and de-emphasized labels in interface design. The lack of color cast keeps it neutral against any accent color. Against white it passes AAA contrast comfortably; against light gray surfaces it remains readable but loses some impact, so a darker shade may serve better. Body text on Dim Gray surfaces should use white or near-white type to maintain legible contrast.',
   },
   {
     slug: 'dodgerblue',
@@ -498,7 +498,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'css',
     related: ['material-blue-500', 'tailwind-blue-500', 'cornflowerblue'],
-    blurb: 'Dodger Blue is a bright mid-blue named after the baseball franchise rather than the artful pedestrian. The CSS hex sits between Sky Blue and Royal Blue, vivid enough to feel modern but desaturated enough to avoid the dated feel of pure web-safe blue. It became one of the standard primary action colors of the 2010s, appearing in early Twitter, Trello, and a long list of SaaS dashboards. Pair with charcoal type and cream surfaces for a friendly tech palette. Body text contrast against white falls below AA at body sizes; reserve text use for headlines and rely on dark text overlays for button surfaces.',
+    blurb: 'Dodger Blue is a bright mid-blue named after the baseball franchise rather than the artful pedestrian. The CSS hex sits between Sky Blue and Royal Blue, vivid enough to feel modern but desaturated enough to avoid the dated feel of pure web-safe blue. It became one of the standard primary action colors of the 2010s, appearing in early Twitter, Trello, and a long list of SaaS dashboards. Pair with charcoal type and cream surfaces for a friendly tech palette. Body text contrast against white falls below AA at body sizes, so keep text use to headlines and rely on dark overlays for button surfaces.',
   },
   {
     slug: 'dusty-rose',
@@ -507,7 +507,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'orange',
     source: 'curated',
     related: ['tan', 'burlywood', 'darksalmon'],
-    blurb: 'Dusty Rose is a curated muted pink with strong brown undertones, popular in fashion, hospitality, and wedding branding. The hex sits in the warm-neutral zone of the color wheel and reads as romantic without leaning juvenile. Pair with sage green for a vintage palette, with cream and brass for luxury hospitality, or with deep burgundy for an editorial fashion contrast. As a primary brand color it works best in lifestyle contexts; in business or technical interfaces it can feel out of register against the conventional palette. Body text contrast against white fails AA at every size; treat it as a surface rather than a type color.',
+    blurb: 'Dusty Rose is a curated muted pink with strong brown undertones, popular in fashion, hospitality, and wedding branding. The hex sits in the warm-neutral zone of the color wheel and reads as romantic without leaning juvenile. Pair with sage green for vintage, with cream and brass for luxury hospitality, or with deep burgundy for editorial fashion contrast. As a primary brand color it works in lifestyle contexts; in business or technical interfaces it can feel out of register against the conventional palette. Body text contrast against white fails AA at every size — treat it as a surface, not a type color.',
   },
   {
     slug: 'firebrick',
@@ -516,7 +516,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'red',
     source: 'css',
     related: ['crimson', 'tailwind-red-600', 'bootstrap-danger'],
-    blurb: 'Firebrick is the deep, slightly brown-leaning red of weathered house bricks. The CSS hex has high chroma at low-mid lightness, giving it strong presence as a primary accent or display heading color. It carries warm, grounded, heritage associations: architecture, leather goods, and serious editorial design. Pair with cream and dark charcoal for a heritage palette, or with deep teal for a striking contrast. Against white the contrast holds at body text sizes, making it one of the more accessible reds in the CSS spec. Body text against white passes AAA at standard sizes; smaller-than-12px should still be verified per browser.',
+    blurb: 'Firebrick is the deep, slightly brown-leaning red of weathered house bricks. The CSS hex has high chroma at low-mid lightness, giving it strong presence as a primary accent or display heading color. It carries warm, grounded, heritage associations: architecture, leather goods, serious editorial design. Pair with cream and dark charcoal for a heritage palette, or with deep teal for a striking contrast. Against white the contrast holds at body text sizes, making it one of the more accessible reds in the CSS spec. Body text against white passes AAA at standard sizes; below 12px still verify per browser.',
   },
   {
     slug: 'floralwhite',
@@ -525,7 +525,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'neutral',
     source: 'css',
     related: ['seashell', 'ivory', 'snow'],
-    blurb: 'Floral White is one of the warmest off-whites in the CSS spec, sitting closer to ivory than to pure white. The name refers to the cream color of common garden flowers, and the hex carries a faint yellow undertone that makes it feel inviting rather than clinical. Stationery, beauty, and wedding designers use it as a background that softens dark text without committing to a real cream. Pair with deep brown for type, or with muted forest green for a softer secondary accent. The warm cast makes long-form reading less fatiguing than pure white under tungsten light at evening hours.',
+    blurb: 'Floral White is one of the warmest off-whites in the CSS spec, closer to ivory than to pure white. The name refers to the cream color of common garden flowers, and the hex carries a faint yellow undertone that makes it feel inviting rather than clinical. Stationery, beauty, and wedding designers use it as a background that softens dark text without committing to a real cream. Pair with deep brown for type, or with muted forest green for a softer secondary accent. The warm cast makes long-form reading less fatiguing than pure white under tungsten light at evening hours.',
   },
   {
     slug: 'forestgreen',
@@ -535,7 +535,7 @@ export const NAMED_COLORS: NamedColor[] = [
     source: 'css',
     aliases: ['forest-green'],
     related: ['green', 'bootstrap-success', 'seagreen'],
-    blurb: 'Forest Green is the deep, slightly cool green of pine and fir canopy seen in late afternoon. The CSS hex is darker than most digital greens and is one of the more legible greens against white at body text sizes. Heritage outdoor brands, conservation groups, and editorial design use it as a primary identity color. Pair with cream and brass for a classic outdoor palette, or with terracotta for an unexpected complementary accent. It works well as a UI accent for environmental or finance products. Body text against white passes AAA at all standard sizes, so the value carries long-form use confidently.',
+    blurb: 'Forest Green is the deep, slightly cool green of pine and fir canopy seen in late afternoon. The CSS hex is darker than most digital greens and one of the more legible greens against white at body text sizes. Heritage outdoor brands, conservation groups, and editorial design use it as a primary identity color. Pair with cream and brass for a classic outdoor palette, or with terracotta for an unexpected complementary accent. Body text against white passes AAA at all standard sizes, so the value carries long-form use confidently.',
   },
   {
     slug: 'gainsboro',
@@ -544,7 +544,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'gray',
     source: 'css',
     related: ['lightgray', 'silver', 'darkgray'],
-    blurb: 'Gainsboro is the very light gray named after a town in Lincolnshire, England, by way of the eighteenth-century painter Thomas Gainsborough. The CSS hex is a quiet, balanced gray with no obvious cool or warm cast, which makes it a useful neutral for borders, dividers, and disabled-state surfaces in interface design. Against white it provides just enough separation to read as a distinct layer without competing for attention. Pair with mid-gray text and a single saturated accent. Body text against Gainsboro surfaces should use a deep charcoal or near-black to maintain legible contrast at all sizes.',
+    blurb: 'Gainsboro is the very light gray named after a town in Lincolnshire, England, by way of the eighteenth-century painter Thomas Gainsborough. The CSS hex is a quiet, balanced gray with no obvious cool or warm cast, which makes it a useful neutral for borders, dividers, and disabled-state surfaces in interface design. Against white it provides just enough separation to read as a distinct layer without competing for attention. Body text on Gainsboro surfaces should use a deep charcoal or near-black to maintain legible contrast at all sizes.',
   },
   {
     slug: 'ghostwhite',
@@ -553,7 +553,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'neutral',
     source: 'css',
     related: ['bootstrap-light', 'aliceblue', 'snow'],
-    blurb: 'Ghost White is the slightly blue-tinted off-white that suggests cold light without committing to a real blue. The CSS hex sits one degree away from white, distinguishable mainly when placed next to true white in adjacent surfaces. Tech, financial, and dashboard designs use it as a background that reads as clean without the harshness of pure white. Pair with charcoal or near-black for type, and reserve real color accents for buttons, badges, and emphasized text. Two Ghost White surfaces side by side will appear identical in dim viewing; treat it as a single-layer surface rather than for nested cards.',
+    blurb: 'Ghost White is the slightly blue-tinted off-white that suggests cold light without committing to a real blue. The CSS hex sits one degree away from white, distinguishable mainly when placed next to true white in adjacent surfaces. Tech, financial, and dashboard designs use it as a background that reads as clean without the harshness of pure white. Pair with charcoal or near-black for type, and reserve real color accents for buttons, badges, and emphasized text. Two Ghost White surfaces side by side will appear identical in dim viewing — a single-layer surface, not the basis for nested cards.',
   },
   {
     slug: 'gold',
@@ -562,7 +562,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'css',
     related: ['mustard', 'bootstrap-warning', 'khaki'],
-    blurb: 'Gold in CSS is the bright, saturated yellow of metallic gold seen in direct sunlight rather than the deeper bronze of jewelry. The hex has very high chroma and lightness, which means it cannot be used reliably as text against white because the contrast fails accessibility checks. Reserve it for background fills, badges, and decorative accents. It pairs well with deep navy or burgundy for heritage palettes, or with matte black for luxury branding. Avoid pairing with yellow-green, which produces visual conflict. Body text contrast against white fails AA at every size; gold must be used with dark text overlays on surfaces.',
+    blurb: 'Gold in CSS is the bright, saturated yellow of metallic gold seen in direct sunlight, not the deeper bronze of jewelry. The hex has very high chroma and lightness, which means it cannot be used reliably as text against white because the contrast fails accessibility checks. It pairs well with deep navy or burgundy for heritage palettes, or with matte black for luxury branding. Yellow-green next to it produces visual conflict. Body text contrast against white fails AA at every size — gold belongs on surfaces with dark text overlays, badges, and decorative accents.',
   },
   {
     slug: 'goldenrod',
@@ -571,7 +571,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'css',
     related: ['tailwind-yellow-500', 'darkkhaki', 'bootstrap-warning'],
-    blurb: 'Solidago, the goldenrod, blankets late-summer roadsides across North America in exactly the kind of warm mustard the CSS hex tries to capture. The web value is more saturated than the actual wildflower but reads cleanly as harvest yellow. Editorial brands such as Field Notes use tones in this band for limited-edition covers because the warmth signals craft. Drop charcoal `#262626` type on a Goldenrod field and the contrast holds at AAA for headings, AA only at body sizes 18px and above. Pair it with deep teal for the kind of complementary tension Saul Bass leaned on in his late-period film posters; pure black flattens the warmth and should be avoided.',
+    blurb: 'Solidago, the goldenrod, blankets late-summer roadsides across North America in exactly the kind of warm mustard the CSS hex tries to capture. The web value is more saturated than the actual wildflower but reads cleanly as harvest yellow. Editorial brands such as Field Notes use tones in this band for limited-edition covers because the warmth signals craft. Drop charcoal `#262626` type on a Goldenrod field and the contrast holds at AAA for headings, AA only at body sizes 18px and above. Pair it with deep teal for the kind of complementary tension Saul Bass leaned on in his late-period film posters; pure black flattens the warmth.',
   },
   {
     slug: 'gray',
@@ -581,7 +581,7 @@ export const NAMED_COLORS: NamedColor[] = [
     source: 'css',
     aliases: ['grey'],
     related: ['tailwind-neutral-500', 'bootstrap-secondary', 'tailwind-stone-500'],
-    blurb: 'Gray in CSS is the dead-center neutral at #808080, the midpoint of the RGB cube. It is the textbook medium gray but rarely appears in modern design systems because purpose-built neutrals with warm or cool casts tend to feel more intentional. Use it sparingly as a stand-in for true neutral in code samples or technical documentation. Most UI designs prefer a slightly cooler or warmer mid-gray for type and borders. Body text in CSS Gray against white passes AA at sizes 18px and above but fails at body text sizes; for type, step down to a darker gray like Dim Gray or #4a5565.',
+    blurb: 'Gray in CSS is the dead-center neutral at #808080, the midpoint of the RGB cube. It is the textbook medium gray but rarely appears in modern design systems because purpose-built neutrals with warm or cool casts tend to feel more intentional. Most UI designs prefer a slightly cooler or warmer mid-gray for type and borders, so CSS Gray ends up as a stand-in for true neutral in code samples or technical documentation. Body text in CSS Gray against white passes AA at sizes 18px and above but fails at body text sizes; for type, step down to a darker gray like Dim Gray or #4a5565.',
   },
   {
     slug: 'green',
@@ -590,7 +590,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'css',
     related: ['forestgreen', 'bootstrap-success', 'seagreen'],
-    blurb: 'CSS Green is `#008000`, a value chosen in 1996 because it sat exactly halfway between the brightest sRGB green and black on each channel. It is rarely what designers want when they say green — modern palettes reach for the brighter Tailwind `#22c55e` or Material Green 500 instead — but the keyword still carries the historical weight. The colour reads as serious rather than fresh. Pair it with cream and warm oak for an outdoor palette, or with charcoal `#0a0a0a` for a hospital-grade clinical look. Body text against white passes AAA at sizes 16px and above, which makes it usable for long-form layouts that need a green hierarchy colour.',
+    blurb: 'CSS Green is `#008000`, a value chosen in 1996 because it sat exactly halfway between the brightest sRGB green and black on each channel. It is rarely what designers want when they say green; modern palettes reach for the brighter Tailwind `#22c55e` or Material Green 500 instead, but the keyword still carries historical weight. The colour reads as serious rather than fresh. Pair it with cream and warm oak for an outdoor palette, or with charcoal `#0a0a0a` for a hospital-grade clinical look. Body text against white passes AAA at sizes 16px and above, which makes it usable for long-form layouts that need a green hierarchy colour.',
   },
   {
     slug: 'greenyellow',
@@ -599,7 +599,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'css',
     related: ['chartreuse', 'lawngreen', 'palegreen'],
-    blurb: 'Green Yellow is the safety-vest hue construction crews and emergency dispatchers reach for when they need a colour the eye cannot ignore. The CSS value sits in the same band as 3M\'s Diamond Grade reflective tape. Use it strictly as an accent — a tag pill, a focus ring, a warning state — never as a surface. It cannot function as body text against any white background, falling well below AA at every size. Pair it with a deep ink like `#0a0a0a` for type, or use it as a single splash against muted forest green to amplify the contrast without the surrounding palette tipping into a sports-team aesthetic.',
+    blurb: 'Green Yellow is the safety-vest hue construction crews and emergency dispatchers reach for when they need a colour the eye cannot ignore. The CSS value sits in the same band as 3M\'s Diamond Grade reflective tape. Use it strictly as an accent — a tag pill, a focus ring, a warning state. Never as a surface. It cannot function as body text against any white background, falling well below AA at every size. Pair it with a deep ink like `#0a0a0a` for type, or place it as a single splash against muted forest green to amplify the contrast without the surrounding palette tipping into a sports-team aesthetic.',
   },
   {
     slug: 'honeydew',
@@ -608,7 +608,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'css',
     related: ['aquamarine', 'seafoam', 'palegreen'],
-    blurb: 'Honeydew is a pale, slightly green-tinted off-white named after the melon. The CSS hex is one of the quieter pastels in the spec and works well as a calm background for wellness, food, and skincare brands. It pairs with deep green for type, or with terracotta for a softer secondary accent. Two Honeydew surfaces sitting adjacent to each other will read as identical in dim viewing conditions, so use it as a single-layer background rather than for layered surfaces. The cool tint distinguishes it from warm off-whites like Floral White or Seashell, which carry yellow undertones instead.',
+    blurb: 'Honeydew is a pale, slightly green-tinted off-white named after the melon. The CSS hex is one of the quieter pastels in the spec and works well as a calm background for wellness, food, and skincare brands. It pairs with deep green for type, or with terracotta for a softer secondary accent. Two Honeydew surfaces sitting adjacent will read as identical in dim viewing conditions, so use it as a single-layer background rather than for layered surfaces. The cool tint distinguishes it from warm off-whites like Floral White or Seashell, which carry yellow undertones instead.',
   },
   {
     slug: 'hotpink',
@@ -617,7 +617,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'pink',
     source: 'css',
     related: ['palevioletred', 'tailwind-pink-500', 'deeppink'],
-    blurb: 'Hot Pink is the bright, saturated pink that dominated 1980s pop fashion and resurfaces in cosmetic, music, and youth-targeted branding. The CSS hex is one of the most attention-grabbing colors in the spec, with high chroma at moderate lightness. Use it as an accent rather than a body color; large fields of Hot Pink fatigue the eye and can read as juvenile. Pair with deep navy for type, with cream for a softer editorial palette, or with chartreuse for a high-energy complementary clash. Body text contrast against white passes AA only at sizes 18px and above; reserve text use for emphasis.',
+    blurb: 'Hot Pink is the bright, saturated pink that dominated 1980s pop fashion and resurfaces in cosmetic, music, and youth-targeted branding. The CSS hex is one of the most attention-grabbing colors in the spec, with high chroma at moderate lightness. Large fields of Hot Pink fatigue the eye and can read as juvenile, so it works better as an accent than as a body color. Pair with deep navy for type, with cream for a softer editorial palette, or with chartreuse for a high-energy complementary clash. Body text contrast against white passes AA only at sizes 18px and above.',
   },
   {
     slug: 'indianred',
@@ -626,7 +626,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'brown',
     source: 'css',
     related: ['terracotta', 'burnt-orange', 'chocolate'],
-    blurb: 'Indian Red is a muted, brick-toned red that takes its name from a historic pigment derived from iron-rich earth in South Asia, not from any depiction of people. The CSS hex sits at mid-lightness with moderate chroma, less aggressive than full red and more inviting than dark red. Heritage and craft brands use it as a primary accent. Pair with cream for a warmer palette, or with deep teal for unexpected contrast. Against white it carries enough contrast for buttons and headlines. Body text contrast against white passes AA at sizes 18px and above; below that it falls below the threshold.',
+    blurb: 'Indian Red is a muted, brick-toned red that takes its name from a historic pigment derived from iron-rich earth in South Asia, not from any depiction of people. The CSS hex sits at mid-lightness with moderate chroma, less aggressive than full red and more inviting than dark red. Heritage and craft brands use it as a primary accent. Pair with cream for a warmer palette, or with deep teal for unexpected contrast. Against white it carries enough contrast for buttons and headlines. Body text against white passes AA at sizes 18px and above; below that it falls below the threshold.',
   },
   {
     slug: 'indigo',
@@ -635,7 +635,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'indigo',
     source: 'css',
     related: ['darkslateblue', 'rebeccapurple', 'material-deep-purple-500'],
-    blurb: 'Indigo names a deep blue-violet historically derived from the indigofera plant, one of the oldest natural dyes still in use. The CSS hex is darker than most digital indigos and reads as a near-purple navy. Cultural associations are wide-ranging: textiles, denim, philosophy, music, the seventh color of the spectrum. Use it as a primary brand color for editorial, fashion, or contemplative products. Pair with warm cream and brass for heritage palettes, or with deep red for an unexpected accent. Body text against white passes AAA at all standard sizes, making it a confident text color for long-form layouts.',
+    blurb: 'Indigo names a deep blue-violet historically derived from the indigofera plant, one of the oldest natural dyes still in use. The CSS hex is darker than most digital indigos and reads as a near-purple navy. Cultural associations are wide-ranging: textiles, denim, philosophy, music, the seventh color of the spectrum. Editorial, fashion, and contemplative products use it as a primary brand color. Pair with warm cream and brass for heritage palettes, or with deep red for an unexpected accent. Body text against white passes AAA at all standard sizes, making it a confident text color for long-form layouts.',
   },
   {
     slug: 'ivory',
@@ -653,7 +653,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'css',
     related: ['palegoldenrod', 'mustard', 'navajowhite'],
-    blurb: 'British troops dyed their cotton uniforms with native earth in 1840s Punjab and called the result khaki, from the Urdu for dust. The CSS value drifted toward yellow over the decades of monitor-spec lists and now sits more banana than burlap, but the name still anchors it to its military origin. Patagonia and Filson both use surfaces in this band for catalogue washes because it reads as outdoors without specifying a biome. Body text in Khaki against white fails AA at every size — treat it strictly as a surface colour with dark type overlays. Pair it with deep navy `#1e3a8a` body copy for a 1940s travel-poster feel.',
+    blurb: 'British troops dyed their cotton uniforms with native earth in 1840s Punjab and called the result khaki, from the Urdu for dust. The CSS value drifted toward yellow over the decades of monitor-spec lists and now sits more banana than burlap, but the name still anchors it to its military origin. Patagonia and Filson both use surfaces in this band for catalogue washes because it reads as outdoors without specifying a biome. Body text in Khaki against white fails AA at every size, so treat it strictly as a surface colour with dark type overlays. Pair it with deep navy `#1e3a8a` body copy for a 1940s travel-poster feel.',
   },
   {
     slug: 'lavender',
@@ -671,7 +671,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'neutral',
     source: 'css',
     related: ['whitesmoke', 'seashell', 'ghostwhite'],
-    blurb: 'Lavender Blush is one of the most obscure CSS named colors, a very pale pink with a faint violet undertone. The hex reads as nearly white in normal viewing and is rarely chosen as an intentional brand color. It works as a quiet background for beauty product photography or wedding stationery where a near-white with a barely-visible warmth is wanted. Pair with deep charcoal or muted burgundy for type. Against pure white it loses all distinction and reads as a calibration discrepancy rather than a real surface, so it should never be placed adjacent to true white in a layout.',
+    blurb: 'Lavender Blush is one of the most obscure CSS named colors, a very pale pink with a faint violet undertone. The hex reads as nearly white in normal viewing and is rarely chosen as an intentional brand color. It works as a quiet background for beauty product photography or wedding stationery where a near-white with a barely-visible warmth is wanted. Pair with deep charcoal or muted burgundy for type. Against pure white it loses all distinction and reads as a calibration discrepancy rather than a real surface, so it should never sit adjacent to true white in a layout.',
   },
   {
     slug: 'lawngreen',
@@ -680,7 +680,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'css',
     related: ['chartreuse', 'lime', 'greenyellow'],
-    blurb: 'Lawn Green is the saturated, slightly yellow-leaning green of fresh turf in spring. The CSS hex is one of the brightest greens in the spec, almost neon, and is too saturated for most UI applications. Use it as a safety or marker color in maps and dashboards, or as a high-energy accent in sports and gaming branding. Against white the contrast fails at body text sizes; reserve it for backgrounds, fills, and decorative elements with dark text on top. Body text contrast against white fails AA at every size, so the value cannot function as a type color.',
+    blurb: 'Lawn Green is the saturated, slightly yellow-leaning green of fresh turf in spring. The CSS hex is one of the brightest greens in the spec, almost neon, and is too saturated for most UI applications. It functions as a safety or marker color in maps and dashboards, or as a high-energy accent in sports and gaming branding. Against white the contrast fails at body text sizes; backgrounds, fills, and decorative elements with dark text on top are where it earns its keep. Body text contrast against white fails AA at every size, so the value cannot function as a type color.',
   },
   {
     slug: 'lemonchiffon',
@@ -698,7 +698,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'css',
     related: ['lightsteelblue', 'skyblue', 'lightskyblue'],
-    blurb: 'Light Blue in CSS is a pale, slightly cyan-leaning sky blue. The hex is lighter and a touch cooler than Sky Blue, with low chroma that makes it suitable for large-area surfaces without visual fatigue. Wellness, baby goods, and tech-product branding use it as a calming background. Pair with deep navy for type, with white for layered surfaces, and with warm coral for unexpected accent contrast. Against pure white it provides enough separation to read as a distinct layer for product cards or panels. Body text against Light Blue should use a deep charcoal or near-black for legible contrast.',
+    blurb: 'Light Blue in CSS is a pale, slightly cyan-leaning sky blue. The hex is lighter and a touch cooler than Sky Blue, with low chroma that makes it suitable for large-area surfaces without visual fatigue. Wellness, baby goods, and tech-product branding use it as a calming background. Pair with deep navy for type, with white for layered surfaces, or with warm coral for unexpected accent contrast. Against pure white it provides enough separation to read as a distinct layer for product cards or panels. Body text against Light Blue should use a deep charcoal or near-black for legible contrast.',
   },
   {
     slug: 'lightcoral',
@@ -707,7 +707,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'red',
     source: 'css',
     related: ['salmon', 'tomato', 'material-red-500'],
-    blurb: 'Light Coral is the softer, paler version of Coral, with the same warm pink-orange hue at higher lightness. The CSS hex reads as a gentle, slightly muted pink and works in beauty, wellness, and editorial palettes where energy without aggression is wanted. Pair with cream for a softer look, or with deep teal for a richer contrast. Against white it does not carry enough contrast for body text; reserve it for backgrounds, headlines, and accent buttons with appropriate dark text overlays. Body text contrast against white fails AA at every size below 18px and is borderline at headline sizes.',
+    blurb: 'Light Coral is the softer, paler version of Coral, with the same warm pink-orange hue at higher lightness. The CSS hex reads as a gentle, slightly muted pink and works in beauty, wellness, and editorial palettes where energy without aggression is wanted. Pair with cream for a softer look, or with deep teal for a richer contrast. Against white it does not carry enough contrast for body text — it lives on backgrounds, headlines, and accent buttons with appropriate dark text overlays. Body text contrast against white fails AA at every size below 18px and is borderline at headline sizes.',
   },
   {
     slug: 'lightcyan',
@@ -716,7 +716,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'teal',
     source: 'css',
     related: ['paleturquoise', 'powderblue', 'cyan'],
-    blurb: 'Light Cyan is the palest member of the cyan family, a very faint blue-green that reads as nearly off-white. The CSS hex is rarely chosen as an intentional brand color because the saturation is too low to register as a real cyan at typical viewing distances. It works as a quiet background for medical, dental, and clinical branding where a hint of cool fresh feel is wanted. Pair with deep teal or charcoal for type. Two Light Cyan surfaces side by side will look identical in normal viewing; treat the color as a single-layer surface tone rather than for nested cards.',
+    blurb: 'Light Cyan is the palest member of the cyan family, a very faint blue-green that reads as nearly off-white. The CSS hex is rarely chosen as an intentional brand color because the saturation is too low to register as a real cyan at typical viewing distances. It works as a quiet background for medical, dental, and clinical branding where a hint of cool fresh feel is wanted. Pair with deep teal or charcoal for type. Two Light Cyan surfaces side by side will look identical in normal viewing; treat the color as a single-layer surface tone rather than the basis for nested cards.',
   },
   {
     slug: 'lightgoldenrodyellow',
@@ -725,7 +725,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'css',
     related: ['lemonchiffon', 'cornsilk', 'lightyellow'],
-    blurb: 'Light Goldenrod Yellow is one of the most awkwardly named CSS colors and one of the palest. The hex is a faint cream with a yellow undertone, slightly lighter than Lemon Chiffon. Food, beauty, and stationery designs use it as a warm background that suggests sunlight without committing to a real yellow. Pair with deep brown or warm charcoal for type. Against pure white the difference is subtle; use it in layered surfaces rather than as a primary background. Body text against this surface should use a deep neutral; light type disappears completely against the warm pale cast.',
+    blurb: 'Light Goldenrod Yellow is one of the most awkwardly named CSS colors and one of the palest. The hex is a faint cream with a yellow undertone, slightly lighter than Lemon Chiffon. Food, beauty, and stationery designs use it as a warm background that suggests sunlight without committing to a real yellow. Pair with deep brown or warm charcoal for type. Against pure white the difference is subtle, so it works better in layered surfaces than as a primary background. Body text against this surface should use a deep neutral; light type disappears completely against the warm pale cast.',
   },
   {
     slug: 'lightgray',
@@ -744,7 +744,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'css',
     related: ['palegreen', 'mediumspringgreen', 'seafoam'],
-    blurb: 'Light Green is a pale, slightly yellow-leaning green that reads as fresh and friendly. The CSS hex is lighter than Pale Green and works as a primary surface for wellness, food, and outdoor brands. Pair with deep green for type, with cream for a softer palette, or with terracotta for an unexpected warmth. Against white it provides reasonable separation; against pure green it loses distinction quickly. As a UI accent it works well for success states with dark text overlays. Body text contrast against white fails AA at every size; use it as a surface only.',
+    blurb: 'Light Green is a pale, slightly yellow-leaning green that reads as fresh and friendly. The CSS hex is lighter than Pale Green and works as a primary surface for wellness, food, and outdoor brands. Pair with deep green for type, with cream for a softer palette, or with terracotta for an unexpected warmth. Against white it provides reasonable separation; against pure green it loses distinction quickly. As a UI accent it works for success states with dark text overlays. Body text contrast against white fails AA at every size — surface use only.',
   },
   {
     slug: 'lightpink',
@@ -753,7 +753,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'pink',
     source: 'css',
     related: ['pink', 'hotpink', 'palevioletred'],
-    blurb: 'Light Pink is the pale, slightly warm pink of, originally, baby clothes. The CSS hex reads as gentle, romantic, and slightly nostalgic. Beauty, wellness, and stationery designs use it as a background or secondary surface. Pair with deep burgundy for type, or with muted teal for a calmer secondary accent. Avoid pairing it with hot pink, which makes the lightness shift jump uncomfortably and the layout starts to feel like a gradient went wrong. Against white it provides enough separation to read as a distinct layer for product cards or panels in a layered UI.',
+    blurb: 'Light Pink is the pale, slightly warm pink of, originally, baby clothes. The CSS hex reads as gentle, romantic, and slightly nostalgic. Beauty, wellness, and stationery designs use it as a background or secondary surface. Pair with deep burgundy for type, or with muted teal for a calmer secondary accent. Pair it with hot pink and the lightness shift jumps uncomfortably, with the layout starting to feel like a gradient went wrong. Against white it provides enough separation to read as a distinct layer for product cards or panels in a layered UI.',
   },
   {
     slug: 'lightsalmon',
@@ -762,7 +762,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'orange',
     source: 'css',
     related: ['sandybrown', 'darksalmon', 'dusty-rose'],
-    blurb: 'Light Salmon is a pale, warm pink-orange that sits between Peach Puff and Salmon. The CSS hex reads as a gentle, sunlit pink and works in beauty, wellness, and editorial palettes. Pair with cream for a quieter palette, or with deep teal for unexpected contrast. It is too pale to function as text against white but works well as a background or large surface color. The warm undertone keeps it from feeling clinical against neutral grays. Body text contrast against white fails AA at every size; reserve it as a surface tone with dark text overlays.',
+    blurb: 'Light Salmon is a pale, warm pink-orange that sits between Peach Puff and Salmon. The CSS hex reads as a gentle, sunlit pink and works in beauty, wellness, and editorial palettes. Pair with cream for a quieter palette, or with deep teal for unexpected contrast. It is too pale to function as text against white but works well as a background or large surface color. The warm undertone keeps it from feeling clinical against neutral grays. Body text contrast against white fails AA at every size, so the surface needs dark text overlays.',
   },
   {
     slug: 'lightseagreen',
@@ -780,7 +780,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'css',
     related: ['skyblue', 'lightsteelblue', 'lightblue'],
-    blurb: 'Light Sky Blue is a pale, slightly cyan-leaning sky blue, lighter and more saturated than Light Blue. The CSS hex reads as fresh and open, common in travel, weather, and aviation branding. Pair with deep navy for type, with cream for a softer palette, or with warm coral for accent. Against white it provides reasonable separation but is too pale for body text. Reserve large-area use for hero sections and panel backgrounds; in dashboards and content areas the saturation level can fight with adjacent data visualization colors that share the same lightness band.',
+    blurb: 'Light Sky Blue is a pale, slightly cyan-leaning sky blue, lighter and more saturated than Light Blue. The CSS hex reads as fresh and open, common in travel, weather, and aviation branding. Pair with deep navy for type, with cream for a softer palette, or with warm coral for accent. Against white it provides reasonable separation but is too pale for body text. Hero sections and panel backgrounds suit the large-area use; in dashboards and content areas the saturation level can fight with adjacent data-visualization colors that share the same lightness band.',
   },
   {
     slug: 'lightslategray',
@@ -799,7 +799,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'css',
     related: ['skyblue', 'lightblue', 'lightskyblue'],
-    blurb: 'Light Steel Blue is a pale, slightly violet-leaning blue-gray that reads as restrained and slightly nostalgic. The CSS hex carries low chroma at high lightness, making it useful as a calm background for editorial, financial, or heritage brands. Pair with deep navy for type, with cream for a quieter palette, or with brass for a heritage accent. It works well as a background for long-form reading or as a panel color in dashboards. Two Light Steel Blue surfaces adjacent to each other will read as a single surface in dim viewing; layer carefully.',
+    blurb: 'Light Steel Blue is a pale, slightly violet-leaning blue-gray that reads as restrained and slightly nostalgic. The CSS hex carries low chroma at high lightness, making it useful as a calm background for editorial, financial, or heritage brands. Pair with deep navy for type, with cream for a quieter palette, or with brass for a heritage accent. It works as a background for long-form reading or as a panel color in dashboards. Two Light Steel Blue surfaces adjacent to each other will read as a single surface in dim viewing, so layer carefully.',
   },
   {
     slug: 'lightyellow',
@@ -808,7 +808,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'css',
     related: ['cornsilk', 'lightgoldenrodyellow', 'lemonchiffon'],
-    blurb: 'Light Yellow is a very pale, faintly green-yellow cream. The CSS hex reads as warm but barely chromatic, useful as a background for food, beauty, or wellness designs where a hint of sunlight is wanted. Pair with deep brown or charcoal for type. Against pure white the difference is subtle, so it works best as a layered surface or panel background rather than as a primary page color. Avoid placing it next to brighter yellows, which will make Light Yellow look gray by comparison and create the impression of a calibration shift rather than a deliberate layered palette.',
+    blurb: 'Light Yellow is a very pale, faintly green-yellow cream. The CSS hex reads as warm but barely chromatic, useful as a background for food, beauty, or wellness designs where a hint of sunlight is wanted. Pair with deep brown or charcoal for type. Against pure white the difference is subtle, so it works best as a layered surface or panel background rather than as a primary page color. Place it next to brighter yellows and Light Yellow looks gray by comparison, creating the impression of a calibration shift rather than a deliberate layered palette.',
   },
   {
     slug: 'lime',
@@ -817,7 +817,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'css',
     related: ['lawngreen', 'chartreuse', 'springgreen'],
-    blurb: 'Lime in CSS is #00ff00, the brightest possible green the sRGB color space can produce. It is too saturated for almost any practical UI application and is most often used as a debugging stand-in or as a high-contrast marker in technical diagrams. Cultural associations are split: tropical fruit, neon signage, gaming, and energy drinks. Real-world lime branding usually pulls a slightly desaturated variant. Pair with deep charcoal or magenta for high-contrast pop palettes. Body text contrast against white fails AA at every size; the value works only as a surface or marker.',
+    blurb: 'Lime in CSS is #00ff00, the brightest possible green the sRGB color space can produce. It is too saturated for almost any practical UI application and most often shows up as a debugging stand-in or as a high-contrast marker in technical diagrams. Cultural associations are split: tropical fruit, neon signage, gaming, energy drinks. Real-world lime branding usually pulls a slightly desaturated variant. Pair with deep charcoal or magenta for high-contrast pop palettes. Body text contrast against white fails AA at every size; the value works only as a surface or marker.',
   },
   {
     slug: 'limegreen',
@@ -826,7 +826,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'css',
     related: ['tailwind-green-500', 'tailwind-lime-500', 'yellowgreen'],
-    blurb: 'Lime Green is the colour Sprite added to its global rebrand in 2008, replacing the more muted bottle-green that Coca-Cola had used since the 1960s. The CSS hex carries enough saturation to feel young and slightly artificial. It works well as a CTA or success state in modern UI but tires the eye quickly when used across large surfaces. Pair it with a deep ink `#0a0a0a` for type and reserve it for the moment in the layout where the eye should land. Body text in Lime Green against white passes AA only at sizes 18px and above; for smaller copy step down to a deeper Tailwind Green 700 or similar.',
+    blurb: 'Lime Green is the colour Sprite added to its global rebrand in 2008, replacing the more muted bottle-green that Coca-Cola had used since the 1960s. The CSS hex carries enough saturation to feel young and slightly artificial. It works as a CTA or success state in modern UI but tires the eye quickly when used across large surfaces. Pair it with a deep ink `#0a0a0a` for type and let it claim the moment in the layout where the eye should land. Body text in Lime Green against white passes AA only at sizes 18px and above; for smaller copy step down to a deeper Tailwind Green 700 or similar.',
   },
   {
     slug: 'linen',
@@ -845,7 +845,7 @@ export const NAMED_COLORS: NamedColor[] = [
     source: 'css',
     aliases: ['fuchsia'],
     related: ['tailwind-fuchsia-500', 'tailwind-fuchsia-600', 'orchid'],
-    blurb: 'Magenta is one of the four CMYK process inks and one of the most saturated colors a screen can produce. The CSS hex is identical to Fuchsia at #ff00ff, an artifact of two separate HTML and X11 color lists merging. Cultural associations are pop, theater, drag, and tech-industry rebrand attempts. Use it strictly as an accent; large fields of magenta fatigue the eye in seconds. Pair with deep teal or charcoal for high-contrast pairings. Body text contrast against white fails AA at every size; reserve the full-saturation value for surfaces, badges, and dark-text overlays only.',
+    blurb: 'Magenta is one of the four CMYK process inks and one of the most saturated colors a screen can produce. The CSS hex is identical to Fuchsia at #ff00ff, an artifact of two separate HTML and X11 color lists merging. Cultural associations are pop, theater, drag, tech-industry rebrand attempts. Large fields of magenta fatigue the eye in seconds, so it works strictly as an accent. Pair with deep teal or charcoal for high-contrast pairings. Body text contrast against white fails AA at every size; the full-saturation value belongs on surfaces, badges, and dark-text overlays only.',
   },
   {
     slug: 'maroon',
@@ -872,7 +872,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'teal',
     source: 'material',
     related: ['darkturquoise', 'lightseagreen', 'tailwind-teal-500'],
-    blurb: 'Material Cyan 500 is the bright teal-blue used as an accent color in Material Design 2. The hex carries enough chroma to function as a primary or strong secondary accent. It is one of the friendlier cyans in popular design systems, neither too pale nor too saturated for typical UI use. Use it for primary buttons in Material-themed designs, or as a secondary accent in palettes that need a bright cool tone. Against white it passes contrast for headlines but is borderline for body text. Body text contrast against white falls below AA below 18px size.',
+    blurb: 'Material Cyan 500 is the bright teal-blue used as an accent in Material Design 2. The hex carries enough chroma to function as a primary or strong secondary, one of the friendlier cyans in popular design systems — neither too pale nor too saturated for typical UI use. Common as a primary button colour in Material-themed designs, or as a secondary accent in palettes that need a bright cool tone. Against white it passes contrast for headlines but is borderline for body text, falling below AA below 18px.',
   },
   {
     slug: 'material-deep-purple-500',
@@ -881,7 +881,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'indigo',
     source: 'material',
     related: ['rebeccapurple', 'slateblue', 'darkslateblue'],
-    blurb: 'Material Deep Purple 500 is the rich, slightly blue-leaning purple in Material Design 2\'s expanded palette. The hex carries strong chroma at mid-low lightness and reads as confident and slightly theatrical. Use it as a primary accent for Material-themed projects, or as a secondary color for cosmetic, music, or arts branding. Pair with cream and warm brass for luxury palettes, or with chartreuse for complementary tension. Against white it passes body text contrast comfortably. Material\'s Deep Purple was retired from the M3 baseline palette but remains a heavily-used hex across legacy Android apps.',
+    blurb: 'Material Deep Purple 500 is the rich, slightly blue-leaning purple in Material Design 2\'s expanded palette. The hex carries strong chroma at mid-low lightness and reads as confident and slightly theatrical. Cosmetic, music, and arts branding use it as a primary or secondary accent. Pair with cream and warm brass for luxury palettes, or with chartreuse for complementary tension. Against white it passes body text contrast comfortably. The value was retired from the M3 baseline palette but remains a heavily-used hex across legacy Android apps.',
   },
   {
     slug: 'material-green-500',
@@ -890,7 +890,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'material',
     related: ['mediumseagreen', 'tailwind-lime-600', 'tailwind-green-600'],
-    blurb: 'Material Green 500 is the warm mid-green used for success states, completed badges, and primary positive actions in Material Design 2. The hex reads as friendly and natural rather than clinical. Use it as a confirmation color in Material-themed projects. Pair with deep gray for type and a single saturated accent for primary actions. Against white it passes contrast for headlines and large buttons but is borderline for body text; reserve text use for larger sizes. Body text contrast against white passes AA only at sizes 18px and above; below that, the value should appear with dark text overlays.',
+    blurb: 'Material Green 500 is the warm mid-green used for success states, completed badges, and primary positive actions in Material Design 2. The hex reads as friendly and natural rather than clinical. Common as a confirmation colour in Material-themed projects, paired with deep gray for type and a single saturated accent for primary actions. Body text against white passes AA only at sizes 18px and above; below that, the value should appear with dark text overlays.',
   },
   {
     slug: 'material-indigo-500',
@@ -899,7 +899,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'material',
     related: ['royalblue', 'tailwind-indigo-600', 'tailwind-blue-600'],
-    blurb: 'Material Indigo 500 is the deep blue-purple Google chose as the original Material Theme default in 2014. It became one of the defining colors of mobile app design for several years. The hex is darker and less saturated than Material Blue 500, with a slight violet shift that makes it feel more sophisticated. Use it as a primary accent in heritage Material projects or in modern designs where a deeper, calmer blue is wanted. Pair with cream for a softer palette, or with warm coral for unexpected accent. Body text contrast against white passes AAA at standard body sizes.',
+    blurb: 'Material Indigo 500 is the deep blue-purple Google chose as the original Material Theme default in 2014, and it became one of the defining colors of mobile app design for several years. The hex is darker and less saturated than Material Blue 500, with a slight violet shift that makes it feel more sophisticated. It still works as a primary accent in heritage Material projects, or in modern designs where a deeper, calmer blue is wanted. Pair with cream for a softer palette, or with warm coral for unexpected accent. Body text contrast against white passes AAA at standard body sizes.',
   },
   {
     slug: 'material-light-blue-500',
@@ -908,7 +908,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'material',
     related: ['tailwind-sky-500', 'material-blue-500', 'deepskyblue'],
-    blurb: 'Material Light Blue 500 is a brighter, slightly cyan-leaning blue from Material Design 2\'s expanded palette. The hex reads as fresh and informational, well suited to system alerts, hint states, and friendly call-to-action buttons. Pair with deep navy or charcoal for type contrast. As a primary brand color it works for travel, communications, and wellness products. Against white it passes contrast for headlines and large buttons; check body text use against AA thresholds. Body text contrast against white falls below AA at body sizes; reserve text use for sizes 18px and above.',
+    blurb: 'Material Light Blue 500 is a brighter, slightly cyan-leaning blue from Material Design 2\'s expanded palette. The hex reads as fresh and informational, well suited to system alerts, hint states, and friendly call-to-action buttons. Paired with deep navy or charcoal for type contrast, it works as a primary brand colour for travel, communications, and wellness products. Against white it passes contrast for headlines and large buttons; body text falls below AA below 18px.',
   },
   {
     slug: 'material-pink-500',
@@ -917,7 +917,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'pink',
     source: 'material',
     related: ['tailwind-pink-600', 'deeppink', 'tailwind-pink-500'],
-    blurb: 'Material Pink 500 is the strong, slightly red-leaning pink in Material Design 2\'s primary palette. The hex carries enough chroma to function as a primary brand color or strong accent. It became one of the friendlier pinks in popular design systems, neither pastel nor neon, which is why it has appeared in countless health, beauty, and dating apps over the past decade. Use it for cosmetic, fashion, and youth-oriented products. Pair with deep navy for type contrast, or with cream for a softer palette. Body text against white passes AA at headline sizes only.',
+    blurb: 'Material Pink 500 is the strong, slightly red-leaning pink in Material Design 2\'s primary palette. The hex carries enough chroma to function as a primary brand color or strong accent, and it became one of the friendlier pinks in popular design systems — neither pastel nor neon, which is why it has appeared in countless health, beauty, and dating apps over the past decade. Pair with deep navy for type contrast, or with cream for a softer palette. Body text against white passes AA at headline sizes only.',
   },
   {
     slug: 'material-purple-500',
@@ -926,7 +926,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'purple',
     source: 'material',
     related: ['darkmagenta', 'tailwind-fuchsia-600', 'purple'],
-    blurb: 'Material Purple 500 is the saturated mid-purple in Material Design 2\'s primary palette. The hex sits between Material Pink and Material Deep Purple and reads as confident without being theatrical. Use it as a primary accent in Material-themed projects, or as a secondary color for cosmetic, music, or premium services. Pair with deep gray for type, or with gold for a luxury contrast. Against white it carries enough contrast for headlines and buttons. Body text contrast against white passes AA at standard body sizes; the saturation level can feel intense in long blocks of running text.',
+    blurb: 'Material Purple 500 is the saturated mid-purple in Material Design 2\'s primary palette. The hex sits between Material Pink and Material Deep Purple and reads as confident without being theatrical. It works as a primary accent in Material-themed projects, or as a secondary colour for cosmetics, music, or premium services. Pair with deep gray for type, or with gold for a luxury contrast. Body text against white passes AA at standard body sizes, though the saturation can feel intense in long blocks of running text.',
   },
   {
     slug: 'material-red-500',
@@ -935,7 +935,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'red',
     source: 'material',
     related: ['tailwind-red-500', 'red', 'tailwind-rose-500'],
-    blurb: 'Material Red 500 is the primary destructive and error color in Material Design 2. The hex was tuned to pass WCAG AA against white text at standard button sizes while still feeling urgent. It became the conventional red for irreversible action buttons in 2010s app design. Use it for destructive actions, error states, and validation messages in Material-themed projects. For non-Material designs it can feel slightly orange-leaning compared to newer OKLCH-tuned reds. Body text contrast against white passes AA at body sizes; AAA holds at headline sizes only.',
+    blurb: 'Material Red 500 is the primary destructive and error color in Material Design 2. The hex was tuned to pass WCAG AA against white text at standard button sizes while still feeling urgent, and it became the conventional red for irreversible action buttons in 2010s app design. For non-Material designs it can feel slightly orange-leaning compared to newer OKLCH-tuned reds. Body text contrast against white passes AA at body sizes; AAA holds at headline sizes only.',
   },
   {
     slug: 'material-teal-500',
@@ -944,7 +944,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'teal',
     source: 'material',
     related: ['tailwind-teal-600', 'darkcyan', 'teal'],
-    blurb: 'Material Teal 500 is the deep, slightly blue-leaning teal in Material Design 2\'s primary palette. The hex carries strong chroma at mid-low lightness and was one of the framework\'s signature accents in early Android releases. Use it as a primary brand color for finance, technology, or wellness products. Pair with cream and warm coral for a fresh palette, or with charcoal for a clean professional look. Against white it passes body text contrast comfortably at most sizes. Body text in Material Teal against white passes AA at standard body sizes and AAA at headline sizes.',
+    blurb: 'Material Teal 500 is the deep, slightly blue-leaning teal in Material Design 2\'s primary palette. The hex carries strong chroma at mid-low lightness and was one of the framework\'s signature accents in early Android releases. Finance, technology, and wellness products use it as a primary brand colour. Pair with cream and warm coral for a fresh palette, or with charcoal for a clean professional look. Body text against white passes AA at standard body sizes and AAA at headline sizes.',
   },
   {
     slug: 'mediumaquamarine',
@@ -953,7 +953,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'css',
     related: ['bootstrap-teal', 'darkseagreen', 'seafoam'],
-    blurb: 'Medium Aquamarine is the muted mid-saturation cousin of Aquamarine, sitting in the soft-mint zone of the color wheel. The CSS hex reads as calm and slightly nostalgic, with low enough chroma to work as a primary surface for wellness, beauty, and editorial brands. Pair with cream for a soft palette, or with deep teal for tonal depth. Against white it provides reasonable separation as a panel background but is too pale for body text. Body text contrast against white fails AA at every size; treat it as a surface tone with dark text overlays rather than as a type color.',
+    blurb: 'Medium Aquamarine is the muted mid-saturation cousin of Aquamarine, sitting in the soft-mint zone of the colour wheel. The CSS hex reads as calm and slightly nostalgic, with low enough chroma to work as a primary surface for wellness, beauty, and editorial brands. Paired with cream it softens further; with deep teal it gains tonal depth. Against white it provides reasonable separation as a panel background but is too pale for body text — contrast fails AA at every size, so it lives as a surface tone with dark text overlays.',
   },
   {
     slug: 'mediumblue',
@@ -962,7 +962,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'css',
     related: ['blue', 'darkblue', 'navy'],
-    blurb: 'Medium Blue is a deep, fully saturated blue that sits between pure CSS Blue and Dark Blue. The hex reads as confident and authoritative, useful for editorial, financial, and government-themed branding. Pair with cream for warmth, or with warm gold for a heritage palette. Against white it passes body text contrast comfortably and works well as a primary action color. The depth and saturation give it more visual weight than mid-bright blues, so use it for emphasis rather than ambient surfaces. Body text contrast against white passes AAA at standard sizes; the saturation can still feel intense in long-form text.',
+    blurb: 'Medium Blue is a deep, fully saturated blue that sits between pure CSS Blue and Dark Blue. The hex reads as confident and authoritative, useful for editorial, financial, and government-themed branding. Pair with cream for warmth, or with warm gold for a heritage palette. Against white it passes body text contrast comfortably and works as a primary action color. The depth and saturation give it more visual weight than mid-bright blues, so it earns its keep on emphasis rather than ambient surfaces. AAA holds at standard sizes; the saturation can still feel intense in long-form text.',
   },
   {
     slug: 'mediumorchid',
@@ -971,7 +971,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'purple',
     source: 'css',
     related: ['orchid', 'tailwind-fuchsia-600', 'tailwind-fuchsia-500'],
-    blurb: 'Medium Orchid is a saturated mid-purple with a slight pink lean, named after the flower. The CSS hex carries high chroma at mid lightness, vivid enough to function as a primary accent. Cosmetic, fashion, and arts brands use it for emphasis. Pair with cream for a softer palette, or with deep teal for a richer contrast. It is too saturated for body text against white but works well as a button color, link state, or display heading. Reserve large-area use for hero sections; in long-form layouts the chroma fights with the type for foreground attention.',
+    blurb: 'Medium Orchid is a saturated mid-purple with a slight pink lean, named after the flower. The CSS hex carries high chroma at mid lightness, vivid enough to function as a primary accent. Cosmetic, fashion, and arts brands use it for emphasis. Pair with cream for a softer palette, or with deep teal for richer contrast. Too saturated for body text against white but it works well as a button colour, link state, or display heading. In long-form layouts the chroma fights with the type for foreground attention.',
   },
   {
     slug: 'mediumpurple',
@@ -980,7 +980,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'indigo',
     source: 'css',
     related: ['mediumslateblue', 'tailwind-violet-500', 'slateblue'],
-    blurb: 'Medium Purple is a softer, slightly blue-leaning purple at moderate lightness and chroma. The CSS hex reads as restrained and slightly thoughtful, distinct from the more theatrical Medium Orchid. Editorial, educational, and contemplative brands use it as a primary or secondary accent. Pair with cream and warm gold for heritage palettes, or with deep teal for tonal contrast. Against white it carries enough contrast for headlines and large buttons but is borderline for small body text. Body text contrast against white passes AA only at sizes 18px and above; smaller sizes drop below the threshold.',
+    blurb: 'Medium Purple is a softer, slightly blue-leaning purple at moderate lightness and chroma. The CSS hex reads as restrained and slightly thoughtful, distinct from the more theatrical Medium Orchid. Editorial, educational, and contemplative brands use it as a primary or secondary accent. Pair with cream and warm gold for heritage palettes, or with deep teal for tonal contrast. Against white it carries enough contrast for headlines and large buttons but is borderline for small body text — AA passes only at 18px and above; smaller sizes drop below the threshold.',
   },
   {
     slug: 'mediumseagreen',
@@ -989,7 +989,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'css',
     related: ['tailwind-emerald-500', 'material-green-500', 'bootstrap-teal'],
-    blurb: 'Medium Sea Green is a deep, slightly blue-leaning mid-green that reads as natural and grounded. The CSS hex sits between Sea Green and Forest Green, with enough chroma to feel intentional without veering into saturation. Outdoor, wellness, and environmental brands use it as a primary identity color. Pair with cream and terracotta for editorial palettes, or with charcoal for a quieter professional look. Against white it passes body text contrast comfortably. The chroma level is balanced enough that adjacent saturated accents will not produce visual vibration against it, which makes it a reliable primary brand color.',
+    blurb: 'Medium Sea Green is a deep, slightly blue-leaning mid-green that reads as natural and grounded. The CSS hex sits between Sea Green and Forest Green, with enough chroma to feel intentional without veering into saturation. Outdoor, wellness, and environmental brands use it as a primary identity color. Pair with cream and terracotta for editorial palettes, or with charcoal for a quieter professional look. Against white it passes body text contrast comfortably. The chroma is balanced enough that adjacent saturated accents will not produce visual vibration against it.',
   },
   {
     slug: 'mediumslateblue',
@@ -998,7 +998,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'indigo',
     source: 'css',
     related: ['tailwind-violet-500', 'mediumpurple', 'slateblue'],
-    blurb: 'Medium Slate Blue is a saturated mid-purple-blue with strong presence at moderate lightness. The CSS hex reads as confident and slightly modern, useful as a primary brand color for tech, education, or premium-service products. Pair with cream and deep gold for a slightly luxurious palette, or with charcoal for type contrast. Against white it carries enough contrast for headlines and most body text. Reserve large-area use for hero sections or accent panels rather than full-page backgrounds; the chroma level can compete with foreground content in dense layouts. Body text against white passes AA at body sizes.',
+    blurb: 'Medium Slate Blue is a saturated mid-purple-blue with strong presence at moderate lightness. The CSS hex reads as confident and slightly modern, useful as a primary brand colour for tech, education, or premium-service products. Pair with cream and deep gold for a slightly luxurious palette, or with charcoal for type contrast. Against white it carries enough contrast for headlines and most body text — AA passes at body sizes. Large-area use lives in hero sections or accent panels rather than full-page backgrounds; the chroma can compete with foreground content in dense layouts.',
   },
   {
     slug: 'mediumspringgreen',
@@ -1007,7 +1007,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'css',
     related: ['springgreen', 'lightgreen', 'palegreen'],
-    blurb: 'Medium Spring Green is the saturated mint of new growth in early spring. The CSS hex is bright and slightly cool, almost neon. Use it as an accent only; large fields of Medium Spring Green fatigue the eye quickly and rarely pass body text contrast against white. Pair with deep navy or charcoal for type, or with magenta for a complementary high-energy clash. As a UI element it works for success states and emphasized buttons with dark text overlays. Body text contrast against white fails AA at every size; the value works only as a surface or accent color.',
+    blurb: 'Medium Spring Green is the saturated mint of new growth in early spring. The CSS hex is bright and slightly cool, almost neon. It works as an accent only — large fields fatigue the eye quickly and the value rarely passes body text contrast against white. Pair with deep navy or charcoal for type, or with magenta for a complementary high-energy clash. As a UI element it works for success states and emphasized buttons with dark text overlays. Body text contrast fails AA at every size; the value functions only as a surface or accent colour.',
   },
   {
     slug: 'mediumturquoise',
@@ -1016,7 +1016,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'teal',
     source: 'css',
     related: ['darkturquoise', 'turquoise', 'material-cyan-500'],
-    blurb: 'Medium Turquoise is the bright, slightly cyan-leaning turquoise of swimming-pool tiles. The CSS hex is slightly muted compared to pure Turquoise and works well as a primary brand color for travel, beauty, and wellness products. Pair with cream and warm coral for a fresh tropical palette, or with deep navy for tonal contrast. Against white it passes contrast for headlines and large buttons; check body text use at smaller sizes. Body text contrast against white falls below AA at body sizes; reserve text use for headlines and rely on dark text overlays for surfaces.',
+    blurb: 'Medium Turquoise is the bright, slightly cyan-leaning turquoise of swimming-pool tiles. The CSS hex is slightly muted compared to pure Turquoise and works well as a primary brand colour for travel, beauty, and wellness products. Pair with cream and warm coral for a fresh tropical palette, or with deep navy for tonal contrast. Against white it passes contrast for headlines and large buttons but body text falls below AA — keep text use for headlines and rely on dark text overlays for surfaces.',
   },
   {
     slug: 'mediumvioletred',
@@ -1025,7 +1025,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'pink',
     source: 'css',
     related: ['tailwind-pink-600', 'material-pink-500', 'tailwind-pink-500'],
-    blurb: 'Medium Violet Red is a deep, slightly pink-leaning magenta with strong chroma at mid lightness. The CSS hex reads as confident and slightly theatrical, useful as a primary accent for cosmetic, fashion, or arts brands. Pair with cream for a softer palette, or with deep teal for a complementary contrast. Against white it passes contrast for headlines and most body text. Reserve large-area use for hero sections; the saturation makes it heavy for full-page backgrounds. Body text contrast against white passes AA at body sizes; AAA holds at headline sizes only, so verify smaller text carefully.',
+    blurb: 'Medium Violet Red is a deep, slightly pink-leaning magenta with strong chroma at mid lightness. The CSS hex reads as confident and slightly theatrical, useful as a primary accent for cosmetic, fashion, or arts brands. Pair with cream for a softer palette, or with deep teal for complementary contrast. Against white it passes contrast for headlines and most body text. Large-area use lives in hero sections; the saturation makes it heavy for full-page backgrounds. AA passes at body sizes; AAA holds at headline sizes only, so verify smaller text carefully.',
   },
   {
     slug: 'midnightblue',
@@ -1035,7 +1035,7 @@ export const NAMED_COLORS: NamedColor[] = [
     source: 'css',
     aliases: ['midnight-blue'],
     related: ['navy', 'darkblue', 'mediumblue'],
-    blurb: 'Midnight Blue is the deep, slightly purple-leaning navy of a clear night sky away from city lights. The CSS hex is one of the darker named colors in the spec and sits between Navy and Dark Slate Blue. Heritage brands in finance, aviation, and luxury use it as a primary identity color. Pair with cream for warmth, or with warm brass for a luxury accent. Against white it passes AAA body text contrast comfortably and works well for long-form reading. The slight purple lean distinguishes it from pure Navy in side-by-side viewing but the difference is subtle enough that the two are often interchangeable.',
+    blurb: 'Midnight Blue is the deep, slightly purple-leaning navy of a clear night sky away from city lights. The CSS hex is one of the darker named colors in the spec and sits between Navy and Dark Slate Blue. Heritage brands in finance, aviation, and luxury use it as a primary identity colour. Pair with cream for warmth, or with warm brass for a luxury accent. Against white it passes AAA body text contrast comfortably and works well for long-form reading. The slight purple lean distinguishes it from pure Navy in side-by-side viewing, though the difference is subtle enough that the two are often interchangeable.',
   },
   {
     slug: 'mintcream',
@@ -1044,7 +1044,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'neutral',
     source: 'css',
     related: ['azure', 'white', 'bootstrap-light'],
-    blurb: 'Mint Cream is a pale, slightly green-tinted off-white that reads as fresh and clean. The CSS hex sits in the territory of medical, dental, and wellness brand backgrounds. Pair with deep teal for type, or with charcoal for a quieter palette. Against pure white the difference is subtle, so it works best as a layered surface or panel background. The cool tint distinguishes it from warm off-whites like Floral White or Linen, which carry yellow undertones instead. Two Mint Cream surfaces in adjacent layers will produce a near-invisible boundary in dim viewing conditions, so layer with care.',
+    blurb: 'Mint Cream is a pale, slightly green-tinted off-white that reads as fresh and clean. The CSS hex sits in the territory of medical, dental, and wellness brand backgrounds. Pair with deep teal for type, or with charcoal for a quieter palette. Against pure white the difference is subtle, so it works as a layered surface or panel rather than a primary page background. The cool tint distinguishes it from warm off-whites like Floral White or Linen, which carry yellow undertones instead. Two Mint Cream surfaces in adjacent layers will produce a near-invisible boundary in dim viewing.',
   },
   {
     slug: 'mistyrose',
@@ -1053,7 +1053,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'red',
     source: 'css',
     related: ['salmon', 'lightcoral', 'tomato'],
-    blurb: 'Misty Rose is one of the gentler pinks in the CSS spec, a very pale warm pink with a slight blue cast. The hex reads as restrained and slightly nostalgic. Beauty, wellness, and stationery brands use it as a quiet background. Pair with deep burgundy for type, or with charcoal for a more neutral palette. Against pure white it provides modest separation; layer it carefully against other pale pinks to avoid muddying. Two Misty Rose surfaces side by side will look identical in dim viewing; treat the color as a single-layer tone rather than for nested card layouts.',
+    blurb: 'Misty Rose is one of the gentler pinks in the CSS spec, a very pale warm pink with a slight blue cast. The hex reads as restrained and slightly nostalgic. Beauty, wellness, and stationery brands use it as a quiet background. Pair with deep burgundy for type, or with charcoal for a more neutral palette. Against pure white it provides modest separation; layer carefully against other pale pinks to avoid muddying. Two Misty Rose surfaces side by side will look identical in dim viewing — single-layer tone rather than nested card material.',
   },
   {
     slug: 'moccasin',
@@ -1062,7 +1062,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'css',
     related: ['navajowhite', 'wheat', 'blanchedalmond'],
-    blurb: 'Moccasin is the warm tan of soft leather, named after the indigenous North American footwear. The CSS hex sits between Peach Puff and Wheat, with low chroma and a yellow-orange undertone. Outdoor, craft, and heritage brands use it as a quiet background. Pair with deep brown for type, or with muted forest green for a softer secondary accent. The warm cast makes it especially comfortable for product photography backgrounds in leather goods, handcrafts, and apparel. Body text contrast against white fails AA at every size; reserve it as a surface tone with dark text overlays.',
+    blurb: 'Moccasin is the warm tan of soft leather, named after the indigenous North American footwear. The CSS hex sits between Peach Puff and Wheat, with low chroma and a yellow-orange undertone. Outdoor, craft, and heritage brands use it as a quiet background. Pair with deep brown for type, or with muted forest green for a softer secondary accent. The warm cast makes it especially comfortable for product photography backgrounds in leather goods, handcrafts, and apparel. Body text contrast against white fails AA at every size — surface tone with dark text overlays.',
   },
   {
     slug: 'mustard',
@@ -1071,7 +1071,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'curated',
     related: ['gold', 'khaki', 'bootstrap-warning'],
-    blurb: 'Mustard is the curated deep yellow named after the condiment. The hex is more saturated than CSS Khaki and warmer than Goldenrod, with strong harvest associations. Editorial, food, and heritage brands use it as a primary accent or display heading color. Pair with deep navy for type, or with cream and brass for warm autumn palettes. Against white it carries enough contrast for headlines but is borderline for body text. Body text contrast against white passes AA only at sizes 18px and above; smaller text in Mustard against a white background will appear washed out and lose legibility quickly.',
+    blurb: 'Mustard is the curated deep yellow named after the condiment. The hex is more saturated than CSS Khaki and warmer than Goldenrod, with strong harvest associations. Editorial, food, and heritage brands use it as a primary accent or display heading colour. Pair with deep navy for type, or with cream and brass for warm autumn palettes. Against white it carries enough contrast for headlines but is borderline for body text — AA passes only at 18px and above; smaller text in Mustard against white will appear washed out and lose legibility quickly.',
   },
   {
     slug: 'navajowhite',
@@ -1080,7 +1080,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'css',
     related: ['moccasin', 'wheat', 'palegoldenrod'],
-    blurb: 'Navajo White is a warm, slightly pink-yellow off-white named after a Diné textile palette. The CSS hex reads as quiet and inviting, distinct from cooler whites. Editorial, interior, and craft brands use it as a primary background. Pair with deep brown for type, or with terracotta for a softer secondary accent. The warm cast suits long-form reading and product photography where a hint of fabric texture is wanted without committing to a real color. Body text on a Navajo White surface should use a deep neutral type color; cool grays will read as slightly off against the warm cast.',
+    blurb: 'Navajo White is a warm, slightly pink-yellow off-white named after a Diné textile palette. The CSS hex reads as quiet and inviting, distinct from cooler whites. Editorial, interior, and craft brands use it as a primary background. Pair with deep brown for type, or with terracotta for a softer secondary accent. The warm cast suits long-form reading and product photography where a hint of fabric texture is wanted without committing to a real colour. Body text on a Navajo White surface should use a deep neutral type colour; cool grays will read as slightly off against the warm cast.',
   },
   {
     slug: 'navy',
@@ -1089,7 +1089,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'css',
     related: ['darkblue', 'midnightblue', 'mediumblue'],
-    blurb: 'Navy is one of the oldest color words in English, named after the dark blue uniforms of military fleets. The CSS hex is identical to Dark Blue almost by accident, both inheriting from the same X11 source. It carries authoritative, professional, and heritage associations across cultures. Use it as a primary identity color for financial, legal, or editorial products. Pair with cream and warm gold for traditional palettes, or with bright coral for unexpected energy. Body text contrast against white is excellent. Navy passes AAA at every standard size and remains one of the most legible saturated colors in the CSS spec.',
+    blurb: 'Navy is one of the oldest color words in English, named after the dark blue uniforms of military fleets. The CSS hex is identical to Dark Blue almost by accident, both inheriting from the same X11 source. It carries authoritative, professional, and heritage associations across cultures. Common as a primary identity colour for financial, legal, or editorial products. Pair with cream and warm gold for traditional palettes, or with bright coral for unexpected energy. Navy passes AAA at every standard size and remains one of the most legible saturated colors in the CSS spec.',
   },
   {
     slug: 'oldlace',
@@ -1107,7 +1107,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'css',
     related: ['darkgoldenrod', 'goldenrod', 'darkkhaki'],
-    blurb: 'Olive in CSS is the deep yellow-green of cured olives and Mediterranean foliage. The hex is darker and less saturated than the dictionary version of olive and sits firmly in the yellow family by hue. Editorial, heritage, and outdoor brands use it as a primary accent. Pair with cream for warmth, or with terracotta for complementary depth. Against white it carries enough contrast for body text in most sizes. Body text in CSS Olive against white passes AA at body sizes; AAA holds only at sizes 18px and above. The undertone gives it more presence than CSS Olive Drab at the same size.',
+    blurb: 'Olive in CSS is the deep yellow-green of cured olives and Mediterranean foliage. The hex is darker and less saturated than the dictionary version of olive and sits firmly in the yellow family by hue. Editorial, heritage, and outdoor brands use it as a primary accent. Pair with cream for warmth, or with terracotta for complementary depth. Against white it carries enough contrast for body text in most sizes. AA passes at body sizes; AAA holds only at 18px and above. The undertone gives it more presence than CSS Olive Drab at the same size.',
   },
   {
     slug: 'olivedrab',
@@ -1125,7 +1125,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'orange',
     source: 'css',
     related: ['tailwind-amber-500', 'sandybrown', 'darkorange'],
-    blurb: 'Orange is the warm, mid-saturation orange of citrus fruit at peak ripeness. The CSS hex carries high lightness and chroma, making it one of the more energetic mid-tones in the spec. Cultural associations are appetite, energy, autumn, and warmth. Use it as a primary brand color for food, sports, or outdoor products. Pair with deep navy or charcoal for type contrast; avoid placing it next to bright red, which produces visual conflict. Body text contrast against white falls below AA at body sizes; reserve text use for headlines and use dark text overlays whenever it appears as a surface or button.',
+    blurb: 'Orange is the warm, mid-saturation orange of citrus fruit at peak ripeness. The CSS hex carries high lightness and chroma, making it one of the more energetic mid-tones in the spec. Cultural associations are appetite, energy, autumn, warmth. Food, sports, and outdoor products use it as a primary brand colour. Pair with deep navy or charcoal for type contrast; placing it next to bright red produces visual conflict. Body text contrast against white falls below AA at body sizes — text use lives at headline sizes, with dark text overlays whenever it appears as a surface or button.',
   },
   {
     slug: 'orangered',
@@ -1143,7 +1143,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'purple',
     source: 'css',
     related: ['violet', 'mediumorchid', 'plum'],
-    blurb: 'Orchid is the bright, slightly pink-leaning mid-purple named after the flower. The CSS hex is brighter than Medium Orchid and reads as theatrical and slightly nostalgic. Cosmetic, fashion, and arts brands use it as a primary accent. Pair with cream for a softer palette, or with deep teal for a richer contrast. As a UI element it works well for buttons and display headings; against white it carries enough contrast for most non-body uses but is borderline for small text. Body text contrast against white passes AA only at sizes 18px and above; smaller text drops below.',
+    blurb: 'Orchid is the bright, slightly pink-leaning mid-purple named after the flower. The CSS hex is brighter than Medium Orchid and reads as theatrical and slightly nostalgic. Cosmetic, fashion, and arts brands use it as a primary accent. Pair with cream for a softer palette, or with deep teal for richer contrast. As a UI element it works well for buttons and display headings; against white it carries enough contrast for most non-body uses but is borderline for small text. AA passes only at 18px and above; smaller text drops below.',
   },
   {
     slug: 'palegoldenrod',
@@ -1152,7 +1152,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'css',
     related: ['moccasin', 'wheat', 'khaki'],
-    blurb: 'Pale Goldenrod is the pale, faintly green-yellow cream of dried summer flowers. The CSS hex sits between Lemon Chiffon and Khaki, with low chroma and a warm undertone. Editorial, food, and wellness brands use it as a quiet background. Pair with deep brown for type, or with muted forest green for a softer secondary accent. Against pure white the difference is subtle, so it works best as a layered surface rather than as a primary page background. Two Pale Goldenrod surfaces in adjacent layers will produce a barely-visible boundary that can read as banding rather than as intentional separation.',
+    blurb: 'Pale Goldenrod is the pale, faintly green-yellow cream of dried summer flowers. The CSS hex sits between Lemon Chiffon and Khaki, with low chroma and a warm undertone. Editorial, food, and wellness brands use it as a quiet background. Pair with deep brown for type, or with muted forest green for a softer secondary accent. Against pure white the difference is subtle, so it works as a layered surface rather than as a primary page background. Two Pale Goldenrod surfaces in adjacent layers will produce a barely-visible boundary that can read as banding rather than intentional separation.',
   },
   {
     slug: 'palegreen',
@@ -1161,7 +1161,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'css',
     related: ['lightgreen', 'mediumspringgreen', 'aquamarine'],
-    blurb: 'Pale Green is a soft, slightly yellow-leaning green at high lightness and moderate chroma. The CSS hex reads as fresh and friendly, useful as a background for wellness, food, and outdoor brands. Pair with deep green or warm brown for type, or with cream for a softer palette. Against white it provides reasonable separation as a panel background but is too pale for body text. As a UI element it works well for success states and emphasized panels with dark text overlays. Body text contrast against white fails AA at every size; reserve it strictly for surfaces.',
+    blurb: 'Pale Green is a soft, slightly yellow-leaning green at high lightness and moderate chroma. The CSS hex reads as fresh and friendly, useful as a background for wellness, food, and outdoor brands. Pair with deep green or warm brown for type, or with cream for a softer palette. Against white it provides reasonable separation as a panel background but is too pale for body text. As a UI element it works for success states and emphasized panels with dark text overlays. Body text contrast fails AA at every size — strictly a surface colour.',
   },
   {
     slug: 'paleturquoise',
@@ -1170,7 +1170,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'teal',
     source: 'css',
     related: ['powderblue', 'lightcyan', 'cyan'],
-    blurb: 'Pale Turquoise is the very pale, slightly cyan-leaning turquoise of shallow tropical water seen from above. The CSS hex carries low chroma at high lightness and reads as calm and slightly nostalgic. Travel, wellness, and beauty brands use it as a quiet background. Pair with deep teal for type, or with charcoal for a more neutral palette. Against pure white the difference is subtle, so it works best as a layered surface or panel background rather than as a primary page color. Two Pale Turquoise surfaces in adjacent layers will appear identical in dim viewing.',
+    blurb: 'Pale Turquoise is the very pale, slightly cyan-leaning turquoise of shallow tropical water seen from above. The CSS hex carries low chroma at high lightness and reads as calm and slightly nostalgic. Travel, wellness, and beauty brands use it as a quiet background. Pair with deep teal for type, or with charcoal for a more neutral palette. Against pure white the difference is subtle, so it works as a layered surface or panel rather than a primary page colour. Two Pale Turquoise surfaces in adjacent layers will appear identical in dim viewing.',
   },
   {
     slug: 'palevioletred',
@@ -1179,7 +1179,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'pink',
     source: 'css',
     related: ['hotpink', 'tailwind-pink-500', 'material-pink-500'],
-    blurb: 'Pale Violet Red is the muted, slightly pink-leaning red-purple of dusty flowers. The CSS hex sits between Light Pink and Medium Violet Red, with moderate chroma at mid-high lightness. Editorial, beauty, and floral brands use it as a primary or secondary accent. Pair with cream for a softer palette, or with deep burgundy for tonal depth. Against white it carries enough contrast for headlines and large buttons but is borderline for body text. Body text contrast against white passes AA at sizes 18px and above; below that, step down to a deeper rose for type use.',
+    blurb: 'Pale Violet Red is the muted, slightly pink-leaning red-purple of dusty flowers. The CSS hex sits between Light Pink and Medium Violet Red, with moderate chroma at mid-high lightness. Editorial, beauty, and floral brands use it as a primary or secondary accent. Pair with cream for a softer palette, or with deep burgundy for tonal depth. Against white it carries enough contrast for headlines and large buttons but is borderline for body text — AA passes at 18px and above; below that, step down to a deeper rose for type use.',
   },
   {
     slug: 'papayawhip',
@@ -1188,7 +1188,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'css',
     related: ['blanchedalmond', 'antiquewhite', 'beige'],
-    blurb: 'Papaya Whip is the pale, slightly orange-yellow cream named after the tropical fruit dessert. The CSS hex sits between Bisque and Lemon Chiffon, with low chroma and a warm undertone. Food, beauty, and craft brands use it as a quiet background. Pair with deep brown for type, or with terracotta for a warmer secondary accent. The warm cast suits product photography and food packaging where a hint of warmth is wanted without committing to a real color. Adjacent cool grays will read as slightly off-register against the warm cast, so layer with awareness.',
+    blurb: 'Papaya Whip is the pale, slightly orange-yellow cream named after the tropical fruit dessert. The CSS hex sits between Bisque and Lemon Chiffon, with low chroma and a warm undertone. Food, beauty, and craft brands use it as a quiet background. Pair with deep brown for type, or with terracotta for a warmer secondary accent. The warm cast suits product photography and food packaging where a hint of warmth is wanted without committing to a real colour. Adjacent cool grays will read as slightly off-register against the warm cast, so layer with awareness.',
   },
   {
     slug: 'peachpuff',
@@ -1197,7 +1197,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'orange',
     source: 'css',
     related: ['bisque', 'burlywood', 'tan'],
-    blurb: 'Peach Puff is the pale, warm pink-orange of a ripe peach skin. The CSS hex sits between Bisque and Light Salmon, with low chroma and a sunny undertone. Beauty, wellness, and editorial brands use it as a quiet background or secondary surface. Pair with deep teal for type, or with warm brown for a softer secondary accent. As a UI element it works as a panel background for cosmetic product cards; against white it provides reasonable separation but is too pale for body text. Body text contrast against white fails AA at every size; reserve it as a surface tone.',
+    blurb: 'Peach Puff is the pale, warm pink-orange of a ripe peach skin. The CSS hex sits between Bisque and Light Salmon, with low chroma and a sunny undertone. Beauty, wellness, and editorial brands use it as a quiet background or secondary surface. Pair with deep teal for type, or with warm brown for a softer secondary accent. As a UI element it works as a panel background for cosmetic product cards; against white it provides reasonable separation but is too pale for body text. Body text contrast fails AA at every size — surface tone only.',
   },
   {
     slug: 'peru',
@@ -1206,7 +1206,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'brown',
     source: 'css',
     related: ['tailwind-yellow-600', 'tailwind-amber-600', 'chocolate'],
-    blurb: 'Peru is the warm tan-brown named loosely after the South American country, though the connection is decorative rather than geographic. The CSS hex sits in the brown family at mid-lightness with moderate warmth. Heritage, outdoor, and craft brands use it as a primary accent. Pair with cream for a softer palette, or with muted forest green for a heritage look. Against white it carries enough contrast for headlines and most body text in larger sizes. Body text contrast against white passes AA at sizes 14px and above; below that, the warm undertone starts to lose legibility against the cool white background.',
+    blurb: 'Peru is the warm tan-brown named loosely after the South American country, though the connection is decorative rather than geographic. The CSS hex sits in the brown family at mid-lightness with moderate warmth. Heritage, outdoor, and craft brands use it as a primary accent. Pair with cream for a softer palette, or with muted forest green for a heritage look. Against white it carries enough contrast for headlines and most body text in larger sizes. AA passes at 14px and above; below that, the warm undertone starts to lose legibility against the cool white background.',
   },
   {
     slug: 'pink',
@@ -1215,7 +1215,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'pink',
     source: 'css',
     related: ['lightpink', 'hotpink', 'palevioletred'],
-    blurb: 'Pink in CSS is the soft, slightly warm pink of cotton candy. The hex is one of the gentler pinks in the spec, lighter than Hot Pink and warmer than Light Pink. Beauty, wellness, and fashion brands use it as a primary or secondary surface. Pair with deep burgundy for type, or with muted teal for a calmer secondary accent. Cultural associations are wide-ranging and have shifted significantly over the past century; pink has been masculine and feminine in different eras and regions. Use it with awareness of context. Body text contrast against white fails AA; reserve as a surface tone.',
+    blurb: 'Pink in CSS is the soft, slightly warm pink of cotton candy. The hex is one of the gentler pinks in the spec, lighter than Hot Pink and warmer than Light Pink. Beauty, wellness, and fashion brands use it as a primary or secondary surface. Pair with deep burgundy for type, or with muted teal for a calmer secondary accent. Cultural associations are wide-ranging and have shifted significantly over the past century; pink has been masculine and feminine in different eras and regions, and context matters. Body text contrast against white fails AA, so it remains a surface tone.',
   },
   {
     slug: 'plum',
@@ -1233,7 +1233,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'teal',
     source: 'css',
     related: ['paleturquoise', 'turquoise', 'lightcyan'],
-    blurb: 'Powder Blue is the pale, slightly cyan-leaning blue of soft baby blanket fabric. The CSS hex sits between Light Blue and Pale Turquoise, with low chroma at high lightness. Beauty, wellness, and baby-product brands use it as a quiet background. Pair with deep navy for type, or with charcoal for a more neutral palette. Against pure white the difference is subtle, so it works best as a layered surface or panel background. The cool undertone suits medical and clinical branding contexts as well, where a hint of fresh air is wanted without committing to a saturated accent.',
+    blurb: 'Powder Blue is the pale, slightly cyan-leaning blue of soft baby blanket fabric. The CSS hex sits between Light Blue and Pale Turquoise, with low chroma at high lightness. Beauty, wellness, and baby-product brands use it as a quiet background. Pair with deep navy for type, or with charcoal for a more neutral palette. Against pure white the difference is subtle, so it works as a layered surface or panel. The cool undertone suits medical and clinical branding contexts as well, where a hint of fresh air is wanted without committing to a saturated accent.',
   },
   {
     slug: 'purple',
@@ -1242,7 +1242,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'purple',
     source: 'css',
     related: ['darkmagenta', 'material-purple-500', 'tailwind-fuchsia-600'],
-    blurb: 'Purple in CSS is #800080, the deep historical purple of Roman ceremonial robes dyed with murex shellfish. The hex sits at mid-low lightness with strong chroma in the magenta-purple zone. Cultural associations are weighty: royalty, mourning, ceremony, religion, music. Use it as a primary identity color for arts, premium-service, or heritage brands. Pair with cream for warmth, or with warm gold for a luxury accent. Against white it passes body text contrast comfortably. Body text in CSS Purple passes AAA at standard sizes; the chroma level can still feel intense in long-form text and is best for short copy.',
+    blurb: 'Purple in CSS is #800080, the deep historical purple of Roman ceremonial robes dyed with murex shellfish. The hex sits at mid-low lightness with strong chroma in the magenta-purple zone. Cultural associations are weighty: royalty, mourning, ceremony, music. Arts, premium-service, and heritage brands use it as a primary identity colour. Pair with cream for warmth, or with warm gold for a luxury accent. Body text passes AAA at standard sizes against white; the chroma can still feel intense in long-form text and is best for short copy.',
   },
   {
     slug: 'rebeccapurple',
@@ -1260,7 +1260,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'red',
     source: 'css',
     related: ['tailwind-red-500', 'material-red-500', 'tailwind-red-600'],
-    blurb: 'Red in CSS is #ff0000, the brightest possible red the sRGB color space can produce. The hex is too saturated for almost any practical UI use except as a brief error state or attention flag. Cultural associations are unusually strong: danger, passion, urgency, importance. Real-world red branding usually pulls a slightly desaturated or darker variant. Use the pure value strictly as a visual stop signal; for sustained use, prefer Crimson, Firebrick, or a modern OKLCH-tuned red. Body text contrast against white falls below AA at body sizes; reserve the pure value for surfaces and brief accent moments.',
+    blurb: 'Red in CSS is #ff0000, the brightest possible red the sRGB color space can produce. The hex is too saturated for almost any practical UI use except as a brief error state or attention flag. Cultural associations are unusually strong: danger, passion, urgency, importance. Real-world red branding usually pulls a slightly desaturated or darker variant. The pure value functions strictly as a visual stop signal; for sustained use, Crimson, Firebrick, or a modern OKLCH-tuned red will hold up better. Body text contrast against white falls below AA at body sizes.',
   },
   {
     slug: 'rosybrown',
@@ -1278,7 +1278,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'css',
     related: ['bootstrap-primary', 'tailwind-blue-600', 'tailwind-indigo-500'],
-    blurb: 'Royal Blue is the bright, slightly purple-leaning blue historically associated with British monarchy. The CSS hex carries strong chroma at mid lightness and reads as confident and slightly formal. Editorial, financial, and heritage brands use it as a primary accent. Pair with cream for warmth, or with warm gold for a luxury accent. Against white it passes body text contrast in most sizes and works well as a primary action color or display heading. Body text in Royal Blue against white passes AA at standard body sizes and AAA at sizes 18px and above.',
+    blurb: 'Royal Blue is the bright, slightly purple-leaning blue historically associated with British monarchy. The CSS hex carries strong chroma at mid lightness and reads as confident and slightly formal. Editorial, financial, and heritage brands use it as a primary accent. Pair with cream for warmth, or with warm gold for a luxury accent. Against white it passes body text contrast in most sizes and works as a primary action colour or display heading. AA passes at standard body sizes and AAA at 18px and above.',
   },
   {
     slug: 'saddlebrown',
@@ -1287,7 +1287,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'brown',
     source: 'css',
     related: ['sienna', 'brown', 'darkred'],
-    blurb: 'Saddle Brown is the deep, warm brown of a well-worn leather saddle. The CSS hex sits at low lightness with moderate chroma and reads as grounded, heritage, and slightly nostalgic. Outdoor, leather, and craft brands use it as a primary identity color. Pair with cream for warmth, or with muted forest green for a heritage outdoor palette. Against white it passes body text contrast comfortably and works well as a primary type color or display heading. Body text in Saddle Brown against white passes AAA at every standard size; the value carries long-form reading confidently.',
+    blurb: 'Saddle Brown is the deep, warm brown of a well-worn leather saddle. The CSS hex sits at low lightness with moderate chroma and reads as grounded and slightly nostalgic. Outdoor, leather, and craft brands use it as a primary identity colour. Pair with cream for warmth, or with muted forest green for a heritage outdoor palette. Against white it passes body text contrast comfortably and works as a primary type colour or display heading. AAA holds at every standard size; the value carries long-form reading confidently.',
   },
   {
     slug: 'salmon',
@@ -1296,7 +1296,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'red',
     source: 'css',
     related: ['lightcoral', 'tomato', 'material-red-500'],
-    blurb: 'Salmon is the warm pink-orange of fresh-caught Atlantic salmon flesh. The CSS hex carries moderate chroma at mid-high lightness and reads as friendly without being aggressive. Beauty, wellness, and editorial brands use it as a primary or secondary accent. Pair with deep teal for type contrast, or with cream for a softer palette. Against white it carries enough contrast for headlines but is borderline for body text. As a UI element it works well for warmth-focused buttons and panels with dark text overlays. Body text contrast against white falls below AA at body sizes.',
+    blurb: 'Salmon is the warm pink-orange of fresh-caught Atlantic salmon flesh. The CSS hex carries moderate chroma at mid-high lightness and reads as friendly without being aggressive. Beauty, wellness, and editorial brands use it as a primary or secondary accent. Pair with deep teal for type contrast, or with cream for a softer palette. Against white it carries enough contrast for headlines but is borderline for body text. As a UI element it works for warmth-focused buttons and panels with dark text overlays — body text falls below AA at body sizes.',
   },
   {
     slug: 'sandybrown',
@@ -1314,7 +1314,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'curated',
     related: ['aquamarine', 'lightgreen', 'palegreen'],
-    blurb: 'Seafoam is the curated pale mint-green of ocean foam. The hex sits between Mint Cream and Pale Green, with low-moderate chroma and a slight blue cast. Wellness, beauty, and travel brands use it as a primary surface. Pair with deep teal for type, or with warm brown for a softer secondary accent. Terracotta works as an unexpected complementary warmth. As a UI element it works well as a panel or section background; against white it provides reasonable separation but is too pale for body text. Body text contrast against white fails AA at every size.',
+    blurb: 'Seafoam is the curated pale mint-green of ocean foam. The hex sits between Mint Cream and Pale Green, with low-moderate chroma and a slight blue cast. Wellness, beauty, and travel brands use it as a primary surface. Pair with deep teal for type, with warm brown for a softer secondary, or with terracotta for unexpected complementary warmth. As a UI element it works as a panel or section background; against white it provides reasonable separation but is too pale for body text, failing AA at every size.',
   },
   {
     slug: 'seagreen',
@@ -1323,7 +1323,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'css',
     related: ['bootstrap-success', 'tailwind-emerald-600', 'forestgreen'],
-    blurb: 'Sea Green is the deep, slightly blue-leaning green of a calm ocean at midday. The CSS hex sits between Forest Green and Light Sea Green, with moderate chroma at low-mid lightness. Outdoor, travel, and environmental brands use it as a primary identity color. Pair with cream for warmth, or with warm coral for an unexpected complementary accent. Against white it passes body text contrast in most sizes and works well as a primary action color or display heading. Body text in Sea Green against white passes AAA at standard body sizes and works for long-form reading.',
+    blurb: 'Sea Green is the deep, slightly blue-leaning green of a calm ocean at midday. The CSS hex sits between Forest Green and Light Sea Green, with moderate chroma at low-mid lightness. Outdoor, travel, and environmental brands use it as a primary identity colour. Pair with cream for warmth, or with warm coral for an unexpected complementary accent. Against white it passes body text contrast in most sizes and works as a primary action colour or display heading. AAA holds at standard body sizes and the value carries long-form reading confidently.',
   },
   {
     slug: 'seashell',
@@ -1332,7 +1332,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'neutral',
     source: 'css',
     related: ['oldlace', 'floralwhite', 'whitesmoke'],
-    blurb: 'Seashell is one of the warmest off-whites in the CSS spec, with a faint pink-orange undertone. The hex reads as quiet and inviting, distinct from cooler whites. Editorial, hospitality, and craft brands use it as a primary background. Pair with deep brown for type, or with charcoal for a quieter palette. The warm cast suits long-form reading and product photography where a hint of texture is wanted without committing to a real color. Two Seashell surfaces sitting adjacent will look identical in dim viewing conditions, so treat the color as a single-layer tone rather than for nested cards.',
+    blurb: 'Seashell is one of the warmest off-whites in the CSS spec, with a faint pink-orange undertone. The hex reads as quiet and inviting, distinct from cooler whites. Editorial, hospitality, and craft brands use it as a primary background. Against deep brown type it warms a layout in a way charcoal cannot. The undertone suits long-form reading and product photography where a hint of texture is wanted without committing to a real color. Two Seashell surfaces sitting adjacent will look identical in dim viewing conditions, so treat the color as a single-layer tone rather than nested cards.',
   },
   {
     slug: 'sienna',
@@ -1341,7 +1341,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'brown',
     source: 'css',
     related: ['saddlebrown', 'brown', 'burnt-orange'],
-    blurb: 'Sienna is the warm red-brown of iron-rich earth fired into pigment, named after the Tuscan town. The CSS hex sits at low-mid lightness with strong warmth and moderate chroma. Heritage, art, and craft brands use it as a primary identity color. Pair with cream for warmth, or with muted forest green for an editorial palette. Against white it passes body text contrast comfortably and works well as a primary type color or display heading. Body text in Sienna against white passes AAA at every standard size, making it one of the more accessible warm-brown values in the spec.',
+    blurb: 'Sienna is the warm red-brown of iron-rich earth fired into pigment, named after the Tuscan town. The CSS hex sits at low-mid lightness with strong warmth and moderate chroma. Heritage and craft brands lean on it for primary identity colour, often against cream surfaces or muted forest green for an editorial counterweight. Against white it passes body text contrast comfortably and reads as a confident type colour as well as a display heading. Body text in Sienna against white passes AAA at every standard size, making it one of the more accessible warm-brown values in the spec.',
   },
   {
     slug: 'silver',
@@ -1350,7 +1350,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'gray',
     source: 'css',
     related: ['lightgray', 'darkgray', 'gainsboro'],
-    blurb: 'Silver in CSS is a mid-light gray, originally chosen to approximate the metallic finish in non-glossy contexts. The hex sits at lightness 0.75 with no chroma. Technology, luxury, and automotive brands use it as a metallic stand-in. Pair with deep charcoal for type and a single saturated accent. As a UI element it works for borders and quiet surfaces. Body text contrast against white falls below AA at every standard size; the value cannot function as text against white and should be reserved for borders, surfaces, and decorative elements with dark text overlays.',
+    blurb: 'Silver in CSS is a mid-light gray, originally chosen to approximate the metallic finish in non-glossy contexts. The hex sits at lightness 0.75 with no chroma. Technology, luxury, and automotive brands use it as a metallic stand-in, usually under deep charcoal type with a single saturated accent. As a UI element it works for borders and quiet surfaces. Body text contrast against white falls below AA at every standard size — the value cannot function as text against white and should be reserved for borders, surfaces, and decorative elements with dark text overlays.',
   },
   {
     slug: 'skyblue',
@@ -1359,7 +1359,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'css',
     related: ['lightskyblue', 'lightsteelblue', 'lightblue'],
-    blurb: 'Sky Blue is the colour of a clear midday sky away from the horizon haze, the same blue Maxfield Parrish captured in his 1920s magazine work — known thereafter as Parrish Blue. The CSS hex is brighter and slightly cooler than the painted version but holds the same emotional weight. Wellness and travel brands use surfaces in this band as page washes — Calm and Headspace both use neighbouring values. Pair it with navy `#1e3a8a` body copy or with cream for a warmer layout. Body text in Sky Blue against white falls below AA at every size; treat it as a surface tone, not a type colour.',
+    blurb: 'Sky Blue is the colour of a clear midday sky away from the horizon haze, the same blue Maxfield Parrish captured in his 1920s magazine work — known thereafter as Parrish Blue. The CSS hex is brighter and slightly cooler than the painted version but holds the same emotional weight. Wellness and travel brands use surfaces in this band as page washes; Calm and Headspace both work with neighbouring values. Against navy `#1e3a8a` body copy it sets a calm reading surface, against cream it warms further. Body text in Sky Blue against white falls below AA at every size; this is a surface tone, not a type colour.',
   },
   {
     slug: 'slateblue',
@@ -1368,7 +1368,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'indigo',
     source: 'css',
     related: ['mediumslateblue', 'material-deep-purple-500', 'mediumpurple'],
-    blurb: 'Slate Blue is the muted, slightly purple-leaning blue-gray of stratified rock. The CSS hex sits at mid-low lightness with moderate chroma in the indigo zone. Editorial, financial, and architectural brands use it as a primary identity color. Pair with cream for warmth, or with warm gold for a heritage accent. Against white it passes body text contrast in most sizes. As a UI element it works well as a primary action color or as a sophisticated alternative to standard navy. Body text in Slate Blue against white passes AA at body sizes; AAA holds at headline sizes.',
+    blurb: 'Slate Blue is the muted, slightly purple-leaning blue-gray of stratified rock. The CSS hex sits at mid-low lightness with moderate chroma in the indigo zone. Editorial, financial, and architectural brands use it as a primary identity colour — often against cream for warmth or with warm gold for a heritage accent. Against white it passes body text contrast in most sizes and works as a sophisticated alternative to standard navy. Body text in Slate Blue against white passes AA at body sizes; AAA holds at headline sizes.',
   },
   {
     slug: 'slategray',
@@ -1378,7 +1378,7 @@ export const NAMED_COLORS: NamedColor[] = [
     source: 'css',
     aliases: ['slategrey', 'slate-gray'],
     related: ['lightslategray', 'tailwind-slate-500', 'tailwind-gray-500'],
-    blurb: 'Slate Gray is the cool, slightly blue-leaning mid-gray of stratified rock. The CSS hex carries low chroma at mid lightness and reads as restrained and considered. Editorial, architectural, and business brands use it as a primary or secondary neutral. Pair with cream for a softer palette, or with warm coral for an unexpected secondary accent. As a UI element it works well for secondary text, borders, and de-emphasized labels. Against white it carries enough contrast for body text at standard sizes. Body text in Slate Gray against white passes AA at body sizes but not AAA at small sizes.',
+    blurb: 'Slate Gray is the cool, slightly blue-leaning mid-gray of stratified rock. The CSS hex carries low chroma at mid lightness and reads as restrained and considered. Editorial, architectural, and business brands lean on it as a primary or secondary neutral. Against cream it softens; against warm coral it carries an unexpected secondary accent. As a UI element it does well for secondary text, borders, and de-emphasised labels. Body text in Slate Gray against white passes AA at body sizes but not AAA at small sizes.',
   },
   {
     slug: 'snow',
@@ -1387,7 +1387,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'neutral',
     source: 'css',
     related: ['bootstrap-light', 'white', 'ghostwhite'],
-    blurb: 'Snow is one of the palest off-whites in CSS, with a faint pink-warm undertone that distinguishes it from pure white. The hex reads as quiet and inviting, useful as a background where the harsh edge of pure #ffffff would feel sterile. Editorial, beauty, and wellness brands use it as a primary background. Pair with deep charcoal for type, or with warm brown for a softer secondary accent. Two Snow surfaces side by side will look identical in dim viewing conditions; treat the color as a single-layer tone rather than for nested cards or stacked surfaces.',
+    blurb: 'Snow is one of the palest off-whites in CSS, with a faint pink-warm undertone that distinguishes it from pure white. The hex reads as quiet and inviting, useful as a background where the harsh edge of pure #ffffff would feel sterile. Editorial, beauty, and wellness brands use it as a primary background, usually under deep charcoal type or warm brown for a softer secondary accent. Two Snow surfaces side by side will look identical in dim viewing conditions; treat the color as a single-layer tone rather than for nested cards or stacked surfaces.',
   },
   {
     slug: 'springgreen',
@@ -1396,7 +1396,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'css',
     related: ['mediumspringgreen', 'lawngreen', 'lime'],
-    blurb: 'Spring Green is the brilliant, slightly cyan-leaning green of new shoots in early spring. The CSS hex is one of the most saturated greens in the spec and reads as almost neon. Use it strictly as an accent; large fields of Spring Green fatigue the eye quickly and rarely pass body text contrast against white. Pair with deep navy for type, or with magenta for a complementary clash. As a UI element it works for success states and emphasized buttons with dark text overlays. Body text contrast against white fails AA at every size; reserve it as a surface only.',
+    blurb: 'Spring Green is the brilliant, slightly cyan-leaning green of new shoots in early spring. The CSS hex is one of the most saturated greens in the spec and reads as almost neon. Large fields of Spring Green fatigue the eye quickly and rarely pass body text contrast against white. Against deep navy type it cools enough to read; against magenta it makes a complementary clash. As a UI element it functions for success states and emphasised buttons with dark text overlays. Body text contrast against white fails AA at every size — a surface only.',
   },
   {
     slug: 'steelblue',
@@ -1405,7 +1405,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'css',
     related: ['tailwind-sky-600', 'tailwind-cyan-600', 'tailwind-slate-500'],
-    blurb: 'Steel Blue is the muted, slightly cyan-leaning mid-blue of, originally, polished steel under cool light. The CSS hex sits between Cornflower Blue and Slate Gray, with moderate chroma at mid lightness. Industrial, financial, and editorial brands use it as a primary identity color. Pair with cream for warmth, or with warm coral for an unexpected accent. Against white it passes body text contrast in most sizes and works well as a sophisticated alternative to brighter blues. Body text in Steel Blue against white passes AA at body sizes; AAA holds at headline sizes only.',
+    blurb: 'Steel Blue is the muted, slightly cyan-leaning mid-blue of polished steel under cool light. The CSS hex sits between Cornflower Blue and Slate Gray, with moderate chroma at mid lightness. Industrial, financial, and editorial brands use it as a primary identity colour, often against cream for warmth or warm coral for an unexpected accent. Against white it passes body text contrast in most sizes and reads as a sophisticated alternative to brighter blues. Body text in Steel Blue against white passes AA at body sizes; AAA holds at headline sizes only.',
   },
   {
     slug: 'tailwind-amber-500',
@@ -1414,7 +1414,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'orange',
     source: 'tailwind',
     related: ['orange', 'darkorange', 'sandybrown'],
-    blurb: 'Tailwind Amber 500 anchors the framework\'s amber palette at mid-saturation, leaning slightly toward orange. The hex is bright enough to function as a warning state color and warm enough to feel friendly rather than alarming. Use it for caution alerts, in-progress badges, or energetic accent buttons in food and travel brands. Against white the contrast is borderline for body text, so reserve text application for larger sizes and rely on dark text overlays when using it as a button or panel color. Body text contrast against white falls below AA at sizes under 18px.',
+    blurb: 'Tailwind Amber 500 anchors the framework\'s amber palette at mid-saturation, leaning slightly toward orange. The hex is bright enough to function as a warning state colour and warm enough to feel friendly rather than alarming. Common for caution alerts, in-progress badges, or energetic accent buttons in food and travel branding. Against white the contrast is borderline for body text, so larger sizes are safest and dark text overlays the cleanest option when it shows up as a button or panel colour. Body text contrast against white falls below AA at sizes under 18px.',
   },
   {
     slug: 'tailwind-amber-600',
@@ -1423,7 +1423,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'brown',
     source: 'tailwind',
     related: ['peru', 'chocolate', 'tailwind-yellow-600'],
-    blurb: 'Tailwind Amber 600 lands in the colour bourbon takes on under direct light — warm, slightly brown, just past mustard. The hex is dark enough to function as body type against white, which sets it apart from the lighter amber stops that read more like highlight pen. Distilleries and craft food brands often pick tones in this band for primary identity colour because the warmth signals heritage without going full brown. Pair it with a cool slate `#475569` for a counterweight or with deep teal for a modern editorial feel. Body text against white passes AA at every standard size and reaches AAA at sizes 18px and above.',
+    blurb: 'Tailwind Amber 600 lands in the colour bourbon takes on under direct light — warm, slightly brown, just past mustard. The hex is dark enough to function as body type against white, which sets it apart from the lighter amber stops that read more like highlight pen. Distilleries and craft food brands often pick tones in this band for primary identity colour because the warmth signals heritage without going full brown. Against a cool slate `#475569` it gains a counterweight; against deep teal it reads as modern editorial. Body text against white passes AA at every standard size and reaches AAA at sizes 18px and above.',
   },
   {
     slug: 'tailwind-blue-500',
@@ -1432,7 +1432,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'tailwind',
     related: ['dodgerblue', 'bootstrap-primary', 'material-blue-500'],
-    blurb: 'Tailwind Blue 500 is one of the most-deployed blues on the modern web, sitting at the center of Tailwind\'s blue ramp. The v4 hex was retuned in OKLCH space from the v3 value and reads as slightly fresher and more saturated. Use it as a primary action color, link state, or focus indicator across SaaS, finance, and developer-tools branding. Against white the contrast is sufficient for body text in most sizes and excellent for buttons. Pair with Tailwind Slate for type contrast and a warm accent for variety in the palette.',
+    blurb: 'Tailwind Blue 500 is one of the most-deployed blues on the modern web, sitting at the centre of Tailwind\'s blue ramp. The v4 hex was retuned in OKLCH space from the v3 value and reads as slightly fresher and more saturated than its predecessor. It pulls duty as a primary action colour, link state, and focus indicator across SaaS, finance, and developer-tools branding. Against white the contrast is sufficient for body text in most sizes and excellent for buttons. Tailwind Slate handles type contrast cleanly; a warm accent keeps the palette from going monochrome.',
   },
   {
     slug: 'tailwind-blue-600',
@@ -1441,7 +1441,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'tailwind',
     related: ['bootstrap-primary', 'royalblue', 'tailwind-indigo-500'],
-    blurb: 'Step into Tailwind Blue 600 and the palette gets a colour with the same emotional register as the Stripe brand blue — deeper than the famously friendly Tailwind 500, more committed without going corporate. The hex pulls slightly cooler than Material Blue 500 and reads as the work blue of choice for SaaS dashboards launched after 2020. It pairs cleanly with Tailwind Slate 50 surfaces for type and with a single warm accent like Amber 500 for emphasis. Body text against white passes AA comfortably at every standard size and reaches AAA at 16px and above, which makes it a safe default for primary copy.',
+    blurb: 'Tailwind Blue 600 has the same emotional register as the Stripe brand blue — deeper than the famously friendly Tailwind 500, more committed without going corporate. The hex pulls slightly cooler than Material Blue 500 and reads as the work blue of choice for SaaS dashboards launched after 2020. It pairs cleanly with Tailwind Slate 50 surfaces for type and with a single warm accent like Amber 500 for emphasis. Body text against white passes AA comfortably at every standard size and reaches AAA at 16px and above, which makes it a safe default for primary copy.',
   },
   {
     slug: 'tailwind-cyan-500',
@@ -1450,7 +1450,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'tailwind',
     related: ['bootstrap-info', 'deepskyblue', 'tailwind-sky-500'],
-    blurb: 'Tailwind Cyan 500 sits at the saturated mid-cyan center of Tailwind v4\'s cyan ramp. The hex is brighter than Sky 500 and slightly cooler than Teal 500, with strong presence against white. Use it for informational accents, data visualization, or as a secondary brand color in technology and communications products. Against white the contrast is borderline for body text at small sizes; reserve text use for headlines and rely on dark text overlays when the color appears as a button or panel surface. Body text contrast falls below AA at sizes under 18px.',
+    blurb: 'Tailwind Cyan 500 sits at the saturated mid-cyan centre of Tailwind v4\'s cyan ramp. The hex is brighter than Sky 500 and slightly cooler than Teal 500, with strong presence against white. It pulls duty for informational accents, data visualisation, and secondary brand colour in technology and communications products. Against white the contrast is borderline for body text at small sizes; headlines and dark text overlays on button or panel surfaces are the safest territory. Body text contrast falls below AA at sizes under 18px.',
   },
   {
     slug: 'tailwind-cyan-600',
@@ -1459,7 +1459,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'tailwind',
     related: ['steelblue', 'tailwind-sky-600', 'lightslategray'],
-    blurb: 'Tailwind Cyan 600 is the cyan you reach for when the brand needs to feel technical without going icy. It sits darker and slightly less green than the framework\'s 500, which puts it on the legible side of the colour-contrast line for body type against white at standard sizes. Use it as a primary action colour in developer-tooling layouts or as the hover state above Cyan 500 buttons. Pair it with a warm accent like burnt orange `#cc5500` for a palette that avoids the obvious neon-on-black engineering cliché. Body text passes AA at body sizes and AAA at 18px and above.',
+    blurb: 'Tailwind Cyan 600 is the cyan you reach for when the brand needs to feel technical without going icy. It sits darker and slightly less green than the framework\'s 500, which puts it on the legible side of the colour-contrast line for body type against white at standard sizes. It works as a primary action colour in developer-tooling layouts or as the hover state above Cyan 500 buttons. A warm accent like burnt orange `#cc5500` keeps the palette away from the obvious neon-on-black engineering cliché. Body text passes AA at body sizes and AAA at 18px and above.',
   },
   {
     slug: 'tailwind-emerald-500',
@@ -1468,7 +1468,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'tailwind',
     related: ['mediumseagreen', 'bootstrap-teal', 'material-green-500'],
-    blurb: 'Tailwind Emerald 500 anchors the framework\'s emerald ramp at mid-saturation, sitting between Green and Teal in hue. The cooler lean compared to most success greens distinguishes it from the warmer Material green tradition. Use it for confirmation states, growth indicators, and primary accents in environmental or wellness products. Against white the body text contrast is borderline at small sizes but comfortable at headline sizes; verify accessibility for fine type. Body text against white passes AA only at sizes 18px and above; smaller text needs the 600 stop or darker.',
+    blurb: 'Tailwind Emerald 500 anchors the framework\'s emerald ramp at mid-saturation, sitting between Green and Teal in hue. The cooler lean compared to most success greens distinguishes it from the warmer Material green tradition. Common for confirmation states, growth indicators, and primary accents in environmental or wellness products. Against white the body text contrast is borderline at small sizes but comfortable at headline sizes; verify accessibility for fine type. Body text against white passes AA only at sizes 18px and above; smaller text needs the 600 stop or darker.',
   },
   {
     slug: 'tailwind-emerald-600',
@@ -1477,7 +1477,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'tailwind',
     related: ['seagreen', 'bootstrap-success', 'tailwind-green-600'],
-    blurb: 'Emerald 600 is the colour Robinhood used during its 2013 launch palette, when the brand wanted a green that felt financial without leaning on the muted bottle-green of legacy banks. Tailwind\'s hex sits in the same neighbourhood — deeper than the framework\'s 500, slightly less yellow, a confident jewel-tone green. It works well for confirmation states, brand accents in wellness products, or primary type against cream surfaces. Pair it with a warm coral `#fb7185` for a complementary palette that reads modern rather than seasonal. Body text against white passes AA at body sizes and AAA at 16px and above, which makes it safe for long-form copy in green-anchored design systems.',
+    blurb: 'Emerald 600 is the colour Robinhood used during its 2013 launch palette, when the brand wanted a green that felt financial without leaning on the muted bottle-green of legacy banks. Tailwind\'s hex sits in the same neighbourhood — deeper than the framework\'s 500, slightly less yellow, a confident jewel-tone green. It works for confirmation states, brand accents in wellness products, or primary type against cream surfaces. A warm coral `#fb7185` accent produces a complementary palette that reads modern rather than seasonal. Body text against white passes AA at body sizes and AAA at 16px and above, which makes it safe for long-form copy in green-anchored design systems.',
   },
   {
     slug: 'tailwind-fuchsia-500',
@@ -1486,7 +1486,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'purple',
     source: 'tailwind',
     related: ['magenta', 'tailwind-fuchsia-600', 'mediumorchid'],
-    blurb: 'Tailwind Fuchsia 500 sits at the saturated bright pink-purple center of Tailwind v4\'s fuchsia ramp. The hex carries very high chroma and reads as energetic and slightly theatrical. Use it for cosmetic, music, or youth-targeted brand accents, or as a high-emphasis call-to-action in palettes that need pop. Against white the body text contrast is borderline at small sizes; reserve text use for larger sizes and use dark text overlays on button surfaces. Body text contrast against white falls below AA at sizes under 18px and works only as accent emphasis.',
+    blurb: 'Tailwind Fuchsia 500 sits at the saturated bright pink-purple centre of Tailwind v4\'s fuchsia ramp. The hex carries very high chroma and reads as energetic and slightly theatrical. It does well for cosmetic, music, or youth-targeted brand accents, and as a high-emphasis call-to-action in palettes that need pop. Against white the body text contrast is borderline at small sizes; larger sizes are safest and dark text overlays the clean option on button surfaces. Body text contrast against white falls below AA at sizes under 18px and works only as accent emphasis.',
   },
   {
     slug: 'tailwind-fuchsia-600',
@@ -1495,7 +1495,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'purple',
     source: 'tailwind',
     related: ['tailwind-fuchsia-500', 'mediumorchid', 'material-purple-500'],
-    blurb: 'Fuchsia 600 lives in the same band Glossier picked for the original You bottle in 2017 — saturated, slightly cool, the kind of digital pink that reads as adult rather than as Barbie. The Tailwind hex is one notch deeper than the headline 500 stop, which pushes it across the body-text contrast threshold against white. Music-streaming services and cosmetics brands use tones near this hex when they want a pink that adults will use in public. Pair it with a deep slate for type-heavy layouts or with a single chartreuse accent for a postcard-shop palette. Body text against white passes AA at body sizes.',
+    blurb: 'Fuchsia 600 lives in the same band Glossier picked for the original You bottle in 2017 — saturated, slightly cool, the kind of digital pink that reads as adult rather than as Barbie. The Tailwind hex is one notch deeper than the headline 500 stop, which pushes it across the body-text contrast threshold against white. Music-streaming services and cosmetics brands use tones near this hex when they want a pink adults will use in public. A deep slate handles type-heavy layouts; a single chartreuse accent gives the postcard-shop palette. Body text against white passes AA at body sizes.',
   },
   {
     slug: 'tailwind-gray-500',
@@ -1504,7 +1504,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'tailwind',
     related: ['tailwind-slate-500', 'slategray', 'lightslategray'],
-    blurb: 'Tailwind Gray 500 anchors the framework\'s gray ramp at mid-light, carrying a faint blue undertone. The cool cast distinguishes it from warmer neutrals like Stone or pure Zinc at similar lightness. Use it for secondary type, borders, and disabled-state surfaces in technology and business products. Against white the body text contrast is sufficient for AA at standard sizes but should be verified for small caps and footnote text. Body text contrast against white passes AA at body sizes; AAA holds only at sizes 18px and above for de-emphasized labels.',
+    blurb: 'Tailwind Gray 500 anchors the framework\'s gray ramp at mid-light, carrying a faint blue undertone. The cool cast distinguishes it from warmer neutrals like Stone or pure Zinc at similar lightness. It handles secondary type, borders, and disabled-state surfaces in technology and business products. Against white the body text contrast is sufficient for AA at standard sizes but should be verified for small caps and footnote text. Body text contrast against white passes AA at body sizes; AAA holds only at sizes 18px and above for de-emphasized labels.',
   },
   {
     slug: 'tailwind-gray-600',
@@ -1513,7 +1513,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'tailwind',
     related: ['tailwind-slate-600', 'tailwind-gray-500', 'tailwind-slate-500'],
-    blurb: 'Gray 600 is Tailwind\'s workhorse body-type colour for any product that wants to feel calm and current — the value Linear, Vercel\'s marketing site, and Cal.com all sit within a few delta-E units of for their default body copy. The cool undertone keeps it from feeling aged compared to warmer Stone or Zinc alternatives. Body text against white passes AAA at every standard size, which is the property that makes it the default copy colour in so many modern design systems. Pair it with any chromatic accent without worrying about temperature clash; the slight blue cast plays well with cool and warm hues alike.',
+    blurb: 'Gray 600 is Tailwind\'s workhorse body-type colour for any product that wants to feel calm and current — the value Linear, Vercel\'s marketing site, and Cal.com all sit within a few delta-E units of for their default body copy. The cool undertone keeps it from feeling aged compared to warmer Stone or Zinc alternatives. Body text against white passes AAA at every standard size, which is the property that makes it the default copy colour in so many modern design systems. The slight blue cast plays well with cool and warm chromatic accents alike.',
   },
   {
     slug: 'tailwind-green-500',
@@ -1522,7 +1522,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'tailwind',
     related: ['limegreen', 'material-green-500', 'tailwind-emerald-500'],
-    blurb: 'Tailwind Green 500 sits at the saturated mid-green center of Tailwind v4\'s green ramp. The hex falls between Emerald and Lime in hue and reads as fresh and energetic. Use it for confirmation states, primary growth accents, or as a bright brand color in food and outdoor products. Against white the body text contrast is borderline at small sizes; reserve text use for larger sizes and use dark text overlays on button surfaces. Body text against white passes AA only at sizes 18px and above; smaller body text needs the 600 stop or deeper.',
+    blurb: 'Tailwind Green 500 sits at the saturated mid-green centre of Tailwind v4\'s green ramp. The hex falls between Emerald and Lime in hue and reads as fresh and energetic. It pulls duty for confirmation states, primary growth accents, and bright brand colour in food and outdoor products. Against white the body text contrast is borderline at small sizes; larger sizes are safest and dark text overlays the clean option on button surfaces. Body text against white passes AA only at sizes 18px and above; smaller body text needs the 600 stop or deeper.',
   },
   {
     slug: 'tailwind-green-600',
@@ -1531,7 +1531,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'tailwind',
     related: ['material-green-500', 'tailwind-lime-600', 'mediumseagreen'],
-    blurb: 'Tailwind Green 600 is a confident, slightly-yellow-leaning green that sits closer to leaf than to emerald. It is the colour many financial dashboards use for positive deltas because it reads as growth without veering into the playful brightness of Lime. Brands working in environmental tech or outdoor gear — Allbirds and Patagonia both have palette entries within delta-E 3 of this hex — use it as a confirmation state or as a primary identity colour. Pair it with terracotta `#e2725b` for a palette inspired by the Tuscan countryside rather than by the obvious tech-startup template. Body text against white passes AA at body sizes and AAA at 18px and above.',
+    blurb: 'Tailwind Green 600 is a confident, slightly-yellow-leaning green that sits closer to leaf than to emerald. It is the colour many financial dashboards use for positive deltas because it reads as growth without veering into the playful brightness of Lime. Brands working in environmental tech or outdoor gear (Allbirds and Patagonia both have palette entries within delta-E 3 of this hex) use it as a confirmation state or as a primary identity colour. A terracotta `#e2725b` accent draws on the Tuscan countryside rather than the obvious tech-startup template. Body text against white passes AA at body sizes and AAA at 18px and above.',
   },
   {
     slug: 'tailwind-indigo-500',
@@ -1540,7 +1540,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'tailwind',
     related: ['royalblue', 'bootstrap-primary', 'tailwind-blue-600'],
-    blurb: 'Tailwind Indigo 500 anchors the framework\'s indigo ramp at mid-saturation. The hex sits in the blue-purple zone, slightly cooler than Violet and warmer than Blue at the same stop. Use it as a primary action color, link state, or brand identity color in technology and editorial products. Against white the body text contrast is borderline at small sizes; reserve text use for headlines and use dark text overlays on button surfaces. Body text contrast against white passes AA only at sizes 18px and above; smaller body text needs the 600 stop.',
+    blurb: 'Tailwind Indigo 500 anchors the framework\'s indigo ramp at mid-saturation. The hex sits in the blue-purple zone, slightly cooler than Violet and warmer than Blue at the same stop. It pulls duty as a primary action colour, link state, and brand identity colour in technology and editorial products. Against white the body text contrast is borderline at small sizes; headlines and dark text overlays on button surfaces are the safest territory. Body text contrast against white passes AA only at sizes 18px and above; smaller body text needs the 600 stop.',
   },
   {
     slug: 'tailwind-indigo-600',
@@ -1558,7 +1558,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'tailwind',
     related: ['yellowgreen', 'limegreen', 'tailwind-green-500'],
-    blurb: 'Tailwind Lime 500 is the bright yellow-green that anchors the framework\'s lime ramp. The hex carries high chroma and reads as energetic and slightly artificial, suitable for sports, gaming, or food branding. Against white the body text contrast fails AA at every size; reserve it strictly for backgrounds, fills, and decorative accents with dark text overlays. Pair with deep navy or charcoal for type contrast in surface-and-text combinations. Body text contrast against white fails AA at every standard size; the value works only as a surface or marker.',
+    blurb: 'Tailwind Lime 500 is the bright yellow-green that anchors the framework\'s lime ramp. The hex carries high chroma and reads as energetic and slightly artificial, suitable for sports, gaming, or food branding. Against white the body text contrast fails AA at every size — strictly backgrounds, fills, and decorative accents with dark text overlays. Deep navy or charcoal handles type contrast cleanly in surface-and-text combinations. Body text contrast against white fails AA at every standard size; the value works only as a surface or marker.',
   },
   {
     slug: 'tailwind-lime-600',
@@ -1567,7 +1567,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'tailwind',
     related: ['material-green-500', 'tailwind-green-600', 'olivedrab'],
-    blurb: 'Lime 600 takes the framework\'s neon-leaning lime and pushes it into the territory where it can almost be taken seriously as a brand colour rather than as a highlight. Skate companies like Polar and certain Adidas Originals lines have built capsule collections around tones in this band — bright enough to read as energetic, dark enough to wear well. Use it as an accent rather than as a body type colour; it sits on the borderline for AA contrast against white at standard sizes. Pair it with charcoal `#1f2937` for type or with a deep magenta for a 1990s rave-poster palette. Reserve large fields for hero sections only.',
+    blurb: 'Lime 600 takes the framework\'s neon-leaning lime and pushes it into the territory where it can almost be taken seriously as a brand colour rather than as a highlight. Skate companies like Polar and certain Adidas Originals lines have built capsule collections around tones in this band — bright enough to read as energetic, dark enough to wear well. It works as an accent rather than as a body type colour; it sits on the borderline for AA contrast against white at standard sizes. Charcoal `#1f2937` handles type cleanly, a deep magenta gives the 1990s rave-poster palette. Large fields belong in hero sections only.',
   },
   {
     slug: 'tailwind-neutral-500',
@@ -1576,7 +1576,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'gray',
     source: 'tailwind',
     related: ['tailwind-stone-500', 'tailwind-zinc-500', 'bootstrap-secondary'],
-    blurb: 'Tailwind Neutral 500 sits at the dead-center, fully neutral midpoint of the framework\'s neutral ramp. The hex has no warm or cool cast, which makes it versatile across mixed-temperature palettes for type, borders, and disabled-state surfaces. Use it as a default secondary text color in technology and business products where the palette already carries warmth from accents. Pair with any accent color without color-shift concerns. Body text contrast against white passes AA at standard body sizes; AAA holds only at sizes 18px and above for de-emphasized text use.',
+    blurb: 'Tailwind Neutral 500 sits at the dead-centre, fully neutral midpoint of the framework\'s neutral ramp. The hex has no warm or cool cast, which makes it versatile across mixed-temperature palettes for type, borders, and disabled-state surfaces. It serves as a default secondary text colour in technology and business products where the palette already carries warmth from accents. Any accent colour pairs without colour-shift concerns. Body text contrast against white passes AA at standard body sizes; AAA holds only at sizes 18px and above for de-emphasized text use.',
   },
   {
     slug: 'tailwind-neutral-600',
@@ -1585,7 +1585,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'gray',
     source: 'tailwind',
     related: ['tailwind-stone-600', 'tailwind-zinc-600', 'dimgray'],
-    blurb: 'Neutral 600 is the true grey of the Tailwind family — no measurable hue shift, no warm or cool bias, exactly the kind of background-and-type colour an architect would specify for an office foyer. Apple\'s product photography has leaned on tones within a few delta-E units of this hex for years because the absence of cast lets the photographed object define the temperature of the scene. The hex works as confident body type in any palette regardless of accent temperature. Body text against white passes AAA at every standard size, making Neutral 600 one of the most versatile copy colours in the framework.',
+    blurb: 'Neutral 600 is the true grey of the Tailwind family — no measurable hue shift, no warm or cool bias, exactly what an architect would specify for an office foyer. Apple\'s product photography has leaned on tones within a few delta-E units of this hex for years because the absence of cast lets the photographed object define the temperature of the scene. The hex works as confident body type in any palette regardless of accent temperature. Body text against white passes AAA at every standard size, making Neutral 600 one of the most versatile copy colours in the framework.',
   },
   {
     slug: 'tailwind-orange-500',
@@ -1594,7 +1594,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'orange',
     source: 'tailwind',
     related: ['coral', 'darkorange', 'tailwind-orange-600'],
-    blurb: 'Tailwind Orange 500 anchors the framework\'s orange ramp at mid-saturation. The hex carries high chroma at mid-high lightness and reads as energetic and warm. Use it as a primary brand color for food, sports, or outdoor products, or as a high-emphasis call-to-action button. Against white the body text contrast is borderline at small sizes; reserve text use for larger sizes and use dark text overlays on button surfaces. Body text contrast against white passes AA only at sizes 18px and above; smaller body text needs the 600 stop or darker.',
+    blurb: 'Tailwind Orange 500 anchors the framework\'s orange ramp at mid-saturation. The hex carries high chroma at mid-high lightness and reads as energetic and warm. It pulls duty as a primary brand colour for food, sports, or outdoor products, and as a high-emphasis call-to-action button. Against white the body text contrast is borderline at small sizes; larger sizes are safest and dark text overlays the clean option on button surfaces. Body text contrast against white passes AA only at sizes 18px and above; smaller body text needs the 600 stop or darker.',
   },
   {
     slug: 'tailwind-orange-600',
@@ -1603,7 +1603,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'orange',
     source: 'tailwind',
     related: ['orangered', 'tailwind-orange-500', 'coral'],
-    blurb: 'Orange 600 is the burnt-orange Hermès has used on its packaging since the 1940s, give or take a delta-E. The Tailwind hex sits deep enough to function as a body-text colour against white but bright enough to still read as orange rather than as brown. Food brands and outdoor-gear companies — Topo Designs and Yeti both have palette entries within a few delta-E of this hex — use it as primary identity colour. Pair it with deep teal `#0f766e` for a complementary palette or with charcoal for type-heavy layouts. Body text against white passes AA at body sizes and AAA at 18px and above for headline use.',
+    blurb: 'Orange 600 is the burnt-orange Hermès has used on its packaging since the 1940s, give or take a delta-E. The Tailwind hex sits deep enough to function as a body-text colour against white but bright enough to still read as orange rather than as brown. Food brands and outdoor-gear companies (Topo Designs and Yeti both have palette entries within a few delta-E of this hex) use it as primary identity colour. A deep teal `#0f766e` builds a complementary palette, charcoal handles type-heavy layouts. Body text against white passes AA at body sizes and AAA at 18px and above for headline use.',
   },
   {
     slug: 'tailwind-pink-500',
@@ -1612,7 +1612,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'pink',
     source: 'tailwind',
     related: ['deeppink', 'tailwind-pink-600', 'material-pink-500'],
-    blurb: 'Tailwind Pink 500 sits at the saturated mid-pink center of the framework\'s pink ramp. The hex carries high chroma at mid-high lightness and reads as energetic without being neon. Use it as a primary brand color for cosmetic, fashion, or youth-targeted products. Against white the body text contrast is borderline at small sizes; reserve text use for headlines and use dark text overlays on button surfaces in app interfaces. Body text contrast against white passes AA only at sizes 18px and above; smaller body text drops below the threshold.',
+    blurb: 'Tailwind Pink 500 sits at the saturated mid-pink centre of the framework\'s pink ramp. The hex carries high chroma at mid-high lightness and reads as energetic without being neon. It pulls duty as a primary brand colour for cosmetic, fashion, or youth-targeted products. Against white the body text contrast is borderline at small sizes; headlines and dark text overlays on button surfaces are the safest territory in app interfaces. Body text contrast against white passes AA only at sizes 18px and above; smaller body text drops below the threshold.',
   },
   {
     slug: 'tailwind-pink-600',
@@ -1621,7 +1621,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'pink',
     source: 'tailwind',
     related: ['material-pink-500', 'mediumvioletred', 'deeppink'],
-    blurb: 'Pink 600 is the hex Glossier might have shipped if it had launched in 2023 rather than 2014 — slightly deeper than the period-defining Glossier Millennial Pink, modernised by a small push toward magenta. The Tailwind value is dark enough to function as body type against white, which sets it apart from the pastels above it in the ramp. Beauty and youth-targeted SaaS brands use tones in this band as primary identity colour. Pair it with a deep teal accent or with a warm cream for surfaces. Body text against white passes AA at body sizes; AAA holds at 16px and above for headline emphasis use.',
+    blurb: 'Pink 600 is the hex Glossier might have shipped if it had launched in 2023 rather than 2014 — slightly deeper than the period-defining Glossier Millennial Pink, modernised by a small push toward magenta. The Tailwind value is dark enough to function as body type against white, which sets it apart from the pastels above it in the ramp. Beauty and youth-targeted SaaS brands use tones in this band as primary identity colour. A deep teal accent or a warm cream surface both work cleanly. Body text against white passes AA at body sizes; AAA holds at 16px and above for headline emphasis use.',
   },
   {
     slug: 'tailwind-purple-500',
@@ -1630,7 +1630,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'indigo',
     source: 'tailwind',
     related: ['tailwind-violet-500', 'tailwind-purple-600', 'mediumslateblue'],
-    blurb: 'Tailwind Purple 500 anchors the framework\'s purple ramp at mid-saturation. The hex sits between Violet and Fuchsia in hue and reads as confident and slightly theatrical. Use it as a primary brand color for premium services, arts, or technology products. Against white the body text contrast is borderline at small sizes; reserve text use for larger sizes and use dark text overlays on button surfaces. Body text contrast against white passes AA only at sizes 18px and above; smaller body text needs the 600 stop for legible contrast.',
+    blurb: 'Tailwind Purple 500 anchors the framework\'s purple ramp at mid-saturation. The hex sits between Violet and Fuchsia in hue and reads as confident and slightly theatrical. It pulls duty as a primary brand colour for premium services, arts, or technology products. Against white the body text contrast is borderline at small sizes; larger sizes are safest and dark text overlays the clean option on button surfaces. Body text contrast against white passes AA only at sizes 18px and above; smaller body text needs the 600 stop for legible contrast.',
   },
   {
     slug: 'tailwind-purple-600',
@@ -1639,7 +1639,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'indigo',
     source: 'tailwind',
     related: ['blueviolet', 'tailwind-violet-600', 'darkviolet'],
-    blurb: 'Purple 600 is the colour of premium and the colour of trouble — Cadbury, Asprey, and FedEx have all leaned on tones in this band for primary identity work. Tailwind\'s hex pulls slightly toward magenta compared with the framework\'s Violet 600, which gives it a warmer presence than the cooler Indigo 600 next door. Use it as a primary brand colour for arts-and-culture products or as a hover state above Purple 500 buttons. Pair it with a chartreuse accent for a Cadbury-style poster palette or with charcoal for type-heavy layouts. Body text against white passes AA at body sizes and AAA at 16px and above.',
+    blurb: 'Purple 600 is the colour of premium and the colour of trouble — Cadbury, Asprey, and FedEx have all leaned on tones in this band for primary identity work. Tailwind\'s hex pulls slightly toward magenta compared with the framework\'s Violet 600, which gives it a warmer presence than the cooler Indigo 600 next door. It works as a primary brand colour for arts-and-culture products or as a hover state above Purple 500 buttons. A chartreuse accent gives the Cadbury-style poster palette; charcoal handles type-heavy layouts. Body text against white passes AA at body sizes and AAA at 16px and above.',
   },
   {
     slug: 'tailwind-red-500',
@@ -1648,7 +1648,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'red',
     source: 'tailwind',
     related: ['material-red-500', 'red', 'tailwind-rose-500'],
-    blurb: 'Tailwind Red 500 sits at the saturated mid-red center of the framework\'s red ramp. The v4 hex was retuned in OKLCH space from the v3 value and reads as slightly cooler and more confident than its predecessor. Use it for destructive actions, error states, and high-urgency call-to-action buttons in dashboards and forms. Against white the body text contrast is borderline at small sizes; reserve text use for larger sizes and use dark text overlays on button surfaces. Body text contrast against white passes AA only at sizes 18px and above.',
+    blurb: 'Tailwind Red 500 sits at the saturated mid-red centre of the framework\'s red ramp. The v4 hex was retuned in OKLCH space from the v3 value and reads as slightly cooler and more confident than its predecessor. It handles destructive actions, error states, and high-urgency call-to-action buttons in dashboards and forms. Against white the body text contrast is borderline at small sizes; larger sizes are safest and dark text overlays the clean option on button surfaces. Body text contrast against white passes AA only at sizes 18px and above.',
   },
   {
     slug: 'tailwind-red-600',
@@ -1657,7 +1657,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'red',
     source: 'tailwind',
     related: ['crimson', 'tailwind-rose-600', 'bootstrap-danger'],
-    blurb: 'Red 600 is the destructive-action red of choice in modern UI — slightly deeper than Tailwind 500, calibrated to pass body-text contrast against white at standard sizes, and dark enough that a button styled with it reads as serious rather than playful. The Vercel dashboard, Linear, and most post-2020 SaaS products use tones within a few delta-E of this hex for delete confirmations and error states. Pair it with a calm Slate 50 surface to keep the red from feeling alarming in non-urgent contexts. Body text against white passes AA at body sizes and AAA at 18px and above, which makes it usable for error message copy.',
+    blurb: 'Red 600 is the destructive-action red of choice in modern UI — slightly deeper than Tailwind 500, calibrated to pass body-text contrast against white at standard sizes, and dark enough that a button styled with it reads as serious rather than playful. The Vercel dashboard, Linear, and most post-2020 SaaS products use tones within a few delta-E of this hex for delete confirmations and error states. A calm Slate 50 surface keeps the red from feeling alarming in non-urgent contexts. Body text against white passes AA at body sizes and AAA at 18px and above, which makes it usable for error message copy.',
   },
   {
     slug: 'tailwind-rose-500',
@@ -1666,7 +1666,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'red',
     source: 'tailwind',
     related: ['tailwind-red-500', 'material-red-500', 'tailwind-rose-600'],
-    blurb: 'Tailwind Rose 500 anchors the framework\'s rose ramp at the saturated red-pink center. The hex sits slightly warmer than Pink 500 and slightly cooler than Red 500, with high chroma at mid-high lightness. Use it as a primary brand color for cosmetic, fashion, or hospitality products. Against white the body text contrast is borderline at small sizes; reserve text use for headlines and use dark text overlays on button surfaces. Body text contrast against white passes AA only at sizes 18px and above; smaller body text needs the 600 stop or deeper for legibility.',
+    blurb: 'Tailwind Rose 500 anchors the framework\'s rose ramp at the saturated red-pink centre. The hex sits slightly warmer than Pink 500 and slightly cooler than Red 500, with high chroma at mid-high lightness. It pulls duty as a primary brand colour for cosmetic, fashion, or hospitality products. Against white the body text contrast is borderline at small sizes; headlines and dark text overlays on button surfaces are the safest territory. Body text contrast against white passes AA only at sizes 18px and above; smaller body text needs the 600 stop or deeper for legibility.',
   },
   {
     slug: 'tailwind-rose-600',
@@ -1675,7 +1675,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'red',
     source: 'tailwind',
     related: ['crimson', 'bootstrap-danger', 'tailwind-red-600'],
-    blurb: 'Rose 600 is the cooler, more grown-up sibling of the framework\'s Pink 600 — pulled slightly toward red and away from magenta, the colour Aesop and Glossier both have palette entries adjacent to. The Tailwind hex is dark enough to function as body type against white, which the lighter rose stops cannot do. Cosmetics, hospitality, and editorial brands use tones in this band when they need a pink that reads as adult rather than playful. Pair it with a deep teal accent for a complementary palette or with warm cream for a softer surface. Body text against white passes AA at body sizes.',
+    blurb: 'Rose 600 is the cooler, more grown-up sibling of the framework\'s Pink 600 — pulled slightly toward red and away from magenta, the colour Aesop and Glossier both have palette entries adjacent to. The Tailwind hex is dark enough to function as body type against white, which the lighter rose stops cannot do. Cosmetics, hospitality, and editorial brands use tones in this band when they need a pink that reads as adult rather than playful. A deep teal accent builds a complementary palette; warm cream produces a softer surface. Body text against white passes AA at body sizes.',
   },
   {
     slug: 'tailwind-sky-500',
@@ -1684,7 +1684,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'tailwind',
     related: ['material-light-blue-500', 'material-blue-500', 'cornflowerblue'],
-    blurb: 'Tailwind Sky 500 sits at the bright, slightly cyan-leaning blue center of the framework\'s sky ramp. The hex falls between Cyan and Blue in hue, brighter than Blue 500 and slightly warmer than Cyan 500. Use it as a primary brand color for travel, weather, or aviation products. Against white the body text contrast is borderline at small sizes; reserve text use for headlines and use dark text overlays on button surfaces. Body text contrast against white passes AA only at sizes 18px and above; smaller body text needs the 600 stop.',
+    blurb: 'Tailwind Sky 500 sits at the bright, slightly cyan-leaning blue centre of the framework\'s sky ramp. The hex falls between Cyan and Blue in hue, brighter than Blue 500 and slightly warmer than Cyan 500. It pulls duty as a primary brand colour for travel, weather, or aviation products. Against white the body text contrast is borderline at small sizes; headlines and dark text overlays on button surfaces are the safest territory. Body text contrast against white passes AA only at sizes 18px and above; smaller body text needs the 600 stop.',
   },
   {
     slug: 'tailwind-sky-600',
@@ -1693,7 +1693,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'tailwind',
     related: ['steelblue', 'tailwind-cyan-600', 'material-blue-500'],
-    blurb: 'Sky 600 is the colour of a clear sky an hour before sunset, with just enough cyan to keep it from feeling navy. Tailwind\'s hex is the headline blue for travel and weather products — the Citymapper app, Klima, and Backblaze all sit within a few delta-E of this neighbourhood. The depth puts it on the legible side of the contrast line against white at standard sizes. Pair it with warm coral `#fb7185` for the kind of palette ridesharing apps have used since 2020 or with a single charcoal accent for type. Body text against white passes AA at body sizes and AAA at 16px and above.',
+    blurb: 'Sky 600 is the colour of a clear sky an hour before sunset, with just enough cyan to keep it from feeling navy. Tailwind\'s hex is the headline blue for travel and weather products — the Citymapper app, Klima, and Backblaze all sit within a few delta-E of this neighbourhood. The depth puts it on the legible side of the contrast line against white at standard sizes. A warm coral `#fb7185` gives the palette ridesharing apps have used since 2020; a single charcoal accent handles type. Body text against white passes AA at body sizes and AAA at 16px and above.',
   },
   {
     slug: 'tailwind-slate-500',
@@ -1702,7 +1702,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'tailwind',
     related: ['tailwind-gray-500', 'slategray', 'steelblue'],
-    blurb: 'Tailwind Slate 500 anchors the framework\'s slate ramp at mid-light. The hex carries a slight blue undertone that distinguishes it from warmer neutrals like Stone or Zinc at the same stop. Use it for secondary type, borders, and disabled-state surfaces in technology and business products. The cool cast pairs especially well with blue accent colors and keeps a palette feeling modern. Body text contrast against white passes AA at standard body sizes; AAA holds only at sizes 18px and above for de-emphasized labels and footnote text use.',
+    blurb: 'Tailwind Slate 500 anchors the framework\'s slate ramp at mid-light. The hex carries a slight blue undertone that distinguishes it from warmer neutrals like Stone or Zinc at the same stop. It handles secondary type, borders, and disabled-state surfaces in technology and business products. The cool cast pairs especially well with blue accent colours and keeps a palette feeling modern. Body text contrast against white passes AA at standard body sizes; AAA holds only at sizes 18px and above for de-emphasized labels and footnote text use.',
   },
   {
     slug: 'tailwind-slate-600',
@@ -1711,7 +1711,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'tailwind',
     related: ['tailwind-gray-600', 'tailwind-gray-500', 'tailwind-slate-500'],
-    blurb: 'Slate 600 is the cool grey Vercel, Supabase, and most other dev-tool sites of the last five years use for body type — just enough blue cast to feel modern but never crossing into looking tinted. The hex sits in the same neighbourhood Apple\'s macOS uses for system labels in light mode. Body text against white passes AAA at every standard size, which is what makes it such a common default for primary copy in design systems built around blue or indigo brand colours. Pair it with any chromatic accent in the cool half of the wheel; warm accents work, though the temperature contrast becomes dominant.',
+    blurb: 'Slate 600 is the cool grey Vercel, Supabase, and most other dev-tool sites of the last five years use for body type — just enough blue cast to feel modern but never crossing into looking tinted. The hex sits in the same neighbourhood Apple\'s macOS uses for system labels in light mode. Body text against white passes AAA at every standard size, which is what makes it such a common default for primary copy in design systems built around blue or indigo brand colours. Any chromatic accent in the cool half of the wheel works; warm accents do too, though the temperature contrast becomes dominant.',
   },
   {
     slug: 'tailwind-stone-500',
@@ -1720,7 +1720,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'gray',
     source: 'tailwind',
     related: ['tailwind-neutral-500', 'tailwind-zinc-500', 'bootstrap-secondary'],
-    blurb: 'Tailwind Stone 500 anchors the framework\'s stone ramp at mid-light. The hex carries a slight yellow undertone that distinguishes it from cooler neutrals like Slate or Zinc at the same stop. Use it for secondary type, borders, and disabled-state surfaces in editorial, hospitality, or heritage products. The warm cast pairs especially well with terracotta and brass for accents and with cream surfaces. Body text contrast against white passes AA at standard body sizes; AAA holds only at sizes 18px and above for de-emphasized text and small label use.',
+    blurb: 'Tailwind Stone 500 anchors the framework\'s stone ramp at mid-light. The hex carries a slight yellow undertone that distinguishes it from cooler neutrals like Slate or Zinc at the same stop. It handles secondary type, borders, and disabled-state surfaces in editorial, hospitality, or heritage products. The warm cast pairs especially well with terracotta and brass for accents and with cream surfaces. Body text contrast against white passes AA at standard body sizes; AAA holds only at sizes 18px and above for de-emphasized text and small label use.',
   },
   {
     slug: 'tailwind-stone-600',
@@ -1729,7 +1729,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'gray',
     source: 'tailwind',
     related: ['tailwind-neutral-600', 'tailwind-zinc-600', 'dimgray'],
-    blurb: 'Stone 600 is the warm grey of weathered limestone, with just enough brown undertone to pair cleanly with terracotta and brass without colour clash. Editorial and hospitality brands — magazines like Cereal and hotel chains like Ace — use tones in this band for body copy because the warmth softens long-form reading in a way cool greys cannot. Pair it with a Tailwind Stone 50 surface and any warm accent in the orange-to-rose band. Body text against white passes AAA at every standard size, making Stone 600 a confident copy colour for layouts in warm-palette designs where Slate or Gray would read as too clinical.',
+    blurb: 'Stone 600 is the warm grey of weathered limestone, with just enough brown undertone to pair cleanly with terracotta and brass without colour clash. Editorial and hospitality brands (magazines like Cereal and hotel chains like Ace) use tones in this band for body copy because the warmth softens long-form reading in a way cool greys cannot. A Tailwind Stone 50 surface with any warm accent in the orange-to-rose band rounds the palette out. Body text against white passes AAA at every standard size, making Stone 600 a confident copy colour for warm-palette designs where Slate or Gray would read as too clinical.',
   },
   {
     slug: 'tailwind-teal-500',
@@ -1738,7 +1738,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'teal',
     source: 'tailwind',
     related: ['lightseagreen', 'material-cyan-500', 'darkturquoise'],
-    blurb: 'Tailwind Teal 500 sits at the saturated mid-teal center of the framework\'s teal ramp. The hex falls between Emerald and Cyan in hue and reads as confident and slightly fresh. Use it as a primary brand color for technology, wellness, or environmental products. Against white the body text contrast is borderline at small sizes; reserve text use for larger sizes and use dark text overlays on button surfaces. Body text contrast against white passes AA only at sizes 18px and above; smaller body text needs the 600 stop for legibility.',
+    blurb: 'Tailwind Teal 500 sits at the saturated mid-teal centre of the framework\'s teal ramp. The hex falls between Emerald and Cyan in hue and reads as confident and slightly fresh. It pulls duty as a primary brand colour for technology, wellness, or environmental products. Against white the body text contrast is borderline at small sizes; larger sizes are safest and dark text overlays the clean option on button surfaces. Body text contrast against white passes AA only at sizes 18px and above; smaller body text needs the 600 stop for legibility.',
   },
   {
     slug: 'tailwind-teal-600',
@@ -1747,7 +1747,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'teal',
     source: 'tailwind',
     related: ['material-teal-500', 'darkcyan', 'teal'],
-    blurb: 'Teal 600 is the colour Headspace shipped in its 2022 rebrand and that wellness brands have orbited around ever since. Tailwind\'s hex pulls slightly cooler than that brand value but lives in the same emotional band — calm, slightly mineral, neither obviously blue nor obviously green. The depth lets it function as body type against white at standard sizes. Use it as a primary identity colour for environmental, wellness, or biotech products. Pair it with a warm coral `#fb7185` accent for a complementary palette that avoids the obvious teal-and-orange tech-startup template. Body text against white passes AA at body sizes and AAA at 18px and above.',
+    blurb: 'Teal 600 is the colour Headspace shipped in its 2022 rebrand and that wellness brands have orbited around ever since. Tailwind\'s hex pulls slightly cooler than that brand value but lives in the same emotional band — calm, slightly mineral, neither obviously blue nor obviously green. The depth lets it function as body type against white at standard sizes. It works as a primary identity colour for environmental, wellness, or biotech products. A warm coral `#fb7185` accent produces a complementary palette that avoids the obvious teal-and-orange tech-startup template. Body text against white passes AA at body sizes and AAA at 18px and above.',
   },
   {
     slug: 'tailwind-violet-500',
@@ -1756,7 +1756,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'indigo',
     source: 'tailwind',
     related: ['mediumslateblue', 'tailwind-purple-500', 'tailwind-violet-600'],
-    blurb: 'Tailwind Violet 500 anchors the framework\'s violet ramp at mid-saturation. The hex sits between Indigo and Purple in hue and reads as confident and slightly modern. Use it as a primary brand color for technology, premium services, or arts products. Against white the body text contrast is borderline at small sizes; reserve text use for larger sizes and use dark text overlays on button surfaces. Body text contrast against white passes AA only at sizes 18px and above; smaller body text needs the 600 stop or darker for legibility against white surfaces.',
+    blurb: 'Tailwind Violet 500 anchors the framework\'s violet ramp at mid-saturation. The hex sits between Indigo and Purple in hue and reads as confident and slightly modern. It pulls duty as a primary brand colour for technology, premium services, or arts products. Against white the body text contrast is borderline at small sizes; larger sizes are safest and dark text overlays the clean option on button surfaces. Body text contrast against white passes AA only at sizes 18px and above; smaller body text needs the 600 stop or darker for legibility against white surfaces.',
   },
   {
     slug: 'tailwind-violet-600',
@@ -1765,7 +1765,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'indigo',
     source: 'tailwind',
     related: ['tailwind-purple-600', 'blueviolet', 'bootstrap-indigo'],
-    blurb: 'Violet 600 is the colour Linear uses for its primary brand accent, and Notion sits within a few delta-E units of the same hex on its workspace icon. Tailwind\'s value pulls slightly bluer than Purple 600 and reads as more technical, less regal. Use it as a primary identity colour for productivity tools or as a hover state above Violet 500 buttons. Pair it with a warm cream surface for editorial layouts or with chartreuse for a poster-shop palette. Body text against white passes AA at body sizes and AAA at 16px and above, which makes Violet 600 safe for primary copy.',
+    blurb: 'Violet 600 is the colour Linear uses for its primary brand accent, and Notion sits within a few delta-E units of the same hex on its workspace icon. Tailwind\'s value pulls slightly bluer than Purple 600 and reads as more technical, less regal. It works as a primary identity colour for productivity tools or as a hover state above Violet 500 buttons. A warm cream surface handles editorial layouts; chartreuse pulls the palette toward poster-shop territory. Body text against white passes AA at body sizes and AAA at 16px and above, which makes Violet 600 safe for primary copy.',
   },
   {
     slug: 'tailwind-yellow-500',
@@ -1774,7 +1774,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'tailwind',
     related: ['goldenrod', 'bootstrap-warning', 'darkkhaki'],
-    blurb: 'Tailwind Yellow 500 sits at the saturated mid-yellow center of the framework\'s yellow ramp. The hex carries very high chroma and reads as a confident harvest yellow. Use it as a primary brand color for food, energy, or attention-focused products, or as a warning state in dashboards and forms. Against white the body text contrast fails AA at all sizes; reserve it strictly for backgrounds, fills, and accents with dark text overlays. Body text contrast against white fails AA at every standard size; the value works only as a surface or marker, never as type.',
+    blurb: 'Tailwind Yellow 500 sits at the saturated mid-yellow centre of the framework\'s yellow ramp. The hex carries very high chroma and reads as a confident harvest yellow. It pulls duty as a primary brand colour for food, energy, or attention-focused products, and as a warning state in dashboards and forms. Against white the body text contrast fails AA at all sizes — strictly backgrounds, fills, and accents with dark text overlays. Body text contrast against white fails AA at every standard size; the value works only as a surface or marker, never as type.',
   },
   {
     slug: 'tailwind-yellow-600',
@@ -1783,7 +1783,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'brown',
     source: 'tailwind',
     related: ['peru', 'tailwind-amber-600', 'chocolate'],
-    blurb: 'Yellow 600 is the hex Tailwind sits at when the framework\'s yellow finally crosses from highlighter into bronze-amber territory. The value is dark enough to pass body-text contrast at headline sizes but still borderline at 14-16px. Caterpillar machinery and the older National Geographic logos both use yellows in this neighbourhood; the depth reads as utilitarian rather than as cheerful. Use it as a brand accent for industrial, energy, or heritage products. Pair it with deep teal `#0f766e` for a complementary palette or with charcoal `#1f2937` for type-heavy layouts. Body text against white passes AA only at sizes 18px and above; smaller copy loses legibility against any pale surface.',
+    blurb: 'Yellow 600 is the hex Tailwind sits at when the framework\'s yellow finally crosses from highlighter into bronze-amber territory. The value is dark enough to pass body-text contrast at headline sizes but still borderline at 14-16px. Caterpillar machinery and the older National Geographic logos both use yellows in this neighbourhood; the depth reads as utilitarian rather than as cheerful. It works as a brand accent for industrial, energy, or heritage products. A deep teal `#0f766e` builds a complementary palette; charcoal `#1f2937` handles type-heavy layouts. Body text against white passes AA only at sizes 18px and above; smaller copy loses legibility against any pale surface.',
   },
   {
     slug: 'tailwind-zinc-500',
@@ -1792,7 +1792,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'gray',
     source: 'tailwind',
     related: ['bootstrap-secondary', 'tailwind-neutral-500', 'tailwind-stone-500'],
-    blurb: 'Tailwind Zinc 500 anchors the framework\'s zinc ramp at mid-light. The hex carries a faint blue-purple undertone that distinguishes it from the bluer Slate ramp and the warmer Stone ramp at the same stop. Use it for secondary type, borders, and disabled-state surfaces in modern technology products. The slight purple cast pairs especially well with violet and fuchsia accent colors. Body text contrast against white passes AA at standard body sizes; AAA holds only at sizes 18px and above for de-emphasized labels and small footnote text use.',
+    blurb: 'Tailwind Zinc 500 anchors the framework\'s zinc ramp at mid-light. The hex carries a faint blue-purple undertone that distinguishes it from the bluer Slate ramp and the warmer Stone ramp at the same stop. It handles secondary type, borders, and disabled-state surfaces in modern technology products. The slight purple cast pairs especially well with violet and fuchsia accent colours. Body text contrast against white passes AA at standard body sizes; AAA holds only at sizes 18px and above for de-emphasized labels and small footnote text use.',
   },
   {
     slug: 'tailwind-zinc-600',
@@ -1801,7 +1801,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'gray',
     source: 'tailwind',
     related: ['tailwind-neutral-600', 'tailwind-stone-600', 'dimgray'],
-    blurb: 'Zinc 600 is the cool grey of a galvanised steel countertop after a few years of use — slightly more saturated and faintly purple compared with Tailwind\'s true-neutral Gray 600. Linear and Raycast both use tones in this band for body type because the faint cool cast pairs cleanly with violet and indigo brand accents without temperature clash. Body text against white passes AAA at every standard size, making it a confident copy colour for products that want to feel modern and slightly engineered rather than warm. Pair it with any chromatic accent in the cool half of the wheel for the smoothest temperature story.',
+    blurb: 'Zinc 600 is the cool grey of a galvanised steel countertop after a few years of use — slightly more saturated and faintly purple compared with Tailwind\'s true-neutral Gray 600. Linear and Raycast both use tones in this band for body type because the faint cool cast pairs cleanly with violet and indigo brand accents without temperature clash. Body text against white passes AAA at every standard size, making it a confident copy colour for products that want to feel modern and slightly engineered rather than warm. Any chromatic accent in the cool half of the wheel produces the smoothest temperature story.',
   },
   {
     slug: 'tan',
@@ -1810,7 +1810,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'orange',
     source: 'css',
     related: ['burlywood', 'dusty-rose', 'sandybrown'],
-    blurb: 'Tan in CSS is the warm, slightly orange-leaning beige of dried grass. The hex sits between Wheat and Burlywood, with low chroma at high lightness. Outdoor, heritage, and craft brands use it as a quiet primary or secondary surface. Pair with deep brown for type, or with muted forest green for a heritage outdoor palette. As a UI element it works as a panel background for outdoor product cards; against white it provides reasonable separation but is too pale for body text. Body text contrast against white fails AA at every standard size; reserve it as a surface tone.',
+    blurb: 'Tan in CSS is the warm, slightly orange-leaning beige of dried grass. The hex sits between Wheat and Burlywood, with low chroma at high lightness. Outdoor, heritage, and craft brands use it as a quiet primary or secondary surface, usually under deep brown type or alongside muted forest green for a heritage outdoor palette. As a UI element it works as a panel background for outdoor product cards; against white it provides reasonable separation but is too pale for body text. Body text contrast against white fails AA at every standard size — a surface tone.',
   },
   {
     slug: 'teal',
@@ -1819,7 +1819,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'teal',
     source: 'css',
     related: ['darkcyan', 'tailwind-teal-600', 'material-teal-500'],
-    blurb: 'Teal in CSS is the deep, slightly blue-leaning green-blue of the duck for which it was named. The hex sits at low-mid lightness with moderate chroma and reads as confident and slightly nostalgic. Editorial, wellness, and technology brands use it as a primary identity color. Pair with cream for warmth, or with warm coral for a complementary accent. Against white it passes body text contrast in most sizes and works well as a primary action color or display heading. Body text in CSS Teal against white passes AAA at every standard size for confident long-form layout use.',
+    blurb: 'Teal in CSS is the deep, slightly blue-leaning green-blue of the duck for which it was named. The hex sits at low-mid lightness with moderate chroma and reads as confident and slightly nostalgic. Editorial, wellness, and technology brands use it as a primary identity colour. Against cream it warms; against warm coral it builds a complementary accent. It passes body text contrast against white in most sizes and works as a primary action colour or display heading. Body text in CSS Teal against white passes AAA at every standard size for confident long-form layout use.',
   },
   {
     slug: 'terracotta',
@@ -1828,7 +1828,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'brown',
     source: 'curated',
     related: ['chocolate', 'indianred', 'tailwind-amber-600'],
-    blurb: 'Terracotta — Italian for cooked earth — has named the same colour since Roman roof tiles were first fired around 100 BC. The curated hex in this list lands on the warmer, more orange end of the band rather than on the brown-leaning Tuscan tile colour. Heritage food brands, garden suppliers, and the long lineage of slow-fashion labels including Toast and Mara Hoffman all use surfaces in this neighbourhood as primary identity colour. Pair it with sage green or cream for a Mediterranean palette that avoids the obvious red-and-cream cliché. Body text against white passes AA only at sizes 18px and above; reserve smaller copy for a deeper warm brown.',
+    blurb: 'Terracotta (Italian for cooked earth) has named the same colour since Roman roof tiles were first fired around 100 BC. The curated hex in this list lands on the warmer, more orange end of the band rather than on the brown-leaning Tuscan tile colour. Heritage food brands, garden suppliers, and the long lineage of slow-fashion labels including Toast and Mara Hoffman all use surfaces in this neighbourhood as primary identity colour. Sage green or cream produces a Mediterranean palette that avoids the obvious red-and-cream cliché. Body text against white passes AA only at sizes 18px and above; smaller copy belongs in a deeper warm brown.',
   },
   {
     slug: 'thistle',
@@ -1837,7 +1837,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'purple',
     source: 'css',
     related: ['plum', 'violet', 'orchid'],
-    blurb: 'Thistle is the pale, dusty mid-purple-pink of the spiny wildflower\'s bloom. The CSS hex sits between Lavender and Plum, with low chroma at high lightness. Beauty, wellness, and floral brands use it as a quiet primary or secondary surface. Pair with deep purple for type, or with charcoal for a more neutral palette. As a UI element it works as a panel background; against pure white it provides modest separation, so use it with awareness of the layering. Body text contrast against white fails AA at every standard size; reserve it strictly as a surface tone.',
+    blurb: 'Thistle is the pale, dusty mid-purple-pink of the spiny wildflower\'s bloom. The CSS hex sits between Lavender and Plum, with low chroma at high lightness. Beauty, wellness, and floral brands use it as a quiet primary or secondary surface, usually under deep purple type or charcoal for a more neutral palette. As a UI element it works as a panel background; against pure white it provides modest separation, so use it with awareness of the layering. Body text contrast against white fails AA at every standard size — strictly a surface tone.',
   },
   {
     slug: 'tomato',
@@ -1846,7 +1846,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'red',
     source: 'css',
     related: ['material-red-500', 'salmon', 'lightcoral'],
-    blurb: 'Tomato is the bright, slightly orange-leaning red of a ripe summer tomato. The CSS hex carries high chroma at mid-high lightness and reads as energetic and warm. Food, sports, and outdoor brands use it as a primary or accent color. Pair with deep navy for type contrast, or with cream for a softer palette. Against white the body text contrast is borderline at small sizes; reserve text use for larger sizes and use dark text overlays on button surfaces. Body text contrast against white passes AA only at sizes 18px and above.',
+    blurb: 'Tomato is the bright, slightly orange-leaning red of a ripe summer tomato. The CSS hex carries high chroma at mid-high lightness and reads as energetic and warm. Food, sports, and outdoor brands use it as a primary or accent colour, typically against deep navy for type contrast or cream for a softer palette. Against white the body text contrast is borderline at small sizes; larger sizes are safest and dark text overlays the clean option on button surfaces. Body text contrast against white passes AA only at sizes 18px and above.',
   },
   {
     slug: 'turquoise',
@@ -1855,7 +1855,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'teal',
     source: 'css',
     related: ['mediumturquoise', 'darkturquoise', 'cyan'],
-    blurb: 'Turquoise is the bright, slightly cyan-leaning teal of the gemstone seen at peak quality. The CSS hex sits between Light Sea Green and Dark Turquoise, with strong chroma at mid-high lightness. Travel, beauty, and wellness brands use it as a primary identity color. Pair with cream for warmth, or with warm coral for a complementary accent. Against white the body text contrast is borderline; reserve text use for larger sizes and rely on dark text overlays for buttons. Body text contrast against white falls below AA at body sizes; the value works only at headline sizes.',
+    blurb: 'Turquoise is the bright, slightly cyan-leaning teal of the gemstone seen at peak quality. The CSS hex sits between Light Sea Green and Dark Turquoise, with strong chroma at mid-high lightness. Travel, beauty, and wellness brands use it as a primary identity colour. Against cream it warms; against warm coral it builds a complementary accent. Against white the body text contrast is borderline; headlines are the safest territory and dark text overlays the clean option for buttons. Body text contrast against white falls below AA at body sizes; the value works only at headline sizes.',
   },
   {
     slug: 'violet',
@@ -1864,7 +1864,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'purple',
     source: 'css',
     related: ['orchid', 'plum', 'mediumorchid'],
-    blurb: 'Violet in CSS is the bright, slightly pink-leaning purple of the wild flower. The hex sits between Orchid and Plum, with moderate chroma at mid-high lightness. Editorial, beauty, and arts brands use it as a primary or secondary accent. Pair with cream for warmth, or with deep teal for a complementary contrast. Against white the body text contrast is borderline at small sizes; reserve text use for headlines and use dark text overlays on button surfaces. Body text contrast against white passes AA only at sizes 18px and above; smaller text needs a deeper purple.',
+    blurb: 'Violet in CSS is the bright, slightly pink-leaning purple of the wild flower. The hex sits between Orchid and Plum, with moderate chroma at mid-high lightness. Editorial, beauty, and arts brands use it as a primary or secondary accent, usually against cream for warmth or deep teal for a complementary contrast. Against white the body text contrast is borderline at small sizes; headlines are the safest territory and dark text overlays the clean option on button surfaces. Body text contrast against white passes AA only at sizes 18px and above; smaller text needs a deeper purple.',
   },
   {
     slug: 'wheat',
@@ -1873,7 +1873,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'css',
     related: ['navajowhite', 'moccasin', 'palegoldenrod'],
-    blurb: 'Wheat is the colour of mature grain heads in late summer, the same hue Pieter Bruegel painted across the foreground of his 1565 Harvesters canvas. The CSS value, drawn from the X11 list in the 1980s, sits between Cornsilk and Tan with low chroma and high lightness. Food brands like King Arthur Flour and Bob\'s Red Mill use surfaces in this band on packaging because the warmth photographs as natural rather than as manufactured. Pair it with walnut `#3e2817` for type or with muted forest green for a heritage outdoor palette. Body text against white fails AA at every standard size; treat Wheat strictly as a surface tone.',
+    blurb: 'Wheat is the colour of mature grain heads in late summer, the same hue Pieter Bruegel painted across the foreground of his 1565 Harvesters canvas. The CSS value, drawn from the X11 list in the 1980s, sits between Cornsilk and Tan with low chroma and high lightness. Food brands like King Arthur Flour and Bob\'s Red Mill use surfaces in this band on packaging because the warmth photographs as natural rather than as manufactured. Against walnut `#3e2817` type it warms further; muted forest green builds a heritage outdoor palette. Body text against white fails AA at every standard size; Wheat is a surface tone.',
   },
   {
     slug: 'white',
@@ -1882,7 +1882,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'neutral',
     source: 'css',
     related: ['snow', 'mintcream', 'bootstrap-light'],
-    blurb: 'White in CSS is #ffffff, the full on-state of every pixel in the sRGB color space. As a UI surface it carries no inherent emotional load, which is exactly why it is the default background for the majority of websites and applications. Used too aggressively, especially in large fields under tungsten light, it can produce eye fatigue; many modern designs reach for a slightly warmer off-white like Snow, Ivory, or a Stone 50 instead. Pair with any dark type and any accent color. Two pure white surfaces in adjacent layers will be indistinguishable without separator borders.',
+    blurb: 'White in CSS is #ffffff, the full on-state of every pixel in the sRGB colour space. As a UI surface it carries no inherent emotional load, which is exactly why it is the default background for the majority of websites and applications. Used too aggressively, especially in large fields under tungsten light, it can produce eye fatigue; many modern designs reach for a slightly warmer off-white like Snow, Ivory, or a Stone 50 instead. Any dark type and any accent colour will pair with it. Two pure white surfaces in adjacent layers will be indistinguishable without separator borders.',
   },
   {
     slug: 'whitesmoke',
@@ -1891,7 +1891,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'neutral',
     source: 'css',
     related: ['bootstrap-light', 'aliceblue', 'ghostwhite'],
-    blurb: 'White Smoke is the layered-surface off-white most modern dashboards use for card backgrounds — Stripe, Linear, and the Vercel dashboard all sit within a few delta-E of this hex for their secondary surfaces. The CSS value carries the faintest warm cast, just enough to read as a distinct layer above pure white without competing for attention. Pair it with charcoal `#1c1917` body copy and any chromatic accent. Two White Smoke surfaces stacked directly on top of each other will read as the same layer under low-light viewing conditions, so introduce a 1px border or a Slate 100 step when nesting cards more than one level deep.',
+    blurb: 'White Smoke is the layered-surface off-white most modern dashboards use for card backgrounds — Stripe, Linear, and the Vercel dashboard all sit within a few delta-E of this hex for their secondary surfaces. The CSS value carries the faintest warm cast, just enough to read as a distinct layer above pure white without competing for attention. It pairs with charcoal `#1c1917` body copy and any chromatic accent. Two White Smoke surfaces stacked directly on top of each other will read as the same layer under low-light viewing conditions, so introduce a 1px border or a Slate 100 step when nesting cards more than one level deep.',
   },
   {
     slug: 'yellow',
@@ -1900,7 +1900,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'yellow',
     source: 'css',
     related: ['gold', 'mustard', 'khaki'],
-    blurb: 'Yellow in CSS is #ffff00, the brightest possible yellow the sRGB color space can produce. The hex is too saturated for almost any practical UI use except as a brief attention marker. Cultural associations are strong: sun, caution, cheer, cowardice, depending on region. Real-world yellow branding usually pulls a slightly desaturated or darker variant like Goldenrod or Mustard for actual deployment. As body text against white the contrast fails completely; reserve it strictly for backgrounds, fills, and decorative accents with dark text overlays. Body text contrast against white fails AA at every standard size.',
+    blurb: 'Yellow in CSS is #ffff00, the brightest possible yellow the sRGB colour space can produce. The hex is too saturated for almost any practical UI use except as a brief attention marker. Cultural associations run strong: sun, caution, cheer, cowardice, depending on region. Real-world yellow branding usually pulls a slightly desaturated or darker variant like Goldenrod or Mustard for actual deployment. As body text against white the contrast fails completely — strictly backgrounds, fills, and decorative accents with dark text overlays. Body text contrast against white fails AA at every standard size.',
   },
   {
     slug: 'yellowgreen',
@@ -1909,7 +1909,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'css',
     related: ['tailwind-lime-500', 'limegreen', 'tailwind-green-500'],
-    blurb: 'Yellow Green is the bright chartreuse-leaning green that sits halfway between yellow and green at full saturation. The CSS hex carries high chroma at mid-high lightness and reads as fresh and energetic. Use it as an accent only; large fields of Yellow Green fatigue the eye quickly. Pair with deep navy for type, or with magenta for a complementary clash. As a UI element it works well for emphasized buttons and panels with dark text overlays in sports and food branding. Body text contrast against white falls below AA at every standard size.',
+    blurb: 'Yellow Green is the bright chartreuse-leaning green that sits halfway between yellow and green at full saturation. The CSS hex carries high chroma at mid-high lightness and reads as fresh and energetic. Large fields of Yellow Green fatigue the eye quickly, so accents work best. Against deep navy type it cools enough to function; against magenta it builds a complementary clash. As a UI element it suits emphasised buttons and panels with dark text overlays in sports and food branding. Body text contrast against white falls below AA at every standard size.',
   },
 ];
 

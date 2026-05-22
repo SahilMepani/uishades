@@ -121,7 +121,7 @@ export default function ShadeRow({
         // write actually resolved — otherwise the user sees "Copied" but
         // nothing's on their clipboard. The parent's onCopy callback is
         // still useful as a "row was successfully copied" signal.
-        pushToast(`Copied ${shade.hex}`);
+        pushToast('Copied');
         onCopy(shade.hex);
         setJustCopied(true);
       },
@@ -202,14 +202,18 @@ export default function ShadeRow({
       className={[
         'group relative flex w-full items-center justify-between gap-3 px-5 py-3.5',
         'cursor-pointer select-none',
-        'motion-safe:transition-shadow',
+        'motion-safe:transition-[transform,box-shadow]',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
         `hover:ring-2 hover:ring-inset ${ringHoverClass}`,
-        shade.isInput ? 'shadow-[inset_0_0_0_2px_currentColor]' : '',
+        shade.isInput
+          ? fg === 'white'
+            ? 'relative z-10 scale-[1.03] shadow-[0_10px_28px_-6px_rgba(0,0,0,0.45),0_4px_10px_-4px_rgba(0,0,0,0.35)]'
+            : 'relative z-10 scale-[1.03] shadow-[0_8px_22px_-8px_rgba(0,0,0,0.18),0_2px_6px_-3px_rgba(0,0,0,0.14)]'
+          : '',
         fgClass,
       ].join(' ')}
     >
-      <div className="flex items-baseline gap-4 font-mono text-sm">
+      <div className="flex items-center gap-4 font-mono text-sm">
         {shade.stop !== undefined && (
           <span className={`w-10 shrink-0 text-[11px] tracking-[0.14em] uppercase ${subtleFgClass}`}>
             {shade.stop}
@@ -248,11 +252,28 @@ export default function ShadeRow({
         <a
           href={navHref}
           aria-label={`Open page for ${shade.hex}`}
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            // Let the browser handle modifier/middle-click so cmd/ctrl-click
+            // still opens the shade in a new tab — see the file's behavior
+            // contract above. Plain left-click stays on the page and lets
+            // the parent swap the hex in place.
+            if (
+              e.metaKey ||
+              e.ctrlKey ||
+              e.shiftKey ||
+              e.altKey ||
+              e.button !== 0
+            ) {
+              return;
+            }
+            e.preventDefault();
+            onNavigate(shade.hex);
+          }}
           className={[
             'rounded p-1',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
-            fg === 'white' ? 'hover:bg-white/15' : 'hover:bg-black/10',
+            fg === 'white' ? 'bg-white/15' : 'bg-black/10',
           ].join(' ')}
         >
           <OpenIcon />
@@ -265,8 +286,8 @@ export default function ShadeRow({
 function OpenIcon() {
   return (
     <svg viewBox="0 0 16 16" aria-hidden="true" className="h-4 w-4">
-      <path d="M9.5 2.5h4v4M13 3L7 9" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-      <path d="M12.5 9v3.5A1.5 1.5 0 0 1 11 14H3.5A1.5 1.5 0 0 1 2 12.5V5A1.5 1.5 0 0 1 3.5 3.5H7" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M11.2 1.6a2.2 2.2 0 0 1 3.1 3.1l-1.4 1.4-3.1-3.1 1.4-1.4Z" fill="currentColor" />
+      <path d="m9.1 3.7 3.1 3.1-6.6 6.6-3.1-.5L2 9.8 9.1 3.7Z" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round" />
     </svg>
   );
 }
