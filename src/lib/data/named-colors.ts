@@ -890,7 +890,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'green',
     source: 'material',
     related: ['mediumseagreen', 'tailwind-lime-600', 'tailwind-green-600'],
-    blurb: 'Material Green 500 is the warm mid-green used for success states, completed badges, and primary positive actions in Material Design 2. The hex reads as friendly and natural rather than clinical. Common as a confirmation colour in Material-themed projects, paired with deep gray for type and a single saturated accent for primary actions. Body text against white passes AA only at sizes 18px and above; below that, the value should appear with dark text overlays.',
+    blurb: 'Material Green 500 is the warm mid-green used for success states, completed badges, and primary positive actions in Material Design 2. The hex reads as friendly and natural rather than clinical. Common as a confirmation colour in Material-themed projects, paired with deep gray for type and a single saturated accent for primary actions. Body text against white passes AA only at sizes 18px and above; below that, the value should appear with dark text overlays. Like other Material 2 fixed-palette stops, it was superseded by Material 3\'s tonal palette generation but remains heavily referenced in legacy Android codebases and confirmation-state design tokens.',
   },
   {
     slug: 'material-indigo-500',
@@ -908,7 +908,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'blue',
     source: 'material',
     related: ['tailwind-sky-500', 'material-blue-500', 'deepskyblue'],
-    blurb: 'Material Light Blue 500 is a brighter, slightly cyan-leaning blue from Material Design 2\'s expanded palette. The hex reads as fresh and informational, well suited to system alerts, hint states, and friendly call-to-action buttons. Paired with deep navy or charcoal for type contrast, it works as a primary brand colour for travel, communications, and wellness products. Against white it passes contrast for headlines and large buttons; body text falls below AA below 18px.',
+    blurb: 'Material Light Blue 500 is a brighter, slightly cyan-leaning blue from Material Design 2\'s expanded palette. The hex reads as fresh and informational, well suited to system alerts, hint states, and friendly call-to-action buttons. Paired with deep navy or charcoal for type contrast, it works as a primary brand colour for travel, communications, and wellness products. Against white it passes contrast for headlines and large buttons; body text falls below AA below 18px. Material 3 swapped fixed-palette stops for tonally derived blues, but this hex still appears in legacy Android styles and many older Material 2 design tokens.',
   },
   {
     slug: 'material-pink-500',
@@ -935,7 +935,7 @@ export const NAMED_COLORS: NamedColor[] = [
     family: 'red',
     source: 'material',
     related: ['tailwind-red-500', 'red', 'tailwind-rose-500'],
-    blurb: 'Material Red 500 is the primary destructive and error color in Material Design 2. The hex was tuned to pass WCAG AA against white text at standard button sizes while still feeling urgent, and it became the conventional red for irreversible action buttons in 2010s app design. For non-Material designs it can feel slightly orange-leaning compared to newer OKLCH-tuned reds. Body text contrast against white passes AA at body sizes; AAA holds at headline sizes only.',
+    blurb: 'Material Red 500 is the primary destructive and error color in Material Design 2. The hex was tuned to pass WCAG AA against white text at standard button sizes while still feeling urgent, and it became the conventional red for irreversible action buttons in 2010s app design. For non-Material designs it can feel slightly orange-leaning compared to newer OKLCH-tuned reds. Body text contrast against white passes AA at body sizes; AAA holds at headline sizes only. Material 3 generates error reds from a dynamic tonal palette rather than fixing them, so this exact value now lives mostly in legacy Android apps and older Material 2 design systems.',
   },
   {
     slug: 'material-teal-500',
