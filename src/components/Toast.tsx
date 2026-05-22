@@ -82,7 +82,6 @@ function ToastStack({ toasts }: { toasts: ToastEntry[] }) {
 }
 
 function ToastBubble({ message }: { message: string }) {
-  // Brief mount animation hook so the bubble fades in cleanly.
   const [shown, setShown] = useState(false);
   useEffect(() => {
     const r = requestAnimationFrame(() => setShown(true));
@@ -92,8 +91,9 @@ function ToastBubble({ message }: { message: string }) {
     <div
       role="status"
       className={
-        'rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white shadow-lg ' +
-        'motion-safe:transition motion-safe:duration-150 ' +
+        'pointer-events-auto bg-ink px-4 py-2.5 font-mono text-[12px] tracking-tight text-paper ' +
+        'shadow-[0_8px_24px_rgba(17,17,16,0.18)] ' +
+        'motion-safe:transition motion-safe:duration-200 ' +
         (shown ? 'opacity-100 translate-y-0' : 'opacity-0 motion-safe:translate-y-2')
       }
     >

@@ -34,7 +34,7 @@ export default function ContinuousRamp({
       data-shade-count={ramp.shades.length}
       role="list"
       aria-label={`Continuous ramp (${ramp.mode})`}
-      className="flex w-full flex-col overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800"
+      className="flex w-full flex-col overflow-hidden border-y border-ink/15"
     >
       {ramp.shades.map((shade, i) => (
         <div role="listitem" key={`${shade.hex}-${i}`}>

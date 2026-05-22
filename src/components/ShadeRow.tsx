@@ -1,6 +1,6 @@
 import { useCallback, useMemo, type KeyboardEvent, type MouseEvent } from 'react';
 import type { Shade, CopyFormat, Hex } from '../lib/color/types';
-import { contrastRatio, wcagLevel } from '../lib/color/contrast';
+import { contrastRatio } from '../lib/color/contrast';
 import { formatForCopy } from '../lib/color/format';
 
 /**
@@ -54,11 +54,6 @@ export default function ShadeRow({
   const subtleFgClass = fg === 'white' ? 'text-white/90' : 'text-black/90';
   const ringHoverClass = fg === 'white' ? 'ring-white/40' : 'ring-black/30';
 
-  const ratioW = contrastRatio(shade.hex, WHITE);
-  const ratioB = contrastRatio(shade.hex, BLACK);
-  const levelW = wcagLevel(ratioW);
-  const levelB = wcagLevel(ratioB);
-
   const navHref = `/${shade.hex.slice(1)}`;
 
   const handleCopy = useCallback(() => {
@@ -110,10 +105,7 @@ export default function ShadeRow({
   );
 
   // WCAG 2.5.3 (Label in Name) requires the accessible name to start with
-  // the visible label text. The visible label on this row is the hex
-  // string + stop + (optional) "input" tag; the contrast badges that
-  // follow are decorative (they have their own `aria-hidden` set below)
-  // so we don't need to include their tokens here.
+  // the visible label text — hex + (optional) stop + (optional) "input".
   const visibleLabel = [
     shade.hex,
     shade.stop !== undefined ? String(shade.stop) : '',
@@ -121,11 +113,7 @@ export default function ShadeRow({
   ]
     .filter(Boolean)
     .join(' ');
-  // Append a screen-reader-only summary of the contrast badges so users
-  // get the audit information that's visually rendered without the badges
-  // polluting the WCAG 2.5.3 match.
-  const contrastSummary = `Contrast vs white ${levelW === 'fail' ? 'fails' : levelW}, vs black ${levelB === 'fail' ? 'fails' : levelB}`;
-  const ariaLabel = `${visibleLabel}. ${contrastSummary}. Click to copy, double-click to open page${shade.isInput ? ' (pinned input)' : ''}`;
+  const ariaLabel = `${visibleLabel}. Click to copy, double-click to open page${shade.isInput ? ' (pinned input)' : ''}`;
 
   return (
     <div
@@ -139,7 +127,7 @@ export default function ShadeRow({
       onKeyDown={handleKeyDown}
       style={{ backgroundColor: shade.hex }}
       className={[
-        'group relative flex w-full items-center justify-between gap-3 px-4 py-3',
+        'group relative flex w-full items-center justify-between gap-3 px-5 py-3.5',
         'cursor-pointer select-none',
         'motion-safe:transition-shadow',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
@@ -148,118 +136,61 @@ export default function ShadeRow({
         fgClass,
       ].join(' ')}
     >
-      <div className="flex items-baseline gap-3 font-mono text-sm">
-        <span className="tabular-nums">{shade.hex}</span>
+      <div className="flex items-baseline gap-4 font-mono text-sm">
         {shade.stop !== undefined && (
-          <span className={`text-xs ${subtleFgClass}`}>{shade.stop}</span>
+          <span className={`w-10 shrink-0 text-[11px] tracking-[0.14em] uppercase ${subtleFgClass}`}>
+            {shade.stop}
+          </span>
         )}
+        <span className="tracking-tight tabular-nums">{shade.hex}</span>
         {shade.isInput && (
           <span
             className={
-              'rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ' +
-              (fg === 'white' ? 'bg-white/20' : 'bg-black/15')
+              'px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ' +
+              (fg === 'white' ? 'bg-white text-black' : 'bg-black text-white')
             }
           >
-            input
+            Input
           </span>
         )}
       </div>
 
-      <div className="flex items-center gap-2">
-        {/* Contrast badges are decorative — the row's aria-label already
-            announces the AA/AAA levels in plain language. Marking the badge
-            container `aria-hidden` keeps Axe's label-content-name-mismatch
-            audit clean (visible text inside an accessible name was the
-            previous Lighthouse failure) and avoids redundant screen-reader
-            announcements. The visual contrast of the badge text itself is
-            handled by the solid-color scheme below — full-opacity ink on
-            full-opacity bg, never relying on the row colour to come
-            through, so the contrast ratio is constant 21:1. */}
-        <div
-          aria-hidden="true"
-          className="flex items-center gap-1.5 font-mono text-[10px]"
-        >
-          <ContrastBadge against="white" level={levelW} ratio={ratioW} fg={fg} />
-          <ContrastBadge against="black" level={levelB} ratio={ratioB} fg={fg} />
-        </div>
-
-        <div
+      <div
+        className={[
+          'flex items-center gap-1',
+          'opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100',
+          'motion-safe:transition-opacity',
+        ].join(' ')}
+      >
+        <button
+          type="button"
+          aria-label={`Copy ${shade.hex}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleCopy();
+          }}
           className={[
-            'flex items-center gap-1',
-            // Always visible on mobile (no hover); revealed on hover/focus on desktop.
-            'opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100',
-            'motion-safe:transition-opacity',
+            'rounded p-1',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
+            fg === 'white' ? 'hover:bg-white/15' : 'hover:bg-black/10',
           ].join(' ')}
         >
-          <button
-            type="button"
-            aria-label={`Copy ${shade.hex}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleCopy();
-            }}
-            className={[
-              'rounded p-1',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
-              fg === 'white' ? 'hover:bg-white/15' : 'hover:bg-black/10',
-            ].join(' ')}
-          >
-            <CopyIcon />
-          </button>
-          <a
-            href={navHref}
-            aria-label={`Open page for ${shade.hex}`}
-            onClick={(e) => e.stopPropagation()}
-            className={[
-              'rounded p-1',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
-              fg === 'white' ? 'hover:bg-white/15' : 'hover:bg-black/10',
-            ].join(' ')}
-          >
-            <OpenIcon />
-          </a>
-        </div>
+          <CopyIcon />
+        </button>
+        <a
+          href={navHref}
+          aria-label={`Open page for ${shade.hex}`}
+          onClick={(e) => e.stopPropagation()}
+          className={[
+            'rounded p-1',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
+            fg === 'white' ? 'hover:bg-white/15' : 'hover:bg-black/10',
+          ].join(' ')}
+        >
+          <OpenIcon />
+        </a>
       </div>
     </div>
-  );
-}
-
-function ContrastBadge({
-  against,
-  level,
-  ratio,
-  fg,
-}: {
-  against: 'white' | 'black';
-  level: ReturnType<typeof wcagLevel>;
-  ratio: number;
-  fg: 'white' | 'black';
-}) {
-  const label = level === 'fail' ? '–' : level;
-  const onColor = against === 'white' ? '#ffffff' : '#000000';
-  // Use solid black-on-white / white-on-black badges so the badge text
-  // clears WCAG AA regardless of the underlying shade. The previous
-  // tinted-overlay approach (bg-white/25 over a vibrant primary) drifted
-  // below 4.5:1 on medium-lightness shades; opaque ink on opaque chip is
-  // the only contrast-safe option. The chip colour follows the row's
-  // chosen foreground so it doesn't visually dominate.
-  const chipBg =
-    fg === 'white'
-      ? 'bg-white text-neutral-900'
-      : 'bg-neutral-900 text-white';
-  return (
-    <span
-      title={`Contrast vs ${against}: ${ratio.toFixed(2)}:1 (${level})`}
-      className={
-        'inline-flex items-center gap-1 rounded px-1.5 py-0.5 ' + chipBg
-      }
-    >
-      <span
-        className="inline-block h-2 w-2 rounded-full"
-        style={{ backgroundColor: onColor, outline: '1px solid currentColor' }}
-      />
-      <span className="tabular-nums">{label}</span>
-    </span>
   );
 }
 

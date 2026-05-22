@@ -2,28 +2,15 @@
 /**
  * /[hex] — the main shade page. SSR-only (no pre-rendering).
  *
- * Why SSR-only:
- *   Under `output: 'static'`, the only way to serve arbitrary hexes (not just
- *   a pre-determined list) is to opt this route out of pre-rendering and let
- *   the Cloudflare adapter handle it on-demand. The "pre-rendered set" win
- *   from the plan is recovered at the edge: each rendered HTML response gets
- *   a long edge-cache, the sitemap lists every popular hex so Googlebot warms
- *   the cache early, and steady-state hits are served from cache in ~10ms.
- *
- * Validation: the route param is the bare 6-char canonical form (lowercased).
- *   Anything else 404s. We canonicalize via `parseColor` so any input that
- *   parses (3-char, 8-char-with-alpha) collapses to the same #rrggbb identity.
- *
- * Page chrome (this file) renders entirely server-side. The interactive bits
- * are inside <ShadeTool>, a React island that hydrates on load. Crawlable
- * neighbor links sit outside the island so Google sees them even when JS is
- * disabled.
+ * Under `output: 'static'`, this route opts out via `prerender = false` so
+ * arbitrary hexes are served on demand by the Cloudflare adapter. Each
+ * rendered HTML response gets long edge cache; the sitemap pre-warms.
  */
 export const prerender = false;
 
 import '../styles/global.css';
 import ShadeTool from '../components/ShadeTool';
-import { parseColor, ParseError } from '../lib/color/parse';
+import { parseColor, ParseError, toOklch } from '../lib/color/parse';
 import { oklchRamp } from '../lib/color/ramp';
 import { findByHex } from '../lib/data/named-colors';
 import { readInitialPrefs } from '../lib/url-prefs';
@@ -31,9 +18,6 @@ import type { Hex } from '../lib/color/types';
 
 // --- validate the URL param ----------------------------------------------
 const rawHex = Astro.params.hex ?? '';
-
-// Accept bare 3/6/8 hex chars. Block anything else early so we don't even
-// call into culori for obviously-bogus inputs (e.g., `/foo`, `/123`).
 const HEX_RE = /^[0-9a-f]{3}$|^[0-9a-f]{6}$|^[0-9a-f]{8}$/i;
 if (!HEX_RE.test(rawHex)) {
   return new Response(null, { status: 404 });
@@ -41,7 +25,6 @@ if (!HEX_RE.test(rawHex)) {
 
 let canonical: Hex;
 try {
-  // parseColor accepts a leading "#" or bare hex (and normalizes shorthand).
   canonical = parseColor(rawHex);
 } catch (e) {
   if (e instanceof ParseError) {
@@ -53,11 +36,8 @@ try {
 // --- derive everything we need for the page ------------------------------
 const ramp = oklchRamp(canonical);
 const named = findByHex(canonical);
+const oklch = toOklch(canonical);
 
-// Neighbor hexes for SEO: pull 3 above and 3 below the input's slot in the
-// OKLCH ramp. When the input sits close to an endpoint we cap with the
-// available slice (which naturally bottoms out at white or black) — that's
-// a fine SEO terminator for the crawl graph.
 const lighter: Hex[] = [];
 for (let i = ramp.inputIndex - 1; i >= Math.max(0, ramp.inputIndex - 3); i--) {
   lighter.push(ramp.shades[i].hex);
@@ -72,8 +52,6 @@ const TITLE = named
   ? `Hex Color ${hexLabel} Tints & Shades · ${named.name} | shades.dev`
   : `Hex Color ${hexLabel} Tints & Shades | shades.dev`;
 
-// First-sentence description: "X is a {named.name}. Sample shades: a, b, c."
-// or for unnamed hexes: "{hex} ramp with sample shades a, b, c."
 const sampleShades = [...lighter.slice(0, 2), ...darker.slice(0, 2)]
   .map((h) => h.toUpperCase())
   .join(', ');
@@ -93,8 +71,6 @@ const jsonLd = {
   identifier: hexLabel,
 };
 
-// Honour ?view=scale&mode=classic&fmt=tailwind-v3 deep-links so the SSR
-// HTML matches the same view the React island will render on hydration.
 const prefs = readInitialPrefs(Astro.url);
 ---
 
@@ -122,16 +98,55 @@ const prefs = readInitialPrefs(Astro.url);
 
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </head>
-  <body>
-    <main class="hex-page">
-      <header class="page-header">
-        <a href="/" class="back">&larr; shades.dev</a>
-        <h1>
-          <span class="swatch" style={`background:${canonical}`} aria-hidden="true"></span>
-          <span class="hex">{hexLabel}</span>
-          {named && <span class="named-label">· {named.name}</span>}
-        </h1>
-      </header>
+  <body class="bg-paper text-ink">
+    <!-- Masthead strip -->
+    <header class="border-b border-ink/90">
+      <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-3 font-mono text-[11px] uppercase tracking-[0.18em]">
+        <a href="/" class="text-ink hover:text-accent">← shades.dev</a>
+        <span class="hidden sm:inline text-mute">Plate · {hexLabel}</span>
+        <a href={`/api/${canonical.slice(1)}.json`} class="text-ink hover:text-accent">JSON</a>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-6xl px-6 pt-10 pb-24 lg:pt-14">
+      <!-- Page header — typeset display title with metadata strip -->
+      <section class="mb-10 border-b border-ink/80 pb-8">
+        <p class="eyebrow mb-3">{named ? 'Named color' : 'Hex color'}</p>
+        <div class="flex flex-wrap items-baseline justify-between gap-4">
+          <h1 class="display text-[clamp(2.5rem,7vw,5rem)]">
+            {named ? (
+              <>
+                {named.name}
+                <span class="ml-3 font-mono text-2xl tracking-tight text-mute not-italic">
+                  {hexLabel}
+                </span>
+              </>
+            ) : (
+              <span class="font-mono not-italic tracking-tight">{hexLabel}</span>
+            )}
+          </h1>
+          <dl class="grid grid-cols-3 gap-x-8 font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
+            <div>
+              <dt>L</dt>
+              <dd class="mt-1 text-base normal-case tracking-tight text-ink">
+                {Number.isFinite(oklch.l) ? oklch.l.toFixed(3) : '—'}
+              </dd>
+            </div>
+            <div>
+              <dt>C</dt>
+              <dd class="mt-1 text-base normal-case tracking-tight text-ink">
+                {Number.isFinite(oklch.c) ? oklch.c.toFixed(3) : '—'}
+              </dd>
+            </div>
+            <div>
+              <dt>H</dt>
+              <dd class="mt-1 text-base normal-case tracking-tight text-ink">
+                {Number.isFinite(oklch.h) ? `${oklch.h.toFixed(0)}°` : '—'}
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </section>
 
       <ShadeTool
         client:load
@@ -142,38 +157,44 @@ const prefs = readInitialPrefs(Astro.url);
       />
 
       <noscript>
-        <p class="noscript-note">
-          Interactive tool requires JavaScript. The neighbor links below still
-          let you browse to related shades.
+        <p class="mx-auto max-w-6xl border border-hairline bg-paper-2 px-5 py-4 font-display italic text-mute">
+          Interactive tool requires JavaScript. The neighbor links below still let you
+          browse to related shades.
         </p>
       </noscript>
 
-      <section class="neighbors" aria-labelledby="neighbors-title">
-        <h2 id="neighbors-title">Nearby shades</h2>
+      <!-- Neighbors as a typeset index -->
+      <section class="mt-20 border-t border-ink/80 pt-8" aria-labelledby="neighbors-title">
+        <div class="mb-6 flex items-baseline justify-between">
+          <span class="eyebrow">Nearby</span>
+          <h2 id="neighbors-title" class="font-display italic text-2xl text-ink">Shades along the ramp</h2>
+        </div>
+
         {lighter.length > 0 && (
-          <div class="row">
-            <h3>Lighter</h3>
-            <ul>
+          <div class="border-t border-hairline pt-5">
+            <p class="idx mb-3">Lighter</p>
+            <ul class="flex flex-wrap gap-3">
               {lighter.map((h) => (
                 <li>
-                  <a href={`/${h.slice(1)}`}>
-                    <span class="dot" style={`background:${h}`} aria-hidden="true"></span>
-                    <code>{h.toUpperCase()}</code>
+                  <a href={`/${h.slice(1)}`} class="group inline-flex items-center gap-2.5 border border-hairline px-3 py-2 hover:border-ink">
+                    <span class="block h-4 w-4 ring-1 ring-ink/10" style={`background:${h}`} aria-hidden="true"></span>
+                    <code class="font-mono text-xs tracking-tight">{h.toUpperCase()}</code>
                   </a>
                 </li>
               ))}
             </ul>
           </div>
         )}
+
         {darker.length > 0 && (
-          <div class="row">
-            <h3>Darker</h3>
-            <ul>
+          <div class="border-t border-hairline pt-5 mt-6">
+            <p class="idx mb-3">Darker</p>
+            <ul class="flex flex-wrap gap-3">
               {darker.map((h) => (
                 <li>
-                  <a href={`/${h.slice(1)}`}>
-                    <span class="dot" style={`background:${h}`} aria-hidden="true"></span>
-                    <code>{h.toUpperCase()}</code>
+                  <a href={`/${h.slice(1)}`} class="group inline-flex items-center gap-2.5 border border-hairline px-3 py-2 hover:border-ink">
+                    <span class="block h-4 w-4 ring-1 ring-ink/10" style={`background:${h}`} aria-hidden="true"></span>
+                    <code class="font-mono text-xs tracking-tight">{h.toUpperCase()}</code>
                   </a>
                 </li>
               ))}
@@ -182,132 +203,19 @@ const prefs = readInitialPrefs(Astro.url);
         )}
       </section>
 
-      <footer class="site-footer">
-        <p>
-          <a href="/">Home</a> · <a href="/colors/coral">Named colors</a>
-        </p>
+      <!-- Footer -->
+      <footer class="mt-20 border-t border-ink/80 pt-6">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between">
+          <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/80">
+            shades.dev — Plate · {hexLabel}
+          </p>
+          <nav aria-label="Footer" class="flex gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
+            <a href="/" class="text-ink hover:text-accent">Home</a>
+            <a href="/colors/coral" class="text-ink hover:text-accent">Named colors</a>
+            <a href={`/api/${canonical.slice(1)}.json`} class="text-ink hover:text-accent">JSON</a>
+          </nav>
+        </div>
       </footer>
     </main>
-
-    <style>
-      :root {
-        --ink: #0a0a0a;
-        --muted: #6b7280;
-        --line: #e5e7eb;
-        --bg: #ffffff;
-      }
-      /* Page chrome (around the React island) follows the OS theme.
-         The colour-content (swatches, ramps) is never inverted — only the
-         surrounding navigation, headings, and links change palette. */
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --ink: #f5f5f5;
-          --muted: #9ca3af;
-          --line: #262626;
-          --bg: #0a0a0a;
-        }
-      }
-      html, body { margin: 0; padding: 0; }
-      html { color-scheme: light dark; }
-      body {
-        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-        color: var(--ink);
-        background: var(--bg);
-        line-height: 1.5;
-      }
-      .hex-page {
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 1.5rem 1rem 3rem;
-      }
-      .back {
-        font-size: 0.9rem;
-        color: var(--muted);
-        text-decoration: none;
-      }
-      .back:hover { color: var(--ink); text-decoration: underline; }
-      .page-header h1 {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        margin: 0.5rem 0 1.5rem;
-        font-size: clamp(1.5rem, 3.5vw, 2.25rem);
-        font-weight: 800;
-        letter-spacing: -0.02em;
-      }
-      .page-header .swatch {
-        width: 1.6em; height: 1.6em;
-        border-radius: 10px;
-        border: 1px solid var(--line);
-        display: inline-block;
-      }
-      .page-header .hex {
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 0.85em;
-      }
-      .named-label { color: var(--muted); font-weight: 500; }
-      .noscript-note {
-        padding: 0.75rem 1rem;
-        border: 1px dashed var(--line);
-        border-radius: 8px;
-        color: var(--muted);
-      }
-      .neighbors { margin-top: 2.5rem; }
-      .neighbors h2 {
-        font-size: 1.25rem;
-        margin: 0 0 0.75rem;
-      }
-      .neighbors .row {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-        align-items: center;
-        margin: 0.5rem 0;
-      }
-      .neighbors h3 {
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: var(--muted);
-        margin: 0;
-        min-width: 64px;
-      }
-      .neighbors ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-      }
-      .neighbors a {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.4rem 0.7rem;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        text-decoration: none;
-        color: var(--ink);
-        font-size: 0.85rem;
-      }
-      .neighbors a:hover { border-color: var(--ink); }
-      .neighbors .dot {
-        width: 14px; height: 14px;
-        border-radius: 999px;
-        border: 1px solid rgba(0,0,0,0.1);
-      }
-      .neighbors code {
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      }
-      .site-footer {
-        margin-top: 3rem;
-        padding-top: 1.25rem;
-        border-top: 1px solid var(--line);
-        color: var(--muted);
-        font-size: 0.9rem;
-      }
-      .site-footer a { color: var(--ink); text-decoration: none; }
-      .site-footer a:hover { text-decoration: underline; }
-    </style>
   </body>
 </html>

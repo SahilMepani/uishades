@@ -67,15 +67,15 @@ const tiles = pickTiles();
 
 <style>
   .random-grid {
-    margin: 1.5rem 0 2.5rem;
+    margin: 0;
   }
   .grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
-    gap: 2px;
-    border-radius: 12px;
+    gap: 0;
     overflow: hidden;
-    background: #000;
+    background: var(--color-paper);
+    border: 1px solid var(--color-ink);
   }
   @media (min-width: 768px) {
     .grid {
@@ -88,23 +88,25 @@ const tiles = pickTiles();
     aspect-ratio: 1 / 1;
     text-decoration: none;
     color: transparent;
-    transition: transform 120ms ease;
+    transition: transform 160ms ease, z-index 0s 160ms;
   }
   .tile:hover, .tile:focus-visible {
-    transform: scale(1.06);
+    transform: scale(1.18);
     z-index: 2;
-    outline: 2px solid #0a0a0a;
-    outline-offset: -2px;
+    transition: transform 160ms ease, z-index 0s;
+    outline: 1px solid var(--color-ink);
   }
   .tile .label {
     position: absolute;
     inset: auto 0 0 0;
-    padding: 2px 4px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    padding: 3px 6px;
+    font-family: var(--font-mono);
     font-size: 10px;
+    letter-spacing: 0.04em;
     text-align: center;
-    background: rgba(0,0,0,0.55);
-    color: #fff;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    border-top: 1px solid var(--color-ink);
     opacity: 0;
     transition: opacity 120ms ease;
   }
@@ -113,5 +115,6 @@ const tiles = pickTiles();
   }
   @media (prefers-reduced-motion: reduce) {
     .tile, .tile .label { transition: none; }
+    .tile:hover, .tile:focus-visible { transform: none; }
   }
 </style>

@@ -24,17 +24,10 @@ import { POPULAR_HEXES } from '../lib/data/popular-hexes';
  * Companion controls (laid out adjacent to the text input):
  *   - A native `<input type="color">` swatch
  *   - A "Random" button that picks from `POPULAR_HEXES`
- *   - An EyeDropper button (conditional on `'EyeDropper' in window`)
  *
  * Autocomplete: once ≥ 2 chars match a named-color slug prefix we render
  * a small dropdown. Arrow keys move focus; Enter / click accepts.
  */
-
-declare global {
-  interface Window {
-    EyeDropper?: new () => { open(): Promise<{ sRGBHex: string }> };
-  }
-}
 
 export interface ColorInputProps {
   value: Hex;
@@ -55,10 +48,9 @@ function findSuggestions(query: string): NamedColor[] {
 export default function ColorInput({ value, onChange }: ColorInputProps) {
   // Local text mirrors what the user is typing. We don't force-sync it to
   // `value` on every keystroke; we only sync when `value` changes from the
-  // outside (e.g., random button, eyedropper, or external navigation).
+  // outside (e.g., random button or external navigation).
   const [text, setText] = useState<string>(value);
   const [hasError, setHasError] = useState(false);
-  const [hasEyeDropper, setHasEyeDropper] = useState(false);
   const [suggestions, setSuggestions] = useState<NamedColor[]>([]);
   const [activeSuggestion, setActiveSuggestion] = useState(0);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -67,7 +59,7 @@ export default function ColorInput({ value, onChange }: ColorInputProps) {
   const lastEmittedRef = useRef<Hex>(value);
 
   // Sync external value -> local text when the parent updates the hex
-  // (e.g., a random click, navigation, eyedropper).
+  // (e.g., a random click or external navigation).
   useEffect(() => {
     if (value !== lastEmittedRef.current) {
       setText(value);
@@ -75,13 +67,6 @@ export default function ColorInput({ value, onChange }: ColorInputProps) {
       setHasError(false);
     }
   }, [value]);
-
-  // Feature-detect EyeDropper after mount (SSR safety).
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'EyeDropper' in window) {
-      setHasEyeDropper(true);
-    }
-  }, []);
 
   const tryEmit = useCallback(
     (raw: string) => {
@@ -182,154 +167,117 @@ export default function ColorInput({ value, onChange }: ColorInputProps) {
     [onChange],
   );
 
-  const onEyeDropper = useCallback(async () => {
-    if (typeof window === 'undefined' || !window.EyeDropper) return;
-    try {
-      const result = await new window.EyeDropper().open();
-      const hex = result.sRGBHex.toLowerCase() as Hex;
-      onChange(hex);
-    } catch {
-      /* user cancelled */
-    }
-  }, [onChange]);
-
-  const inputRingClass = hasError
-    ? 'ring-2 ring-red-500/70'
-    : 'ring-1 ring-neutral-300 dark:ring-neutral-700';
+  const inputBorderClass = hasError
+    ? 'border-accent'
+    : 'border-ink/20 focus-within:border-ink';
 
   const inputId = useMemo(() => 'shade-tool-color-input', []);
 
   return (
-    <div className="relative flex flex-col gap-2">
-      <div className="flex items-stretch gap-2">
-        <div className="relative flex-1">
-          <input
-            id={inputId}
-            type="text"
-            value={text}
-            onChange={(e) => onTextChange(e.target.value)}
-            onKeyDown={onKeyDown}
-            onFocus={() => setShowSuggestions(true)}
-            onBlur={() => {
-              // Delay so a click on a suggestion item can register first.
-              window.setTimeout(() => setShowSuggestions(false), 120);
-            }}
-            spellCheck={false}
-            autoComplete="off"
-            autoCapitalize="off"
-            aria-label="Color value"
-            aria-invalid={hasError || undefined}
-            placeholder="#4040ff, coral, rgb(...), oklch(...)"
-            className={[
-              'w-full rounded-md bg-white px-3 py-2 font-mono text-sm text-neutral-900',
-              'dark:bg-neutral-900 dark:text-neutral-100',
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
-              inputRingClass,
-            ].join(' ')}
-          />
+    <div className="relative flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
+        <span className="eyebrow">Color</span>
+        <div className={`flex items-stretch gap-0 border ${inputBorderClass} bg-paper transition-colors`}>
+          {/* Native color swatch (left) */}
+          <label
+            className="flex w-12 shrink-0 cursor-pointer items-center justify-center border-r border-ink/15"
+            title="Pick a color"
+            style={{ backgroundColor: value }}
+          >
+            <span className="sr-only">Color picker</span>
+            <input
+              type="color"
+              value={value}
+              onChange={onPicker}
+              className="h-0 w-0 opacity-0"
+              aria-label="Open color picker"
+            />
+          </label>
 
-          {showSuggestions && suggestions.length > 0 && (
-            <ul
-              role="listbox"
+          <div className="relative flex-1">
+            <input
+              id={inputId}
+              type="text"
+              value={text}
+              onChange={(e) => onTextChange(e.target.value)}
+              onKeyDown={onKeyDown}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => {
+                window.setTimeout(() => setShowSuggestions(false), 120);
+              }}
+              spellCheck={false}
+              autoComplete="off"
+              autoCapitalize="off"
+              aria-label="Color value"
+              aria-invalid={hasError || undefined}
+              placeholder="#4040ff, coral, rgb(64 64 255)"
               className={
-                'absolute left-0 right-0 top-full z-20 mt-1 max-h-60 overflow-auto rounded-md ' +
-                'border border-neutral-200 bg-white shadow-lg ' +
-                'dark:border-neutral-700 dark:bg-neutral-900'
+                'w-full bg-transparent px-3 py-2.5 font-mono text-sm tracking-tight text-ink ' +
+                'placeholder:text-mute/70 focus:outline-none'
               }
-            >
-              {suggestions.map((s, i) => (
-                <li
-                  key={s.slug}
-                  role="option"
-                  aria-selected={i === activeSuggestion}
-                  onMouseDown={(e) => {
-                    // Use mousedown so it fires before the input's blur.
-                    e.preventDefault();
-                    acceptSuggestion(s);
-                  }}
-                  onMouseEnter={() => setActiveSuggestion(i)}
-                  className={[
-                    'flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm',
-                    i === activeSuggestion
-                      ? 'bg-neutral-100 dark:bg-neutral-800'
-                      : '',
-                  ].join(' ')}
-                >
-                  <span
-                    aria-hidden="true"
-                    className="inline-block h-4 w-4 rounded ring-1 ring-black/10"
-                    style={{ backgroundColor: s.hex }}
-                  />
-                  <span className="font-mono text-xs text-neutral-500">{s.slug}</span>
-                  <span className="ml-auto font-mono text-xs text-neutral-400">
-                    {s.hex}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+            />
+          </div>
 
-        {/* Native color swatch */}
-        <label
-          className="flex h-auto w-10 cursor-pointer items-center justify-center rounded-md ring-1 ring-neutral-300 dark:ring-neutral-700"
-          title="Pick a color"
-          style={{ backgroundColor: value }}
-        >
-          <span className="sr-only">Color picker</span>
-          <input
-            type="color"
-            value={value}
-            onChange={onPicker}
-            className="h-0 w-0 opacity-0"
-            aria-label="Open color picker"
-          />
-        </label>
-
-        <button
-          type="button"
-          onClick={onRandom}
-          className={
-            'rounded-md bg-neutral-900 px-3 py-2 text-xs font-medium text-white ' +
-            'hover:bg-neutral-800 ' +
-            'dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200 ' +
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500'
-          }
-        >
-          Random
-        </button>
-
-        {hasEyeDropper && (
           <button
             type="button"
-            onClick={onEyeDropper}
-            aria-label="Pick color from screen"
-            title="Pick color from screen"
+            onClick={onRandom}
+            title="Random color"
+            aria-label="Random color"
             className={
-              'rounded-md px-3 py-2 text-xs font-medium ring-1 ring-neutral-300 ' +
-              'hover:bg-neutral-100 ' +
-              'dark:ring-neutral-700 dark:hover:bg-neutral-800 ' +
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500'
+              'flex w-12 shrink-0 items-center justify-center border-l border-ink/15 ' +
+              'text-ink/70 hover:text-accent hover:bg-paper-2 ' +
+              'focus-visible:outline-none focus-visible:bg-accent-soft'
             }
           >
-            <EyeDropperIcon />
+            <DiceIcon />
           </button>
+        </div>
+
+        {showSuggestions && suggestions.length > 0 && (
+          <ul
+            role="listbox"
+            className="absolute left-0 right-0 top-full z-20 mt-1 max-h-60 overflow-auto border border-ink/15 bg-paper shadow-[0_8px_24px_rgba(17,17,16,0.08)]"
+          >
+            {suggestions.map((s, i) => (
+              <li
+                key={s.slug}
+                role="option"
+                aria-selected={i === activeSuggestion}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  acceptSuggestion(s);
+                }}
+                onMouseEnter={() => setActiveSuggestion(i)}
+                className={[
+                  'flex cursor-pointer items-center gap-3 px-3 py-2 text-sm',
+                  i === activeSuggestion ? 'bg-paper-2' : '',
+                ].join(' ')}
+              >
+                <span
+                  aria-hidden="true"
+                  className="inline-block h-5 w-5 rounded-sm ring-1 ring-ink/10"
+                  style={{ backgroundColor: s.hex }}
+                />
+                <span className="font-display italic text-ink">{s.name ?? s.slug}</span>
+                <span className="ml-auto font-mono text-xs text-mute">{s.hex}</span>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
     </div>
   );
 }
 
-function EyeDropperIcon() {
+function DiceIcon() {
   return (
     <svg viewBox="0 0 16 16" aria-hidden="true" className="h-4 w-4">
-      <path
-        d="M10.5 1.5l4 4-2 2-1-1-5 5L4 13l-2 1 1-2 1.5-2.5 5-5-1-1 2-2z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.25"
-        strokeLinejoin="round"
-      />
+      <rect x="2.5" y="2.5" width="11" height="11" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.25" />
+      <circle cx="5.5" cy="5.5" r="0.9" fill="currentColor" />
+      <circle cx="10.5" cy="5.5" r="0.9" fill="currentColor" />
+      <circle cx="8" cy="8" r="0.9" fill="currentColor" />
+      <circle cx="5.5" cy="10.5" r="0.9" fill="currentColor" />
+      <circle cx="10.5" cy="10.5" r="0.9" fill="currentColor" />
     </svg>
   );
 }

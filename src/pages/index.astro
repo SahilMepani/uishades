@@ -2,14 +2,12 @@
 /**
  * Homepage.
  *
- * Pure HTML/CSS — no React island. The 200-color grid is rendered server-side
- * as static <a> tags pointing at /[hex] (good for crawl graph), and the hex
- * input is a plain form that POSTs to the action URL; a small inline script
- * intercepts the submit, parses+validates the input via the same parseColor
- * the rest of the site uses, and client-side navigates to /[normalizedHex].
+ * Editorial layout — a magazine masthead instead of a landing page. The
+ * type does the work; the random color grid is the only color on the
+ * page and it acts as a single typographic-scale woodblock band.
  *
- * SEO essentials: title, meta description, OG/Twitter cards, JSON-LD
- * WebApplication schema.
+ * Pure HTML/CSS — no React island. The hex input is a plain form whose
+ * inline JS canonicalizes the value and client-side navigates.
  */
 import '../styles/global.css';
 import RandomGrid from '../components/RandomGrid.astro';
@@ -17,7 +15,7 @@ import RandomGrid from '../components/RandomGrid.astro';
 const TITLE = 'shades.dev — Free Tints and Shades of Any Hex Color';
 const DESCRIPTION =
   'A free tool for finding lighter and darker shades of any hex color. OKLCH-based ramps, Tailwind-style 11-stop scales, and paste-ready exports.';
-const OG = 'https://shades.dev/og/777777.png'; // generic preview using a neutral
+const OG = 'https://shades.dev/og/777777.png';
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -29,6 +27,11 @@ const jsonLd = {
   operatingSystem: 'Any',
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
 };
+
+const ISSUE_DATE = new Date().toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+});
 ---
 
 <!doctype html>
@@ -55,80 +58,153 @@ const jsonLd = {
 
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </head>
-  <body>
-    <main class="home">
-      <header class="hero">
-        <h1>
-          <span class="brand">shades.dev</span>
-          <span class="tag">Tints &amp; shades of any color, free.</span>
-        </h1>
+  <body class="bg-paper text-ink">
+    <!-- Masthead strip -->
+    <header class="border-b border-ink/90 bg-paper">
+      <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-3 font-mono text-[11px] uppercase tracking-[0.18em] text-ink/80">
+        <span>Shades — A free design tool</span>
+        <span class="hidden sm:inline">Issue Nº 01 · {ISSUE_DATE}</span>
+        <span class="text-accent">Open access</span>
+      </div>
+    </header>
 
-        <form id="hex-form" class="hex-form" action="/" method="get" novalidate>
-          <label for="hex" class="visually-hidden">Color (hex, rgb, hsl, oklch, or CSS name)</label>
-          <input
-            id="hex"
-            name="hex"
-            type="text"
-            placeholder="#4040ff or rgb(64 64 255) or coral"
-            autocomplete="off"
-            autocapitalize="off"
-            spellcheck="false"
-            inputmode="text"
-            required
-          />
-          <button type="submit">Show shades</button>
-          <p id="hex-error" class="error" role="alert" aria-live="polite"></p>
-        </form>
-      </header>
+    <main class="mx-auto max-w-6xl px-6 pb-24 pt-14 lg:pt-20">
+      <!-- Hero -->
+      <section class="grid gap-10 lg:grid-cols-[7fr_5fr] lg:gap-16">
+        <div>
+          <p class="eyebrow mb-6">A replacement for 0to255 — free, fast, OKLCH</p>
+          <h1 class="display text-[clamp(3rem,9vw,7.5rem)]">
+            Tints &amp; shades<br />
+            <span class="text-accent">of any color</span>,<br />
+            free.
+          </h1>
+          <p class="mt-8 max-w-[44ch] font-display italic text-xl leading-snug text-ink-2">
+            Paste a hex, name, <code class="font-mono not-italic text-base text-ink">rgb()</code>,
+            or <code class="font-mono not-italic text-base text-ink">oklch()</code>. Get a
+            perceptually-even ramp, an 11-stop Tailwind scale, and paste-ready exports.
+          </p>
 
-      <RandomGrid />
+          <form id="hex-form" class="mt-10 flex flex-col gap-2 max-w-xl" action="/" method="get" novalidate>
+            <label for="hex" class="visually-hidden">Color (hex, rgb, hsl, oklch, or name)</label>
+            <div class="flex flex-col sm:flex-row border border-ink/80 bg-paper">
+              <input
+                id="hex"
+                name="hex"
+                type="text"
+                placeholder="#4040ff · coral · rgb(64 64 255)"
+                autocomplete="off"
+                autocapitalize="off"
+                spellcheck="false"
+                inputmode="text"
+                required
+                class="flex-1 bg-transparent px-4 py-3.5 font-mono text-base tracking-tight text-ink placeholder:text-mute focus:outline-none"
+              />
+              <button
+                type="submit"
+                class="border-t sm:border-l sm:border-t-0 border-ink/80 bg-ink px-6 py-3.5 font-mono text-[12px] uppercase tracking-[0.18em] text-paper hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+              >
+                Open →
+              </button>
+            </div>
+            <p id="hex-error" class="error" role="alert" aria-live="polite"></p>
+          </form>
+        </div>
 
-      <section class="why" aria-labelledby="why-title">
-        <h2 id="why-title">Why shades.dev</h2>
-        <ul>
-          <li>
-            <strong>Free.</strong> No paywall, no signup, no ads. Permanent
-            URLs for every hex you'd ever want to share with a teammate.
-          </li>
-          <li>
-            <strong>Better algorithm.</strong> OKLCH-anchored ramps keep
-            perceived lightness and hue stable across the whole scale, so
-            yellows, browns, and olives don't muddy out at the mid-shades.
-            A "Classic" toggle reproduces the familiar RGB-walk output bit
-            for bit.
-          </li>
-          <li>
-            <strong>Tailwind-first exports.</strong> Drop-in 11-stop scales
-            with copy buttons for Tailwind v4 <code>@theme</code>, v3
-            config, plain CSS variables, W3C Design Tokens JSON, and
-            Figma Variables.
-          </li>
-        </ul>
+        <!-- Right column: editorial "table of contents" -->
+        <aside class="hidden lg:flex lg:flex-col lg:items-end lg:pt-4">
+          <p class="eyebrow mb-3 self-start">Index</p>
+          <ol class="w-full divide-y divide-hairline border-y border-hairline">
+            <li class="flex items-baseline justify-between py-3">
+              <span class="font-display italic text-xl">The shades tool</span>
+              <span class="font-mono text-xs text-mute">№ 01</span>
+            </li>
+            <li class="flex items-baseline justify-between py-3">
+              <span class="font-display italic text-xl">Tailwind scale</span>
+              <span class="font-mono text-xs text-mute">№ 02</span>
+            </li>
+            <li class="flex items-baseline justify-between py-3">
+              <span class="font-display italic text-xl">Named colors</span>
+              <span class="font-mono text-xs text-mute">№ 03</span>
+            </li>
+            <li class="flex items-baseline justify-between py-3">
+              <span class="font-display italic text-xl">JSON API</span>
+              <span class="font-mono text-xs text-mute">№ 04</span>
+            </li>
+          </ol>
+          <p class="mt-6 max-w-[28ch] text-right font-display italic text-base text-mute">
+            Same URL pattern as 0to255, OKLCH math underneath, no paywall.
+          </p>
+        </aside>
       </section>
 
-      <footer class="site-footer">
-        <nav aria-label="Footer">
-          <a href="/colors/coral">Named colors</a>
-          <span>·</span>
-          <a href="https://github.com/sponsors" rel="noopener">Sponsor</a>
-          <span>·</span>
-          <a href="https://ko-fi.com" rel="noopener">Ko-fi</a>
-        </nav>
-        <p class="attribution">
-          Built with <a href="https://astro.build" rel="noopener">Astro</a>.
-          Color math by <a href="https://culorijs.org" rel="noopener">culori</a>.
+      <!-- Color grid section -->
+      <section class="mt-20 lg:mt-28">
+        <div class="mb-4 flex items-baseline justify-between border-b border-ink/80 pb-2">
+          <span class="eyebrow">Plate 01 — Sampler</span>
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">204 hexes · click to open</span>
+        </div>
+        <RandomGrid />
+      </section>
+
+      <!-- Editorial "Why" -->
+      <section class="mt-20 lg:mt-28" aria-labelledby="why-title">
+        <div class="mb-10 flex items-baseline justify-between border-b border-ink/80 pb-2">
+          <span class="eyebrow">Department</span>
+          <h2 id="why-title" class="font-display italic text-3xl text-ink">Why shades.dev</h2>
+        </div>
+        <div class="grid gap-x-10 gap-y-12 lg:grid-cols-3">
+          <article>
+            <p class="idx mb-2">№ 01</p>
+            <h3 class="font-display italic text-2xl text-ink leading-tight">Free, forever.</h3>
+            <p class="mt-3 text-ink-2 leading-relaxed">
+              No paywall, no signup, no ads. Permanent URLs for every hex you'd ever
+              want to share with a teammate — pattern-identical to the one you've
+              had bookmarked for a decade.
+            </p>
+          </article>
+          <article>
+            <p class="idx mb-2">№ 02</p>
+            <h3 class="font-display italic text-2xl text-ink leading-tight">Better algorithm.</h3>
+            <p class="mt-3 text-ink-2 leading-relaxed">
+              OKLCH-anchored ramps keep perceived lightness and hue stable across
+              the whole scale, so yellows, browns, and olives don't muddy out
+              at the mids. A <em class="font-display italic">Classic</em> toggle reproduces the familiar
+              RGB-walk output, bit for bit.
+            </p>
+          </article>
+          <article>
+            <p class="idx mb-2">№ 03</p>
+            <h3 class="font-display italic text-2xl text-ink leading-tight">Tailwind-first exports.</h3>
+            <p class="mt-3 text-ink-2 leading-relaxed">
+              Drop-in 11-stop scales with copy buttons for Tailwind v4
+              <code>@theme</code>, v3 config, plain CSS variables, W3C Design
+              Tokens JSON, and Figma Variables.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <!-- Footer / colophon -->
+      <footer class="mt-24 border-t border-ink/80 pt-6">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-baseline sm:justify-between">
+          <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/80">
+            shades.dev · A free design tool
+          </p>
+          <nav aria-label="Footer" class="flex gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
+            <a href="/colors/coral" class="text-ink hover:text-accent">Named colors</a>
+            <a href="https://github.com/sponsors" rel="noopener" class="text-ink hover:text-accent">Sponsor</a>
+            <a href="https://ko-fi.com" rel="noopener" class="text-ink hover:text-accent">Ko-fi</a>
+          </nav>
+        </div>
+        <p class="mt-2 font-display italic text-sm text-mute">
+          Set in Instrument Serif, Geist, and JetBrains Mono. Built with
+          <a href="https://astro.build" rel="noopener" class="underline decoration-hairline underline-offset-2 hover:text-accent">Astro</a>.
+          Color math by <a href="https://culorijs.org" rel="noopener" class="underline decoration-hairline underline-offset-2 hover:text-accent">culori</a>.
         </p>
       </footer>
     </main>
 
     <script is:inline>
-      // Lightweight hex/color input handler.
-      //
-      // We don't import the project's parseColor here on purpose: the home
-      // page is meant to ship zero JS and stay under the SEO/perf budget.
-      // Instead we duplicate the canonical-hex shape check inline; any input
-      // that doesn't match becomes a server-side parse problem on the next
-      // page, where the full parseColor runs.
       (function () {
         var form = document.getElementById('hex-form');
         if (!form) return;
@@ -138,15 +214,11 @@ const jsonLd = {
         function toSlug(value) {
           var v = value.trim().toLowerCase();
           if (!v) return null;
-          // Strip a leading "#" if present.
           if (v.charAt(0) === '#') v = v.slice(1);
-          // 6-digit hex.
           if (/^[0-9a-f]{6}$/.test(v)) return v;
-          // 3-digit hex shorthand -> expand to 6.
           if (/^[0-9a-f]{3}$/.test(v)) {
             return v[0] + v[0] + v[1] + v[1] + v[2] + v[2];
           }
-          // 8-digit hex (with alpha) -> drop alpha, keep first 6.
           if (/^[0-9a-f]{8}$/.test(v)) return v.slice(0, 6);
           return null;
         }
@@ -159,11 +231,6 @@ const jsonLd = {
             window.location.assign('/' + slug);
             return;
           }
-          // Non-hex inputs (rgb/hsl/oklch/named CSS colors) are handled by the
-          // homepage in place: we don't have a server-side endpoint that
-          // accepts non-canonical input, so we keep the user on `/` and tell
-          // them what we expected. The React island on each /[hex] page does
-          // accept these formats, but the home form needs a hex up front.
           var raw = input.value.trim();
           err.textContent = raw
             ? 'Could not parse "' + raw + '" as hex. Try a 3 or 6 digit hex value.'
@@ -174,98 +241,6 @@ const jsonLd = {
     </script>
 
     <style>
-      :root {
-        --ink: #0a0a0a;
-        --muted: #6b7280;
-        --line: #e5e7eb;
-        --bg: #ffffff;
-        --code-bg: #f6f6f6;
-        --accent: #4040ff;
-      }
-      /* Match the React island's dark surface (neutral-950 / neutral-100).
-         The page chrome around the tool gets the same dark inversion when
-         the OS reports a dark preference; the colour-content itself is
-         never altered. */
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --ink: #f5f5f5;
-          --muted: #9ca3af;
-          --line: #262626;
-          --bg: #0a0a0a;
-          --code-bg: #171717;
-        }
-      }
-      html, body { margin: 0; padding: 0; }
-      html {
-        /* Tell the UA which colour scheme our chrome targets so native form
-           controls and scrollbars pick the matching system rendering. */
-        color-scheme: light dark;
-      }
-      body {
-        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-        color: var(--ink);
-        background: var(--bg);
-        line-height: 1.5;
-      }
-      .home {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 2rem 1rem 4rem;
-      }
-      .hero h1 {
-        margin: 0 0 1rem;
-        font-size: clamp(1.75rem, 4vw, 2.75rem);
-        font-weight: 800;
-        line-height: 1.15;
-        letter-spacing: -0.02em;
-      }
-      .hero .brand { color: var(--ink); }
-      .hero .tag {
-        display: block;
-        font-size: clamp(1rem, 2vw, 1.25rem);
-        font-weight: 500;
-        color: var(--muted);
-        margin-top: 0.25rem;
-      }
-      .hex-form {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin: 1rem 0 0.5rem;
-      }
-      .hex-form input {
-        flex: 1 1 280px;
-        min-width: 0;
-        padding: 0.7rem 0.9rem;
-        font-size: 1rem;
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        background: var(--bg);
-        color: var(--ink);
-      }
-      .hex-form input:focus-visible {
-        outline: 2px solid var(--accent);
-        outline-offset: 1px;
-      }
-      .hex-form button {
-        padding: 0.7rem 1.2rem;
-        font-size: 1rem;
-        border: 0;
-        border-radius: 10px;
-        background: var(--ink);
-        color: #fff;
-        cursor: pointer;
-        font-weight: 600;
-      }
-      .hex-form button:hover { background: var(--accent); }
-      .error {
-        flex: 1 1 100%;
-        margin: 0.25rem 0 0;
-        color: #b91c1c;
-        font-size: 0.9rem;
-        min-height: 1.2em;
-      }
       .visually-hidden {
         position: absolute;
         width: 1px; height: 1px;
@@ -275,47 +250,13 @@ const jsonLd = {
         white-space: nowrap;
         border: 0;
       }
-      .why h2 {
-        font-size: 1.5rem;
-        margin: 0 0 0.75rem;
+      .error {
+        margin: 0.25rem 0 0;
+        color: var(--color-accent);
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        min-height: 1.2em;
       }
-      .why ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: grid;
-        gap: 1rem;
-        grid-template-columns: 1fr;
-      }
-      @media (min-width: 720px) {
-        .why ul { grid-template-columns: repeat(3, 1fr); }
-      }
-      .why li {
-        padding: 1rem;
-        border: 1px solid var(--line);
-        border-radius: 12px;
-      }
-      .why code {
-        background: var(--code-bg);
-        padding: 0 0.25rem;
-        border-radius: 4px;
-        font-size: 0.95em;
-      }
-      .site-footer {
-        margin-top: 3rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid var(--line);
-        color: var(--muted);
-        font-size: 0.9rem;
-      }
-      .site-footer nav a {
-        color: var(--ink);
-        text-decoration: none;
-        margin: 0 0.25rem;
-      }
-      .site-footer nav a:hover { text-decoration: underline; }
-      .site-footer .attribution { margin: 0.5rem 0 0; }
-      .site-footer .attribution a { color: var(--muted); }
     </style>
   </body>
 </html>

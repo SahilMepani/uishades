@@ -1,11 +1,147 @@
 @import "tailwindcss";
 
 /*
- * Tailwind v4 `@theme` block. Engaging the directive here makes Tailwind v4
- * mode active and gives downstream agents (tool-ui, astro-routing) a place
- * to register design tokens via CSS variables. Keep tokens minimal in Wave 0;
- * Wave 2 will fill this out with the real brand/typography/spacing tokens.
+ * shades.dev — editorial design system.
+ *
+ * The aesthetic is "typeset paper": warm off-white background, near-black
+ * ink, a single oxblood accent, hairline rules instead of boxes, and a
+ * typographic pairing that does the heavy lifting:
+ *   - Instrument Serif (italic display) for headlines + section heads
+ *   - Geist Sans for body and UI
+ *   - JetBrains Mono for hex codes and data strips
+ *
+ * Light theme only — the OS preference is ignored on purpose. The color
+ * content (swatches, ramps) is the visual hero and never gets inverted;
+ * we already had that rule, but now the chrome doesn't invert either.
  */
+
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @theme {
-  --color-shades-ink: #0a0a0a;
+  --color-paper:        #faf8f3;
+  --color-paper-2:      #f3efe5;
+  --color-paper-3:      #ece6d6;
+  --color-ink:          #111110;
+  --color-ink-2:        #2a2826;
+  --color-mute:         #6b665f;
+  --color-mute-2:       #8a857c;
+  --color-hairline:     #d9d3c4;
+  --color-hairline-2:   #e7e2d4;
+  --color-accent:       #b8431e;
+  --color-accent-soft:  #f4dccb;
+  --color-paper-rule:   #2a2826;
+
+  --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+  --font-sans:    'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* ----- Base reset & typography ---------------------------------------- */
+
+html {
+  color-scheme: light;
+  background: var(--color-paper);
+  font-feature-settings: "ss01", "cv11";
+}
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+* { box-sizing: border-box; }
+a { color: inherit; }
+
+::selection {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+
+/* ----- Editorial primitives ------------------------------------------- */
+
+.font-display { font-family: var(--font-display); }
+.font-sans    { font-family: var(--font-sans); }
+.font-mono    { font-family: var(--font-mono); }
+
+/* "Kicker": small italic-serif section label, set above titles or as a
+   left-aligned label in a metadata strip. */
+.kicker {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.9rem;
+  letter-spacing: 0.005em;
+  color: var(--color-accent);
+}
+
+/* "Eyebrow": all-caps mono label with extra tracking. Used for column
+   labels above big serif headlines, a la masthead departments. */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-mute);
+}
+
+/* "Index number" — small superscript number with a hair rule under it.
+   Used for the numbered "Why shades.dev" cards on the home and the
+   complementary/triadic swatches on the named-color pages. */
+.idx {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--color-mute);
+}
+
+/* Editorial rule: 1px hairline using the warm hairline token. */
+.hairline { border-color: var(--color-hairline); }
+
+/* Display headline tweak: pull the leading tight and the optical kerning
+   visible. Instrument Serif's italic is the workhorse here. */
+.display {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: -0.005em;
+  color: var(--color-ink);
+}
+
+/* Body prose: tight measure for readable named-color blurbs. */
+.prose-editorial {
+  max-width: 62ch;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: var(--color-ink-2);
+}
+.prose-editorial p {
+  margin: 0 0 1em;
+}
+.prose-editorial code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  padding: 0 0.2em;
+  background: var(--color-paper-2);
+  border-radius: 3px;
+}
+.prose-editorial em,
+.prose-editorial i {
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+/* Editorial card — used for the "Why" blocks on the home. No box-shadow,
+   just hairlines, a numbered marker, and generous whitespace. */
+.ed-card {
+  border-top: 1px solid var(--color-hairline);
+  padding: 1.25rem 0 0;
 }

@@ -66,17 +66,17 @@ export default function ExportDropdown({
   };
 
   return (
-    <div className="flex flex-col gap-2" data-export-format={format}>
-      <div className="flex items-center justify-between gap-2">
-        <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-200">
-          <span>Export as</span>
+    <div className="flex flex-col gap-3" data-export-format={format}>
+      <div className="flex items-center justify-between gap-3 border-b border-hairline pb-3">
+        <label className="flex items-center gap-3 text-sm text-ink/80">
+          <span className="eyebrow">Export as</span>
           <select
             value={format}
             onChange={(e) => onFormatChange(e.target.value as ExportFormat)}
+            aria-label="Export as"
             className={
-              'rounded-md bg-white px-2 py-1 text-sm ring-1 ring-neutral-300 ' +
-              'dark:bg-neutral-900 dark:ring-neutral-700 ' +
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500'
+              'border border-ink/20 bg-paper px-2 py-1 font-mono text-xs text-ink ' +
+              'focus-visible:outline-none focus-visible:border-accent'
             }
           >
             {FORMAT_OPTIONS.map(opt => (
@@ -93,10 +93,9 @@ export default function ExportDropdown({
           type="button"
           onClick={handleCopy}
           className={
-            'absolute right-2 top-2 rounded bg-neutral-900 px-2 py-1 text-xs font-medium text-white ' +
-            'hover:bg-neutral-800 ' +
-            'dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200 ' +
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500'
+            'absolute right-3 top-3 z-10 bg-ink px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.16em] text-paper ' +
+            'hover:bg-accent ' +
+            'focus-visible:outline-none focus-visible:bg-accent'
           }
           aria-label="Copy export to clipboard"
         >
@@ -105,9 +104,8 @@ export default function ExportDropdown({
         <pre
           data-export-preview="true"
           className={
-            'max-h-72 overflow-auto rounded-md bg-neutral-50 p-3 pr-16 font-mono text-xs ' +
-            'leading-snug text-neutral-800 ring-1 ring-neutral-200 ' +
-            'dark:bg-neutral-950 dark:text-neutral-100 dark:ring-neutral-800'
+            'max-h-80 overflow-auto bg-paper-2 p-4 pr-20 font-mono text-[12px] ' +
+            'leading-relaxed text-ink-2 border border-hairline'
           }
         >
           {text}

@@ -2,17 +2,9 @@
 /**
  * /colors/[name] — named-color landing pages, pre-rendered.
  *
- * One page per entry in NAMED_COLORS (~209 entries). The page is mostly
- * HTML/CSS (no React island until the user actually wants to manipulate the
- * shades), per the plan's "Named-color pages: HTML/CSS only" target.
- *
- * Sections (top to bottom):
- *   1. Header with name + canonical hex + a large swatch
- *   2. The hand-authored 90-110 word blurb
- *   3. The interactive <ShadeTool> island, hydrated on first interaction
- *   4. Palette built around it (complementary, two triadic, two analogous)
- *   5. Related-named-colors crawl links
- *   6. Aliases (if any)
+ * Editorial layout: the blurb is the body copy of a magazine feature; the
+ * embedded ShadeTool is the "data sheet"; the complementary/triadic
+ * palette is a numbered plate. ~209 pages, one per NAMED_COLORS entry.
  */
 import '../../styles/global.css';
 import ShadeTool from '../../components/ShadeTool';
@@ -31,32 +23,24 @@ export async function getStaticPaths() {
 const { slug } = Astro.props as { slug: string };
 const color = findBySlug(slug);
 if (!color) {
-  // Should be unreachable since getStaticPaths is the only entry point.
   return new Response(null, { status: 404 });
 }
 
-// Rotate hue by `deg` degrees, keeping L and C. Used to construct the
-// "palette built around it" — complementary (+180), triadic (+/-120),
-// analogous (+/-30). When the input is achromatic we still rotate but the
-// chroma is ~0 so all rotations collapse to roughly the same gray.
 function rotate(input: Hex, deg: number): Hex {
   const o: OKLCH = toOklch(input);
   const h = (Number.isFinite(o.h) ? o.h : 0) + deg;
-  // Normalize to [0, 360).
   const hh = ((h % 360) + 360) % 360;
   return oklchToHex({ l: o.l, c: o.c, h: hh });
 }
 
 const palette: { label: string; hex: Hex }[] = [
-  { label: 'Complementary',  hex: rotate(color.hex, 180) },
-  { label: 'Triadic',         hex: rotate(color.hex, 120) },
-  { label: 'Triadic',         hex: rotate(color.hex, -120) },
-  { label: 'Analogous',       hex: rotate(color.hex, 30) },
-  { label: 'Analogous',       hex: rotate(color.hex, -30) },
+  { label: 'Complementary', hex: rotate(color.hex, 180) },
+  { label: 'Triadic',        hex: rotate(color.hex, 120) },
+  { label: 'Triadic',        hex: rotate(color.hex, -120) },
+  { label: 'Analogous',      hex: rotate(color.hex, 30) },
+  { label: 'Analogous',      hex: rotate(color.hex, -30) },
 ];
 
-// Related-color crawl links: resolve each slug to a NamedColor entry. Any
-// missing related slug is just dropped (data integrity is enforced in tests).
 const related = (color.related || [])
   .map((s) => findBySlug(s))
   .filter((c): c is NonNullable<typeof c> => !!c)
@@ -64,11 +48,6 @@ const related = (color.related || [])
 
 const TITLE = `${color.name} (${color.hex.toUpperCase()}) Color Shades, Tints & Palette | shades.dev`;
 
-// Meta description target: 120-160 chars. A naive first-sentence split often
-// returns 60-90 chars on these blurbs, which falls below the 120-char floor
-// search engines prefer; we glue on additional sentences until the total
-// clears 120, then hard-truncate at 160. The blurbs are written so the
-// first two sentences carry the color name plus a concrete hook.
 function buildDescription(blurb: string): string {
   const parts = blurb.split('. ');
   let out = '';
@@ -77,10 +56,8 @@ function buildDescription(blurb: string): string {
     out = out ? out + ' ' + piece : piece;
     if (out.length >= 120) break;
   }
-  // Strip inline `code` backticks; meta descriptions render as plain text.
   out = out.replace(/`([^`]+)`/g, '$1');
   if (out.length <= 160) return out;
-  // Truncate at last word boundary before 157, append ellipsis.
   const trimmed = out.slice(0, 157);
   const lastSpace = trimmed.lastIndexOf(' ');
   return (lastSpace > 100 ? trimmed.slice(0, lastSpace) : trimmed) + '...';
@@ -90,8 +67,6 @@ const DESCRIPTION = buildDescription(color.blurb);
 const canonicalUrl = `https://shades.dev/colors/${color.slug}`;
 const ogImage = `https://shades.dev/og/${color.hex.slice(1)}.png`;
 
-// Strip inline markdown `code` ticks from the structured-data description —
-// JSON-LD consumers render this as plain text, so the backticks would leak.
 const plainBlurb = color.blurb.replace(/`([^`]+)`/g, '$1');
 
 const jsonLd = {
@@ -102,25 +77,11 @@ const jsonLd = {
   description: plainBlurb,
   url: canonicalUrl,
   identifier: color.hex.toUpperCase(),
-  // 'color' is a valid Thing property in many product/style schemas; the hex
-  // makes it programmatically consumable by color-aware crawlers.
   color: color.hex,
 };
 
-// Named-color pages are pre-rendered, so at build time `Astro.url` has no
-// search params and this call is effectively a no-op — the React island
-// boots with its defaults. The canonical URL has no preferences in it (the
-// param-bearing variants share the same HTML, just hydrate to a different
-// view), so this is the correct behaviour for SEO. A user who lands on
-// `/colors/coral?view=scale` will briefly see the ramp before the
-// post-hydration swap; that cost is bounded to the deep-link case which is
-// rarely the entry point for a name-canonical URL.
 const prefs = readInitialPrefs(Astro.url);
 
-// Render the blurb with markdown-style `code` spans converted to <code>.
-// The blurbs are author-controlled (no user input) and the regex only matches
-// the limited subset we use, so the only escape we have to do is for HTML
-// metacharacters before substituting <code> wrappers.
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
@@ -132,6 +93,9 @@ const blurbHtml = escapeHtml(color.blurb).replace(
   /`([^`]+)`/g,
   (_m, inner) => `<code>${inner}</code>`,
 );
+
+const oklch = toOklch(color.hex);
+const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1);
 ---
 
 <!doctype html>
@@ -158,44 +122,102 @@ const blurbHtml = escapeHtml(color.blurb).replace(
 
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </head>
-  <body>
-    <main class="color-page">
-      <header class="page-header">
-        <a href="/" class="back">&larr; shades.dev</a>
-        <h1>
-          <span class="swatch" style={`background:${color.hex}`} aria-hidden="true"></span>
-          <span class="title-text">
-            {color.name}
-            <small><code>{color.hex.toUpperCase()}</code></small>
-          </span>
-        </h1>
-        {color.aliases && color.aliases.length > 0 && (
-          <p class="aliases">Also known as: {color.aliases.join(', ')}</p>
-        )}
-      </header>
+  <body class="bg-paper text-ink">
+    <!-- Masthead strip -->
+    <header class="border-b border-ink/90">
+      <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-3 font-mono text-[11px] uppercase tracking-[0.18em]">
+        <a href="/" class="text-ink hover:text-accent">← shades.dev</a>
+        <span class="hidden sm:inline text-mute">Index · {familyLabel}</span>
+        <a href={`/${color.hex.slice(1)}`} class="text-ink hover:text-accent">Open in tool</a>
+      </div>
+    </header>
 
-      <section class="blurb">
-        <p set:html={blurbHtml}></p>
+    <main class="mx-auto max-w-5xl px-6 pt-10 pb-24 lg:pt-16">
+      <!-- Editorial cover -->
+      <section class="grid gap-10 lg:grid-cols-[5fr_4fr] lg:gap-14">
+        <div>
+          <p class="eyebrow mb-3">A study in {familyLabel.toLowerCase()}</p>
+          <h1 class="display text-[clamp(3rem,8vw,6.5rem)]">{color.name}</h1>
+          <p class="mt-4 font-mono text-base tracking-tight text-ink">{color.hex.toUpperCase()}</p>
+          {color.aliases && color.aliases.length > 0 && (
+            <p class="mt-2 font-display italic text-mute">
+              also known as <span class="text-ink-2">{color.aliases.join(', ')}</span>
+            </p>
+          )}
+
+          <dl class="mt-8 grid grid-cols-4 gap-x-6 border-t border-hairline pt-4 font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
+            <div>
+              <dt>Family</dt>
+              <dd class="mt-1 text-sm normal-case tracking-tight text-ink">{familyLabel}</dd>
+            </div>
+            <div>
+              <dt>L</dt>
+              <dd class="mt-1 text-sm normal-case tracking-tight text-ink">{oklch.l.toFixed(3)}</dd>
+            </div>
+            <div>
+              <dt>C</dt>
+              <dd class="mt-1 text-sm normal-case tracking-tight text-ink">{oklch.c.toFixed(3)}</dd>
+            </div>
+            <div>
+              <dt>H</dt>
+              <dd class="mt-1 text-sm normal-case tracking-tight text-ink">
+                {Number.isFinite(oklch.h) ? `${oklch.h.toFixed(0)}°` : '—'}
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        <!-- Hero swatch -->
+        <div
+          role="img"
+          aria-label={`Color ${color.hex}`}
+          class="aspect-[4/5] w-full ring-1 ring-ink/15"
+          style={`background:${color.hex}`}
+        ></div>
       </section>
 
-      <ShadeTool
-        client:load
-        initialHex={color.hex}
-        initialView={prefs.view}
-        initialRampMode={prefs.mode}
-        initialExportFormat={prefs.fmt}
-      />
+      <!-- Editorial blurb (drop cap optional via CSS) -->
+      <section class="mt-16 border-t border-ink/80 pt-8">
+        <div class="grid gap-8 lg:grid-cols-[1fr_3fr]">
+          <p class="eyebrow lg:pt-2">Notes</p>
+          <div class="prose-editorial" set:html={`<p>${blurbHtml}</p>`}></div>
+        </div>
+      </section>
 
-      <section class="palette" aria-labelledby="palette-title">
-        <h2 id="palette-title">Palette built around {color.name}</h2>
-        <ul class="palette-grid">
-          {palette.map((p) => (
-            <li>
-              <a href={`/${p.hex.slice(1)}`} class="palette-swatch">
-                <span class="block" style={`background:${p.hex}`} aria-hidden="true"></span>
-                <span class="meta">
-                  <span class="label">{p.label}</span>
-                  <code>{p.hex.toUpperCase()}</code>
+      <!-- Tool -->
+      <section class="mt-16 border-t border-ink/80 pt-8">
+        <div class="mb-6 flex items-baseline justify-between">
+          <span class="eyebrow">The data sheet</span>
+          <span class="font-display italic text-2xl text-ink">Shades &amp; scale</span>
+        </div>
+        <ShadeTool
+          client:load
+          initialHex={color.hex}
+          initialView={prefs.view}
+          initialRampMode={prefs.mode}
+          initialExportFormat={prefs.fmt}
+        />
+      </section>
+
+      <!-- Numbered palette plate -->
+      <section class="mt-20 border-t border-ink/80 pt-8" aria-labelledby="palette-title">
+        <div class="mb-6 flex items-baseline justify-between">
+          <span class="eyebrow">Plate 02</span>
+          <h2 id="palette-title" class="font-display italic text-2xl text-ink">
+            Palette built around {color.name}
+          </h2>
+        </div>
+        <ul class="grid grid-cols-2 gap-0 border-t border-hairline sm:grid-cols-5">
+          {palette.map((p, i) => (
+            <li class={`border-b border-hairline ${i < palette.length - 1 ? 'sm:border-r' : ''} ${i % 2 === 0 ? 'border-r sm:border-r' : ''}`}>
+              <a href={`/${p.hex.slice(1)}`} class="block group">
+                <span class="block aspect-square w-full" style={`background:${p.hex}`} aria-hidden="true"></span>
+                <span class="flex items-baseline justify-between gap-2 border-t border-hairline px-3 py-2">
+                  <span class="font-display italic text-sm text-ink-2">{p.label}</span>
+                  <span class="idx">№ 0{i + 1}</span>
+                </span>
+                <span class="block px-3 pb-3 font-mono text-xs tracking-tight text-ink group-hover:text-accent">
+                  {p.hex.toUpperCase()}
                 </span>
               </a>
             </li>
@@ -203,16 +225,21 @@ const blurbHtml = escapeHtml(color.blurb).replace(
         </ul>
       </section>
 
+      <!-- Related -->
       {related.length > 0 && (
-        <section class="related" aria-labelledby="related-title">
-          <h2 id="related-title">Related colors</h2>
-          <ul>
-            {related.map((c) => (
+        <section class="mt-20 border-t border-ink/80 pt-8" aria-labelledby="related-title">
+          <div class="mb-6 flex items-baseline justify-between">
+            <span class="eyebrow">Cross-reference</span>
+            <h2 id="related-title" class="font-display italic text-2xl text-ink">Related colors</h2>
+          </div>
+          <ul class="divide-y divide-hairline border-y border-hairline">
+            {related.map((c, i) => (
               <li>
-                <a href={`/colors/${c.slug}`}>
-                  <span class="dot" style={`background:${c.hex}`} aria-hidden="true"></span>
-                  <span>{c.name}</span>
-                  <code>{c.hex.toUpperCase()}</code>
+                <a href={`/colors/${c.slug}`} class="flex items-center gap-5 py-4 group hover:bg-paper-2 px-2">
+                  <span class="idx">№ 0{i + 1}</span>
+                  <span class="block h-6 w-6 ring-1 ring-ink/10 shrink-0" style={`background:${c.hex}`} aria-hidden="true"></span>
+                  <span class="font-display italic text-xl text-ink group-hover:text-accent">{c.name}</span>
+                  <span class="ml-auto font-mono text-xs tracking-tight text-mute">{c.hex.toUpperCase()}</span>
                 </a>
               </li>
             ))}
@@ -220,164 +247,19 @@ const blurbHtml = escapeHtml(color.blurb).replace(
         </section>
       )}
 
-      <footer class="site-footer">
-        <p>
-          <a href="/">Home</a> ·
-          <a href={`/${color.hex.slice(1)}`}>Open in tool</a> ·
-          <a href={`/api/${color.hex.slice(1)}.json`}>JSON</a>
-        </p>
+      <!-- Footer / colophon -->
+      <footer class="mt-20 border-t border-ink/80 pt-6">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between">
+          <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/80">
+            shades.dev — {color.name}
+          </p>
+          <nav aria-label="Footer" class="flex gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
+            <a href="/" class="text-ink hover:text-accent">Home</a>
+            <a href={`/${color.hex.slice(1)}`} class="text-ink hover:text-accent">Open in tool</a>
+            <a href={`/api/${color.hex.slice(1)}.json`} class="text-ink hover:text-accent">JSON</a>
+          </nav>
+        </div>
       </footer>
     </main>
-
-    <style>
-      :root {
-        --ink: #0a0a0a;
-        --muted: #6b7280;
-        --line: #e5e7eb;
-        --bg: #ffffff;
-      }
-      /* Named-color pages follow the OS theme in chrome, never the swatch.
-         The blurb, palette labels, and "Related colors" pills all flip; the
-         palette swatches and the embedded shade tool keep their fixed
-         colours. */
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --ink: #f5f5f5;
-          --muted: #9ca3af;
-          --line: #262626;
-          --bg: #0a0a0a;
-        }
-      }
-      html, body { margin: 0; padding: 0; }
-      html { color-scheme: light dark; }
-      body {
-        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-        color: var(--ink);
-        background: var(--bg);
-        line-height: 1.6;
-      }
-      .color-page {
-        max-width: 920px;
-        margin: 0 auto;
-        padding: 1.5rem 1rem 3rem;
-      }
-      .back {
-        font-size: 0.9rem;
-        color: var(--muted);
-        text-decoration: none;
-      }
-      .back:hover { color: var(--ink); text-decoration: underline; }
-      .page-header h1 {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin: 0.5rem 0 0.25rem;
-        font-size: clamp(1.75rem, 4vw, 2.5rem);
-        font-weight: 800;
-        letter-spacing: -0.02em;
-      }
-      .page-header .swatch {
-        width: 1.4em; height: 1.4em;
-        border-radius: 12px;
-        border: 1px solid var(--line);
-        display: inline-block;
-        flex: 0 0 auto;
-      }
-      .page-header small {
-        display: block;
-        font-size: 0.5em;
-        font-weight: 500;
-        color: var(--muted);
-        margin-top: 0.25rem;
-      }
-      .aliases {
-        color: var(--muted);
-        font-size: 0.9rem;
-        margin: 0 0 1rem;
-      }
-      .blurb {
-        margin: 1rem 0 2rem;
-        max-width: 65ch;
-        font-size: 1.05rem;
-      }
-      .palette { margin: 2.5rem 0; }
-      .palette h2 { font-size: 1.25rem; margin: 0 0 1rem; }
-      .palette-grid {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 0.75rem;
-      }
-      .palette-swatch {
-        display: block;
-        text-decoration: none;
-        color: var(--ink);
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        overflow: hidden;
-      }
-      .palette-swatch:hover { border-color: var(--ink); }
-      .palette-swatch .block {
-        display: block;
-        height: 80px;
-      }
-      .palette-swatch .meta {
-        display: block;
-        padding: 0.5rem 0.6rem;
-        font-size: 0.8rem;
-      }
-      .palette-swatch .label {
-        display: block;
-        color: var(--muted);
-      }
-      .palette-swatch code {
-        display: block;
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 0.85rem;
-      }
-      .related { margin: 2.5rem 0; }
-      .related h2 { font-size: 1.25rem; margin: 0 0 0.75rem; }
-      .related ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-      }
-      .related a {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 0.8rem;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        text-decoration: none;
-        color: var(--ink);
-        font-size: 0.9rem;
-      }
-      .related a:hover { border-color: var(--ink); }
-      .related .dot {
-        width: 14px; height: 14px;
-        border-radius: 999px;
-        border: 1px solid rgba(0,0,0,0.1);
-      }
-      .related code {
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        color: var(--muted);
-        font-size: 0.85rem;
-      }
-      .site-footer {
-        margin-top: 3rem;
-        padding-top: 1.25rem;
-        border-top: 1px solid var(--line);
-        color: var(--muted);
-        font-size: 0.9rem;
-      }
-      .site-footer a { color: var(--ink); text-decoration: none; margin: 0 0.25rem; }
-      .site-footer a:hover { text-decoration: underline; }
-    </style>
   </body>
 </html>

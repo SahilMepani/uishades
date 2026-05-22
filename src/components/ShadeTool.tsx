@@ -15,7 +15,7 @@ import type {
   Hex,
   RampMode,
 } from '../lib/color/types';
-import { parseColor } from '../lib/color/parse';
+import { parseColor, toOklch } from '../lib/color/parse';
 import { oklchRamp } from '../lib/color/ramp';
 import { classicRamp } from '../lib/color/classic';
 import { buildScale } from '../lib/color/scale';
@@ -321,19 +321,19 @@ function ShadeToolInner({
   }, [pushToast, exportFormat]);
 
   return (
-    <div className="min-h-screen bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
+    <div className="text-ink">
       {/* Mobile sticky header: visible only < lg */}
-      <div className="sticky top-0 z-30 border-b border-neutral-200 bg-white/85 backdrop-blur lg:hidden dark:border-neutral-800 dark:bg-neutral-950/85">
+      <div className="sticky top-0 z-30 border-b border-hairline bg-paper/90 backdrop-blur lg:hidden">
         <div className="flex items-center gap-3 px-4 py-3">
           <div
             aria-hidden="true"
-            className="h-10 w-10 shrink-0 rounded-md ring-1 ring-black/10"
+            className="h-10 w-10 shrink-0 rounded-sm ring-1 ring-ink/10"
             style={{ backgroundColor: hex }}
           />
           <div className="min-w-0 flex-1">
-            <div className="truncate font-mono text-sm">{hex}</div>
+            <div className="truncate font-mono text-sm tracking-tight">{hex}</div>
             {named && (
-              <div className="truncate text-xs text-neutral-500">{named.name}</div>
+              <div className="truncate font-display italic text-sm text-mute">{named.name}</div>
             )}
           </div>
         </div>
@@ -342,14 +342,16 @@ function ShadeToolInner({
         </div>
       </div>
 
-      <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[2fr_3fr] lg:gap-10 lg:px-8 lg:py-10">
+      <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-8 lg:grid-cols-[5fr_7fr] lg:gap-14 lg:px-8 lg:py-12">
         {/* Left rail: preview + input + controls (sticky on desktop) */}
-        <aside className="hidden lg:block lg:sticky lg:top-6 lg:self-start">
+        <aside className="hidden lg:block lg:sticky lg:top-8 lg:self-start">
           <PreviewBlock hex={hex} named={named} />
-          <div className="mt-4 flex flex-col gap-4">
+          <div className="mt-6 flex flex-col gap-5">
             <ColorInput value={hex} onChange={handleChangeHex} />
 
-            <ViewToggle view={view} onChange={setView} />
+            <div className="border-t border-hairline pt-5">
+              <ViewToggle view={view} onChange={setView} />
+            </div>
 
             {view === 'ramp' && (
               <RampModeToggle mode={rampMode} onChange={setRampMode} />
@@ -375,6 +377,13 @@ function ShadeToolInner({
               onChange={setCopyFormat}
               hasStop={view === 'scale'}
             />
+          </div>
+
+          <div className="flex items-baseline justify-between border-b border-hairline pb-2">
+            <span className="eyebrow">{view === 'ramp' ? 'Shades' : 'Scale'}</span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
+              {view === 'ramp' ? `${ramp.shades.length} stops · ${ramp.mode}` : `11 stops · anchor ${scale.anchorStop}`}
+            </span>
           </div>
 
           {view === 'ramp' ? (
@@ -411,22 +420,19 @@ function ShadeToolInner({
  * to keep the page from jumping once the chunk finishes (CLS).
  */
 function TailwindScaleFallback() {
-  // Tailwind's `motion-safe:animate-pulse` skips the pulse when the user
-  // has `prefers-reduced-motion: reduce` set. Static placeholders still
-  // reserve the same vertical space, so CLS protection is unaffected.
   return (
     <div
       aria-hidden="true"
       className="flex flex-col gap-4"
       style={{ minHeight: '52rem' }}
     >
-      <div className="h-8 w-48 rounded bg-neutral-200 motion-safe:animate-pulse dark:bg-neutral-800" />
-      <div className="h-64 rounded-md bg-neutral-100 motion-safe:animate-pulse dark:bg-neutral-900" />
-      <div className="overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800">
+      <div className="h-8 w-48 bg-paper-2 motion-safe:animate-pulse" />
+      <div className="h-64 bg-paper-2 motion-safe:animate-pulse" />
+      <div className="overflow-hidden border-y border-hairline">
         {Array.from({ length: 11 }).map((_, i) => (
           <div
             key={i}
-            className="h-12 border-b border-neutral-100 bg-neutral-50 last:border-b-0 motion-safe:animate-pulse dark:border-neutral-900 dark:bg-neutral-900/40"
+            className="h-12 border-b border-hairline-2 bg-paper-2/60 last:border-b-0 motion-safe:animate-pulse"
           />
         ))}
       </div>
@@ -435,21 +441,51 @@ function TailwindScaleFallback() {
 }
 
 function PreviewBlock({ hex, named }: { hex: Hex; named: ReturnType<typeof findByHex> }) {
+  // OKLCH coordinates for the metadata strip below the swatch — gives the
+  // page chrome a "data sheet" feel without competing with the color block.
+  const oklchTriple = useMemo(() => {
+    try {
+      return toOklch(hex);
+    } catch {
+      return null;
+    }
+  }, [hex]);
   return (
-    <div
-      role="img"
-      aria-label={`Color ${hex}`}
-      className="flex aspect-square w-full items-end overflow-hidden rounded-xl ring-1 ring-black/10"
-      style={{ backgroundColor: hex }}
-    >
-      <div className="m-4 inline-flex flex-col rounded-md bg-white/80 px-3 py-2 backdrop-blur dark:bg-neutral-900/70">
-        <span className="font-mono text-base">{hex}</span>
+    <div className="flex flex-col gap-4">
+      <div
+        role="img"
+        aria-label={`Color ${hex}`}
+        className="aspect-[5/6] w-full ring-1 ring-ink/10"
+        style={{ backgroundColor: hex }}
+      />
+      <div className="flex items-baseline justify-between border-b border-hairline pb-2">
+        <span className="font-mono text-sm tracking-tight text-ink">{hex}</span>
         {named && (
-          <span className="text-xs text-neutral-600 dark:text-neutral-300">
-            {named.name}
-          </span>
+          <span className="font-display italic text-base text-ink-2">{named.name}</span>
         )}
       </div>
+      {oklchTriple && Number.isFinite(oklchTriple.l) && (
+        <dl className="grid grid-cols-3 gap-4 font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
+          <div>
+            <dt>L</dt>
+            <dd className="mt-1 text-base normal-case tracking-tight text-ink">
+              {oklchTriple.l.toFixed(3)}
+            </dd>
+          </div>
+          <div>
+            <dt>C</dt>
+            <dd className="mt-1 text-base normal-case tracking-tight text-ink">
+              {oklchTriple.c.toFixed(3)}
+            </dd>
+          </div>
+          <div>
+            <dt>H</dt>
+            <dd className="mt-1 text-base normal-case tracking-tight text-ink">
+              {Number.isFinite(oklchTriple.h) ? `${oklchTriple.h.toFixed(0)}°` : '—'}
+            </dd>
+          </div>
+        </dl>
+      )}
     </div>
   );
 }
@@ -461,31 +497,31 @@ function ViewToggle({
   view: View;
   onChange: (v: View) => void;
 }) {
+  // Underline-tab style — Linear / editorial.
   return (
-    <div
-      role="tablist"
-      aria-label="View"
-      className="inline-flex rounded-md ring-1 ring-neutral-300 dark:ring-neutral-700"
-    >
-      {(['ramp', 'scale'] as const).map(v => (
-        <button
-          key={v}
-          type="button"
-          role="tab"
-          aria-selected={view === v}
-          aria-label={v === 'ramp' ? 'Continuous ramp' : 'Tailwind scale'}
-          onClick={() => onChange(v)}
-          className={[
-            'px-3 py-1.5 text-sm font-medium first:rounded-l-md last:rounded-r-md',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
-            view === v
-              ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
-              : 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800',
-          ].join(' ')}
-        >
-          {v === 'ramp' ? 'Continuous ramp' : 'Tailwind scale'}
-        </button>
-      ))}
+    <div role="tablist" aria-label="View" className="flex gap-6">
+      {(['ramp', 'scale'] as const).map(v => {
+        const active = view === v;
+        return (
+          <button
+            key={v}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            aria-label={v === 'ramp' ? 'Continuous ramp' : 'Tailwind scale'}
+            onClick={() => onChange(v)}
+            className={[
+              'relative -mb-px py-2 text-sm font-medium tracking-tight',
+              'focus-visible:outline-none',
+              active
+                ? 'text-ink after:absolute after:inset-x-0 after:-bottom-px after:h-[2px] after:bg-accent'
+                : 'text-mute hover:text-ink',
+            ].join(' ')}
+          >
+            {v === 'ramp' ? 'Continuous ramp' : 'Tailwind scale'}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -498,29 +534,35 @@ function RampModeToggle({
   onChange: (m: RampMode) => void;
 }) {
   return (
-    <div
-      role="tablist"
-      aria-label="Ramp algorithm"
-      className="inline-flex rounded-md ring-1 ring-neutral-300 dark:ring-neutral-700"
-    >
-      {(['oklch', 'classic'] as const).map(m => (
-        <button
-          key={m}
-          type="button"
-          role="tab"
-          aria-selected={mode === m}
-          onClick={() => onChange(m)}
-          className={[
-            'px-3 py-1 text-xs font-medium first:rounded-l-md last:rounded-r-md',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
-            mode === m
-              ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
-              : 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800',
-          ].join(' ')}
-        >
-          {m === 'oklch' ? 'OKLCH (default)' : 'Classic (0to255)'}
-        </button>
-      ))}
+    <div className="flex flex-col gap-2">
+      <span className="eyebrow">Algorithm</span>
+      <div
+        role="tablist"
+        aria-label="Ramp algorithm"
+        className="inline-flex border border-ink/20"
+      >
+        {(['oklch', 'classic'] as const).map(m => {
+          const active = mode === m;
+          return (
+            <button
+              key={m}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => onChange(m)}
+              className={[
+                'px-3 py-1.5 text-xs font-medium tracking-tight',
+                'focus-visible:outline-none focus-visible:bg-accent-soft',
+                active
+                  ? 'bg-ink text-paper'
+                  : 'bg-paper text-ink/70 hover:bg-paper-2',
+              ].join(' ')}
+            >
+              {m === 'oklch' ? 'OKLCH' : 'Classic'}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -544,20 +586,17 @@ function CopyFormatPicker({
   hasStop: boolean;
 }) {
   return (
-    <label className="flex items-center gap-2 text-sm">
-      <span className="text-neutral-600 dark:text-neutral-300">Copy as</span>
+    <label className="flex items-center gap-3 text-sm">
+      <span className="eyebrow shrink-0">Copy as</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as CopyFormat)}
         className={
-          'rounded-md bg-white px-2 py-1 text-sm ring-1 ring-neutral-300 ' +
-          'dark:bg-neutral-900 dark:ring-neutral-700 ' +
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500'
+          'min-w-0 flex-1 border border-ink/15 bg-paper px-2 py-1 font-mono text-xs text-ink ' +
+          'focus-visible:outline-none focus-visible:border-accent'
         }
       >
         {(Object.keys(COPY_FORMAT_LABELS) as CopyFormat[]).map(k => {
-          // The cssVar / tailwindClass formats really only make sense in
-          // palette mode; surface them only when a stop is available.
           const requiresStop = k === 'cssVar' || k === 'tailwindClass';
           if (requiresStop && !hasStop) return null;
           return (
