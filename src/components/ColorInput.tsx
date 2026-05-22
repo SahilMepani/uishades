@@ -8,7 +8,14 @@ import {
 } from 'react';
 import type { Hex } from '../lib/color/types';
 import { parseColor } from '../lib/color/parse';
-import { NAMED_COLORS, type NamedColor } from '../lib/data/named-colors';
+// Use the slim projection (slug/name/hex/aliases only). Importing the full
+// NAMED_COLORS would drag ~150 KB of editorial blurbs and `related[]`
+// arrays into the React island bundle even though the autocomplete only
+// reads slug/name prefixes and renders hex swatches.
+import {
+  NAMED_COLORS_SLIM,
+  type NamedColorSlim,
+} from '../lib/data/named-colors-slim';
 import { POPULAR_HEXES } from '../lib/data/popular-hexes';
 
 /**
@@ -37,10 +44,10 @@ export interface ColorInputProps {
 const DEBOUNCE_MS = 250;
 const MAX_SUGGESTIONS = 6;
 
-function findSuggestions(query: string): NamedColor[] {
+function findSuggestions(query: string): NamedColorSlim[] {
   const q = query.trim().toLowerCase();
   if (q.length < 2) return [];
-  return NAMED_COLORS
+  return NAMED_COLORS_SLIM
     .filter(c => c.slug.startsWith(q) || c.name.toLowerCase().startsWith(q))
     .slice(0, MAX_SUGGESTIONS);
 }
@@ -51,7 +58,7 @@ export default function ColorInput({ value, onChange }: ColorInputProps) {
   // outside (e.g., random button or external navigation).
   const [text, setText] = useState<string>(value);
   const [hasError, setHasError] = useState(false);
-  const [suggestions, setSuggestions] = useState<NamedColor[]>([]);
+  const [suggestions, setSuggestions] = useState<NamedColorSlim[]>([]);
   const [activeSuggestion, setActiveSuggestion] = useState(0);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -108,7 +115,7 @@ export default function ColorInput({ value, onChange }: ColorInputProps) {
   }, []);
 
   const acceptSuggestion = useCallback(
-    (s: NamedColor) => {
+    (s: NamedColorSlim) => {
       setText(s.slug);
       setShowSuggestions(false);
       // Cancel pending debounce and emit immediately for snappy UX on accept.
