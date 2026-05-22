@@ -283,6 +283,45 @@ function ShadeToolInner({
 
   const { pushToast } = useToast();
 
+  // Honor `?seed=<raw>` from the URL on mount: this is the home form's
+  // hand-off path for inputs it can't resolve locally (rgb/hsl/oklch/typo).
+  // We try parseColor; on success we swap to that hex and strip the param.
+  // On failure we leave the URL's `initialHex` showing and toast.
+  // Runs ONCE on mount; deps intentionally empty.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let raw: string | null = null;
+    try {
+      raw = new URL(window.location.href).searchParams.get('seed');
+    } catch {
+      return;
+    }
+    if (!raw) return;
+    const decoded = (() => {
+      try {
+        return decodeURIComponent(raw);
+      } catch {
+        return raw as string;
+      }
+    })();
+    // Always strip the param after consuming it — we don't want a refresh
+    // to keep re-parsing or to leak the raw input into shared URLs.
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('seed');
+      window.history.replaceState(null, '', url.toString());
+    } catch {
+      /* ignore */
+    }
+    try {
+      const parsed = parseColor(decoded);
+      if (parsed !== hex) setHex(parsed);
+    } catch {
+      pushToast(`Couldn't parse "${decoded}" — showing #4040ff instead.`);
+    }
+  }, []);
+
   // Derive ramp + scale lazily from inputs.
   const ramp = useMemo(() => {
     return rampMode === 'oklch' ? oklchRamp(hex) : classicRamp(hex);

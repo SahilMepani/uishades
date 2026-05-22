@@ -11,6 +11,16 @@
  */
 import '../styles/global.css';
 import RandomGrid from '../components/RandomGrid.astro';
+import { NAMED_COLORS } from '../lib/data/named-colors';
+
+// Bake the CSS-named color list into the inline form script at build time so
+// the home page can resolve `coral` / `rebeccapurple` / etc. without booting
+// the React island. Filter to `source === 'css'` to keep the payload to ~4 KB
+// — the Tailwind/Material/Bootstrap slugs live in the React island where the
+// full data set is already loaded for autocomplete.
+const HOME_NAMED_COLORS = NAMED_COLORS
+  .filter((c) => c.source === 'css')
+  .map((c) => ({ slug: c.slug, name: c.name, hex: c.hex }));
 
 const TITLE = 'shades.dev — Free Tints and Shades of Any Hex Color';
 const DESCRIPTION =
@@ -79,13 +89,13 @@ const ISSUE_DATE = new Date().toLocaleDateString('en-US', {
             free.
           </h1>
           <p class="mt-8 max-w-[44ch] font-display italic text-xl leading-snug text-ink-2">
-            Paste a hex, name, <code class="font-mono not-italic text-base text-ink">rgb()</code>,
-            or <code class="font-mono not-italic text-base text-ink">oklch()</code>. Get a
-            perceptually-even ramp, an 11-stop Tailwind scale, and paste-ready exports.
+            Paste a hex or a CSS color name. <code class="font-mono not-italic text-base text-ink">rgb()</code>,
+            <code class="font-mono not-italic text-base text-ink">hsl()</code>, and
+            <code class="font-mono not-italic text-base text-ink">oklch()</code> work too — open the tool to use them.
           </p>
 
           <form id="hex-form" class="mt-10 flex flex-col gap-2 max-w-xl" action="/" method="get" novalidate>
-            <label for="hex" class="visually-hidden">Color (hex, rgb, hsl, oklch, or name)</label>
+            <label for="hex" class="visually-hidden">Color (hex, name, rgb, hsl, or oklch)</label>
             <div class="flex flex-col sm:flex-row border border-ink/80 bg-paper">
               <input
                 id="hex"
@@ -204,14 +214,26 @@ const ISSUE_DATE = new Date().toLocaleDateString('en-US', {
       </footer>
     </main>
 
-    <script is:inline>
+    <script is:inline define:vars={{ HOME_NAMED_COLORS }}>
       (function () {
         var form = document.getElementById('hex-form');
         if (!form) return;
         var input = document.getElementById('hex');
         var err = document.getElementById('hex-error');
 
-        function toSlug(value) {
+        // Build a normalized lookup once. Keys are lowercased + whitespace
+        // stripped so "Alice Blue" and "aliceblue" both hit.
+        var nameToHex = Object.create(null);
+        function normName(s) {
+          return String(s).toLowerCase().replace(/\s+/g, '');
+        }
+        for (var i = 0; i < HOME_NAMED_COLORS.length; i++) {
+          var c = HOME_NAMED_COLORS[i];
+          nameToHex[normName(c.slug)] = c.hex;
+          if (c.name) nameToHex[normName(c.name)] = c.hex;
+        }
+
+        function hexShape(value) {
           var v = value.trim().toLowerCase();
           if (!v) return null;
           if (v.charAt(0) === '#') v = v.slice(1);
@@ -225,17 +247,38 @@ const ISSUE_DATE = new Date().toLocaleDateString('en-US', {
 
         form.addEventListener('submit', function (e) {
           e.preventDefault();
-          var slug = toSlug(input.value);
+          var raw = input.value;
+          if (!raw || !raw.trim()) {
+            err.textContent = 'Enter a hex, color name, rgb(), hsl(), or oklch().';
+            input.focus();
+            return;
+          }
+
+          // 1. Hex shape — fast path.
+          var slug = hexShape(raw);
           if (slug) {
             err.textContent = '';
             window.location.assign('/' + slug);
             return;
           }
-          var raw = input.value.trim();
-          err.textContent = raw
-            ? 'Could not parse "' + raw + '" as hex. Try a 3 or 6 digit hex value.'
-            : 'Enter a hex, rgb(), hsl(), oklch(), or color name.';
-          input.focus();
+
+          // 2. CSS named color (baked at build).
+          var hex = nameToHex[normName(raw)];
+          if (hex) {
+            err.textContent = '';
+            // hex is already canonical lowercase `#rrggbb`.
+            window.location.assign('/' + hex.slice(1));
+            return;
+          }
+
+          // 3. Anything else (rgb/hsl/oklch/typo/Tailwind slug/etc.):
+          // hand off to the React island via `?seed=`. The island will
+          // try to parse it and either swap to the resolved hex (and
+          // strip the param) or surface a toast.
+          err.textContent = '';
+          window.location.assign(
+            '/4040ff?seed=' + encodeURIComponent(raw.trim()),
+          );
         });
       })();
     </script>
