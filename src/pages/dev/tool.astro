@@ -7,8 +7,19 @@
 // linking to `/src/...` directly so Tailwind utilities compile cleanly under
 // `npm run build` (Playwright's webServer runs `npm run preview`).
 import '../../styles/global.css';
+import BaseHead from '../../components/BaseHead.astro';
 import ShadeTool from '../../components/ShadeTool';
 import { readInitialPrefs } from '../../lib/url-prefs';
+
+// Hard-404 in production builds: this is a dev-only host for the React
+// island. It's already `noindex` and excluded from the sitemap, but
+// returning 404 on the published site removes the page from QA's surface
+// entirely. Only `astro dev` (not `astro preview`) keeps the page live.
+// The Playwright smoke tests were retargeted at the real /[hex] route
+// to compensate; see tests/e2e/tool.spec.ts.
+if (import.meta.env.PROD) {
+  return new Response(null, { status: 404 });
+}
 
 const c = Astro.url.searchParams.get('c') ?? '4040ff';
 // Normalize: allow `c=#4040ff` or `c=4040ff`; pass through any other format
@@ -20,8 +31,7 @@ const prefs = readInitialPrefs(Astro.url);
 
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
+    <BaseHead />
     <meta name="robots" content="noindex,nofollow" />
     <title>shades.dev — tool (dev)</title>
   </head>

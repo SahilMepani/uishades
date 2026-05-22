@@ -7,6 +7,7 @@
  * palette is a numbered plate. ~209 pages, one per NAMED_COLORS entry.
  */
 import '../../styles/global.css';
+import BaseHead from '../../components/BaseHead.astro';
 import ShadeTool from '../../components/ShadeTool';
 import { NAMED_COLORS, findBySlug } from '../../lib/data/named-colors';
 import { toOklch, oklchToHex } from '../../lib/color/parse';
@@ -101,11 +102,7 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="generator" content={Astro.generator} />
+    <BaseHead />
     <title>{TITLE}</title>
     <meta name="description" content={DESCRIPTION} />
     <link rel="canonical" href={canonicalUrl} />

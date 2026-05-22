@@ -29,7 +29,17 @@ function xorshift32(seed: number) {
 }
 
 function pickTiles(): string[] {
-  const rng = xorshift32(0xc01ec01e);
+  // Per-build rotating seed: stable for a single build (so the rendered
+  // HTML / ETag is byte-identical across requests within a deploy) but
+  // changes on each rebuild so frequent visitors see a fresh palette.
+  // The arithmetic is intentionally tiny — we just want a different
+  // 32-bit integer per UTC day; xorshift handles the actual scatter.
+  const today = new Date();
+  const seed =
+    today.getUTCFullYear() * 372 +
+    (today.getUTCMonth() + 1) * 31 +
+    today.getUTCDate();
+  const rng = xorshift32(seed);
   const pool = POPULAR_HEXES;
   const picked = new Set<string>();
   const out: string[] = [];

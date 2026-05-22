@@ -9,6 +9,7 @@
 export const prerender = false;
 
 import '../styles/global.css';
+import BaseHead from '../components/BaseHead.astro';
 import ShadeTool from '../components/ShadeTool';
 import { parseColor, ParseError, toOklch } from '../lib/color/parse';
 import { oklchRamp } from '../lib/color/ramp';
@@ -72,16 +73,23 @@ const jsonLd = {
 };
 
 const prefs = readInitialPrefs(Astro.url);
+
+// Tell the Cloudflare edge to cache the rendered HTML for 30 days,
+// serving stale for an extra day while it revalidates. Same shape as
+// the JSON API and OG endpoints — without this header the Workers
+// cache won't store the response and every visit re-executes the SSR.
+// The hex is already validated above, so all branches that reach here
+// are cacheable.
+Astro.response.headers.set(
+  'Cache-Control',
+  'public, s-maxage=2592000, stale-while-revalidate=86400',
+);
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="generator" content={Astro.generator} />
+    <BaseHead />
     <title>{TITLE}</title>
     <meta name="description" content={DESCRIPTION} />
     <link rel="canonical" href={canonicalUrl} />

@@ -21,7 +21,11 @@ import { test, expect } from '@playwright/test';
  *    a fixed timeout.
  */
 
-const DEV_URL = '/dev/tool/?c=4040ff';
+// Wave A's audit step A9 hard-404s /dev/tool/ in production builds, and
+// Playwright runs against `npm run preview` (a production build), so we
+// can't use the dev-tool host any more. /4040ff is the real shade route,
+// SSR-renders the same React island, and is a more faithful smoke target.
+const DEV_URL = '/4040ff';
 
 test.describe('shade tool — smoke', () => {
   test('renders 22 ramp rows for #4040ff', async ({ page }) => {
@@ -108,7 +112,7 @@ test.describe('shade tool — smoke', () => {
     // SSR-derived initial view: when the URL carries `?view=scale` we want
     // the React island to mount in scale mode (not ramp), so a shared
     // link to a specific stop preview lands the user on the right tab.
-    await page.goto('/dev/tool/?c=4040ff&view=scale');
+    await page.goto('/4040ff?view=scale');
     // 11-stop scale should be rendered, not the 20-step ramp.
     const rows = page.locator('[data-shade-row="true"]');
     await expect(rows).toHaveCount(11);
