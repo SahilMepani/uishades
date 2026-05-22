@@ -13,6 +13,7 @@ import '../styles/global.css';
 import BaseHead from '../components/BaseHead.astro';
 import RandomGrid from '../components/RandomGrid.astro';
 import { NAMED_COLORS } from '../lib/data/named-colors';
+import { safeJsonForScript } from '../lib/safe-json';
 
 // Bake the CSS-named color list into the inline form script at build time so
 // the home page can resolve `coral` / `rebeccapurple` / etc. without booting
@@ -63,7 +64,7 @@ const ISSUE_DATE = new Date().toLocaleDateString('en-US', {
     <meta name="twitter:description" content={DESCRIPTION} />
     <meta name="twitter:image" content={OG} />
 
-    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(jsonLd)} />
   </head>
   <body class="bg-paper text-ink">
     <!-- Masthead strip -->

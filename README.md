@@ -138,6 +138,12 @@ Specific behaviours documented in the source comments:
 - All shade-row tap targets are ≥ 44×44 CSS px (tested in
   `tests/e2e/mobile.spec.ts`).
 
+## Security
+
+Middleware (`src/middleware.ts`) decorates every response with HSTS, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy, and CSP. The CSP keeps `'unsafe-inline'` for the JSON-LD blocks and the home-page inline form-handler script; audit Tier 2.4 tracks tightening via nonces.
+
+All inline JSON-LD payloads pass through `safeJsonForScript()` (`src/lib/safe-json.ts`), which escapes `<`, `>`, `&`, U+2028, and U+2029 so future user-derived fields can't break out of the inline `<script>` block. Wired in `src/pages/index.astro`, `src/pages/[hex].astro`, and `src/pages/colors/[name].astro`.
+
 ## Deploy
 
 Deployment is automatic: pushes to `main` trigger the
