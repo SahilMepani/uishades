@@ -1,7 +1,8 @@
-import { useCallback, useMemo, type KeyboardEvent, type MouseEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import type { Shade, CopyFormat, Hex } from '../lib/color/types';
 import { contrastRatio } from '../lib/color/contrast';
 import { formatForCopy } from '../lib/color/format';
+import { useToast } from './Toast';
 
 /**
  * A single row in either the continuous ramp or the Tailwind scale.
@@ -56,25 +57,66 @@ export default function ShadeRow({
 
   const navHref = `/${shade.hex.slice(1)}`;
 
+  const { pushToast } = useToast();
+
+  // Feature-detect clipboard availability after hydration. SSR can't tell —
+  // `navigator` is undefined and the secure-context rule is browser-specific
+  // anyway. Default to `true` so SSR + first paint match, then flip to
+  // `false` once we know better. When unavailable we hide the copy icon and
+  // fall row-clicks back to navigate so the row still has an action.
+  const [canCopy, setCanCopy] = useState(true);
+  useEffect(() => {
+    if (
+      typeof navigator === 'undefined' ||
+      !navigator.clipboard ||
+      typeof navigator.clipboard.writeText !== 'function'
+    ) {
+      setCanCopy(false);
+    }
+  }, []);
+
   const handleCopy = useCallback(() => {
     const text = formatForCopy(shade.hex, copyFormat, {
       name: brandName,
       stop: shade.stop,
     });
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(text).catch(() => {
-        /* swallow; the toast still fires so the UX isn't broken */
-      });
+    if (
+      typeof navigator === 'undefined' ||
+      !navigator.clipboard ||
+      typeof navigator.clipboard.writeText !== 'function'
+    ) {
+      pushToast("Couldn't copy — clipboard is unavailable in this browser.");
+      return;
     }
-    onCopy(shade.hex);
-  }, [shade.hex, shade.stop, copyFormat, brandName, onCopy]);
+    navigator.clipboard.writeText(text).then(
+      () => {
+        // Only fire the success toast (and notify the parent) after the
+        // write actually resolved — otherwise the user sees "Copied" but
+        // nothing's on their clipboard. The parent's onCopy callback is
+        // still useful as a "row was successfully copied" signal.
+        pushToast(`Copied ${shade.hex}`);
+        onCopy(shade.hex);
+      },
+      () => {
+        // Common rejection causes: insecure (HTTP) context, document not
+        // focused, denied permission (Safari private, sandboxed iframes).
+        pushToast("Couldn't copy — check browser permissions.");
+      },
+    );
+  }, [shade.hex, shade.stop, copyFormat, brandName, onCopy, pushToast]);
 
   const handleClick = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
       if ((e.target as HTMLElement).closest('a')) return;
+      // Without clipboard the row needs *some* affordance — fall the click
+      // back to navigation so it isn't a dead element.
+      if (!canCopy) {
+        onNavigate(shade.hex);
+        return;
+      }
       handleCopy();
     },
-    [handleCopy],
+    [handleCopy, canCopy, onNavigate, shade.hex],
   );
 
   const handleDoubleClick = useCallback(() => {
@@ -113,7 +155,9 @@ export default function ShadeRow({
   ]
     .filter(Boolean)
     .join(' ');
-  const ariaLabel = `${visibleLabel}. Click to copy, double-click to open page${shade.isInput ? ' (pinned input)' : ''}`;
+  const ariaLabel = canCopy
+    ? `${visibleLabel}. Click to copy, double-click to open page${shade.isInput ? ' (pinned input)' : ''}`
+    : `${visibleLabel}. Click to open page${shade.isInput ? ' (pinned input)' : ''}`;
 
   return (
     <div
@@ -163,21 +207,23 @@ export default function ShadeRow({
           'pointer-fine-hide',
         ].join(' ')}
       >
-        <button
-          type="button"
-          aria-label={`Copy ${shade.hex}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleCopy();
-          }}
-          className={[
-            'rounded p-1',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
-            fg === 'white' ? 'hover:bg-white/15' : 'hover:bg-black/10',
-          ].join(' ')}
-        >
-          <CopyIcon />
-        </button>
+        {canCopy && (
+          <button
+            type="button"
+            aria-label={`Copy ${shade.hex}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCopy();
+            }}
+            className={[
+              'rounded p-1',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
+              fg === 'white' ? 'hover:bg-white/15' : 'hover:bg-black/10',
+            ].join(' ')}
+          >
+            <CopyIcon />
+          </button>
+        )}
         <a
           href={navHref}
           aria-label={`Open page for ${shade.hex}`}

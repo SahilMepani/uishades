@@ -1,10 +1,11 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ExportFormat, TailwindScale } from '../lib/color/types';
 import { toTailwindV4 } from '../lib/exports/tailwind-v4';
 import { toTailwindV3 } from '../lib/exports/tailwind-v3';
 import { toCssVars } from '../lib/exports/css-vars';
 import { toW3CTokens } from '../lib/exports/w3c-tokens';
 import { toFigmaVars } from '../lib/exports/figma-vars';
+import { useToast } from './Toast';
 
 /**
  * Five-format export dropdown for the Tailwind scale view.
@@ -56,13 +57,40 @@ export default function ExportDropdown({
   const name = (brandName || 'brand').trim() || 'brand';
   const text = useMemo(() => serialize(scale, format, name), [scale, format, name]);
 
-  const handleCopy = () => {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(text).catch(() => {
-        /* noop */
-      });
+  const { pushToast } = useToast();
+
+  // Feature-detect clipboard availability after hydration. Default true so
+  // SSR + first paint match; flip to false when missing so we can disable
+  // the Copy button instead of presenting an action that does nothing.
+  const [canCopy, setCanCopy] = useState(true);
+  useEffect(() => {
+    if (
+      typeof navigator === 'undefined' ||
+      !navigator.clipboard ||
+      typeof navigator.clipboard.writeText !== 'function'
+    ) {
+      setCanCopy(false);
     }
-    onCopy(text);
+  }, []);
+
+  const handleCopy = () => {
+    if (
+      typeof navigator === 'undefined' ||
+      !navigator.clipboard ||
+      typeof navigator.clipboard.writeText !== 'function'
+    ) {
+      pushToast("Couldn't copy — clipboard is unavailable in this browser.");
+      return;
+    }
+    navigator.clipboard.writeText(text).then(
+      () => {
+        pushToast(`Copied ${format} export`);
+        onCopy(text);
+      },
+      () => {
+        pushToast("Couldn't copy — check browser permissions.");
+      },
+    );
   };
 
   return (
@@ -89,18 +117,20 @@ export default function ExportDropdown({
       </div>
 
       <div className="relative">
-        <button
-          type="button"
-          onClick={handleCopy}
-          className={
-            'absolute right-3 top-3 z-10 bg-ink px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.16em] text-paper ' +
-            'hover:bg-accent ' +
-            'focus-visible:outline-none focus-visible:bg-accent'
-          }
-          aria-label="Copy export to clipboard"
-        >
-          Copy
-        </button>
+        {canCopy && (
+          <button
+            type="button"
+            onClick={handleCopy}
+            className={
+              'absolute right-3 top-3 z-10 bg-ink px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.16em] text-paper ' +
+              'hover:bg-accent ' +
+              'focus-visible:outline-none focus-visible:bg-accent'
+            }
+            aria-label="Copy export to clipboard"
+          >
+            Copy
+          </button>
+        )}
         <pre
           data-export-preview="true"
           className={

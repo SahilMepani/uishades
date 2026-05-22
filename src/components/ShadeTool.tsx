@@ -342,12 +342,14 @@ function ShadeToolInner({
     setHex(next);
   }, []);
 
-  const handleCopyShade = useCallback(
-    (h: Hex) => {
-      pushToast(`Copied ${h}`);
-    },
-    [pushToast],
-  );
+  // Copy-success toasts are now fired by ShadeRow / ExportDropdown
+  // themselves — they're the only places that know whether the underlying
+  // clipboard write actually resolved. We keep these callbacks as hooks for
+  // any future "this row was just copied" analytics, but they no longer
+  // double-fire a toast.
+  const handleCopyShade = useCallback((_h: Hex) => {
+    // intentionally no-op; row owns the toast
+  }, []);
 
   const handleNavigate = useCallback((h: Hex) => {
     if (typeof window !== 'undefined') {
@@ -355,9 +357,9 @@ function ShadeToolInner({
     }
   }, []);
 
-  const handleExportCopy = useCallback(() => {
-    pushToast(`Copied ${exportFormat} export`);
-  }, [pushToast, exportFormat]);
+  const handleExportCopy = useCallback((_text: string) => {
+    // intentionally no-op; ExportDropdown owns the toast
+  }, []);
 
   return (
     <div className="text-ink">
