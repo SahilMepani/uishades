@@ -244,3 +244,15 @@ export const NAMED_COLORS_SLIM: NamedColorSlim[] = [
   { slug: "yellow", name: "Yellow", hex: "#ffff00" },
   { slug: "yellowgreen", name: "Yellow Green", hex: "#9acd32" },
 ];
+
+// O(1) hex -> slim entry lookup. Mirrors `findByHex` in `named-colors.ts`
+// but returns the slim shape so the React island doesn't need to import
+// the full blurb-bearing module.
+let _byHex: Map<string, NamedColorSlim> | null = null;
+export function findByHexSlim(hex: string): NamedColorSlim | undefined {
+  if (_byHex === null) {
+    _byHex = new Map();
+    for (const c of NAMED_COLORS_SLIM) _byHex.set(c.hex.toLowerCase(), c);
+  }
+  return _byHex.get(hex.toLowerCase());
+}

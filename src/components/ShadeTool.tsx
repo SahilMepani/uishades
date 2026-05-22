@@ -19,7 +19,10 @@ import { parseColor, toOklch } from '../lib/color/parse';
 import { oklchRamp } from '../lib/color/ramp';
 import { classicRamp } from '../lib/color/classic';
 import { buildScale } from '../lib/color/scale';
-import { findByHex } from '../lib/data/named-colors';
+// Use the slim hex-lookup so the React island doesn't drag the full
+// blurb-bearing NAMED_COLORS module into its bundle. The page chrome
+// only reads `named.name` and `named.slug` from the result.
+import { findByHexSlim as findByHex } from '../lib/data/named-colors-slim';
 import ColorInput from './ColorInput';
 import ContinuousRamp from './ContinuousRamp';
 import { ToastProvider, useToast } from './Toast';
