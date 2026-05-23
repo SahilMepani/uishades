@@ -18,19 +18,19 @@
  *     to fonts.gstatic.com in parallel with HTML parsing, fetch the
  *     stylesheet itself with high priority, and discover the font URLs
  *     much earlier.
- *   - All three font URLs are combined into a single Google Fonts CSS
+ *   - Both font URLs are combined into a single Google Fonts CSS
  *     request via the `family=` repetition syntax so we only pay one
- *     round trip instead of three.
+ *     round trip instead of two.
  *   - `display=swap` keeps the fallback visible during the swap window
  *     so we never block paint waiting for the webfont.
  */
 
-// A single combined Google Fonts URL: one round trip, three font families.
+// A single combined Google Fonts URL: one round trip, two font families.
 // Latin subset (the default) covers our copy without per-page `text=`
 // hashing. Audit Tier 2.4 tracks a deeper subset for display strings.
 const GOOGLE_FONTS_HREF =
   'https://fonts.googleapis.com/css2?' +
-  'family=Geist:wght@300;400;500;600;700' +
+  'family=Geist:wght@400;500;600;700' +
   '&family=JetBrains+Mono:wght@400;500;600' +
   '&display=swap';
 ---
