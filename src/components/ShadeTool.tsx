@@ -27,6 +27,7 @@ import { findByHexSlim as findByHex } from '../lib/data/named-colors-slim';
 import ContinuousRamp from './ContinuousRamp';
 import { ToastProvider, useToast } from './Toast';
 import ColorPicker from './ColorPicker';
+import ShareRow from './ShareRow';
 
 // Lazy-load the Tailwind scale view + its export panel + serializers. They
 // form the heaviest leaf of the React island (Tailwind scale, five export-
@@ -59,7 +60,7 @@ const STORAGE_KEYS = {
   rampMode: 'shades.rampMode',
   exportFormat: 'shades.exportFormat',
   view: 'shades.view',
-  seenDoubleClickHint: 'shades.seenDoubleClickHint',
+  dismissedHintBanner: 'shades.dismissedHintBanner',
 } as const;
 
 type View = 'ramp' | 'scale';
@@ -349,24 +350,33 @@ function ShadeToolInner({
     setHex(next);
   }, []);
 
-  // Copy-success toasts are now fired by ShadeRow / ExportDropdown
-  // themselves — they're the only places that know whether the underlying
-  // clipboard write actually resolved. We piggyback on this callback to
-  // teach the double-click-to-use-as-source gesture once per user: after
-  // their first successful shade copy we queue a longer-lived tip toast
-  // (delayed so it doesn't stack on top of the "Copied" toast).
-  const handleCopyShade = useCallback((_h: Hex) => {
+  // Copy-success toasts are fired by ShadeRow / ExportDropdown themselves —
+  // they're the only places that know whether the underlying clipboard write
+  // actually resolved.
+  const handleCopyShade = useCallback((_h: Hex) => {}, []);
+
+  // Inline tip banner shown at the top of the shades column. Hidden by
+  // default during SSR + first paint to keep hydration deterministic, then
+  // revealed post-mount if the user has not yet dismissed it.
+  const [showHintBanner, setShowHintBanner] = useState(false);
+  useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      if (window.localStorage.getItem(STORAGE_KEYS.seenDoubleClickHint) === 'true') return;
-      window.localStorage.setItem(STORAGE_KEYS.seenDoubleClickHint, 'true');
+      const dismissed =
+        window.localStorage.getItem(STORAGE_KEYS.dismissedHintBanner) === 'true';
+      if (!dismissed) setShowHintBanner(true);
     } catch {
-      return;
+      setShowHintBanner(true);
     }
-    window.setTimeout(() => {
-      pushToast('Tip: double-click a shade to use it as your source.', { durationMs: 8000 });
-    }, 1400);
-  }, [pushToast]);
+  }, []);
+  const dismissHintBanner = useCallback(() => {
+    setShowHintBanner(false);
+    try {
+      window.localStorage.setItem(STORAGE_KEYS.dismissedHintBanner, 'true');
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   // Update in place instead of full navigation. The `hex` effect calls
   // syncUrl which rewrites the path on /[hex] routes, so the URL still
@@ -417,6 +427,7 @@ function ShadeToolInner({
               onChange={setCopyFormat}
               hasStop={view === 'scale'}
             />
+            <ShareRow hex={hex} named={named} />
           </div>
         </aside>
 
@@ -432,6 +443,7 @@ function ShadeToolInner({
               onChange={setCopyFormat}
               hasStop={view === 'scale'}
             />
+            <ShareRow hex={hex} named={named} />
           </div>
 
           <div className={`flex items-baseline justify-between gap-4${view === 'scale' ? ' border-b border-hairline pb-2' : ''}`}>
@@ -440,44 +452,38 @@ function ShadeToolInner({
             ) : (
               <span className="eyebrow">Scale</span>
             )}
-            <div className="flex items-baseline gap-2 font-mono text-[11px] uppercase tracking-[0.16em]">
-              <span className="text-mute">
-                {view === 'ramp' ? `${ramp.shades.length} stops · ${ramp.mode}` : `11 stops · anchor ${scale.anchorStop}`}
-              </span>
-              <span aria-hidden="true" className="text-mute">·</span>
-              <a
-                href={`/api/${hex.slice(1)}.json`}
-                className="text-ink hover:text-accent"
-              >
-                View JSON
-              </a>
-            </div>
+            <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
+              {view === 'ramp' ? `${ramp.shades.length} stops · ${ramp.mode}` : `11 stops · anchor ${scale.anchorStop}`}
+            </span>
           </div>
 
-          {view === 'ramp' ? (
-            <ContinuousRamp
-              ramp={ramp}
-              sourceHex={hex}
-              copyFormat={copyFormat}
-              brandName={brandName}
-              onCopy={handleCopyShade}
-              onNavigate={handleNavigate}
-            />
-          ) : (
-            <Suspense fallback={<TailwindScaleFallback />}>
-              <TailwindScale
-                scale={scale}
+          <div className="flex flex-col gap-2.5">
+            {showHintBanner && <HintBanner onDismiss={dismissHintBanner} />}
+            {view === 'ramp' ? (
+              <ContinuousRamp
+                ramp={ramp}
                 sourceHex={hex}
                 copyFormat={copyFormat}
-                exportFormat={exportFormat}
                 brandName={brandName}
                 onCopy={handleCopyShade}
                 onNavigate={handleNavigate}
-                onExportCopy={handleExportCopy}
-                onExportFormatChange={setExportFormat}
               />
-            </Suspense>
-          )}
+            ) : (
+              <Suspense fallback={<TailwindScaleFallback />}>
+                <TailwindScale
+                  scale={scale}
+                  sourceHex={hex}
+                  copyFormat={copyFormat}
+                  exportFormat={exportFormat}
+                  brandName={brandName}
+                  onCopy={handleCopyShade}
+                  onNavigate={handleNavigate}
+                  onExportCopy={handleExportCopy}
+                  onExportFormatChange={setExportFormat}
+                />
+              </Suspense>
+            )}
+          </div>
         </section>
       </div>
     </div>
@@ -561,34 +567,82 @@ function PreviewBlock({
     );
   }, [layers]);
 
+  // Local text mirrors what the user is typing in the always-visible input
+  // next to the swatch trigger. Synced from `hex` only when the parent
+  // value changes from outside (popover pick, shade-row click, navigation),
+  // so an in-progress typed value like "rgb(64" isn't clobbered.
+  const [inputText, setInputText] = useState<string>(hex);
+  useEffect(() => {
+    let derived: Hex | null = null;
+    try {
+      derived = parseColor(inputText);
+    } catch {
+      /* unparseable — fall through and sync */
+    }
+    if (derived !== hex) setInputText(hex);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hex]);
+
+  const handleTextChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const raw = e.target.value;
+      setInputText(raw);
+      try {
+        onChange(parseColor(raw));
+      } catch {
+        /* partial / invalid — wait for more keystrokes */
+      }
+    },
+    [onChange],
+  );
+
+  const handleTextBlur = useCallback(() => {
+    try {
+      parseColor(inputText);
+    } catch {
+      setInputText(hex);
+    }
+  }, [inputText, hex]);
+
   return (
     <div className="flex flex-col gap-4">
-      <ColorPicker
-        hex={hex}
-        onChange={onChange}
-        triggerLabel={`Color ${hex} — open color picker`}
-        className="block w-full"
-      >
-        <span
-          title="Pick a color"
-          className="relative flex h-[140px] w-full items-center justify-center overflow-hidden ring-1 ring-ink/10"
+      <div className="flex h-[60px] w-full bg-paper-2">
+        <ColorPicker
+          hex={hex}
+          onChange={onChange}
+          triggerLabel={`Color ${hex} — open color picker`}
+          className="block h-full w-1/4 shrink-0"
         >
-          {layers.map((l) => (
-            <span
-              key={l.id}
-              aria-hidden="true"
-              className="absolute inset-0 transition-opacity duration-300 ease-out motion-reduce:transition-none"
-              style={{ backgroundColor: l.hex, opacity: l.visible ? 1 : 0 }}
-            />
-          ))}
-          <span className="relative inline-flex h-[42px] w-[42px] items-center justify-center rounded-full bg-paper/85 text-ink ring-1 ring-ink/15 shadow-sm">
-            <PickerIcon className="h-6 w-6" />
+          <span
+            title="Pick a color"
+            className="relative flex h-[60px] w-full items-center justify-center overflow-hidden"
+          >
+            {layers.map((l) => (
+              <span
+                key={l.id}
+                aria-hidden="true"
+                className="absolute inset-0 transition-opacity duration-300 ease-out motion-reduce:transition-none"
+                style={{ backgroundColor: l.hex, opacity: l.visible ? 1 : 0 }}
+              />
+            ))}
+            <span className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-paper/85 text-ink ring-1 ring-ink/15 shadow-sm transition-transform duration-150 ease-out group-hover:scale-110 group-focus-visible:scale-110 motion-reduce:transition-none motion-reduce:group-hover:scale-100 motion-reduce:group-focus-visible:scale-100">
+              <PickerIcon className="h-5 w-5" />
+            </span>
           </span>
-          <span className="absolute top-2 left-2 bg-paper/90 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-ink">
-            Pick a color
-          </span>
-        </span>
-      </ColorPicker>
+        </ColorPicker>
+        <input
+          type="text"
+          value={inputText}
+          onChange={handleTextChange}
+          onBlur={handleTextBlur}
+          spellCheck={false}
+          autoCapitalize="off"
+          autoCorrect="off"
+          aria-label="Color value (hex, rgb, hsl, oklch, or name)"
+          placeholder="#4040ff · coral · rgb(64 64 255)"
+          className="h-full flex-1 bg-transparent px-4 font-mono text-xl tracking-tight text-ink placeholder:text-mute focus:outline-none"
+        />
+      </div>
       {named && (
         <div className="border-b border-hairline pb-2">
           <span className="font-display text-base text-ink-2">{named.name}</span>
@@ -650,6 +704,38 @@ function CopyableValueRow({ label, value }: { label: string; value: string }) {
         </span>
       </div>
     </div>
+  );
+}
+
+function HintBanner({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-label="Dismiss tip: double-click a shade to use as your new source"
+      onClick={onDismiss}
+      className="group flex w-full items-center justify-between gap-3 bg-black px-3.5 py-2 text-left text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+    >
+      <span>
+        <span className="mr-2 font-mono text-[11px] uppercase tracking-[0.16em] text-white/60">
+          Tip
+        </span>
+        Double-click a shade to use as your new source.
+      </span>
+      <span
+        aria-hidden="true"
+        className="-mr-1 inline-flex h-6 w-6 shrink-0 items-center justify-center text-white/70 transition-transform duration-150 ease-out group-hover:scale-150 group-hover:text-white group-focus-visible:scale-150 group-focus-visible:text-white motion-reduce:transition-none"
+      >
+        <svg viewBox="0 0 16 16" className="h-4 w-4">
+          <path
+            d="M3 3l10 10M13 3L3 13"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        </svg>
+      </span>
+    </button>
   );
 }
 
@@ -873,14 +959,26 @@ function CopyFormatPicker({
       </label>
     );
   }
+  const activeIndex = Math.max(0, formats.indexOf(value));
   return (
     <div className="flex flex-col gap-2">
       <span className="eyebrow">Copy as</span>
       <div
         role="tablist"
         aria-label="Copy format"
-        className="grid grid-cols-4 gap-1 rounded-full bg-paper-2 p-1 ring-1 ring-ink/10"
+        className="relative grid grid-cols-4 gap-1 rounded-full bg-paper-2 p-1 ring-1 ring-ink/10"
       >
+        {/* Sliding indicator — matches the Algorithm toggle pattern.
+            Pill width equals one column; translateX by (100% + gap) per step.
+            p-1 = 0.25rem, gap-1 = 0.25rem → 4-col inner is (100% - 1.25rem)/4. */}
+        <span
+          aria-hidden="true"
+          className="absolute inset-y-1 left-1 rounded-full bg-ink shadow-sm transition-transform duration-200 ease-out motion-reduce:transition-none"
+          style={{
+            width: 'calc((100% - 1.25rem) / 4)',
+            transform: `translateX(calc(${activeIndex} * (100% + 0.25rem)))`,
+          }}
+        />
         {formats.map(k => {
           const active = value === k;
           return (
@@ -891,12 +989,10 @@ function CopyFormatPicker({
               aria-selected={active}
               onClick={() => onChange(k)}
               className={[
-                'min-w-0 rounded-full px-2 py-1.5 text-center font-mono text-xs tracking-tight whitespace-nowrap',
+                'relative z-10 min-w-0 rounded-full px-2 py-1.5 text-center font-mono text-xs tracking-tight whitespace-nowrap',
                 'transition-colors duration-150 motion-reduce:transition-none',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
-                active
-                  ? 'bg-ink text-paper shadow-sm'
-                  : 'text-ink/70 hover:text-ink',
+                active ? 'text-paper' : 'text-ink/70 hover:text-ink',
               ].join(' ')}
             >
               {COPY_FORMAT_LABELS[k]}

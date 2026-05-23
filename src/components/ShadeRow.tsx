@@ -201,6 +201,7 @@ export default function ShadeRow({
     : `${visibleLabel}. Click to use as source${shade.isInput ? ' (pinned source)' : ''}`;
 
   return (
+    <div className="group relative">
     <div
       ref={rowRef}
       data-shade-row="true"
@@ -262,7 +263,6 @@ export default function ShadeRow({
             {shade.stop}
           </span>
         )}
-        <span className="truncate tracking-tight tabular-nums">{displayValue}</span>
         {shade.isInput && (
           <span
             className={
@@ -275,56 +275,68 @@ export default function ShadeRow({
         )}
       </div>
 
-      <div
-        className={[
-          'flex items-center gap-2',
-          // Always visible on touch-only devices; faded-in on hover-capable
-          // ones via the .pointer-fine-hide CSS utility in global.css.
-          'pointer-fine-hide',
-        ].join(' ')}
-      >
+      <div className="flex items-center gap-3">
         <span
           aria-hidden="true"
           className={[
             'rounded-sm px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em]',
+            // Always visible on touch-only devices; faded-in on hover-capable
+            // ones via the .pointer-fine-hide CSS utility in global.css.
+            'pointer-fine-hide',
             fg === 'white' ? 'bg-white/15 text-white' : 'bg-black/10 text-black',
           ].join(' ')}
         >
           {canCopy ? (justCopied ? 'Copied' : 'Click to copy') : 'Click to open'}
         </span>
-        {!shade.isInput && (
-          <a
-            href={navHref}
-            aria-label={`Use ${shade.hex} as source`}
-            title="Use as source"
-            onClick={(e) => {
-              e.stopPropagation();
-              // Let the browser handle modifier/middle-click so cmd/ctrl-click
-              // still opens the shade in a new tab — see the file's behavior
-              // contract above. Plain left-click stays on the page and lets
-              // the parent swap the hex in place.
-              if (
-                e.metaKey ||
-                e.ctrlKey ||
-                e.shiftKey ||
-                e.altKey ||
-                e.button !== 0
-              ) {
-                return;
-              }
-              e.preventDefault();
-              onNavigate(shade.hex);
-            }}
-            className={[
-              'rounded p-1',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
-              fg === 'white' ? 'bg-white/15' : 'bg-black/10',
-            ].join(' ')}
-          >
-            <OpenIcon />
-          </a>
-        )}
+        <span className="truncate font-mono text-sm tracking-tight tabular-nums">{displayValue}</span>
       </div>
+    </div>
+    {!shade.isInput && (
+      <>
+      {/* Invisible bridge spanning the 10px gap between the row and the
+          icon so a slow cursor never crosses an unhovered region (which
+          would otherwise trigger a brief fade-out / fade-in cycle on the
+          icon and the "Click to copy" badge). */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-auto absolute inset-y-0 left-full w-2.5"
+      />
+      <a
+        href={navHref}
+        aria-label={`Use ${shade.hex} as source`}
+        title="Use as source"
+        onClick={(e) => {
+          e.stopPropagation();
+          // Let the browser handle modifier/middle-click so cmd/ctrl-click
+          // still opens the shade in a new tab — see the file's behavior
+          // contract above. Plain left-click stays on the page and lets
+          // the parent swap the hex in place.
+          if (
+            e.metaKey ||
+            e.ctrlKey ||
+            e.shiftKey ||
+            e.altKey ||
+            e.button !== 0
+          ) {
+            return;
+          }
+          e.preventDefault();
+          onNavigate(shade.hex);
+        }}
+        className={[
+          'absolute top-1/2 left-full ml-2.5 -translate-y-1/2 h-[90%] aspect-square',
+          'flex items-center justify-center border border-ink/20',
+          'text-ink/60 transition-colors duration-200 ease-out hover:text-ink hover:bg-paper-2',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
+          // Fade in only when the row (or anything in the group wrapper) is
+          // hovered/focused — mirrors the "Click to copy" badge behavior.
+          'pointer-fine-hide',
+        ].join(' ')}
+      >
+        <OpenIcon />
+      </a>
+      </>
+    )}
     </div>
   );
 }

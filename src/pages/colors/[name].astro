@@ -77,6 +77,7 @@ const DESCRIPTION = buildDescription(color.blurb);
 
 const canonicalUrl = `https://uishades.com/colors/${color.slug}`;
 const ogImage = `https://uishades.com/og/${color.hex.slice(1)}.png`;
+const ogImagePin = `https://uishades.com/og/pin/${color.hex.slice(1)}.png`;
 
 const plainBlurb = color.blurb.replace(/`([^`]+)`/g, '$1');
 
@@ -170,6 +171,12 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:alt" content={`${color.name} (${color.hex.toUpperCase()}) — tints, shades, and palette`} />
+    {/* Pinterest-optimized 2:3 portrait variant. See note in [hex].astro. */}
+    <meta property="og:image" content={ogImagePin} />
+    <meta property="og:image:width" content="1000" />
+    <meta property="og:image:height" content="1500" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:alt" content={`${color.name} (${color.hex.toUpperCase()}) — tints, shades, and palette`} />
     <meta name="twitter:card" content="summary_large_image" />
@@ -304,6 +311,7 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
           </p>
           <nav aria-label="Footer" class="flex gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
             <a href={`/${color.hex.slice(1)}`} class="text-ink hover:text-accent">Open in tool</a>
+            <a href={`/api/${color.hex.slice(1)}.json`} class="text-ink hover:text-accent">View JSON</a>
           </nav>
         </div>
       </footer>

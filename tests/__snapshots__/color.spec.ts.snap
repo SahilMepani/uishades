@@ -3,7 +3,6 @@
 exports[`classicRamp — reference parity > snapshot — additional inputs 1`] = `
 {
   "#000000": [
-    "#ffffff",
     "#eeeeee",
     "#dddddd",
     "#cccccc",
@@ -21,7 +20,6 @@ exports[`classicRamp — reference parity > snapshot — additional inputs 1`] =
     "#000000",
   ],
   "#0000ff": [
-    "#ffffff",
     "#eeeeff",
     "#ddddff",
     "#ccccff",
@@ -51,10 +49,8 @@ exports[`classicRamp — reference parity > snapshot — additional inputs 1`] =
     "#000033",
     "#000022",
     "#000011",
-    "#000000",
   ],
   "#00ff00": [
-    "#ffffff",
     "#eeffee",
     "#ddffdd",
     "#ccffcc",
@@ -84,10 +80,8 @@ exports[`classicRamp — reference parity > snapshot — additional inputs 1`] =
     "#003300",
     "#002200",
     "#001100",
-    "#000000",
   ],
   "#808080": [
-    "#ffffff",
     "#f7f7f7",
     "#e6e6e6",
     "#d5d5d5",
@@ -103,10 +97,8 @@ exports[`classicRamp — reference parity > snapshot — additional inputs 1`] =
     "#2b2b2b",
     "#1a1a1a",
     "#090909",
-    "#000000",
   ],
   "#aabbcc": [
-    "#ffffff",
     "#eeffff",
     "#ddeeff",
     "#ccddee",
@@ -134,10 +126,8 @@ exports[`classicRamp — reference parity > snapshot — additional inputs 1`] =
     "#000033",
     "#000022",
     "#000011",
-    "#000000",
   ],
   "#abcdef": [
-    "#ffffff",
     "#efffff",
     "#deffff",
     "#cdefff",
@@ -169,10 +159,8 @@ exports[`classicRamp — reference parity > snapshot — additional inputs 1`] =
     "#000024",
     "#000013",
     "#000002",
-    "#000000",
   ],
   "#ff0000": [
-    "#ffffff",
     "#ffeeee",
     "#ffdddd",
     "#ffcccc",
@@ -202,10 +190,8 @@ exports[`classicRamp — reference parity > snapshot — additional inputs 1`] =
     "#330000",
     "#220000",
     "#110000",
-    "#000000",
   ],
   "#ff7f50": [
-    "#ffffff",
     "#fffffa",
     "#ffffe9",
     "#ffffd8",
@@ -239,7 +225,6 @@ exports[`classicRamp — reference parity > snapshot — additional inputs 1`] =
     "#2a0000",
     "#190000",
     "#080000",
-    "#000000",
   ],
   "#ffffff": [
     "#ffffff",
@@ -257,7 +242,6 @@ exports[`classicRamp — reference parity > snapshot — additional inputs 1`] =
     "#333333",
     "#222222",
     "#111111",
-    "#000000",
   ],
 }
 `;

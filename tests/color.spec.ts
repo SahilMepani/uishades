@@ -11,14 +11,14 @@ function hexesOf(ramp: { shades: { hex: string }[] }): string[] {
 }
 
 describe('classicRamp — reference parity', () => {
-  it('matches the 0to255 reference exactly for #4040ff', () => {
+  it('matches the 0to255 reference exactly for #4040ff (sans pure white/black endpoints)', () => {
     const ref = [
-      '#ffffff', '#fbfbff', '#eaeaff', '#d9d9ff', '#c8c8ff', '#b7b7ff',
+      '#fbfbff', '#eaeaff', '#d9d9ff', '#c8c8ff', '#b7b7ff',
       '#a6a6ff', '#9595ff', '#8484ff', '#7373ff', '#6262ff', '#5151ff',
       '#4040ff', '#2f2fff', '#1e1eff', '#0d0dff', '#0000fb', '#0000ea',
       '#0000d9', '#0000c8', '#0000b7', '#0000a6', '#000095', '#000084',
       '#000073', '#000062', '#000051', '#000040', '#00002f', '#00001e',
-      '#00000d', '#000000',
+      '#00000d',
     ];
     const ramp = classicRamp('#4040ff');
     expect(hexesOf(ramp)).toEqual(ref);
@@ -27,11 +27,11 @@ describe('classicRamp — reference parity', () => {
     expect(ramp.shades[ramp.inputIndex].isInput).toBe(true);
   });
 
-  it('always starts with #ffffff and ends with #000000 for non-endpoint inputs', () => {
+  it('never contains pure #ffffff or #000000 for non-endpoint inputs', () => {
     for (const input of ['#4040ff', '#ff0000', '#00ff00', '#0000ff', '#808080', '#ff7f50', '#aabbcc']) {
       const ramp = classicRamp(input);
-      expect(ramp.shades[0].hex).toBe('#ffffff');
-      expect(ramp.shades[ramp.shades.length - 1].hex).toBe('#000000');
+      expect(ramp.shades.some(s => s.hex === '#ffffff')).toBe(false);
+      expect(ramp.shades.some(s => s.hex === '#000000')).toBe(false);
     }
   });
 
@@ -49,18 +49,17 @@ describe('classicRamp — reference parity', () => {
     expect(snapshot).toMatchSnapshot();
   });
 
-  it('handles pure white input — single white entry then gray ramp to black', () => {
+  it('handles pure white input — input preserved as first entry, no pure-black tail', () => {
     const ramp = classicRamp('#ffffff');
     expect(ramp.shades[0].hex).toBe('#ffffff');
-    expect(ramp.shades[ramp.shades.length - 1].hex).toBe('#000000');
-    // input is the white at index 0 (dedup means input isn't duplicated)
+    expect(ramp.shades[ramp.shades.length - 1].hex).not.toBe('#000000');
     expect(ramp.inputIndex).toBe(0);
     expect(ramp.shades[0].isInput).toBe(true);
   });
 
-  it('handles pure black input — gray ramp from white to single black entry', () => {
+  it('handles pure black input — input preserved as last entry, no pure-white head', () => {
     const ramp = classicRamp('#000000');
-    expect(ramp.shades[0].hex).toBe('#ffffff');
+    expect(ramp.shades[0].hex).not.toBe('#ffffff');
     expect(ramp.shades[ramp.shades.length - 1].hex).toBe('#000000');
     expect(ramp.inputIndex).toBe(ramp.shades.length - 1);
     expect(ramp.shades[ramp.inputIndex].isInput).toBe(true);
@@ -68,11 +67,11 @@ describe('classicRamp — reference parity', () => {
 });
 
 describe('oklchRamp', () => {
-  it('produces exactly 22 shades with #ffffff and #000000 endpoints', () => {
+  it('produces exactly 20 shades with no pure white/black endpoints', () => {
     const ramp = oklchRamp('#4040ff');
-    expect(ramp.shades).toHaveLength(22);
-    expect(ramp.shades[0].hex).toBe('#ffffff');
-    expect(ramp.shades[21].hex).toBe('#000000');
+    expect(ramp.shades).toHaveLength(20);
+    expect(ramp.shades[0].hex).not.toBe('#ffffff');
+    expect(ramp.shades[19].hex).not.toBe('#000000');
     expect(ramp.mode).toBe('oklch');
   });
 
@@ -89,16 +88,15 @@ describe('oklchRamp', () => {
     const ramp = oklchRamp('#4040ff');
     expect(ramp.shades[ramp.inputIndex].hex).toBe('#4040ff');
     expect(ramp.shades[ramp.inputIndex].isInput).toBe(true);
-    // inputIndex must be an interior (not an endpoint) index.
-    expect(ramp.inputIndex).toBeGreaterThanOrEqual(1);
-    expect(ramp.inputIndex).toBeLessThanOrEqual(20);
+    expect(ramp.inputIndex).toBeGreaterThanOrEqual(0);
+    expect(ramp.inputIndex).toBeLessThanOrEqual(19);
   });
 
   it('handles achromatic input (#777) without crashing', () => {
     const ramp = oklchRamp('#777777');
-    expect(ramp.shades).toHaveLength(22);
-    expect(ramp.shades[0].hex).toBe('#ffffff');
-    expect(ramp.shades[21].hex).toBe('#000000');
+    expect(ramp.shades).toHaveLength(20);
+    expect(ramp.shades[0].hex).not.toBe('#ffffff');
+    expect(ramp.shades[19].hex).not.toBe('#000000');
   });
 });
 

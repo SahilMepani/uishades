@@ -123,7 +123,7 @@ export default function ExportDropdown({
             onClick={handleCopy}
             className={
               'absolute right-3 top-3 z-10 bg-ink px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.16em] text-paper ' +
-              'hover:bg-accent ' +
+              'transition-colors duration-200 ease-out hover:bg-accent ' +
               'focus-visible:outline-none focus-visible:bg-accent'
             }
             aria-label="Copy export to clipboard"

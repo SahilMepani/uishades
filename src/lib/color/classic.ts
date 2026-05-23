@@ -8,14 +8,19 @@
  * walk to zero, then a single residual carry transferring a few units to B
  * before B itself starts dropping by 17 per step.
  *
+ * The walks naturally terminate at `#ffffff` (lighter) and `#000000` (darker);
+ * the composed ramp drops those literal endpoints so the lightest/darkest
+ * displayed stops are the next-to-extreme RGB values rather than pure white
+ * and black. When the input itself is `#ffffff` or `#000000`, it is preserved
+ * as an interior shade — only the dedicated endpoints are removed.
+ *
  * Concretely the rule we implement (and which matches the reference list
- * verbatim) is:
+ * verbatim, minus endpoints) is:
  *
  *  Lighter walk:
  *    Each step, increment every channel whose value is currently below 255
  *    by 17. Cap at 255 (any overshoot is discarded — no carry). Stop when
- *    all three channels are 255. Append `#ffffff` as the final lightest
- *    shade if it wasn't reached exactly.
+ *    all three channels are 255, then drop that final `#ffffff` step.
  *
  *  Darker walk:
  *    Let M = max(R, G, B) at the input. "Low" channels are those < M; "high"
@@ -25,17 +30,17 @@
  *      - residual = 17 - drop
  *      - subtract `residual` from every high channel (flooring at 0)
  *    After all low channels reach zero, switch to phase 2: subtract 17 from
- *    each currently non-zero channel each step until all are 0. Append
- *    `#000000` as the final darkest shade.
+ *    each currently non-zero channel each step until all are 0, then drop
+ *    that final `#000000` step.
  *
  *  Edge cases:
  *    - Input has no "low" channels (e.g., `#ff0000`, where the only non-zero
  *      channel is already at max, or grayscale where all channels equal):
  *      skip phase 1 entirely and go straight to phase 2.
  *    - Input is `#ffffff`: lighter walk is empty; darker walk steps every
- *      channel down by 17 each step (grayscale ramp).
+ *      channel down by 17 each step (grayscale ramp), final black dropped.
  *    - Input is `#000000`: lighter walk steps every channel up by 17 each
- *      step (grayscale ramp); darker walk is empty.
+ *      step (grayscale ramp), final white dropped; darker walk is empty.
  */
 
 import { parseColor, toOklch } from './parse';
@@ -144,26 +149,33 @@ function darkerWalk(input: RGB): RGB[] {
 
 /**
  * Build the Classic continuous ramp for a hex input. Result is lightest
- * first, with `#ffffff` and `#000000` as the endpoints (deduplicated when
- * the input itself is one of them) and the input hex appearing verbatim
- * at `inputIndex`.
+ * first; pure `#ffffff` and `#000000` endpoints are stripped, so the
+ * lightest/darkest displayed stops are the next-to-extreme RGB values.
+ * The input hex appears verbatim at `inputIndex` (preserved even when
+ * the input itself is `#ffffff` or `#000000`).
  */
 export function classicRamp(input: Hex): ContinuousRamp {
   const inputHex = parseColor(input); // normalize & validate
   const inputRgb = hexToRgb(inputHex);
 
-  const lighterStrict = lighterWalk(inputRgb); // ends at white
-  const darkerStrict = darkerWalk(inputRgb); // ends at black
+  const lighterStrict = lighterWalk(inputRgb); // ends at white (if non-empty)
+  const darkerStrict = darkerWalk(inputRgb); // ends at black (if non-empty)
 
-  // Compose: [whitest..just-above-input] + [input] + [just-below-input..black]
+  // Drop the pure-white tail of lighterWalk and the pure-black tail of
+  // darkerWalk. Each walk produces steps strictly outside the input, so
+  // these tails are never the input itself — safe to pop unconditionally
+  // when present.
+  if (lighterStrict.length > 0) lighterStrict.pop();
+  if (darkerStrict.length > 0) darkerStrict.pop();
+
+  // Compose: [next-to-white..just-above-input] + [input] + [just-below-input..next-to-black]
   // `lighterStrict` is currently ordered darkest-lighter first, so reverse it.
   const lighter = [...lighterStrict].reverse();
 
   const rgbList: RGB[] = [...lighter, inputRgb, ...darkerStrict];
 
-  // Deduplicate adjacent equal entries -- this handles the case where the
-  // input is exactly white or black (input would otherwise duplicate the
-  // endpoint), and any pathological where a step lands precisely on input.
+  // Deduplicate adjacent equal entries — defensive against any pathological
+  // case where a walk step lands precisely on the input value.
   const deduped: RGB[] = [];
   for (const c of rgbList) {
     const prev = deduped[deduped.length - 1];

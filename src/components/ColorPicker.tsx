@@ -59,6 +59,7 @@ export default function ColorPicker({
   const [visible, setVisible] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const popoverId = 'color-picker-popover';
 
   useEffect(() => {
@@ -81,6 +82,8 @@ export default function ColorPicker({
     const node = popoverRef.current;
     if (node) void node.offsetHeight;
     setVisible(true);
+    inputRef.current?.focus();
+    inputRef.current?.select();
   }, [mounted]);
 
   useEffect(() => {
@@ -178,9 +181,10 @@ export default function ColorPicker({
         type="button"
         onClick={() => setOpen(o => !o)}
         aria-label={triggerLabel}
+        title={triggerLabel}
         aria-expanded={open}
         aria-controls={popoverId}
-        className="block w-full cursor-pointer p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+        className="group block w-full cursor-pointer p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
       >
         {children}
       </button>
@@ -209,7 +213,7 @@ export default function ColorPicker({
                 title="Pick color from screen"
                 className={
                   'inline-flex h-9 w-9 shrink-0 items-center justify-center ' +
-                  'border border-ink/20 bg-paper text-ink hover:bg-paper-2 ' +
+                  'border border-ink/20 bg-paper text-ink transition-colors duration-200 ease-out hover:bg-paper-2 ' +
                   'focus-visible:outline-none focus-visible:border-accent'
                 }
               >
@@ -218,6 +222,7 @@ export default function ColorPicker({
             )}
             <div className="flex flex-1 items-center border border-ink/20 bg-paper focus-within:border-ink">
               <input
+                ref={inputRef}
                 type="text"
                 value={inputValue}
                 onChange={handleInputChange}
@@ -243,8 +248,9 @@ export default function ColorPicker({
 function EyeDropperIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 16 16" aria-hidden="true" className={className ?? 'h-4 w-4'}>
-      <path d="M11.2 1.6a2.2 2.2 0 0 1 3.1 3.1l-1.4 1.4-3.1-3.1 1.4-1.4Z" fill="currentColor"/>
-      <path d="m9.1 3.7 3.1 3.1-6.6 6.6-3.1-.5L2 9.8 9.1 3.7Z" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round"/>
+      <circle cx="8" cy="8" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.25"/>
+      <circle cx="8" cy="8" r="1" fill="currentColor"/>
+      <path d="M8 0.5v3M8 12.5v3M0.5 8h3M12.5 8h3" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/>
     </svg>
   );
 }

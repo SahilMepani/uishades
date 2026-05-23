@@ -2,13 +2,7 @@
  * OKLCH-based continuous ramp (default mode).
  *
  * Convention: 20 inner stepped shades at equal OKLCH lightness spacing
- * between L_TOP and L_BOTTOM, plus `#ffffff` and `#000000` literally
- * appended as the first and last entries respectively. Total = 22.
- *
- * Why this convention: it matches how the Classic ramp behaves (input
- * always sandwiched between the white and black endpoints), and it
- * keeps the inner step lightnesses stable regardless of input (so the
- * input's snapped index is meaningful for cross-color comparison).
+ * between L_TOP and L_BOTTOM. No literal `#ffffff` / `#000000` endpoints.
  *
  * Input is pinned at the inner-step index whose target L is closest to
  * the input's measured OKLCH L. At that index, we use the input hex
@@ -23,8 +17,8 @@ import { oklchToHex, toOklch } from './parse';
 import type { ContinuousRamp, Hex, OKLCH, Shade } from './types';
 
 const INNER_STEPS = 20;
-const L_TOP = 0.95; // L of the lightest inner step (just below pure white)
-const L_BOTTOM = 0.05; // L of the darkest inner step (just above pure black)
+const L_TOP = 0.95; // L of the lightest inner step (achromatic → #eeeeee)
+const L_BOTTOM = 0.06; // L of the darkest inner step (achromatic → #010101 — keeps c=0 inputs off pure black)
 
 function chromaBellMultiplier(l: number): number {
   // 1.0 at L=0.5, 0.3 at L=0 or L=1, smooth quadratic between.
@@ -54,23 +48,12 @@ function nearestIndex(target: number, values: readonly number[]): number {
   return best;
 }
 
-const WHITE_HEX = '#ffffff' as Hex;
-const BLACK_HEX = '#000000' as Hex;
-
-function whiteShade(): Shade {
-  return { hex: WHITE_HEX, oklch: { l: 1, c: 0, h: NaN } };
-}
-function blackShade(): Shade {
-  return { hex: BLACK_HEX, oklch: { l: 0, c: 0, h: NaN } };
-}
-
 /**
- * Build a 22-shade OKLCH continuous ramp from a canonical hex input.
+ * Build a 20-shade OKLCH continuous ramp from a canonical hex input.
  *
  * The input hex appears verbatim at the inner step whose target L is
  * closest to the input's measured L. `inputIndex` points to that entry
- * in the returned `shades` array (which includes the white and black
- * endpoints, so inputIndex is in the range [1, 20]).
+ * in the returned `shades` array (range [0, 19]).
  */
 export function oklchRamp(input: Hex): ContinuousRamp {
   const inputOklch: OKLCH = toOklch(input);
@@ -83,11 +66,11 @@ export function oklchRamp(input: Hex): ContinuousRamp {
   const inputC = inputOklch.c;
 
   // Find the inner step closest to the input's L. If the input is exactly
-  // white or black we still snap to an inner step (the dedicated endpoints
-  // are separate; the inner pinned shade reproduces the input hex literally).
+  // white or black we still snap to an inner step and reproduce the input
+  // hex literally there.
   const snapInner = nearestIndex(inputOklch.l, stepLs);
 
-  const inner: Shade[] = stepLs.map((l, i) => {
+  const shades: Shade[] = stepLs.map((l, i) => {
     if (i === snapInner) {
       return { hex: input, oklch: inputOklch, isInput: true };
     }
@@ -98,8 +81,5 @@ export function oklchRamp(input: Hex): ContinuousRamp {
     return { hex, oklch };
   });
 
-  const shades: Shade[] = [whiteShade(), ...inner, blackShade()];
-  // inputIndex is offset by 1 because whiteShade() is at index 0.
-  const inputIndex = snapInner + 1;
-  return { mode: 'oklch', shades, inputIndex };
+  return { mode: 'oklch', shades, inputIndex: snapInner };
 }

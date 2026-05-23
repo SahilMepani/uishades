@@ -104,13 +104,15 @@ export default function HomeColorPicker() {
         className="relative inline-flex h-[52px] w-[52px] items-center justify-center border-r border-ink/80 transition-[background-color] duration-150 ease-out motion-reduce:transition-none"
         style={picked ? { backgroundColor: hex } : undefined}
       >
-        {picked ? (
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-paper/85 text-ink ring-1 ring-ink/15 shadow-sm">
-            <PickerIcon className="h-3 w-3" />
-          </span>
-        ) : (
-          <PickerIcon className="h-4 w-4 text-ink" />
-        )}
+        <span className="inline-flex transition-transform duration-150 ease-out group-hover:scale-110 group-focus-visible:scale-110 motion-reduce:transition-none motion-reduce:group-hover:scale-100 motion-reduce:group-focus-visible:scale-100">
+          {picked ? (
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-paper/85 text-ink ring-1 ring-ink/15 shadow-sm">
+              <PickerIcon className="h-3 w-3" />
+            </span>
+          ) : (
+            <PickerIcon className="h-4 w-4 text-ink" />
+          )}
+        </span>
       </span>
     </ColorPicker>
   );
