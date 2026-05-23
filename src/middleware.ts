@@ -25,9 +25,18 @@
  *   no third-party font/style origins are needed. The `'unsafe-inline'`
  *   on `script-src` is needed for the JSON-LD blocks and the home-page
  *   inline form-handler; audit Tier 2.4 tracks tightening this via
- *   nonces later.
+ *   nonces later. GTM and GA4 are allow-listed across script-src
+ *   (gtm.js loader), connect-src (collect-endpoint beacons including
+ *   regional subdomains like region1.google-analytics.com), and
+ *   img-src (legacy pixel beacons). Without these GTM is silently
+ *   broken in production.
  */
 import { defineMiddleware } from 'astro:middleware';
+
+const GTM = 'https://www.googletagmanager.com';
+const GA = 'https://www.google-analytics.com';
+const GA_REGIONS = 'https://*.google-analytics.com';
+const GA_ALT = 'https://analytics.google.com';
 
 const SECURITY_HEADERS: Record<string, string> = {
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
@@ -40,9 +49,10 @@ const SECURITY_HEADERS: Record<string, string> = {
     "default-src 'self'",
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self' data:",
-    "img-src 'self' data: blob:",
-    "script-src 'self' 'unsafe-inline'",
-    "connect-src 'self'",
+    `img-src 'self' data: blob: ${GTM} ${GA}`,
+    `script-src 'self' 'unsafe-inline' ${GTM}`,
+    `connect-src 'self' ${GTM} ${GA} ${GA_REGIONS} ${GA_ALT}`,
+    `frame-src ${GTM}`,
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",

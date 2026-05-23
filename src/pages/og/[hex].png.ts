@@ -104,12 +104,18 @@ export const GET: APIRoute = async ({ params }) => {
     </div>
   `;
 
-  return new ImageResponse(html, {
+  // workers-og emits its own default Cache-Control. If we pass one via the
+  // constructor's `headers` option it gets appended alongside the default,
+  // producing a duplicated `Cache-Control` header on the wire that some
+  // CDN / browser combos handle by taking the most-restrictive value
+  // (often `no-store`), wiping the long-cache intent. Construct the
+  // response without a `headers` option, then `.set()` after so we own
+  // exactly one Cache-Control value.
+  const resp = new ImageResponse(html, {
     width: 1200,
     height: 630,
     format: 'png',
-    headers: {
-      'cache-control': 'public, max-age=2592000, immutable',
-    },
   });
+  resp.headers.set('Cache-Control', 'public, max-age=2592000, immutable');
+  return resp;
 };

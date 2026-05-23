@@ -124,6 +124,10 @@ Astro.response.headers.set(
     <meta property="og:description" content={DESCRIPTION} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:alt" content={named ? `Tints and shades of ${hexLabel} (${named.name})` : `Tints and shades of ${hexLabel}`} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={TITLE} />
     <meta name="twitter:description" content={DESCRIPTION} />
@@ -136,18 +140,13 @@ Astro.response.headers.set(
     <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W6D48RVL" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
-    <main class="mx-auto max-w-6xl px-6 pt-10 pb-24 lg:pt-14">
-      <header class="mb-8 lg:mb-12">
-        <p class="eyebrow mb-3">Tints &amp; shades</p>
-        <h1 class="display text-[clamp(2rem,6vw,4rem)]">
-          {hexLabel}{named && <span class="text-mute"> · {named.name}</span>}
-        </h1>
-        <p class="mt-3 max-w-prose font-display text-base text-ink-2">
-          {named
-            ? `${hexLabel} — also known as ${named.name}. OKLCH ramp, 11-stop Tailwind scale, and copy-ready exports.`
-            : `OKLCH ramp, 11-stop Tailwind scale, and copy-ready exports for ${hexLabel}.`}
-        </p>
-      </header>
+    <main class="mx-auto max-w-6xl px-6 pt-4 pb-24 lg:pt-6">
+      {/* Visually hidden H1 — kept in the DOM so screen readers get a page
+          heading and Googlebot / AI crawlers see the hex keyword as the
+          primary topic. The tool itself owns the visible hierarchy. */}
+      <h1 class="sr-only">
+        Tints &amp; shades of {hexLabel}{named && <span> · {named.name}</span>}
+      </h1>
 
       <ShadeTool
         client:load
@@ -171,7 +170,6 @@ Astro.response.headers.set(
             <a href="/" class="text-ink hover:text-accent">uishades.com</a> · {hexLabel}
           </p>
           <nav aria-label="Footer" class="flex gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
-            <a href="/" class="text-ink hover:text-accent">Home</a>
             <a href="/colors/coral" class="text-ink hover:text-accent">Named colors</a>
           </nav>
         </div>

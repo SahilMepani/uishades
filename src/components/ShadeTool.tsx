@@ -425,7 +425,7 @@ function ShadeToolInner({
 
           <div className={`flex items-baseline justify-between gap-4${view === 'scale' ? ' border-b border-hairline pb-2' : ''}`}>
             {view === 'ramp' ? (
-              <span className="eyebrow">SHADES</span>
+              <span className="eyebrow">Tints and Shades</span>
             ) : (
               <span className="eyebrow">Scale</span>
             )}

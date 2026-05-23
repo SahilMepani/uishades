@@ -51,16 +51,25 @@ const related = (color.related || [])
 const TITLE = `${color.name} (${color.hex.toUpperCase()}) Color Shades, Tints & Palette | uishades.com`;
 
 function buildDescription(blurb: string): string {
-  const parts = blurb.split('. ');
+  // Strip inline `code` ticks before any length math so character budgets
+  // reflect what Google actually renders in the SERP.
+  const clean = blurb.replace(/`([^`]+)`/g, '$1');
+  // Prefer to end on a complete sentence. Take as many whole sentences as
+  // fit under the 160-char SERP limit; never truncate mid-sentence on a
+  // conjunction like "but" or "and", which reads as broken in search
+  // results (the original bug on /colors/coral was "...underwater but...").
+  const sentences = clean.split(/(?<=\.) /);
   let out = '';
-  for (let i = 0; i < parts.length; i++) {
-    const piece = parts[i].endsWith('.') ? parts[i] : parts[i] + '.';
-    out = out ? out + ' ' + piece : piece;
-    if (out.length >= 120) break;
+  for (const s of sentences) {
+    const next = out ? out + ' ' + s : s;
+    if (next.length > 160) break;
+    out = next;
   }
-  out = out.replace(/`([^`]+)`/g, '$1');
-  if (out.length <= 160) return out;
-  const trimmed = out.slice(0, 157);
+  if (out) return out;
+  // Edge case: the first sentence alone is already >160 chars. Fall back
+  // to word-boundary truncation with an ellipsis — ugly, but only reached
+  // by unusually long opening sentences in named-color blurbs.
+  const trimmed = clean.slice(0, 157);
   const lastSpace = trimmed.lastIndexOf(' ');
   return (lastSpace > 100 ? trimmed.slice(0, lastSpace) : trimmed) + '...';
 }
@@ -159,6 +168,10 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
     <meta property="og:description" content={DESCRIPTION} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:alt" content={`${color.name} (${color.hex.toUpperCase()}) — tints, shades, and palette`} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={TITLE} />
     <meta name="twitter:description" content={DESCRIPTION} />
@@ -290,7 +303,6 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
             <a href="/" class="text-ink hover:text-accent">uishades.com</a> — {color.name}
           </p>
           <nav aria-label="Footer" class="flex gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
-            <a href="/" class="text-ink hover:text-accent">Home</a>
             <a href={`/${color.hex.slice(1)}`} class="text-ink hover:text-accent">Open in tool</a>
           </nav>
         </div>
