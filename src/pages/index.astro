@@ -29,15 +29,64 @@ const DESCRIPTION =
   'Find tints and shades of any hex color, free. OKLCH ramps, Tailwind 11-stop scales, exports you can paste straight into your code.';
 const OG = 'https://uishades.com/og/777777.png';
 
-const jsonLd = {
+const orgJsonLd = {
   '@context': 'https://schema.org',
-  '@type': 'WebApplication',
+  '@type': 'Organization',
+  '@id': 'https://uishades.com/#org',
+  name: 'uishades.com',
+  url: 'https://uishades.com/',
+  logo: {
+    '@type': 'ImageObject',
+    url: 'https://uishades.com/favicon.svg',
+    width: 512,
+    height: 512,
+  },
+};
+
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  '@id': 'https://uishades.com/#website',
+  url: 'https://uishades.com/',
+  name: 'uishades.com',
+  description: DESCRIPTION,
+  inLanguage: 'en',
+  publisher: { '@id': 'https://uishades.com/#org' },
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: 'https://uishades.com/?hex={search_term_string}',
+    },
+    'query-input': 'required name=search_term_string',
+  },
+};
+
+const appJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  '@id': 'https://uishades.com/#app',
   name: 'uishades.com',
   url: 'https://uishades.com/',
   description: DESCRIPTION,
   applicationCategory: 'DesignApplication',
+  applicationSubCategory: 'Color Tool',
   operatingSystem: 'Any',
+  browserRequirements: 'Requires JavaScript. Modern evergreen browser.',
+  inLanguage: 'en',
+  isAccessibleForFree: true,
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  publisher: { '@id': 'https://uishades.com/#org' },
+  image: OG,
+  screenshot: OG,
+  featureList: [
+    'OKLCH-anchored color ramps',
+    'Classic RGB-walk shade algorithm',
+    '11-stop Tailwind scale generation',
+    'Exports for Tailwind v4 @theme, Tailwind v3 config, CSS variables, W3C Design Tokens, Figma Variables',
+    'WCAG contrast badges on every shade',
+    'Permanent shareable URL for every hex',
+  ],
 };
 
 ---
@@ -60,7 +109,9 @@ const jsonLd = {
     <meta name="twitter:description" content={DESCRIPTION} />
     <meta name="twitter:image" content={OG} />
 
-    <script type="application/ld+json" set:html={safeJsonForScript(jsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(orgJsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(websiteJsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(appJsonLd)} />
   </head>
   <body class="bg-paper text-ink">
     <!-- Google Tag Manager (noscript) -->
@@ -191,9 +242,7 @@ const jsonLd = {
           return null;
         }
 
-        form.addEventListener('submit', function (e) {
-          e.preventDefault();
-          var raw = input.value;
+        function resolveAndGo(raw) {
           if (!raw || !raw.trim()) {
             input.focus();
             return;
@@ -221,7 +270,23 @@ const jsonLd = {
           window.location.assign(
             '/4040ff?seed=' + encodeURIComponent(raw.trim()),
           );
+        }
+
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          resolveAndGo(input.value);
         });
+
+        // SearchAction urlTemplate target: /?hex={search_term_string}.
+        // Pick up the param at load so external search-engine deep-links
+        // land users on the resolved color page instead of an empty form.
+        try {
+          var seed = new URL(window.location.href).searchParams.get('hex');
+          if (seed && seed.trim()) {
+            input.value = seed.trim();
+            resolveAndGo(seed);
+          }
+        } catch (_) { /* ignore */ }
       })();
     </script>
 

@@ -1,38 +1,33 @@
 ---
 /**
  * Shared <head> chrome: favicon, charset, viewport, generator, and the
- * Google Fonts loading sequence (preconnect -> preload -> stylesheet).
+ * self-hosted font loading sequence.
  *
  * Per-page meta — <title>, <meta name="description">, canonical URL,
  * OG/Twitter cards, and the JSON-LD <script> block — stays in each
  * page's own <head> because every page renders them with different
  * content. This component handles only the truly shared bits.
  *
- * Font loading rationale (audit Tier 1.2):
- *   - `@import url(fonts.googleapis.com/...)` lines inside CSS are
- *     render-blocking: the browser can't issue the font HTTP request
- *     until the CSS itself has finished downloading and parsing. That
- *     adds ~100-300 ms to FCP on cold visits.
- *   - Moving to <link rel="preconnect"> + <link rel="preload" as="style">
- *     + <link rel="stylesheet"> lets the browser open the TLS connection
- *     to fonts.gstatic.com in parallel with HTML parsing, fetch the
- *     stylesheet itself with high priority, and discover the font URLs
- *     much earlier.
- *   - Both font URLs are combined into a single Google Fonts CSS
- *     request via the `family=` repetition syntax so we only pay one
- *     round trip instead of two.
- *   - `display=swap` keeps the fallback visible during the swap window
- *     so we never block paint waiting for the webfont.
+ * Font loading rationale:
+ *   - Fonts are self-hosted via Astro's `fonts` config (see
+ *     `astro.config.mjs`). The integration downloads the woff2 files at
+ *     build time, ships them from our own origin, and auto-generates a
+ *     metric-overridden fallback @font-face so the system-font fallback
+ *     occupies the same box as Geist — zero CLS when the swap happens.
+ *   - `font-display: 'optional'` keeps first paint instant: if the woff2
+ *     hasn't arrived in the ~100 ms block period the browser keeps the
+ *     fallback for the whole pageview and warms the cache for next time.
+ *     Combined with the size-adjusted fallback this means visitors on
+ *     slow connections read a metric-matched system font instead of a
+ *     mid-load swap.
+ *   - The `<Font preload />` on Geist emits `<link rel="preload">` for
+ *     every Geist weight so the LCP element (a `.display`-class heading
+ *     in Geist 700) has the best possible chance of painting in Geist on
+ *     a cold visit. JetBrains Mono is not preloaded — the mono fallback
+ *     is acceptable on first paint and the bytes are better spent on the
+ *     sans family that drives perceived render.
  */
-
-// A single combined Google Fonts URL: one round trip, two font families.
-// Latin subset (the default) covers our copy without per-page `text=`
-// hashing. Audit Tier 2.4 tracks a deeper subset for display strings.
-const GOOGLE_FONTS_HREF =
-  'https://fonts.googleapis.com/css2?' +
-  'family=Geist:wght@400;500;600;700' +
-  '&family=JetBrains+Mono:wght@400;500;600' +
-  '&display=swap';
+import { Font } from 'astro:assets';
 ---
 
 <!-- Google Tag Manager -->
@@ -51,11 +46,9 @@ const GOOGLE_FONTS_HREF =
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="icon" href="/favicon.ico" />
 
-{/* Font loading: preconnect -> preload -> stylesheet. The stylesheet
-    <link> is the actual blocking resource the browser uses; the
-    preload primes the cache so it resolves nearly instantly, and the
-    preconnects open both TCP+TLS handshakes ahead of the GET. */}
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="preload" as="style" href={GOOGLE_FONTS_HREF} />
-<link rel="stylesheet" href={GOOGLE_FONTS_HREF} media="all" />
+{/* Self-hosted fonts via Astro's fonts API. Geist is preloaded because the
+    LCP element on most pages is a `.display`-class heading set in Geist 700;
+    JetBrains Mono is loaded without preload (used for secondary hex/mono
+    strings whose fallback is acceptable on first paint). */}
+<Font cssVariable="--font-geist" preload />
+<Font cssVariable="--font-jb-mono" />

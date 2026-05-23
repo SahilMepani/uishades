@@ -16,8 +16,13 @@
  * we already had that rule, but now the chrome doesn't invert either.
  */
 
-/* Google Fonts are loaded via <link> tags in BaseHead.astro so they
- * don't render-block on CSS parsing. See that file for the rationale. */
+/* Fonts are self-hosted via Astro's `fonts` config (astro.config.mjs) and
+ * registered through the <Font> component in BaseHead.astro. Astro emits the
+ * `--font-geist` and `--font-jb-mono` CSS variables at :root with the full
+ * font-family chain — primary face, metric-overridden fallback, then the
+ * system stack we configured. We forward those into the @theme tokens
+ * Tailwind v4 turns into `font-sans` / `font-mono` / `font-display`
+ * utilities so nothing else in the codebase has to change. */
 
 @theme {
   --color-paper:        #faf8f3;
@@ -33,9 +38,9 @@
   --color-accent-soft:  #f4dccb;
   --color-paper-rule:   #2a2826;
 
-  --font-display: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-sans:    'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display: var(--font-geist);
+  --font-sans:    var(--font-geist);
+  --font-mono:    var(--font-jb-mono);
 }
 
 /* ----- Base reset & typography ---------------------------------------- */

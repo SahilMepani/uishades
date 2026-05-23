@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
+import { defineConfig, fontProviders } from 'astro/config';
 import react from '@astrojs/react';
 import cloudflare from '@astrojs/cloudflare';
 import sitemap from '@astrojs/sitemap';
@@ -41,4 +41,44 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
   },
+  // Self-host Geist and JetBrains Mono via Astro's fonts API. The integration
+  // downloads woff2 files at build time, emits an @font-face rule with the
+  // chosen `display` value, and (because `optimizedFallbacks` defaults to
+  // true) generates a metric-overridden fallback @font-face so the
+  // system-font fallback occupies the same box as the real webfont — no CLS
+  // when the swap happens, and `display: 'optional'` means the user's first
+  // paint isn't held up at all.
+  fonts: [
+    {
+      name: 'Geist',
+      cssVariable: '--font-geist',
+      provider: fontProviders.google(),
+      weights: [400, 500, 600, 700],
+      styles: ['normal'],
+      subsets: ['latin'],
+      display: 'optional',
+      fallbacks: [
+        'ui-sans-serif',
+        'system-ui',
+        '-apple-system',
+        'Segoe UI',
+        'sans-serif',
+      ],
+    },
+    {
+      name: 'JetBrains Mono',
+      cssVariable: '--font-jb-mono',
+      provider: fontProviders.google(),
+      weights: [400, 500, 600],
+      styles: ['normal'],
+      subsets: ['latin'],
+      display: 'optional',
+      fallbacks: [
+        'ui-monospace',
+        'SFMono-Regular',
+        'Menlo',
+        'monospace',
+      ],
+    },
+  ],
 });

@@ -71,15 +71,61 @@ const ogImage = `https://uishades.com/og/${color.hex.slice(1)}.png`;
 
 const plainBlurb = color.blurb.replace(/`([^`]+)`/g, '$1');
 
-const jsonLd = {
+const breadcrumbJsonLd = {
   '@context': 'https://schema.org',
-  '@type': 'Thing',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Home',
+      item: 'https://uishades.com/',
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: color.name,
+      item: canonicalUrl,
+    },
+  ],
+};
+
+const colorPageJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CreativeWork',
+  '@id': `${canonicalUrl}#article`,
+  headline: `${color.name} (${color.hex.toUpperCase()}) — Tints, Shades & Palette`,
   name: color.name,
-  alternateName: color.aliases ?? [],
+  alternateName: color.aliases && color.aliases.length > 0 ? color.aliases : undefined,
   description: plainBlurb,
   url: canonicalUrl,
   identifier: color.hex.toUpperCase(),
-  color: color.hex,
+  inLanguage: 'en',
+  isAccessibleForFree: true,
+  isPartOf: { '@id': 'https://uishades.com/#website' },
+  publisher: { '@id': 'https://uishades.com/#org' },
+  image: {
+    '@type': 'ImageObject',
+    url: ogImage,
+    width: 1200,
+    height: 630,
+    caption: `OG preview card for ${color.name} (${color.hex.toUpperCase()})`,
+  },
+  keywords: [
+    color.name,
+    color.hex.toUpperCase(),
+    `${color.family} color`,
+    'color shades',
+    'color tints',
+    'tailwind scale',
+    'oklch ramp',
+  ],
+  about: {
+    '@type': 'Thing',
+    name: color.name,
+    identifier: color.hex.toUpperCase(),
+    sameAs: color.aliases ?? [],
+  },
 };
 
 const prefs = readInitialPrefs(Astro.url);
@@ -118,7 +164,8 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
     <meta name="twitter:description" content={DESCRIPTION} />
     <meta name="twitter:image" content={ogImage} />
 
-    <script type="application/ld+json" set:html={safeJsonForScript(jsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(breadcrumbJsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(colorPageJsonLd)} />
   </head>
   <body class="bg-paper text-ink">
     <!-- Google Tag Manager (noscript) -->

@@ -19,12 +19,13 @@
  * - `Permissions-Policy`: deny camera, mic, geolocation, payment, accel.
  *   `clipboard-write=(self)` is required for the copy buttons on the
  *   shade tool to work.
- * - `Content-Security-Policy`: tight default-src 'self' with explicit
- *   allowlists for Google Fonts (style + font), inline styles, data:/blob:
- *   images (canvas exports, OG worker), and inline scripts. The
- *   `'unsafe-inline'` on `script-src` is needed for the JSON-LD blocks
- *   and the home-page inline form-handler; audit Tier 2.4 tracks
- *   tightening this via nonces later.
+ * - `Content-Security-Policy`: tight default-src 'self' with allowlists
+ *   for inline styles, data:/blob: images (canvas exports, OG worker),
+ *   and inline scripts. Fonts are self-hosted via Astro's fonts API so
+ *   no third-party font/style origins are needed. The `'unsafe-inline'`
+ *   on `script-src` is needed for the JSON-LD blocks and the home-page
+ *   inline form-handler; audit Tier 2.4 tracks tightening this via
+ *   nonces later.
  */
 import { defineMiddleware } from 'astro:middleware';
 
@@ -37,8 +38,8 @@ const SECURITY_HEADERS: Record<string, string> = {
     'clipboard-write=(self), accelerometer=(), camera=(), microphone=(), geolocation=(), payment=()',
   'Content-Security-Policy': [
     "default-src 'self'",
-    "style-src 'self' https://fonts.googleapis.com 'unsafe-inline'",
-    "font-src 'self' https://fonts.gstatic.com data:",
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self' data:",
     "img-src 'self' data: blob:",
     "script-src 'self' 'unsafe-inline'",
     "connect-src 'self'",

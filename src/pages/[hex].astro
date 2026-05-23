@@ -49,13 +49,52 @@ const DESCRIPTION = named
 const ogImage = `https://uishades.com/og/${canonical.slice(1)}.png`;
 const canonicalUrl = `https://uishades.com/${canonical.slice(1)}`;
 
-const jsonLd = {
+const breadcrumbJsonLd = {
   '@context': 'https://schema.org',
-  '@type': 'Thing',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Home',
+      item: 'https://uishades.com/',
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: hexLabel,
+      item: canonicalUrl,
+    },
+  ],
+};
+
+const hexPageJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CreativeWork',
+  '@id': `${canonicalUrl}#page`,
+  headline: named
+    ? `Hex Color ${hexLabel} (${named.name}) — Tints & Shades`
+    : `Hex Color ${hexLabel} — Tints & Shades`,
   name: named?.name ?? `Hex color ${hexLabel}`,
   description: DESCRIPTION,
   url: canonicalUrl,
   identifier: hexLabel,
+  inLanguage: 'en',
+  isAccessibleForFree: true,
+  isPartOf: { '@id': 'https://uishades.com/#website' },
+  publisher: { '@id': 'https://uishades.com/#org' },
+  image: {
+    '@type': 'ImageObject',
+    url: ogImage,
+    width: 1200,
+    height: 630,
+    caption: `OG preview card for ${hexLabel}`,
+  },
+  about: {
+    '@type': 'Thing',
+    name: named?.name ?? hexLabel,
+    identifier: hexLabel,
+  },
 };
 
 const prefs = readInitialPrefs(Astro.url);
@@ -90,13 +129,26 @@ Astro.response.headers.set(
     <meta name="twitter:description" content={DESCRIPTION} />
     <meta name="twitter:image" content={ogImage} />
 
-    <script type="application/ld+json" set:html={safeJsonForScript(jsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(breadcrumbJsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(hexPageJsonLd)} />
   </head>
   <body class="bg-paper text-ink">
     <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W6D48RVL" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
     <main class="mx-auto max-w-6xl px-6 pt-10 pb-24 lg:pt-14">
+      <header class="mb-8 lg:mb-12">
+        <p class="eyebrow mb-3">Tints &amp; shades</p>
+        <h1 class="display text-[clamp(2rem,6vw,4rem)]">
+          {hexLabel}{named && <span class="text-mute"> · {named.name}</span>}
+        </h1>
+        <p class="mt-3 max-w-prose font-display text-base text-ink-2">
+          {named
+            ? `${hexLabel} — also known as ${named.name}. OKLCH ramp, 11-stop Tailwind scale, and copy-ready exports.`
+            : `OKLCH ramp, 11-stop Tailwind scale, and copy-ready exports for ${hexLabel}.`}
+        </p>
+      </header>
+
       <ShadeTool
         client:load
         initialHex={canonical}
