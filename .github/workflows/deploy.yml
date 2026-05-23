@@ -1,13 +1,17 @@
 name: Deploy
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
     branches: [main]
 
 jobs:
   deploy:
     name: Build and deploy to Cloudflare Workers
     runs-on: ubuntu-latest
+    # Only deploy when CI (build + Vitest + Playwright) finished green.
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     timeout-minutes: 15
     permissions:
       contents: read
@@ -16,6 +20,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Pin to the exact commit CI verified, not the branch tip,
+          # in case another push landed between CI finishing and this run.
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Setup Node
         uses: actions/setup-node@v4

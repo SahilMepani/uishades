@@ -594,12 +594,12 @@ function PreviewBlock({
           <span className="font-display text-base text-ink-2">{named.name}</span>
         </div>
       )}
-      <dl className="flex flex-col font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
+      <div className="flex flex-col font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
         <CopyableValueRow label="HEX" value={hex} />
         <CopyableValueRow label="OKLCH" value={oklchString} />
         <CopyableValueRow label="RGB" value={rgbString} />
         <CopyableValueRow label="HSL" value={hslString} />
-      </dl>
+      </div>
     </div>
   );
 }
@@ -642,9 +642,9 @@ function CopyableValueRow({ label, value }: { label: string; value: string }) {
       aria-label={`Copy ${label} value`}
       className="-mx-2 flex cursor-pointer items-baseline justify-between gap-4 rounded-sm px-2 py-1 transition-colors duration-200 ease-out hover:bg-paper-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
     >
-      <dt>{label}</dt>
+      <span>{label}</span>
       <div className="flex items-center gap-2">
-        <dd className="font-mono text-sm normal-case tracking-tight text-ink">{value}</dd>
+        <span className="font-mono text-sm normal-case tracking-tight text-ink">{value}</span>
         <span aria-hidden="true" className="inline-flex h-6 w-6 items-center justify-center text-mute">
           <CopyIcon className="h-3.5 w-3.5" />
         </span>

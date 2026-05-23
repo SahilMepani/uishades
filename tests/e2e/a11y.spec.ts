@@ -5,7 +5,8 @@ import AxeBuilder from '@axe-core/playwright';
  * Axe-core accessibility scan on the three canonical entry points:
  *   - /                  (home — pure HTML/CSS, no React island)
  *   - /colors/coral      (pre-rendered named-color page + hydrated island)
- *   - /dev/tool/?c=...   (dev host for the React island in isolation)
+ *   - /4040ff            (SSR /[hex] route + hydrated island; replaces the
+ *                         dev-only /dev/tool host which 404s in production)
  *
  * We assert zero `serious` or `critical` violations. Lower-severity findings
  * (e.g., colour-contrast on decorative shade swatches, where the row body
@@ -13,7 +14,7 @@ import AxeBuilder from '@axe-core/playwright';
  * documented inline. Axe defaults catch all WCAG 2.0/2.1 A and AA rules.
  */
 
-const URLS = ['/', '/colors/coral', '/dev/tool/?c=4040ff'];
+const URLS = ['/', '/colors/coral', '/4040ff'];
 
 for (const url of URLS) {
   test(`axe scan: ${url} has no serious/critical violations`, async ({
@@ -21,7 +22,7 @@ for (const url of URLS) {
   }) => {
     await page.goto(url);
     // Wait for the page to settle. The React island on /colors/coral and
-    // /dev/tool hydrates within a frame or two; load-state is enough.
+    // /4040ff hydrates within a frame or two; load-state is enough.
     await page.waitForLoadState('networkidle');
 
     const results = await new AxeBuilder({ page })

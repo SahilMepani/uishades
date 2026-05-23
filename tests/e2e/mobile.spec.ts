@@ -7,31 +7,33 @@ import { test, expect } from '@playwright/test';
  *   - The sticky preview header stays visible while scrolling shades.
  *   - All tap targets in the shade list are >= 44x44 CSS px (WCAG 2.5.5).
  *   - There is no horizontal scroll at 375 wide.
- *   - Opening the color input doesn't push the sticky header off-screen
- *     (the input itself sits below the preview, so focusing it should keep
- *     the preview pinned at the top).
+ *
+ * Note: the desktop sidebar (PreviewBlock + ColorPicker) is `hidden lg:block`,
+ * so there is no color input on mobile — mobile users change the color by
+ * navigating to a different /[hex] URL or via the home page. The historical
+ * "focusing the color input doesn't push the sticky off-screen" test was
+ * removed when the picker UI dropped its mobile presence.
  *
  * Configured through `testMatch: /mobile\.spec\.ts$/` so only the
  * `mobile-chrome` project picks it up — running it under a desktop viewport
  * would fail because the sticky header is `lg:hidden`.
  */
 
-const DEV_URL = '/dev/tool/?c=4040ff';
+// /dev/tool/ hard-404s in production builds (Wave A audit step A9), and
+// Playwright runs against `npm run preview` (a production build). The real
+// /[hex] SSR route hosts the same React island, so we target it instead.
+const DEV_URL = '/4040ff';
 
 test.describe('mobile (375x667)', () => {
   test('sticky preview stays at the top after scroll', async ({ page }) => {
     await page.goto(DEV_URL);
-    // The sticky header has `top-0 sticky`. Confirm it has a measured top
-    // of 0 before and after scrolling the page.
+    // The sticky header has `top-0 sticky`. Before scrolling, it sits at its
+    // natural flow position (16px on `/[hex].astro` because <main> has pt-4 —
+    // the page heading is sr-only, so the sticky is the first visible thing).
+    // After scrolling past that origin, sticky pins to viewport top === 0.
     const sticky = page.locator('div.sticky.top-0').first();
     await expect(sticky).toBeVisible();
-    const beforeTop = await sticky.evaluate(
-      (el) => el.getBoundingClientRect().top,
-    );
-    expect(beforeTop).toBeCloseTo(0, 0);
 
-    // Scroll the shade list down a lot — the sticky header should still
-    // report top === 0 (it follows the viewport, not the doc).
     await page.evaluate(() => window.scrollTo({ top: 800, behavior: 'auto' }));
     const afterTop = await sticky.evaluate(
       (el) => el.getBoundingClientRect().top,
@@ -64,20 +66,4 @@ test.describe('mobile (375x667)', () => {
     }
   });
 
-  test('focusing the color input does not push sticky header off-screen', async ({
-    page,
-  }) => {
-    await page.goto(DEV_URL);
-    const input = page
-      .getByLabel('Color value')
-      .filter({ visible: true })
-      .first();
-    await input.click();
-    // Sticky header should still be at top == 0 after focusing input.
-    const stickyTop = await page
-      .locator('div.sticky.top-0')
-      .first()
-      .evaluate((el) => el.getBoundingClientRect().top);
-    expect(stickyTop).toBeCloseTo(0, 0);
-  });
 });

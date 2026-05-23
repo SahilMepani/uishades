@@ -14,7 +14,8 @@
     "test:unit": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "lhci": "lhci autorun"
+    "lhci": "lhci autorun",
+    "prepare": "git config core.hooksPath scripts/git-hooks || true"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.5.4",

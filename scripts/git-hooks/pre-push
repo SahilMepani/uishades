@@ -1,0 +1,18 @@
+#!/bin/sh
+# Local mirror of CI (.github/workflows/ci.yml).
+# Runs build + Vitest + full Playwright matrix before allowing the push.
+# Bypass intentionally with: git push --no-verify
+set -e
+
+printf '\n[pre-push] Running CI-equivalent checks before push...\n\n'
+
+printf '[pre-push] 1/3 npm run build\n'
+npm run build
+
+printf '\n[pre-push] 2/3 npm test (Vitest)\n'
+npm test
+
+printf '\n[pre-push] 3/3 npm run test:e2e (Playwright full matrix)\n'
+npm run test:e2e
+
+printf '\n[pre-push] All checks passed. Pushing.\n'
