@@ -15,6 +15,8 @@ import ExportDropdown from './ExportDropdown';
 
 export interface TailwindScaleProps {
   scale: TailwindScaleData;
+  /** Pinned source hex — every non-anchor row renders this in a 20% band. */
+  sourceHex: Hex;
   copyFormat: CopyFormat;
   exportFormat: ExportFormat;
   brandName?: string;
@@ -26,6 +28,7 @@ export interface TailwindScaleProps {
 
 export default function TailwindScale({
   scale,
+  sourceHex,
   copyFormat,
   exportFormat,
   brandName,
@@ -52,6 +55,7 @@ export default function TailwindScale({
           <div role="listitem" key={shade.stop}>
             <ShadeRow
               shade={shade}
+              sourceHex={sourceHex}
               copyFormat={copyFormat}
               brandName={brandName}
               onCopy={onCopy}

@@ -9,14 +9,14 @@ import { useToast } from './Toast';
  *
  * Behavior contract (per the spec):
  *   - Click on the row body = copy hex (or current copy-format preference)
- *   - Double-click on the row body = navigate to that shade's page
- *   - Cmd/Ctrl-click on the navigate link = browser-native open-in-new-tab
- *     (we use a real `<a>` for the navigate icon, not a JS handler)
+ *   - Double-click on the row body = use that shade as the new source
+ *   - Cmd/Ctrl-click on the "use as source" link = browser-native open-in-new-tab
+ *     (we use a real `<a>` for the icon, not a JS handler)
  *   - Mobile: icons always shown; Desktop: icons revealed on hover/focus
  *
  * Keyboard:
  *   - Enter on focused row = copy
- *   - Shift+Enter on focused row = navigate
+ *   - Shift+Enter on focused row = use as source
  *   - ArrowDown/ArrowUp move focus between sibling rows (handled via DOM
  *     traversal of [data-shade-row] elements so this component stays
  *     orchestrator-agnostic).
@@ -24,6 +24,14 @@ import { useToast } from './Toast';
 
 export interface ShadeRowProps {
   shade: Shade;
+  /**
+   * The user-selected source color. Each non-source row renders this in a
+   * 20%-wide band on its left edge so users can compare the row's
+   * tint/shade against the source side-by-side. The source row itself
+   * (shade.isInput) skips the band — splitting source-against-source would
+   * just look like a solid row.
+   */
+  sourceHex: Hex;
   copyFormat: CopyFormat;
   brandName?: string;
   onCopy: (hex: Hex) => void;
@@ -41,11 +49,13 @@ function pickForeground(hex: Hex): 'white' | 'black' {
 
 export default function ShadeRow({
   shade,
+  sourceHex,
   copyFormat,
   brandName,
   onCopy,
   onNavigate,
 }: ShadeRowProps) {
+  const showSourceBand = !shade.isInput;
   const fg = useMemo(() => pickForeground(shade.hex), [shade.hex]);
   const fgClass = fg === 'white' ? 'text-white' : 'text-black';
   // Push the secondary label to 90% opacity. 70% was failing WCAG AA on
@@ -187,8 +197,8 @@ export default function ShadeRow({
     .filter(Boolean)
     .join(' ');
   const ariaLabel = canCopy
-    ? `${visibleLabel}. Click to copy, double-click to open page${shade.isInput ? ' (pinned source)' : ''}`
-    : `${visibleLabel}. Click to open page${shade.isInput ? ' (pinned source)' : ''}`;
+    ? `${visibleLabel}. Click to copy, double-click to use as source${shade.isInput ? ' (pinned source)' : ''}`
+    : `${visibleLabel}. Click to use as source${shade.isInput ? ' (pinned source)' : ''}`;
 
   return (
     <div
@@ -201,21 +211,51 @@ export default function ShadeRow({
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
       onKeyDown={handleKeyDown}
-      style={{ backgroundColor: shade.hex }}
+      style={
+        showSourceBand
+          ? {
+              backgroundColor: shade.hex,
+              backgroundImage: `linear-gradient(to right, ${sourceHex} 20%, ${shade.hex} 20%)`,
+            }
+          : { backgroundColor: shade.hex }
+      }
       className={[
-        'group relative flex w-full items-center justify-between gap-3 px-5 py-3.5',
+        // Same left padding on every row so the hex label (and the source
+        // row's SOURCE badge) line up with one another. Non-source rows
+        // paint a 20% source-color band underneath via the linear-gradient
+        // background; source row paints solid color.
+        'group relative flex w-full items-center justify-between gap-3 py-3.5 pr-5 pl-[calc(20%+0.75rem)]',
         'cursor-pointer select-none',
         'motion-safe:transition-[transform,box-shadow]',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
         `hover:ring-2 hover:ring-inset ${ringHoverClass}`,
-        shade.isInput
-          ? fg === 'white'
-            ? 'relative z-10 scale-[1.03] shadow-[0_10px_28px_-6px_rgba(0,0,0,0.45),0_4px_10px_-4px_rgba(0,0,0,0.35)]'
-            : 'relative z-10 scale-[1.03] shadow-[0_8px_22px_-8px_rgba(0,0,0,0.18),0_2px_6px_-3px_rgba(0,0,0,0.14)]'
-          : '',
+        // Source row sits above its neighbors. The visual horizontal
+        // overflow is drawn by two absolute spans inside the row (below)
+        // so the row's layout box stays the same size as its siblings and
+        // the hex label / SOURCE badge stay pixel-aligned with the rest.
+        shade.isInput ? 'relative z-10' : '',
         fgClass,
       ].join(' ')}
     >
+      {/* Source-row only: two absolute spans extend the visible row a
+          few pixels past its left and right edges so the source row reads
+          as elevated above its neighbors. They sit OUTSIDE the row's
+          layout box, so the row's padding and content positions stay
+          identical to sibling rows. */}
+      {shade.isInput && (
+        <>
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 -left-2 w-2"
+            style={{ backgroundColor: shade.hex }}
+          />
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 -right-2 w-2"
+            style={{ backgroundColor: shade.hex }}
+          />
+        </>
+      )}
       <div className="flex items-center gap-4 font-mono text-sm">
         {shade.stop !== undefined && (
           <span className={`w-10 shrink-0 text-[11px] tracking-[0.14em] uppercase ${subtleFgClass}`}>
@@ -255,7 +295,8 @@ export default function ShadeRow({
         {!shade.isInput && (
           <a
             href={navHref}
-            aria-label={`Open page for ${shade.hex}`}
+            aria-label={`Use ${shade.hex} as source`}
+            title="Use as source"
             onClick={(e) => {
               e.stopPropagation();
               // Let the browser handle modifier/middle-click so cmd/ctrl-click

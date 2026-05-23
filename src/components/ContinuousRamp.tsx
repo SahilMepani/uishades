@@ -15,6 +15,8 @@ import ShadeRow from './ShadeRow';
 
 export interface ContinuousRampProps {
   ramp: ContinuousRampData;
+  /** Pinned source hex — every non-source row renders this in a 20% band. */
+  sourceHex: Hex;
   copyFormat: CopyFormat;
   brandName?: string;
   onCopy: (hex: Hex) => void;
@@ -23,6 +25,7 @@ export interface ContinuousRampProps {
 
 export default function ContinuousRamp({
   ramp,
+  sourceHex,
   copyFormat,
   brandName,
   onCopy,
@@ -40,6 +43,7 @@ export default function ContinuousRamp({
         <div role="listitem" key={`${shade.hex}-${i}`}>
           <ShadeRow
             shade={shade}
+            sourceHex={sourceHex}
             copyFormat={copyFormat}
             brandName={brandName}
             onCopy={onCopy}

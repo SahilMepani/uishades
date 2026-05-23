@@ -26,8 +26,13 @@ interface ToastEntry {
   message: string;
 }
 
+interface PushToastOptions {
+  /** Override the default auto-dismiss duration. */
+  durationMs?: number;
+}
+
 interface ToastContextValue {
-  pushToast: (message: string) => void;
+  pushToast: (message: string, opts?: PushToastOptions) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -48,13 +53,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastEntry[]>([]);
   const idRef = useRef(0);
 
-  const pushToast = useCallback((message: string) => {
+  const pushToast = useCallback((message: string, opts?: PushToastOptions) => {
     const id = ++idRef.current;
     setToasts(prev => [...prev, { id, message }]);
-    // Auto-dismiss
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
-    }, TOAST_LIFETIME_MS);
+    }, opts?.durationMs ?? TOAST_LIFETIME_MS);
   }, []);
 
   const value = useMemo(() => ({ pushToast }), [pushToast]);

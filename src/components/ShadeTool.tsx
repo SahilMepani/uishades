@@ -59,6 +59,7 @@ const STORAGE_KEYS = {
   rampMode: 'shades.rampMode',
   exportFormat: 'shades.exportFormat',
   view: 'shades.view',
+  seenDoubleClickHint: 'shades.seenDoubleClickHint',
 } as const;
 
 type View = 'ramp' | 'scale';
@@ -350,12 +351,22 @@ function ShadeToolInner({
 
   // Copy-success toasts are now fired by ShadeRow / ExportDropdown
   // themselves — they're the only places that know whether the underlying
-  // clipboard write actually resolved. We keep these callbacks as hooks for
-  // any future "this row was just copied" analytics, but they no longer
-  // double-fire a toast.
+  // clipboard write actually resolved. We piggyback on this callback to
+  // teach the double-click-to-use-as-source gesture once per user: after
+  // their first successful shade copy we queue a longer-lived tip toast
+  // (delayed so it doesn't stack on top of the "Copied" toast).
   const handleCopyShade = useCallback((_h: Hex) => {
-    // intentionally no-op; row owns the toast
-  }, []);
+    if (typeof window === 'undefined') return;
+    try {
+      if (window.localStorage.getItem(STORAGE_KEYS.seenDoubleClickHint) === 'true') return;
+      window.localStorage.setItem(STORAGE_KEYS.seenDoubleClickHint, 'true');
+    } catch {
+      return;
+    }
+    window.setTimeout(() => {
+      pushToast('Tip: double-click a shade to use it as your source.', { durationMs: 8000 });
+    }, 1400);
+  }, [pushToast]);
 
   // Update in place instead of full navigation. The `hex` effect calls
   // syncUrl which rewrites the path on /[hex] routes, so the URL still
@@ -446,6 +457,7 @@ function ShadeToolInner({
           {view === 'ramp' ? (
             <ContinuousRamp
               ramp={ramp}
+              sourceHex={hex}
               copyFormat={copyFormat}
               brandName={brandName}
               onCopy={handleCopyShade}
@@ -455,6 +467,7 @@ function ShadeToolInner({
             <Suspense fallback={<TailwindScaleFallback />}>
               <TailwindScale
                 scale={scale}
+                sourceHex={hex}
                 copyFormat={copyFormat}
                 exportFormat={exportFormat}
                 brandName={brandName}
