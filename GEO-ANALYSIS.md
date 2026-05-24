@@ -7,9 +7,9 @@
 
 ---
 
-## GEO Readiness Score: **67 / 100** — Solid foundation, two real gaps
+## GEO Readiness Score: **76 / 100** — Strong foundation, enhancements left
 
-The fundamentals are good: server-side rendered content, clean schema, a coherent crawler policy, and genuinely citable editorial prose. The score is held back by three things — (1) the **core answer for "shades/tints of X" is rendered client-side** and invisible to AI crawlers, (2) **no `llms.txt`**, and (3) a **zero brand footprint** (the strongest single correlate of AI visibility). None is a blocker; all are fixable.
+The fundamentals are strong: the OKLCH shade ramp **is server-rendered** (verified — the literal answer to "shades of X" is in the crawlable HTML), schema is clean, the crawler policy is coherent, and the editorial prose is genuinely citable. What's left are enhancements, not blockers — (1) **no `llms.txt`**, (2) **no `FAQPage` schema / dates**, and (3) a **zero brand footprint** (the strongest single correlate of AI visibility). Secondary: the Tailwind scale and Classic ramp (both non-default views) aren't in the SSR HTML.
 
 > **Read this first — the robots.txt is a deliberate "allow AI citation, block AI training" policy, and it's working as intended.** Cloudflare's *Managed robots.txt* (Scrape Shield / AI Audit) is active and blocks AI **training** crawlers — GPTBot (OpenAI training), Google-Extended (Gemini training), ClaudeBot (**Anthropic training**), CCBot, Applebot-Extended, Bytespider, Amazonbot, meta-externalagent — while allowing the **search/retrieval** crawlers that actually produce citations: OAI-SearchBot, ChatGPT-User, PerplexityBot, and (not in the block list, so allowed) Anthropic's Claude-SearchBot and Claude-User, plus traditional search (Googlebot, Bingbot). **Search-citation access is preserved on every major AI platform, including Claude.** The training blocks do not reduce citation surface.
 
@@ -19,11 +19,11 @@ The fundamentals are good: server-side rendered content, clean schema, a coheren
 
 | Platform | Score | Reasoning |
 |---|---|---|
-| **Google AI Overviews** | 72 / 100 | Googlebot allowed; AIO is served from the **main index**, so the `Google-Extended` block (Gemini training only) does **not** affect it. Content is SSR, schema is clean. Capped because the shade ramp — the literal answer to "shades of X" — isn't in crawlable HTML. |
-| **ChatGPT search** | 70 / 100 | `OAI-SearchBot` (search index) and `ChatGPT-User` (live retrieval) are **both allowed**. The `GPTBot` block is **training-only** and does not reduce citation surface. Same client-side-ramp cap. |
-| **Perplexity** | 60 / 100 | `PerplexityBot` allowed, content crawlable. Capped harder because Perplexity cites Reddit ~47% of the time and the brand has **zero Reddit presence**. |
-| **Bing Copilot** | 66 / 100 | `Bingbot` allowed; supports IndexNow (not yet wired). Standard Bing-index citation path is open. |
-| **Claude (web)** | 62 / 100 | The blocked `ClaudeBot` is Anthropic's **training** crawler (the GPTBot analog) — blocking it does **not** affect citations. The bots that drive Claude citations, `Claude-SearchBot` (search index) and `Claude-User` (live retrieval), are **not** in Cloudflare's block list, so they're allowed under `*`. Same client-side-ramp cap as the others. |
+| **Google AI Overviews** | 82 / 100 | Googlebot allowed; AIO is served from the **main index**, so the `Google-Extended` block (Gemini training only) does **not** affect it. Content is SSR — **including the OKLCH shade ramp** (verified) — and schema is clean. Capped mainly by the missing `llms.txt`/FAQ schema, not content. |
+| **ChatGPT search** | 80 / 100 | `OAI-SearchBot` (search index) and `ChatGPT-User` (live retrieval) are **both allowed**. The `GPTBot` block is **training-only** and does not reduce citation surface. Content incl. the ramp is crawlable. |
+| **Perplexity** | 66 / 100 | `PerplexityBot` allowed, content crawlable. Capped because Perplexity cites Reddit ~47% of the time and the brand has **zero Reddit presence**. |
+| **Bing Copilot** | 74 / 100 | `Bingbot` allowed; supports IndexNow (not yet wired). Standard Bing-index citation path is open. |
+| **Claude (web)** | 72 / 100 | The blocked `ClaudeBot` is Anthropic's **training** crawler (the GPTBot analog) — blocking it does **not** affect citations. The bots that drive Claude citations, `Claude-SearchBot` (search index) and `Claude-User` (live retrieval), are **not** in Cloudflare's block list, so they're allowed under `*`. |
 
 ---
 
@@ -97,10 +97,11 @@ AI crawlers do **not** execute JavaScript. What's in the initial HTML is what ge
 | OKLCH L/C/H values, family, aliases (`<dl>`) | ✅ Yes | ✅ |
 | Complementary / triadic / analogous **palette plate** (5 swatches + hexes) | ✅ Yes | ✅ |
 | JSON-LD (Organization, WebSite, SoftwareApplication, BreadcrumbList, CreativeWork) | ✅ Yes | ✅ |
-| **The 20-shade OKLCH ramp** (the actual tints/shades + their hex values) | ❌ No — inside `<ShadeTool client:load>` | ❌ |
-| **The 11-stop Tailwind scale** (50…950 values) | ❌ No — React island | ❌ |
+| **The 20-shade OKLCH ramp** (default view — actual shades + hex values) | ✅ **Yes** — `client:load` SSRs the non-lazy ramp; verified live (177 hex codes) | ✅ |
+| **The 11-stop Tailwind scale** (50…950) | ❌ No — `lazy()` + `Suspense`, and only in the non-default "scale" view | ⚠️ |
+| **The Classic ramp** (alternate algorithm) | ❌ No — only rendered in the non-default "classic" mode | ⚠️ |
 
-**This is the single biggest GEO gap.** A page titled "Coral (#FF7F50) Color Shades, Tints & Palette" answers *"what is coral"* well, but an AI crawler reading the HTML **cannot extract the actual shade/tint hex values** — they're computed in the client island. For the headline query class ("shades of coral", "tints of #ff7f50"), the literal answer is invisible to the crawler. The 5-color harmony palette *is* server-rendered (good), but the 20-step ramp and Tailwind scale — the product's whole point — are not.
+**Correction from an earlier draft of this report: the OKLCH ramp IS server-rendered.** Astro's `client:load` runs the island through SSR; because the ramp is computed in render (`useMemo`) and `ContinuousRamp` is a non-lazy import, the 20 shade hexes for the page's color land in the static HTML (verified: 177 hex codes on the live `/colors/coral`, "20 stops · oklch"). So the headline query — "shades of coral" — *is* answerable from crawlable HTML. The remaining gaps are secondary: the **Tailwind scale** (lazy-loaded + only in the non-default "scale" view) and the **Classic ramp** (only in the non-default algorithm) are JS-gated. Whether to SSR those is a trade-off against the initial-load-JS perf win the lazy split currently buys.
 
 ---
 
@@ -113,7 +114,7 @@ The editorial blurbs are a genuine strength — definition-first, self-contained
 - ✅ Opens with the `X is…` definition pattern — ideal for AI extraction.
 - ✅ Self-contained, specific facts (Pantone 2019, contrast guidance), no fluff.
 - ⚠️ ~105 words — **just under the 134–167-word optimal citation band.** Extending each blurb by 2–3 sentences (usage, pairing hexes, accessibility note) lands it in the sweet spot.
-- ⚠️ The factual data points (OKLCH values, contrast ratios, the shade hexes) live in the `<dl>` and the JS tool — they're not woven into the prose where they'd be most quotable.
+- ⚠️ The OKLCH values and the 20 shade hexes are present in the HTML (the `<dl>` plus the SSR'd ramp), but they're not *woven into the prose*, where they'd be most quotable. Contrast ratios aren't surfaced as text anywhere.
 
 ---
 
@@ -151,23 +152,25 @@ This is normal for a day-old domain, but it's the ceiling on AI visibility until
 
 ---
 
-## Top 5 Highest-Impact Changes
+## Action Items (progress)
 
-| # | Change | Effort | Impact | Why |
-|---|---|---|---|---|
-| 1 | **Server-render the shade values.** Emit the 20-step OKLCH ramp and 11-stop Tailwind scale (hex + label) as a `<noscript>`-safe `<table>`/`<dl>` in the page HTML, even if the interactive island re-renders them. | Med | **Very High** | Makes the literal answer to "shades/tints of X" crawlable. Directly unblocks the core query class for every AI platform. |
-| 2 | **Add a `www`→apex 301.** Both `uishades.com` and `www.uishades.com` are Cloudflare Worker routes to the same deployment and both return `200` with no redirect (duplicate host). Add a 301 `www`→apex (the code's canonical host). | Low | Med | Consolidates host signals and keeps `www` URLs out of the index. Canonicals already point at the apex, so Google mostly handles it — the 301 is the clean belt-and-braces. |
-| 3 | **Add `public/llms.txt`** + the algorithm description (template below). | Low | High | Low-cost discoverability; plain-text fallback for the JS-gated ramp facts. |
-| 4 | **Add `FAQPage` schema** to `/colors/[name]` (3–5 Q&A from existing blurb: "What is coral?", "What hex codes pair with coral?", "Is coral accessible on white?"). | Med | High | Direct citability lift for the definition/usage queries AI engines re-emit. |
-| 5 | **Extend blurbs to 140–165 words** and weave in the actual key shade hexes + a contrast number. | Med | Med | Lands passages in the optimal citation band and embeds the quotable facts in prose. |
+| # | Change | Impact | Status |
+|---|---|---|---|
+| ✅ | **`public/llms.txt`** — site purpose, core pages, ramp algorithm in plain text. | High | DONE (in code, pending deploy) |
+| ✅ | **On-page FAQ + FAQPage schema** on `/colors/[name]` — 4 grounded Q&A (definition, tints/shades, pairings, OKLCH+RGB); visible text matches the schema. | High | DONE (in code, pending deploy) |
+| ✅ | **`dateModified`/`datePublished`** on color + hex `CreativeWork` JSON-LD (via `src/lib/site-meta.ts`). | Med | DONE (in code, pending deploy) |
+| ✅ | **`www`→apex 301 + HTTP→HTTPS** (Cloudflare Redirect Rules, live) + **trailing-slash canonical** (committed). | Med | DONE / partly live |
+| ◻️ | **Extend the 209 blurbs to ~150 words** + weave in key shade hexes / a contrast number. | Med | Open — content project |
+| ◻️ | **Build brand presence** (Reddit / YouTube / dev communities). | High | Open — biggest remaining lever |
+| ◻️ | **(Optional) SSR the Tailwind scale + Classic ramp** (non-default views; OKLCH ramp already SSR'd). | Low–Med | Open — weigh vs initial-JS perf |
 
 ---
 
 ## Content Reformatting Suggestions
 
 - **First 60 words = the definition.** The coral blurb already nails this. Audit the other 208 blurbs to ensure each opens with `"<Name> is a <family> color (<hex>)…"`.
-- **Add a question-based H2 per color page**, e.g. `<h2>What are the shades and tints of Coral?</h2>` directly above the (newly server-rendered) ramp table. Question headings match AI query patterns.
-- **Put the harmony palette and ramp into real tables/lists with text**, not just CSS-background swatches. A `<table>` of `shade name | hex | contrast vs white` is maximally extractable.
+- **Add a question-based H2 per color page**, e.g. `<h2>What are the shades and tints of Coral?</h2>` directly above the (already server-rendered) ramp. Question headings match AI query patterns; right now the ramp's heading is just "Tints and Shades".
+- **Surface contrast as text.** The shade hexes are in the HTML, but WCAG contrast ratios aren't — a `shade | hex | contrast vs white/black` table would be maximally extractable for "is coral accessible" queries.
 - **Add `dateModified` to JSON-LD** and a visible "Updated 2026" line in the colophon.
 - **One canonical home-page FAQ block** ("What is an OKLCH ramp?", "OKLCH vs HSL for shades?", "How is this different from 0to255?") — these are exactly the comparison queries AI engines answer.
 
