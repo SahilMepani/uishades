@@ -6,6 +6,8 @@
  * embedded ShadeTool is the "data sheet"; the complementary/triadic
  * palette is a numbered plate. ~209 pages, one per NAMED_COLORS entry.
  */
+import { DATE_PUBLISHED, DATE_MODIFIED } from '../../lib/site-meta';
+import { formatForCopy } from '../../lib/color/format';
 import '../../styles/global.css';
 import BaseHead from '../../components/BaseHead.astro';
 import ShadeTool from '../../components/ShadeTool';
@@ -108,6 +110,8 @@ const colorPageJsonLd = {
   name: color.name,
   alternateName: color.aliases && color.aliases.length > 0 ? color.aliases : undefined,
   description: plainBlurb,
+  datePublished: DATE_PUBLISHED,
+  dateModified: DATE_MODIFIED,
   url: canonicalUrl,
   identifier: color.hex.toUpperCase(),
   inLanguage: 'en',
@@ -154,6 +158,38 @@ const blurbHtml = escapeHtml(color.blurb).replace(
 
 const oklch = toOklch(color.hex);
 const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1);
+
+const faqFirstSentences = plainBlurb.split(/(?<=\.)\s+/).slice(0, 2).join(' ');
+const HEXU = color.hex.toUpperCase();
+const faq = [
+  {
+    q: `What is ${color.name}?`,
+    a: `${faqFirstSentences} Its hex code is ${HEXU}.`,
+  },
+  {
+    q: `What are the tints and shades of ${color.name}?`,
+    a: `uishades builds a 20-step OKLCH ramp for ${color.name} (${HEXU}) — its lightest tints through its darkest shades — plus an 11-stop Tailwind scale (50–950). Lightness steps stay evenly spaced and the hue stays stable, so the mid-tones don't go muddy.`,
+  },
+  {
+    q: `What colors pair well with ${color.name}?`,
+    a: `Its complementary color is ${palette[0].hex.toUpperCase()}. Triadic partners are ${palette[1].hex.toUpperCase()} and ${palette[2].hex.toUpperCase()}; analogous neighbours are ${palette[3].hex.toUpperCase()} and ${palette[4].hex.toUpperCase()}.`,
+  },
+  {
+    q: `What are the OKLCH and RGB values of ${color.name}?`,
+    a: `${color.name} is ${HEXU} — OKLCH ${oklch.l.toFixed(3)} ${oklch.c.toFixed(3)} ${Number.isFinite(oklch.h) ? oklch.h.toFixed(0) + '°' : '0°'}, ${formatForCopy(color.hex, 'rgb')}, in the ${color.family} family.${color.aliases && color.aliases.length > 0 ? ` Also known as ${color.aliases.join(', ')}.` : ''}`,
+  },
+];
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  '@id': `${canonicalUrl}#faq`,
+  mainEntity: faq.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
 ---
 
 <!doctype html>
@@ -186,6 +222,7 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
 
     <script type="application/ld+json" set:html={safeJsonForScript(breadcrumbJsonLd)} />
     <script type="application/ld+json" set:html={safeJsonForScript(colorPageJsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(faqJsonLd)} />
   </head>
   <body class="bg-paper text-ink">
     <!-- Google Tag Manager (noscript) -->
@@ -302,6 +339,22 @@ const familyLabel = color.family.charAt(0).toUpperCase() + color.family.slice(1)
           </ul>
         </section>
       )}
+
+      <!-- FAQ -->
+      <section class="mt-20 border-t border-hairline pt-8" aria-labelledby="faq-title">
+        <div class="mb-6 flex items-baseline justify-between">
+          <span class="eyebrow">Q&amp;A</span>
+          <h2 id="faq-title" class="font-display text-2xl text-ink">Frequently asked questions</h2>
+        </div>
+        <div class="divide-y divide-hairline border-y border-hairline">
+          {faq.map((f) => (
+            <div class="py-5">
+              <h3 class="font-display text-lg text-ink">{f.q}</h3>
+              <p class="mt-2 leading-relaxed text-ink-2">{f.a}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <!-- Footer / colophon -->
       <footer class="mt-20 border-t border-hairline pt-6">

@@ -1,0 +1,23 @@
+# uishades.com
+
+> Free, ad-free generator for tints and shades of any color. Convert any hex,
+> rgb(), hsl(), oklch(), or CSS color name into a 20-step OKLCH perceptual ramp
+> or an 11-stop Tailwind scale (50–950), with copy-ready exports. Mirrors
+> 0to255.com's URL structure: /[hex] and /colors/[name] permanent links.
+
+## Core pages
+- [Home](https://uishades.com/): Generate tints and shades from any color.
+- [Named colors](https://uishades.com/colors/coral): 209 CSS named colors, each with an OKLCH ramp, aliases, a harmony palette, and WCAG contrast badges.
+- [Hex pages](https://uishades.com/4040ff): Permanent /[hex] page for any 3-, 6-, or 8-digit hex.
+
+## How the ramps work
+- OKLCH mode: a 20-shade perceptual ramp at evenly spaced lightness (about L=0.95 down to L=0.06). The input hex is pinned to its nearest lightness step. Chroma follows a bell-curve multiplier (1.0 at mid lightness, about 0.3 at the extremes) to stay inside the sRGB gamut and avoid washed-out clipping near white and black.
+- Classic mode: a reverse-engineered RGB walk that reproduces the pre-paywall 0to255.com output bit-for-bit (+17 per channel toward white; a two-phase residual-carry walk toward black).
+- Tailwind scale: 11 stops (50–950); the input snaps to its nearest stop.
+
+## Exports
+- Tailwind v4 @theme, Tailwind v3 config, CSS custom properties, W3C Design Tokens (DTCG) JSON, and Figma Variables.
+
+## Notes
+- Free, no ads, no signup. A WCAG contrast badge is shown on every shade.
+- JSON API for any hex: https://uishades.com/api/[hex].json

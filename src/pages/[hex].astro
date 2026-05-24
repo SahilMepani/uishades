@@ -8,6 +8,7 @@
  */
 export const prerender = false;
 
+import { DATE_PUBLISHED, DATE_MODIFIED } from '../lib/site-meta';
 import '../styles/global.css';
 import BaseHead from '../components/BaseHead.astro';
 import ShadeTool from '../components/ShadeTool';
@@ -78,6 +79,8 @@ const hexPageJsonLd = {
     : `Hex Color ${hexLabel} — Tints & Shades`,
   name: named?.name ?? `Hex color ${hexLabel}`,
   description: DESCRIPTION,
+  datePublished: DATE_PUBLISHED,
+  dateModified: DATE_MODIFIED,
   url: canonicalUrl,
   identifier: hexLabel,
   inLanguage: 'en',
