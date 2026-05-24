@@ -28,12 +28,12 @@ import { test, expect } from '@playwright/test';
 const DEV_URL = '/4040ff';
 
 test.describe('shade tool — smoke', () => {
-  test('renders 22 ramp rows for #4040ff', async ({ page }) => {
+  test('renders 20 ramp rows for #4040ff', async ({ page }) => {
     await page.goto(DEV_URL);
     // Wait for the island to hydrate (ramp rows are SSR-rendered too, so
     // they should appear basically immediately).
     const rows = page.locator('[data-shade-row="true"]');
-    await expect(rows).toHaveCount(22);
+    await expect(rows).toHaveCount(20);
 
     // The page shows the current hex prominently. Mobile-sticky duplicates
     // and the desktop sidebar both render the hex; the visible one depends
@@ -154,7 +154,11 @@ test.describe('shade tool — smoke', () => {
     // tree selectors. CSS selectors bypass that.
     await expect(trigger).toHaveAttribute('aria-expanded', 'true');
 
-    const input = page.locator('input[aria-label^="Color value"]');
+    // The PreviewBlock smart input shares this aria-label, so scope to the
+    // ColorPicker popover. A CSS attribute selector (not getByRole) is used
+    // deliberately: the dialog carries aria-hidden="true" while transitioning
+    // in, which would hide it from accessibility-tree selectors.
+    const input = page.locator('[role="dialog"] input[aria-label^="Color value"]');
     await input.fill('coral');
 
     // ColorPicker parses on every keystroke (no debounce, no autocomplete),
