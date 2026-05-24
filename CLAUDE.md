@@ -58,6 +58,8 @@ Top-level `client:load` island. Owns hex, view mode (ramp vs scale), ramp mode (
 
 The Tailwind scale view, its export panel, and all five export-format serializers (`src/lib/exports/`) are lazy-loaded via `React.lazy` + `Suspense`. The Suspense fallback reserves roughly the same height as the rendered scale to avoid CLS on view-switch. Only the continuous-ramp path is shipped on initial load.
 
+Both views' "Download PNG" button renders the palette client-side to a canvas via `src/lib/exports/ramp-png.ts`, which is dynamically `import()`-ed inside the click handler so the canvas code stays out of the eager ramp chunk. Keep `ramp-png.ts` free of static imports from any eager-path module. The drawing function takes a plain `Shade[]` (the ramp and the 11-stop Tailwind scale both feed it; scale shades render their stop label too). The `variant` option only tags the download filename (`uishades-<hex>-<oklch|classic|scale>.png`).
+
 `ShadeTool.tsx` imports `findByHexSlim` from `named-colors-slim.ts` (not the full `named-colors.ts`) so the React island doesn't drag the blurb-bearing data set into its bundle. The full module is consumed only by `src/pages/colors/[name].astro` at build time. Respect this split when adding consumers.
 
 ### Data sources (`src/lib/data/`)

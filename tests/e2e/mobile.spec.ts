@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
  *   - All tap targets in the shade list are >= 44x44 CSS px (WCAG 2.5.5).
  *   - There is no horizontal scroll at 375 wide.
  *
- * Note: the desktop sidebar (PreviewBlock + ColorPicker) is `hidden lg:block`,
+ * Note: the desktop sidebar (PreviewBlock + ColorPicker) is `hidden md:block`,
  * so there is no color input on mobile — mobile users change the color by
  * navigating to a different /[hex] URL or via the home page. The historical
  * "focusing the color input doesn't push the sticky off-screen" test was
@@ -16,7 +16,7 @@ import { test, expect } from '@playwright/test';
  *
  * Configured through `testMatch: /mobile\.spec\.ts$/` so only the
  * `mobile-chrome` project picks it up — running it under a desktop viewport
- * would fail because the sticky header is `lg:hidden`.
+ * would fail because the sticky header is `md:hidden`.
  */
 
 // /dev/tool/ hard-404s in production builds (Wave A audit step A9), and

@@ -72,6 +72,42 @@ test.describe('shade tool — smoke', () => {
     expect(clip).toBe(targetHex);
   });
 
+  test('downloads the ramp as a PNG with a hex/mode filename', async ({
+    page,
+    browserName,
+  }) => {
+    // Blob-URL anchor downloads are captured reliably by Playwright's
+    // download event in chromium; firefox/webkit under Playwright are flaky
+    // about surfacing blob downloads, so we pin the assertion to chromium —
+    // same rationale as the clipboard test above.
+    test.skip(
+      browserName !== 'chromium',
+      'blob-URL download capture is only reliable in chromium under Playwright',
+    );
+    await page.goto(DEV_URL);
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: /download ramp as png/i }).first().click();
+    const download = await downloadPromise;
+    // Default oklch ramp for #4040ff → uishades-4040ff-oklch.png
+    expect(download.suggestedFilename()).toBe('uishades-4040ff-oklch.png');
+  });
+
+  test('downloads the Tailwind scale as a PNG with a scale filename', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName !== 'chromium',
+      'blob-URL download capture is only reliable in chromium under Playwright',
+    );
+    await page.goto('/4040ff?view=scale');
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: /download scale as png/i }).first().click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('uishades-4040ff-scale.png');
+  });
+
   test('switching to Tailwind scale renders 11 rows with the anchor highlighted', async ({
     page,
     browserName,

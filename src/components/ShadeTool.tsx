@@ -14,6 +14,7 @@ import type {
   ExportFormat,
   Hex,
   RampMode,
+  Shade,
 } from '../lib/color/types';
 import { parseColor } from '../lib/color/parse';
 import { formatForCopy } from '../lib/color/format';
@@ -393,7 +394,7 @@ function ShadeToolInner({
   return (
     <div className="text-ink">
       {/* Mobile sticky header: visible only < lg */}
-      <div className="sticky top-0 z-30 border-b border-hairline bg-paper/90 backdrop-blur lg:hidden">
+      <div className="sticky top-0 z-30 border-b border-hairline bg-paper/90 backdrop-blur md:hidden">
         <div className="flex items-center gap-3 px-4 py-3">
           <div
             aria-hidden="true"
@@ -409,9 +410,9 @@ function ShadeToolInner({
         </div>
       </div>
 
-      <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-8 lg:grid-cols-[5fr_7fr] lg:gap-14 lg:px-8 lg:py-12">
+      <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-8 md:grid-cols-[5fr_7fr] lg:gap-14 lg:px-8 lg:py-12">
         {/* Left rail: preview + input + controls (sticky on desktop) */}
-        <aside className="hidden lg:block lg:sticky lg:top-8 lg:self-start">
+        <aside className="hidden md:block md:sticky md:top-8 md:self-start">
           <PreviewBlock hex={hex} named={named} onChange={handleChangeHex} />
           <div className="mt-6 flex flex-col gap-5">
             <div className="border-t border-hairline pt-5">
@@ -433,7 +434,7 @@ function ShadeToolInner({
 
         {/* Right column: ramp or scale + view/mode toggles on mobile */}
         <section className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3 lg:hidden">
+          <div className="flex flex-col gap-3 md:hidden">
             <ViewToggle view={view} onChange={setView} />
             {view === 'ramp' && (
               <RampModeToggle mode={rampMode} onChange={setRampMode} />
@@ -446,15 +447,33 @@ function ShadeToolInner({
             <ShareRow hex={hex} named={named} />
           </div>
 
-          <div className={`flex items-baseline justify-between gap-4${view === 'scale' ? ' border-b border-hairline pb-2' : ''}`}>
+          <div className={`flex items-center justify-between gap-4${view === 'scale' ? ' border-b border-hairline pb-2' : ''}`}>
             {view === 'ramp' ? (
               <span className="eyebrow">Tints and Shades</span>
             ) : (
               <span className="eyebrow">Scale</span>
             )}
-            <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-              {view === 'ramp' ? `${ramp.shades.length} stops · ${ramp.mode}` : `11 stops · anchor ${scale.anchorStop}`}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
+                {view === 'ramp' ? `${ramp.shades.length} stops · ${ramp.mode}` : `11 stops · anchor ${scale.anchorStop}`}
+              </span>
+              <span aria-hidden="true" className="font-mono text-[11px] text-mute">·</span>
+              {view === 'ramp' ? (
+                <DownloadPngButton
+                  shades={ramp.shades}
+                  sourceHex={hex}
+                  variant={ramp.mode}
+                  subject="ramp"
+                />
+              ) : (
+                <DownloadPngButton
+                  shades={scale.shades}
+                  sourceHex={hex}
+                  variant="scale"
+                  subject="scale"
+                />
+              )}
+            </div>
           </div>
 
           <div className="flex flex-col gap-2.5">
@@ -513,6 +532,84 @@ function TailwindScaleFallback() {
         ))}
       </div>
     </div>
+  );
+}
+
+/**
+ * "Download PNG" button shared by the ramp and scale views. The drawing
+ * module is dynamically imported on click so the canvas code stays out of the
+ * eager ramp chunk (see `src/lib/exports/ramp-png.ts`). `subject` names the
+ * palette for the accessible label; `variant` tags the download filename.
+ */
+function DownloadPngButton({
+  shades,
+  sourceHex,
+  variant,
+  subject,
+}: {
+  shades: Shade[];
+  sourceHex: Hex;
+  variant: string;
+  subject: string;
+}) {
+  const { pushToast } = useToast();
+  const [busy, setBusy] = useState(false);
+
+  const handleClick = useCallback(async () => {
+    if (busy) return;
+    setBusy(true);
+    // Surface progress in the shared bottom-right toast (same place as the
+    // "Copied" feedback) rather than mutating the button label.
+    pushToast('Preparing…');
+    try {
+      const { downloadRampPng } = await import('../lib/exports/ramp-png');
+      await downloadRampPng({ shades, sourceHex, variant });
+    } catch {
+      pushToast("Couldn't generate the PNG in this browser.");
+    } finally {
+      setBusy(false);
+    }
+  }, [busy, shades, sourceHex, variant, pushToast]);
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={busy}
+      aria-label={`Download ${subject} as PNG`}
+      className={
+        'inline-flex shrink-0 items-center gap-1.5 border border-ink/20 px-2.5 py-1 ' +
+        'font-mono text-[11px] uppercase tracking-[0.16em] text-ink ' +
+        'transition-colors duration-200 ease-out hover:border-ink/40 hover:bg-paper-2 ' +
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 ' +
+        'disabled:cursor-default disabled:opacity-60'
+      }
+    >
+      <DownloadIcon className="h-3.5 w-3.5" />
+      PNG
+    </button>
+  );
+}
+
+function DownloadIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" className={className ?? 'h-4 w-4'}>
+      <path
+        d="M8 1.5v8m0 0L5 6.5m3 3 3-3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M2.5 11v1.5A1.5 1.5 0 0 0 4 14h8a1.5 1.5 0 0 0 1.5-1.5V11"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 
@@ -668,7 +765,7 @@ function PreviewBlock({
           <span className="font-display text-base text-ink-2">{named.name}</span>
         </div>
       )}
-      <div className="flex flex-col font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
+      <div className="flex flex-col">
         <CopyableValueRow label="HEX" value={hex} />
         <CopyableValueRow label="OKLCH" value={oklchString} />
         <CopyableValueRow label="RGB" value={rgbString} />
@@ -680,6 +777,15 @@ function PreviewBlock({
 
 function CopyableValueRow({ label, value }: { label: string; value: string }) {
   const { pushToast } = useToast();
+  const [copied, setCopied] = useState(false);
+  const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current);
+    },
+    [],
+  );
 
   const handleCopy = useCallback(() => {
     if (
@@ -692,7 +798,9 @@ function CopyableValueRow({ label, value }: { label: string; value: string }) {
     }
     navigator.clipboard.writeText(value).then(
       () => {
-        pushToast('Copied');
+        setCopied(true);
+        if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current);
+        copiedTimeoutRef.current = setTimeout(() => setCopied(false), 1500);
       },
       () => {
         pushToast("Couldn't copy — check browser permissions.");
@@ -714,15 +822,17 @@ function CopyableValueRow({ label, value }: { label: string; value: string }) {
       onClick={handleCopy}
       onKeyDown={handleKeyDown}
       aria-label={`Copy ${label} value`}
-      className="-mx-2 flex cursor-pointer items-baseline justify-between gap-4 rounded-sm px-2 py-1 transition-colors duration-200 ease-out hover:bg-paper-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+      className="-mx-2 flex cursor-pointer items-center justify-end gap-2 rounded-sm px-2 py-1 transition-colors duration-200 ease-out hover:bg-paper-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
     >
-      <span>{label}</span>
-      <div className="flex items-center gap-2">
-        <span className="font-mono text-sm normal-case tracking-tight text-ink">{value}</span>
-        <span aria-hidden="true" className="inline-flex h-6 w-6 items-center justify-center text-mute">
-          <CopyIcon className="h-3.5 w-3.5" />
+      {copied && (
+        <span className="rounded-sm bg-black px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-white">
+          Copied
         </span>
-      </div>
+      )}
+      <span className="font-mono text-sm tracking-tight text-ink">{value}</span>
+      <span aria-hidden="true" className="inline-flex h-6 w-6 items-center justify-center text-mute">
+        <CopyIcon className="h-3.5 w-3.5" />
+      </span>
     </div>
   );
 }
@@ -962,20 +1072,41 @@ function CopyFormatPicker({
     return (
       <label className="flex flex-col gap-2 text-base">
         <span className="eyebrow">Copy as</span>
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value as CopyFormat)}
-          className={
-            'w-full border border-ink/20 bg-paper px-3 py-2.5 font-mono text-sm text-ink ' +
-            'focus-visible:outline-none focus-visible:border-accent'
-          }
-        >
-          {formats.map(k => (
-            <option key={k} value={k}>
-              {COPY_FORMAT_LABELS[k]}
-            </option>
-          ))}
-        </select>
+        {/* `appearance-none` strips the native control chrome so the box can
+            match the Download button (hairline border, paper-2 hover, accent
+            focus); the chevron below is our own, overlaid and non-interactive.
+            The option popup itself can't be styled without JS — that's fine. */}
+        <div className="relative">
+          <select
+            value={value}
+            onChange={(e) => onChange(e.target.value as CopyFormat)}
+            className={
+              'w-full appearance-none border border-ink/20 bg-paper-2 py-2.5 pl-3 pr-9 ' +
+              'font-mono text-sm text-ink transition-colors duration-150 ease-out ' +
+              'motion-reduce:transition-none ' +
+              'focus-visible:outline-none focus-visible:border-accent ' +
+              'focus-visible:ring-2 focus-visible:ring-accent/30'
+            }
+          >
+            {formats.map(k => (
+              <option key={k} value={k}>
+                {COPY_FORMAT_LABELS[k]}
+              </option>
+            ))}
+          </select>
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 16 16"
+            className="pointer-events-none absolute right-3 top-1/2 h-[1.2rem] w-[1.2rem] -translate-y-1/2 text-mute"
+          >
+            <path
+              d="M4 6.5 8 10.5l4-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+          </svg>
+        </div>
       </label>
     );
   }

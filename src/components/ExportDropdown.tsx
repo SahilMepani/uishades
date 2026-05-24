@@ -98,21 +98,40 @@ export default function ExportDropdown({
       <div className="flex items-center justify-between gap-3">
         <label className="flex items-center gap-3 text-sm text-ink/80">
           <span className="eyebrow">Export as</span>
-          <select
-            value={format}
-            onChange={(e) => onFormatChange(e.target.value as ExportFormat)}
-            aria-label="Export as"
-            className={
-              'border border-ink/20 bg-paper px-2 py-1 font-mono text-xs text-ink ' +
-              'focus-visible:outline-none focus-visible:border-accent'
-            }
-          >
-            {FORMAT_OPTIONS.map(opt => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          {/* `appearance-none` + overlaid chevron, matching the "Copy as"
+              picker. Accent border/ring is focus-visible only; hover just
+              warms the background. */}
+          <span className="relative inline-flex">
+            <select
+              value={format}
+              onChange={(e) => onFormatChange(e.target.value as ExportFormat)}
+              aria-label="Export as"
+              className={
+                'appearance-none border border-ink/20 bg-paper-2 py-1 pl-2 pr-7 font-mono text-xs text-ink ' +
+                'transition-colors duration-150 ease-out motion-reduce:transition-none ' +
+                'focus-visible:outline-none focus-visible:border-accent ' +
+                'focus-visible:ring-2 focus-visible:ring-accent/30'
+              }
+            >
+              {FORMAT_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 16 16"
+              className="pointer-events-none absolute right-2 top-1/2 h-[1.05rem] w-[1.05rem] -translate-y-1/2 text-mute"
+            >
+              <path
+                d="M4 6.5 8 10.5l4-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+            </svg>
+          </span>
         </label>
       </div>
 

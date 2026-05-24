@@ -171,9 +171,10 @@ function ShareButton({
       onClick={onClick}
       className={
         // 44px hit target (Apple HIG / Material minimum), 24px icon inside.
-        'inline-flex h-11 w-11 items-center justify-center border border-transparent text-ink-2 ' +
-        '[&>svg]:h-6 [&>svg]:w-6 ' +
-        'transition-colors duration-200 ease-out hover:border-ink/20 hover:bg-paper-2 hover:text-ink ' +
+        'inline-flex h-11 w-11 items-center justify-center text-ink-2 ' +
+        // Only the icon scales on hover/focus — the 44px button box stays put.
+        '[&>svg]:h-6 [&>svg]:w-6 [&>svg]:transition-transform [&>svg]:duration-200 [&>svg]:ease-out ' +
+        'hover:[&>svg]:scale-110 focus-visible:[&>svg]:scale-110 ' +
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60'
       }
     >
@@ -226,22 +227,24 @@ function PinterestIcon({ className }: { className?: string }) {
 }
 
 function NativeShareIcon({ className }: { className?: string }) {
-  // iOS/Lucide-style share (box + up arrow). Stroke style matches the
+  // Lucide "send" — an upward paper plane. Stroke style matches the
   // Copy-link icon so the row reads as a coherent set.
   return (
     <svg
       viewBox="0 0 24 24"
       aria-hidden="true"
-      className={className ?? 'h-6 w-6'}
+      // Nudged down 3px so the upward paper plane sits on the same optical
+      // baseline as the other share icons. translate-y composes with the
+      // button's hover scale-110 via Tailwind's shared transform vars.
+      className={className ?? 'h-6 w-6 translate-y-[3px]'}
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" />
-      <polyline points="16 6 12 2 8 6" />
-      <line x1="12" x2="12" y1="2" y2="15" />
+      <path d="M22 2 11 13" />
+      <path d="m22 2-7 20-4-9-9-4Z" />
     </svg>
   );
 }
