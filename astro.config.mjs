@@ -20,9 +20,21 @@ export default defineConfig({
   site: 'https://uishades.com',
   output: 'static',
   adapter: cloudflare(),
+  // Canonical URLs carry no trailing slash (mirrors 0to255: /[hex],
+  // /colors/[name]). `format: 'file'` emits `colors/coral.html` instead of
+  // `colors/coral/index.html`, so Cloudflare Pages serves the bare URL at 200
+  // and redirects the slash variant to it — matching the no-slash <link
+  // rel="canonical"> on every page. Without this, prerendered pages 307'd
+  // `/colors/coral` → `/colors/coral/` while pointing canonical at the bare
+  // URL (a self-referencing redirect crawlers downweight).
+  trailingSlash: 'never',
+  build: { format: 'file' },
   integrations: [
     react(),
     sitemap({
+      // No-slash URLs (to match page canonicals) are inherited from the
+      // top-level `trailingSlash: 'never'`. The integration has no own
+      // `trailingSlash` option in this version — passing one aborts emission.
       // Inject the popular-hex URLs into the sitemap so Googlebot picks them
       // up on the first crawl. The static integration auto-includes the
       // pre-rendered pages on top of this list.
