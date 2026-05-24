@@ -325,8 +325,8 @@ export default function ShadeRow({
         }}
         className={[
           'absolute top-1/2 left-full ml-2.5 -translate-y-1/2 h-[90%] aspect-square',
-          'flex items-center justify-center border border-ink/20',
-          'text-ink/60 transition-colors duration-200 ease-out hover:text-ink hover:bg-paper-2',
+          'flex items-center justify-center border border-transparent',
+          'text-ink/60 transition-colors duration-200 ease-out hover:border-ink/20 hover:text-ink hover:bg-paper-2',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
           // Fade in only when the row (or anything in the group wrapper) is
           // hovered/focused — mirrors the "Click to copy" badge behavior.

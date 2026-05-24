@@ -604,6 +604,24 @@ function PreviewBlock({
     }
   }, [inputText, hex]);
 
+  // Select-all on click/focus so the user can immediately retype or paste a
+  // new value. `onFocus` covers keyboard tab-in; for a mouse click the
+  // browser places the caret on `mouseup` *after* focus, which clears the
+  // focus-time selection — so we flag the focusing click and `preventDefault`
+  // its `mouseup` to keep the selection. The flag clears after that first
+  // click, so subsequent drag-to-select inside the field still works.
+  const focusingClickRef = useRef(false);
+  const handleTextFocus = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
+    focusingClickRef.current = true;
+    e.currentTarget.select();
+  }, []);
+  const handleTextMouseUp = useCallback((e: React.MouseEvent<HTMLInputElement>) => {
+    if (focusingClickRef.current) {
+      e.preventDefault();
+      focusingClickRef.current = false;
+    }
+  }, []);
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex h-[60px] w-full bg-paper-2">
@@ -635,6 +653,8 @@ function PreviewBlock({
           value={inputText}
           onChange={handleTextChange}
           onBlur={handleTextBlur}
+          onFocus={handleTextFocus}
+          onMouseUp={handleTextMouseUp}
           spellCheck={false}
           autoCapitalize="off"
           autoCorrect="off"

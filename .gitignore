@@ -32,6 +32,9 @@ test-results/
 # macOS-specific files
 .DS_Store
 
+# MSYS/Cygwin crash dumps
+*.stackdump
+
 # jetbrains setting folder
 .idea/
 

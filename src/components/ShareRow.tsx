@@ -134,7 +134,7 @@ export default function ShareRow({ hex, named }: ShareRowProps) {
   return (
     <div className="flex flex-col gap-2">
       <span className="eyebrow">Share</span>
-      <div className="-mx-2 flex flex-wrap items-center gap-0.5">
+      <div className="-mx-2.5 flex flex-wrap items-center gap-0.5">
         <ShareButton label="Copy link to this color" onClick={handleCopy}>
           <LinkIcon />
         </ShareButton>
@@ -171,9 +171,9 @@ function ShareButton({
       onClick={onClick}
       className={
         // 44px hit target (Apple HIG / Material minimum), 24px icon inside.
-        'inline-flex h-11 w-11 items-center justify-center border border-ink/20 text-ink-2 ' +
+        'inline-flex h-11 w-11 items-center justify-center border border-transparent text-ink-2 ' +
         '[&>svg]:h-6 [&>svg]:w-6 ' +
-        'transition-colors duration-200 ease-out hover:bg-paper-2 hover:text-ink ' +
+        'transition-colors duration-200 ease-out hover:border-ink/20 hover:bg-paper-2 hover:text-ink ' +
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60'
       }
     >
