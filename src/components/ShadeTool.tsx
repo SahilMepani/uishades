@@ -456,7 +456,7 @@ function ShadeToolInner({
               metadata + PNG fit. With the eyebrow gone only one child remains,
               so right-align it (justify-end) rather than spread it
               (justify-between). The sr-only <h1> still carries the heading. */}
-          <div className={`flex items-center justify-end gap-4 lg:justify-between lg:mr-14${view === 'scale' ? ' border-b border-hairline pb-2' : ''}`}>
+          <div className={`flex items-center justify-end gap-4 lg:justify-between${view === 'scale' ? ' border-b border-hairline pb-2' : ''}`}>
             {view === 'ramp' ? (
               <span className="eyebrow hidden lg:inline">Tints and Shades</span>
             ) : (
@@ -485,7 +485,7 @@ function ShadeToolInner({
             </div>
           </div>
 
-          <div className="flex flex-col gap-2.5 lg:pr-14">
+          <div className="flex flex-col gap-2.5">
             {showHintBanner && <HintBanner onDismiss={dismissHintBanner} />}
             {view === 'ramp' ? (
               <ContinuousRamp
