@@ -410,7 +410,7 @@ function ShadeToolInner({
         </div>
       </div>
 
-      <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-8 md:grid-cols-[5fr_7fr] lg:gap-14 lg:px-8 lg:py-12">
+      <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-8 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-14 lg:px-8 lg:py-12">
         {/* Left rail: preview + input + controls (sticky on desktop) */}
         <aside className="hidden md:block md:sticky md:top-8 md:self-start">
           <PreviewBlock hex={hex} named={named} onChange={handleChangeHex} />
@@ -432,8 +432,11 @@ function ShadeToolInner({
           </div>
         </aside>
 
-        {/* Right column: ramp or scale + view/mode toggles on mobile */}
-        <section className="flex flex-col gap-4">
+        {/* Right column: ramp or scale + view/mode toggles on mobile.
+            `min-w-0` lets this grid item shrink to its track instead of being
+            propped open by its content's min-content (long mono values, the
+            header row), which otherwise overflows the grid on narrow screens. */}
+        <section className="flex min-w-0 flex-col gap-4">
           <div className="flex flex-col gap-3 md:hidden">
             <ViewToggle view={view} onChange={setView} />
             {view === 'ramp' && (
@@ -447,11 +450,17 @@ function ShadeToolInner({
             <ShareRow hex={hex} named={named} />
           </div>
 
-          <div className={`flex items-center justify-between gap-4${view === 'scale' ? ' border-b border-hairline pb-2' : ''}`}>
+          {/* Below lg the eyebrow heading is hidden: on a phone/tablet column
+              "eyebrow · stops · mode · PNG" is wider than the column and forces
+              horizontal overflow. Dropping the eyebrow frees ~160px so the
+              metadata + PNG fit. With the eyebrow gone only one child remains,
+              so right-align it (justify-end) rather than spread it
+              (justify-between). The sr-only <h1> still carries the heading. */}
+          <div className={`flex items-center justify-end gap-4 lg:justify-between lg:mr-14${view === 'scale' ? ' border-b border-hairline pb-2' : ''}`}>
             {view === 'ramp' ? (
-              <span className="eyebrow">Tints and Shades</span>
+              <span className="eyebrow hidden lg:inline">Tints and Shades</span>
             ) : (
-              <span className="eyebrow">Scale</span>
+              <span className="eyebrow hidden lg:inline">Scale</span>
             )}
             <div className="flex items-center gap-3">
               <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
@@ -476,7 +485,7 @@ function ShadeToolInner({
             </div>
           </div>
 
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-2.5 lg:pr-14">
             {showHintBanner && <HintBanner onDismiss={dismissHintBanner} />}
             {view === 'ramp' ? (
               <ContinuousRamp

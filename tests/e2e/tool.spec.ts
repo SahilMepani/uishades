@@ -147,6 +147,9 @@ test.describe('shade tool — smoke', () => {
     // Change the export-format dropdown.
     await page.getByLabel(/^Export as/).selectOption('tailwind-v3');
 
+    // The code preview now lives in the "View code" modal, not inline.
+    await page.getByRole('button', { name: /view export code/i }).click();
+
     const preview = page.locator('pre[data-export-preview="true"]');
     await expect(preview).toBeVisible();
     const text = await preview.innerText();

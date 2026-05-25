@@ -257,7 +257,7 @@ export default function ShadeRow({
           />
         </>
       )}
-      <div className="flex items-center gap-4 font-mono text-sm">
+      <div className="flex shrink-0 items-center gap-4 font-mono text-sm">
         {shade.stop !== undefined && (
           <span className={`w-10 shrink-0 text-[11px] tracking-[0.14em] uppercase ${subtleFgClass}`}>
             {shade.stop}
@@ -275,11 +275,11 @@ export default function ShadeRow({
         )}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 flex-1 items-center justify-end gap-3">
         <span
           aria-hidden="true"
           className={[
-            'rounded-sm px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em]',
+            'shrink-0 whitespace-nowrap rounded-sm px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em]',
             // Always visible on touch-only devices; faded-in on hover-capable
             // ones via the .pointer-fine-hide CSS utility in global.css.
             'pointer-fine-hide',
@@ -288,7 +288,7 @@ export default function ShadeRow({
         >
           {canCopy ? (justCopied ? 'Copied' : 'Click to copy') : 'Click to open'}
         </span>
-        <span className="truncate font-mono text-sm tracking-tight tabular-nums">{displayValue}</span>
+        <span className="min-w-0 truncate font-mono text-sm tracking-tight tabular-nums">{displayValue}</span>
       </div>
     </div>
     {!shade.isInput && (
@@ -296,10 +296,12 @@ export default function ShadeRow({
       {/* Invisible bridge spanning the 10px gap between the row and the
           icon so a slow cursor never crosses an unhovered region (which
           would otherwise trigger a brief fade-out / fade-in cycle on the
-          icon and the "Click to copy" badge). */}
+          icon and the "Click to copy" badge). Hidden below lg in lockstep
+          with the icon so it can't add horizontal overflow on narrow
+          viewports (where no right gutter is reserved). */}
       <span
         aria-hidden="true"
-        className="pointer-events-auto absolute inset-y-0 left-full w-2.5"
+        className="pointer-events-auto absolute inset-y-0 left-full hidden w-2.5 lg:block"
       />
       <a
         href={navHref}
@@ -325,7 +327,11 @@ export default function ShadeRow({
         }}
         className={[
           'absolute top-1/2 left-full ml-2.5 -translate-y-1/2 h-[90%] aspect-square',
-          'flex items-center justify-center border border-transparent',
+          // Hidden below lg: narrow viewports reserve no right gutter, so an
+          // out-of-row icon at `left-full` would push horizontal overflow.
+          // The whole row stays clickable / double-clickable as the source
+          // affordance there; the gutter + icon only appear at lg and up.
+          'hidden items-center justify-center border border-transparent lg:flex',
           'text-ink/60 transition-colors duration-200 ease-out hover:border-ink/20 hover:text-ink hover:bg-paper-2',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
           // Fade in only when the row (or anything in the group wrapper) is
