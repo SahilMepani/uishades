@@ -1,28 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-    <defs>
-        <linearGradient id="sat" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#fff"/>
-            <stop offset="100%" stop-color="#ff0040"/>
-        </linearGradient>
-        <linearGradient id="val" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#000" stop-opacity="0"/>
-            <stop offset="100%" stop-color="#000" stop-opacity="1"/>
-        </linearGradient>
-        <linearGradient id="hue" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#ff0000"/>
-            <stop offset="16.66%" stop-color="#ffff00"/>
-            <stop offset="33.33%" stop-color="#00ff00"/>
-            <stop offset="50%" stop-color="#00ffff"/>
-            <stop offset="66.66%" stop-color="#0000ff"/>
-            <stop offset="83.33%" stop-color="#ff00ff"/>
-            <stop offset="100%" stop-color="#ff0000"/>
-        </linearGradient>
-    </defs>
-
-    <rect x="12" y="12" width="104" height="80" fill="url(#sat)"/>
-    <rect x="12" y="12" width="104" height="80" fill="url(#val)"/>
-
-    <rect x="12" y="100" width="104" height="16" fill="url(#hue)"/>
-
-    <circle cx="92" cy="32" r="8" fill="none" stroke="#fff" stroke-width="3"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="uishades color ramp">
+  <defs>
+    <clipPath id="r">
+      <rect x="0" y="0" width="128" height="128" rx="28" ry="28"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#r)">
+    <rect x="0" y="0" width="128" height="26.1" fill="#ebf3ff"/>
+    <rect x="0" y="25.6" width="128" height="26.1" fill="#c0d2ff"/>
+    <rect x="0" y="51.2" width="128" height="26.1" fill="#6178ff"/>
+    <rect x="0" y="76.8" width="128" height="26.1" fill="#3937ea"/>
+    <rect x="0" y="102.4" width="128" height="25.6" fill="#190f82"/>
+  </g>
 </svg>

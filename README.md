@@ -62,16 +62,19 @@ classifies the rule as informative; the category score is 100.
 
 | Chunk                          | Raw     | Gzip    | Brotli  | Loaded |
 |--------------------------------|--------:|--------:|--------:|--------|
-| `client.*.js` (React runtime)  | 186 KB  | 58 KB   | 51 KB   | initial |
-| `ShadeTool.*.js`               | 242 KB  | 66 KB   | 53 KB   | initial |
-| `index.*.js` (page shell)      |   7.7 KB|  2.9 KB |  2.6 KB | initial |
-| **Initial load total**         | 436 KB  | **128 KB** | **106 KB** | |
-| `TailwindScale.*.js`           |  4.1 KB |  1.5 KB |  1.3 KB | lazy (on view switch) |
+| `client.*.js` (React runtime)  | 178 KB  | 56 KB   | 49 KB   | initial |
+| `ShadeTool.*.js` (both view grids) | 100 KB | 33 KB | 28 KB | initial |
+| `index.*.js` (page shell)      |   7.6 KB|  2.9 KB |  2.6 KB | initial |
+| **Initial load total**         | 286 KB  | **92 KB** | **79 KB** | |
+| `ExportDropdown.*.js` (+ 5 export serializers) | 8.0 KB | 2.8 KB | 2.5 KB | lazy (after hydration, scale view) |
 
-The Tailwind scale view + its five export-format serializers are lazy-loaded
-via `React.lazy` + `Suspense`; the initial paint only ships the continuous
-ramp code path. A height-stable Suspense fallback prevents CLS on
-view-switch.
+The Tailwind scale is the default view, so its grid ships eagerly and is
+server-rendered. The lazy boundary now sits *inside* `TailwindScale`,
+wrapping only the heaviest leaf — the `ExportDropdown` UI plus its five
+export-format serializers — via `React.lazy` + `Suspense`. The OKLCH
+continuous ramp is eager too (it reuses the shared `ShadeRow`). A short
+height-stable fallback over the export-controls row prevents CLS while that
+chunk loads after hydration.
 
 ### Performance budget
 
@@ -81,13 +84,13 @@ Brotli — alone. The honest budget for this codebase, accounting for
 React + the lazy-loaded Tailwind path being separately chunked:
 
 - **Initial-load JS (React + ShadeTool main + page shell): ≤ 110 KB Brotli.**
-  Measured: 106 KB. The bulk is `ShadeTool.*.js` which embeds the
-  `POPULAR_HEXES` + `NAMED_COLORS` data sources (used by `ColorInput`'s
-  random + autocomplete features). Both are imports in `src/lib/data/`
-  which the wave-3a charter forbade modifying; data-driven shrinkage is
-  the right next step (split blurbs from lookup; only ship lookup keys
-  on initial load).
-- **Lazy-load chunks: ≤ 10 KB Brotli per chunk.** Measured: 1.3 KB.
+  Measured: 79 KB. The bulk is now the React 19 + ReactDOM runtime
+  (~49 KB Brotli); `ShadeTool.*.js` (~28 KB) carries both view grids
+  eagerly (the Tailwind scale is the default view and is server-rendered,
+  and the OKLCH ramp reuses the same `ShadeRow`), while the export panel +
+  its serializers are split into a lazy chunk.
+- **Lazy-load chunks: ≤ 10 KB Brotli per chunk.** Measured: 2.5 KB
+  (`ExportDropdown.*.js`, loaded after hydration on the scale view).
 
 CI does not currently fail on bundle-size regressions — adding a
 `size-limit` step on top of these numbers is a TODO for the next pass.
@@ -96,13 +99,13 @@ CI does not currently fail on bundle-size regressions — adding a
 
 - **Per-shade `label-content-name-mismatch` axe finding** (described above)
   is informative-only and intentional.
-- **Pre-rendered named-color pages with `?view=scale` deep links**
-  briefly show the ramp view before swapping to the scale on hydration.
-  `Astro.url` has no search params at build time for these pages, so the
-  SSR HTML always uses the default view. The canonical entry point for
-  `/colors/[name]` has no query string, so this case only affects users
-  who explicitly share `/colors/coral?view=scale`. Opting these pages out
-  of pre-rendering would close the gap at the cost of the named-color
+- **Pre-rendered named-color pages with `?view=ramp` deep links**
+  briefly show the default Tailwind scale before swapping to the OKLCH ramp
+  on hydration. `Astro.url` has no search params at build time for these
+  pages, so the SSR HTML always uses the default view. The canonical entry
+  point for `/colors/[name]` has no query string, so this case only affects
+  users who explicitly share `/colors/coral?view=ramp`. Opting these pages
+  out of pre-rendering would close the gap at the cost of the named-color
   SEO win (a hot-path edge cache hit, vs. building 209 HTML files at
   CI time).
 - **Lighthouse on Windows** intermittently logs

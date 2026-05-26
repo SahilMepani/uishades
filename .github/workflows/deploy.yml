@@ -43,3 +43,22 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --config dist/server/wrangler.json
+
+      - name: Purge Cloudflare edge cache
+        # The SSR /[hex] HTML is edge-cached for 30 days (s-maxage=2592000 in
+        # src/pages/[hex].astro). Without a purge, already-warm hex URLs keep
+        # serving the PREVIOUS build's HTML to crawlers and on first paint for
+        # up to 30 days — so any content change (e.g. the Tailwind-default
+        # flip) is invisible on hot URLs. Purge the whole zone so the next
+        # request re-caches fresh HTML. The home page and /colors/* pages ship
+        # fresh with the deploy; this only matters for /[hex].
+        #
+        # Requires:
+        #   - secrets.CLOUDFLARE_ZONE_ID   (the uishades.com zone id)
+        #   - secrets.CLOUDFLARE_API_TOKEN scoped to include Zone > Cache Purge
+        run: |
+          curl --fail --silent --show-error -X POST \
+            "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}'

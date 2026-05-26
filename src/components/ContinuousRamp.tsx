@@ -6,11 +6,11 @@ import type {
 import ShadeRow from './ShadeRow';
 
 /**
- * Renders a `ContinuousRamp` as a stack of `<ShadeRow>` entries. The
- * mode toggle (OKLCH vs Classic) is owned by the parent — this component
- * is purely presentational. The ramp data already carries its mode in
- * `ramp.mode`; we surface it as a heading hint and as a data attribute
- * for tests.
+ * Renders a `ContinuousRamp` as a stack of `<ShadeRow>` entries. Purely
+ * presentational — the algorithm toggle (Tailwind scale vs this OKLCH ramp)
+ * is owned by the parent. The ramp data carries its mode in `ramp.mode`
+ * (always `oklch` now that the classic walk is no longer surfaced in the
+ * UI); we keep it as a data attribute for tests.
  */
 
 export interface ContinuousRampProps {
@@ -36,7 +36,7 @@ export default function ContinuousRamp({
       data-ramp-mode={ramp.mode}
       data-shade-count={ramp.shades.length}
       role="list"
-      aria-label={`Continuous ramp (${ramp.mode})`}
+      aria-label="OKLCH ramp"
       className="flex w-full flex-col border-b border-ink/15"
     >
       {ramp.shades.map((shade, i) => (

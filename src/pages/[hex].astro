@@ -9,9 +9,7 @@
 export const prerender = false;
 
 import { DATE_PUBLISHED, DATE_MODIFIED } from '../lib/site-meta';
-import '../styles/global.css';
-import BaseHead from '../components/BaseHead.astro';
-import ShadeTool from '../components/ShadeTool';
+import ColorToolLayout from '../layouts/ColorToolLayout.astro';
 import { parseColor, ParseError } from '../lib/color/parse';
 import { findByHex } from '../lib/data/named-colors';
 import { readInitialPrefs } from '../lib/url-prefs';
@@ -103,6 +101,8 @@ const hexPageJsonLd = {
 
 const prefs = readInitialPrefs(Astro.url);
 
+const h1Text = `Tints & shades of ${hexLabel}${named ? ` · ${named.name}` : ''}`;
+
 // Tell the Cloudflare edge to cache the rendered HTML for 30 days,
 // serving stale for an extra day while it revalidates. Same shape as
 // the JSON API and OG endpoints — without this header the Workers
@@ -115,79 +115,22 @@ Astro.response.headers.set(
 );
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <BaseHead />
-    <title>{TITLE}</title>
-    <meta name="description" content={DESCRIPTION} />
-    <link rel="canonical" href={canonicalUrl} />
-
-    <meta property="og:type" content="article" />
-    <meta property="og:title" content={TITLE} />
-    <meta property="og:description" content={DESCRIPTION} />
-    <meta property="og:url" content={canonicalUrl} />
-    <meta property="og:image" content={ogImage} />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:alt" content={named ? `Tints and shades of ${hexLabel} (${named.name})` : `Tints and shades of ${hexLabel}`} />
-    {/* Pinterest-optimized 2:3 portrait variant — Pinterest's feed is
-        portrait-first and re-crops landscape OG cards. Listed as a
-        secondary og:image so Facebook/LinkedIn keep using the
-        landscape primary while Pinterest can pick this one. */}
-    <meta property="og:image" content={ogImagePin} />
-    <meta property="og:image:width" content="1000" />
-    <meta property="og:image:height" content="1500" />
-    <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:alt" content={named ? `Tints and shades of ${hexLabel} (${named.name})` : `Tints and shades of ${hexLabel}`} />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={TITLE} />
-    <meta name="twitter:description" content={DESCRIPTION} />
-    <meta name="twitter:image" content={ogImage} />
-
+<ColorToolLayout
+  title={TITLE}
+  description={DESCRIPTION}
+  canonical={canonicalUrl}
+  ogType="article"
+  ogImage={ogImage}
+  ogImageAlt={named ? `Tints and shades of ${hexLabel} (${named.name})` : `Tints and shades of ${hexLabel}`}
+  ogImagePin={ogImagePin}
+  initialHex={canonical}
+  prefs={prefs}
+  h1={h1Text}
+  footerLabel={hexLabel}
+  footerHex={canonical.slice(1)}
+>
+  <Fragment slot="head">
     <script type="application/ld+json" set:html={safeJsonForScript(breadcrumbJsonLd)} />
     <script type="application/ld+json" set:html={safeJsonForScript(hexPageJsonLd)} />
-  </head>
-  <body class="bg-paper text-ink">
-    <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W6D48RVL" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
-    <main class="mx-auto max-w-6xl px-6 pb-24">
-      {/* Visually hidden H1 — kept in the DOM so screen readers get a page
-          heading and Googlebot / AI crawlers see the hex keyword as the
-          primary topic. The tool itself owns the visible hierarchy. */}
-      <h1 class="sr-only">
-        Tints &amp; shades of {hexLabel}{named && <span> · {named.name}</span>}
-      </h1>
-
-      <ShadeTool
-        client:load
-        initialHex={canonical}
-        initialView={prefs.view}
-        initialRampMode={prefs.mode}
-        initialExportFormat={prefs.fmt}
-        initialCopyFormat={prefs.copy}
-      />
-
-      <noscript>
-        <p class="mx-auto max-w-6xl border border-hairline bg-paper-2 px-5 py-4 font-display text-mute">
-          This tool needs JavaScript to run.
-        </p>
-      </noscript>
-
-      <!-- Footer -->
-      <footer class="mt-20 border-t border-hairline pt-6">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between">
-          <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/80">
-            <a href="/" class="text-ink hover:text-accent">uishades.com</a> · {hexLabel}
-          </p>
-          <nav aria-label="Footer" class="flex gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
-            <a href="/colors/coral" class="text-ink hover:text-accent">Named colors</a>
-            <a href={`/api/${canonical.slice(1)}.json`} class="text-ink hover:text-accent">JSON API</a>
-          </nav>
-        </div>
-      </footer>
-    </main>
-  </body>
-</html>
+  </Fragment>
+</ColorToolLayout>

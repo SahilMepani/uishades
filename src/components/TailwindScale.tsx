@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import type {
   CopyFormat,
   ExportFormat,
@@ -5,7 +6,15 @@ import type {
   TailwindScale as TailwindScaleData,
 } from '../lib/color/types';
 import ShadeRow from './ShadeRow';
-import ExportDropdown from './ExportDropdown';
+
+// The export-dropdown UI plus its five export-format serializers are the
+// heaviest leaf of the React island. Now that the Tailwind scale is the
+// default view, its grid is shipped eagerly and server-rendered — but the
+// export panel stays split into its own chunk and loads after hydration
+// behind the small, height-stable fallback below. Keeping the boundary here
+// (rather than around all of `TailwindScale`) means the SSR'd HTML carries
+// the real 11-stop scale as crawlable content, not a skeleton.
+const ExportDropdown = lazy(() => import('./ExportDropdown'));
 
 /**
  * Renders the 11-stop Tailwind scale and the export dropdown that sits
@@ -39,13 +48,15 @@ export default function TailwindScale({
 }: TailwindScaleProps) {
   return (
     <div className="flex flex-col gap-4" data-anchor-stop={scale.anchorStop}>
-      <ExportDropdown
-        scale={scale}
-        format={exportFormat}
-        brandName={brandName}
-        onFormatChange={onExportFormatChange}
-        onCopy={onExportCopy}
-      />
+      <Suspense fallback={<ExportDropdownFallback />}>
+        <ExportDropdown
+          scale={scale}
+          format={exportFormat}
+          brandName={brandName}
+          onFormatChange={onExportFormatChange}
+          onCopy={onExportCopy}
+        />
+      </Suspense>
       <div
         role="list"
         aria-label="Tailwind 11-stop scale"
@@ -64,6 +75,23 @@ export default function TailwindScale({
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Height-stable placeholder for the lazy `ExportDropdown` chunk. Reserves
+ * roughly the height of the real "Export as" controls row (a label + select
+ * and two icon buttons) so the scale grid below it doesn't jump when the
+ * chunk arrives. Much shorter than the old whole-view fallback because the
+ * grid itself now renders eagerly.
+ */
+function ExportDropdownFallback() {
+  return (
+    <div aria-hidden="true" className="flex items-center gap-3">
+      <div className="h-7 w-40 bg-paper-2 motion-safe:animate-pulse" />
+      <div className="h-7 w-7 bg-paper-2 motion-safe:animate-pulse" />
+      <div className="h-7 w-7 bg-paper-2 motion-safe:animate-pulse" />
     </div>
   );
 }

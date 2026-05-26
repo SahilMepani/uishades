@@ -1,0 +1,124 @@
+---
+/**
+ * ColorToolLayout — the single shared document shell for the interactive tool.
+ *
+ * Both `/` and `/[hex]` render through this layout so the two URLs emit an
+ * identical `<!doctype html>…</html>` structure from one source. Page-specific
+ * `<head>` content (JSON-LD, etc.) is injected via the `head` slot; everything
+ * else is parameterized through props.
+ *
+ * The rendered output for a given hex MUST stay byte-for-byte identical to the
+ * markup `/[hex].astro` used to render inline — edits here hit both URLs.
+ */
+import '../styles/global.css';
+import BaseHead from '../components/BaseHead.astro';
+import ShadeTool from '../components/ShadeTool';
+import type { Hex } from '../lib/color/types';
+import type { InitialPrefs } from '../lib/url-prefs';
+
+interface Props {
+  title: string;
+  description: string;
+  canonical: string;
+  ogType: string; // 'website' | 'article'
+  ogImage: string;
+  ogImageAlt: string;
+  ogImagePin?: string; // optional portrait 1000x1500 OG (only /[hex] uses it)
+  twitterImage?: string; // defaults to ogImage
+  initialHex: Hex;
+  prefs: InitialPrefs;
+  h1: string; // sr-only heading text
+  footerLabel: string; // e.g. "#4040FF"
+  footerHex: string; // e.g. "4040ff" (for the /api/<hex>.json link)
+}
+
+const {
+  title,
+  description,
+  canonical,
+  ogType,
+  ogImage,
+  ogImageAlt,
+  ogImagePin,
+  twitterImage = ogImage,
+  initialHex,
+  prefs,
+  h1,
+  footerLabel,
+  footerHex,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:alt" content={ogImageAlt} />
+    {ogImagePin && (
+      <>
+        {/* Pinterest-optimized 2:3 portrait variant — Pinterest's feed is
+            portrait-first and re-crops landscape OG cards. Listed as a
+            secondary og:image so Facebook/LinkedIn keep using the
+            landscape primary while Pinterest can pick this one. */}
+        <meta property="og:image" content={ogImagePin} />
+        <meta property="og:image:width" content="1000" />
+        <meta property="og:image:height" content="1500" />
+        <meta property="og:image:type" content="image/png" />
+        <meta property="og:image:alt" content={ogImageAlt} />
+      </>
+    )}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={twitterImage} />
+
+    <slot name="head" />
+  </head>
+  <body class="bg-paper text-ink">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W6D48RVL" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <main class="w-full px-6 pb-24 lg:px-8">
+      <h1 class="sr-only">{h1}</h1>
+
+      <ShadeTool
+        client:load
+        initialHex={initialHex}
+        initialView={prefs.view}
+        initialExportFormat={prefs.fmt}
+        initialCopyFormat={prefs.copy}
+      />
+
+      <noscript>
+        <p class="mx-auto max-w-6xl border border-hairline bg-paper-2 px-5 py-4 font-display text-mute">
+          This tool needs JavaScript to run.
+        </p>
+      </noscript>
+
+      <!-- Footer -->
+      <footer class="mt-20 border-t border-hairline pt-6">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between">
+          <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/80">
+            <a href="/" class="text-ink hover:text-accent">uishades.com</a> · {footerLabel}
+          </p>
+          <nav aria-label="Footer" class="flex gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
+            <a href="/colors/coral" class="text-ink hover:text-accent">Named colors</a>
+            <a href={`/api/${footerHex}.json`} class="text-ink hover:text-accent">JSON API</a>
+          </nav>
+        </div>
+      </footer>
+    </main>
+  </body>
+</html>

@@ -1,6 +1,4 @@
 import {
-  lazy,
-  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -13,13 +11,11 @@ import type {
   CopyFormat,
   ExportFormat,
   Hex,
-  RampMode,
   Shade,
 } from '../lib/color/types';
 import { parseColor } from '../lib/color/parse';
 import { formatForCopy } from '../lib/color/format';
 import { oklchRamp } from '../lib/color/ramp';
-import { classicRamp } from '../lib/color/classic';
 import { buildScale } from '../lib/color/scale';
 // Use the slim hex-lookup so the React island doesn't drag the full
 // blurb-bearing NAMED_COLORS module into its bundle. The page chrome
@@ -30,25 +26,23 @@ import { ToastProvider, useToast } from './Toast';
 import ColorPicker from './ColorPicker';
 import ShareRow from './ShareRow';
 
-// Lazy-load the Tailwind scale view + its export panel + serializers. They
-// form the heaviest leaf of the React island (Tailwind scale, five export-
-// format serializers, the export-dropdown UI) and most first visits only
-// need the continuous ramp. Splitting them into a separate chunk keeps the
-// initial-load JS smaller; the Suspense fallback below reserves a
-// placeholder roughly the same height as the rendered scale so switching
-// tabs does not produce a CLS spike.
-const TailwindScale = lazy(() => import('./TailwindScale'));
+// The Tailwind scale is the default view, so its grid ships eagerly and is
+// server-rendered — real content on first paint, no skeleton flash. Only the
+// heaviest leaf (the export-dropdown UI plus the five export-format
+// serializers) stays lazy, split out *inside* `TailwindScale` behind a small
+// height-stable fallback. The OKLCH continuous ramp is eager too — it just
+// reuses the shared `ShadeRow` — so toggling between the two views is instant.
+import TailwindScale from './TailwindScale';
 
 /**
  * Top-level React island for the shade tool.
  *
  * Owns:
  *   - current hex (URL-synced)
- *   - view mode (ramp vs scale)
- *   - ramp mode (oklch vs classic) — persisted in localStorage
+ *   - view selection (Tailwind scale vs OKLCH ramp; default Tailwind) —
+ *     persisted in localStorage and mirrored to `?view=scale|ramp`
  *   - copy-format preference — persisted in localStorage
  *   - export-format preference — persisted in localStorage
- *   - view selection — persisted in localStorage
  *
  * URL sync: each new hex calls `history.replaceState` to update the path.
  * On the development page (`/_dev/tool`) we update the `?c=` search param
@@ -58,10 +52,12 @@ const TailwindScale = lazy(() => import('./TailwindScale'));
 
 const STORAGE_KEYS = {
   copyFormat: 'shades.copyFormat',
-  rampMode: 'shades.rampMode',
   exportFormat: 'shades.exportFormat',
   view: 'shades.view',
   dismissedHintBanner: 'shades.dismissedHintBanner',
+  // Last-used color, written on every hex change and re-seeded on the root
+  // route after hydration (see the mount handler + the `hex` effect below).
+  hex: 'uishades:hex',
 } as const;
 
 type View = 'ramp' | 'scale';
@@ -203,7 +199,12 @@ function isHexRoute(): boolean {
   return HEX_PATH_RE.test(window.location.pathname);
 }
 
-function syncUrl(hex: Hex) {
+// `userChose` gates ONLY the root-route branch: the home page paints the
+// seed/last-used color before any interaction, and we must NOT rewrite `/` to
+// `/[hex]` for that post-hydration swap (the URL should stay clean until the
+// user actually picks a color). It does NOT gate the `isHexRoute()` branch —
+// a direct visit to `/ff7f50` must keep its path synced regardless.
+function syncUrl(hex: Hex, userChose: boolean) {
   if (typeof window === 'undefined') return;
   try {
     if (isDevHostingRoute()) {
@@ -216,8 +217,17 @@ function syncUrl(hex: Hex) {
       const url = new URL(window.location.href);
       url.pathname = '/' + hex.slice(1);
       window.history.replaceState(null, '', url.toString());
+    } else if (window.location.pathname === '/' && userChose) {
+      // Root route, after a user-initiated change: promote `/` to `/[hex]`
+      // so the URL is shareable. Mirror the isHexRoute branch's URL build to
+      // preserve any existing search params. Subsequent syncs match
+      // isHexRoute() above and reuse that branch automatically.
+      const url = new URL(window.location.href);
+      url.pathname = '/' + hex.slice(1);
+      window.history.replaceState(null, '', url.toString());
     }
-    // Any other route (home, /colors/[name]) leaves the path alone.
+    // Any other route (/colors/[name], or root before interaction) leaves the
+    // path alone.
   } catch {
     /* ignore — URL update is best-effort */
   }
@@ -232,7 +242,6 @@ export interface ShadeToolProps {
    * Each is optional with a sensible default.
    */
   initialView?: View;
-  initialRampMode?: RampMode;
   initialExportFormat?: ExportFormat;
   initialCopyFormat?: CopyFormat;
 }
@@ -240,7 +249,6 @@ export interface ShadeToolProps {
 export default function ShadeTool({
   initialHex,
   initialView,
-  initialRampMode,
   initialExportFormat,
   initialCopyFormat,
 }: ShadeToolProps) {
@@ -249,7 +257,6 @@ export default function ShadeTool({
       <ShadeToolInner
         initialHex={initialHex}
         initialView={initialView}
-        initialRampMode={initialRampMode}
         initialExportFormat={initialExportFormat}
         initialCopyFormat={initialCopyFormat}
       />
@@ -259,8 +266,7 @@ export default function ShadeTool({
 
 function ShadeToolInner({
   initialHex,
-  initialView = 'ramp',
-  initialRampMode = 'oklch',
+  initialView = 'scale',
   initialExportFormat = 'tailwind-v4',
   initialCopyFormat = 'hex',
 }: ShadeToolProps) {
@@ -270,12 +276,6 @@ function ShadeToolInner({
     ['ramp', 'scale'] as const,
     initialView,
     'view',
-  );
-  const [rampMode, setRampMode] = usePersistedState<RampMode>(
-    STORAGE_KEYS.rampMode,
-    ['oklch', 'classic'] as const,
-    initialRampMode,
-    'mode',
   );
   const [copyFormat, setCopyFormat] = usePersistedState<CopyFormat>(
     STORAGE_KEYS.copyFormat,
@@ -292,49 +292,108 @@ function ShadeToolInner({
 
   const { pushToast } = useToast();
 
-  // Honor `?seed=<raw>` from the URL on mount: this is the home form's
-  // hand-off path for inputs it can't resolve locally (rgb/hsl/oklch/typo).
-  // We try parseColor; on success we swap to that hex and strip the param.
-  // On failure we leave the URL's `initialHex` showing and toast.
-  // Runs ONCE on mount; deps intentionally empty.
+  // Tracks whether the current hex resulted from a user-initiated change
+  // (picker, text input, shade-row navigation, or an explicit `?hex=` deep
+  // link). It gates the root-route URL rewrite in `syncUrl`: the post-
+  // hydration localStorage seed-swap on `/` leaves this false so the URL
+  // stays clean, while the first real interaction flips it true so `/` is
+  // promoted to `/[hex]`. Refs are not reactive — read `.current` at fire
+  // time, never in a deps array.
+  const userChoseRef = useRef(false);
+
+  // Mount handler for the URL/last-used color hand-off. Runs ONCE on mount;
+  // deps intentionally empty. Precedence (highest first):
+  //   1. `?hex=<raw>` — explicit deep link (replaces the old home form). On
+  //      success this IS a user intent, so we flip userChoseRef and let the
+  //      path rewrite to /[hex]. `?hex=` wins if both params appear.
+  //   2. `?seed=<raw>` — the legacy home-form hand-off for inputs it can't
+  //      resolve locally (rgb/hsl/oklch/typo). Does NOT flip userChoseRef,
+  //      so its URL behavior is unchanged from before.
+  //   3. localStorage['uishades:hex'] — last-used color, but ONLY on the root
+  //      route and ONLY when neither param is present. No URL rewrite (the
+  //      gate stays false), so SSR's clean `/` is preserved.
+  //   4. (implicit) the SSR `initialHex` already in state — nothing to do.
+  // Both params are always stripped after consumption so a refresh doesn't
+  // re-parse and shared URLs don't leak the raw input.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    let raw: string | null = null;
+    let rawHex: string | null = null;
+    let rawSeed: string | null = null;
     try {
-      raw = new URL(window.location.href).searchParams.get('seed');
+      const params = new URL(window.location.href).searchParams;
+      rawHex = params.get('hex');
+      rawSeed = params.get('seed');
     } catch {
       return;
     }
-    if (!raw) return;
-    const decoded = (() => {
+
+    const decode = (raw: string): string => {
       try {
         return decodeURIComponent(raw);
       } catch {
-        return raw as string;
+        return raw;
       }
-    })();
-    // Always strip the param after consuming it — we don't want a refresh
-    // to keep re-parsing or to leak the raw input into shared URLs.
-    try {
-      const url = new URL(window.location.href);
-      url.searchParams.delete('seed');
-      window.history.replaceState(null, '', url.toString());
-    } catch {
-      /* ignore */
+    };
+    const stripParams = () => {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('hex');
+        url.searchParams.delete('seed');
+        window.history.replaceState(null, '', url.toString());
+      } catch {
+        /* ignore */
+      }
+    };
+
+    if (rawHex) {
+      // 1. Explicit `?hex=` deep link — user intent, so promote to /[hex].
+      const decoded = decode(rawHex);
+      // Strip both params before the hex-effect runs so the rewritten path
+      // doesn't carry ?hex= along.
+      stripParams();
+      try {
+        const parsed = parseColor(decoded);
+        userChoseRef.current = true;
+        if (parsed !== hex) setHex(parsed);
+      } catch {
+        pushToast(`Couldn't parse "${decoded}" — showing #4040ff instead.`);
+      }
+      return;
     }
-    try {
-      const parsed = parseColor(decoded);
-      if (parsed !== hex) setHex(parsed);
-    } catch {
-      pushToast(`Couldn't parse "${decoded}" — showing #4040ff instead.`);
+
+    if (rawSeed) {
+      // 2. Legacy `?seed=` hand-off. Behavior unchanged — does NOT flip the
+      // user-choice gate.
+      const decoded = decode(rawSeed);
+      stripParams();
+      try {
+        const parsed = parseColor(decoded);
+        if (parsed !== hex) setHex(parsed);
+      } catch {
+        pushToast(`Couldn't parse "${decoded}" — showing #4040ff instead.`);
+      }
+      return;
+    }
+
+    // 3. No param — on the root route, seed the last-used color from
+    // localStorage. This swap happens post-hydration (SSR painted the
+    // initialHex), and because the gate stays false the URL stays at `/`.
+    if (window.location.pathname === '/') {
+      try {
+        const stored = window.localStorage.getItem(STORAGE_KEYS.hex);
+        if (stored) {
+          const parsed = parseColor(stored);
+          if (parsed !== hex) setHex(parsed);
+        }
+      } catch {
+        /* localStorage unavailable or stored value unparseable — keep seed */
+      }
     }
   }, []);
 
   // Derive ramp + scale lazily from inputs.
-  const ramp = useMemo(() => {
-    return rampMode === 'oklch' ? oklchRamp(hex) : classicRamp(hex);
-  }, [hex, rampMode]);
+  const ramp = useMemo(() => oklchRamp(hex), [hex]);
   const scale = useMemo(() => buildScale(hex), [hex]);
 
   const named = useMemo(() => findByHex(hex), [hex]);
@@ -342,12 +401,22 @@ function ShadeToolInner({
   // (Assumption documented in the implementation report.)
   const brandName = named?.slug ?? 'brand';
 
-  // URL sync whenever the hex changes from any source.
+  // URL sync whenever the hex changes from any source, plus persist the
+  // last-used color. The localStorage write is the store for the root-route
+  // re-seed in the mount handler above.
   useEffect(() => {
-    syncUrl(hex);
+    syncUrl(hex, userChoseRef.current);
+    try {
+      window.localStorage.setItem(STORAGE_KEYS.hex, hex);
+    } catch {
+      /* localStorage may be unavailable in private mode */
+    }
   }, [hex]);
 
   const handleChangeHex = useCallback((next: Hex) => {
+    // User-initiated (color picker + the hex text input via PreviewBlock).
+    // Flip the gate so syncUrl promotes the root `/` to `/[hex]`.
+    userChoseRef.current = true;
     setHex(next);
   }, []);
 
@@ -384,6 +453,9 @@ function ShadeToolInner({
   // updates — just without reloading the page. Mirrors the color-picker
   // flow so the arrow link behaves the same as the top-left color box.
   const handleNavigate = useCallback((h: Hex) => {
+    // User-initiated (shade-row "use as source"). Flip the gate so syncUrl
+    // promotes the root `/` to `/[hex]`.
+    userChoseRef.current = true;
     setHex(h);
   }, []);
 
@@ -410,18 +482,14 @@ function ShadeToolInner({
         </div>
       </div>
 
-      <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-8 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-14 lg:px-8 lg:py-12">
+      <div className="grid w-full gap-8 px-4 py-8 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:grid-cols-[22rem_minmax(0,1fr)] lg:gap-14 lg:px-8 lg:py-12">
         {/* Left rail: preview + input + controls (sticky on desktop) */}
         <aside className="hidden md:block md:sticky md:top-8 md:self-start">
           <PreviewBlock hex={hex} named={named} onChange={handleChangeHex} />
           <div className="mt-6 flex flex-col gap-5">
             <div className="border-t border-hairline pt-5">
-              <ViewToggle view={view} onChange={setView} />
+              <AlgorithmToggle view={view} onChange={setView} />
             </div>
-
-            {view === 'ramp' && (
-              <RampModeToggle mode={rampMode} onChange={setRampMode} />
-            )}
 
             <CopyFormatPicker
               value={copyFormat}
@@ -432,16 +500,13 @@ function ShadeToolInner({
           </div>
         </aside>
 
-        {/* Right column: ramp or scale + view/mode toggles on mobile.
+        {/* Right column: ramp or scale + the algorithm toggle on mobile.
             `min-w-0` lets this grid item shrink to its track instead of being
             propped open by its content's min-content (long mono values, the
             header row), which otherwise overflows the grid on narrow screens. */}
         <section className="flex min-w-0 flex-col gap-4">
           <div className="flex flex-col gap-3 md:hidden">
-            <ViewToggle view={view} onChange={setView} />
-            {view === 'ramp' && (
-              <RampModeToggle mode={rampMode} onChange={setRampMode} />
-            )}
+            <AlgorithmToggle view={view} onChange={setView} />
             <CopyFormatPicker
               value={copyFormat}
               onChange={setCopyFormat}
@@ -497,48 +562,20 @@ function ShadeToolInner({
                 onNavigate={handleNavigate}
               />
             ) : (
-              <Suspense fallback={<TailwindScaleFallback />}>
-                <TailwindScale
-                  scale={scale}
-                  sourceHex={hex}
-                  copyFormat={copyFormat}
-                  exportFormat={exportFormat}
-                  brandName={brandName}
-                  onCopy={handleCopyShade}
-                  onNavigate={handleNavigate}
-                  onExportCopy={handleExportCopy}
-                  onExportFormatChange={setExportFormat}
-                />
-              </Suspense>
+              <TailwindScale
+                scale={scale}
+                sourceHex={hex}
+                copyFormat={copyFormat}
+                exportFormat={exportFormat}
+                brandName={brandName}
+                onCopy={handleCopyShade}
+                onNavigate={handleNavigate}
+                onExportCopy={handleExportCopy}
+                onExportFormatChange={setExportFormat}
+              />
             )}
           </div>
         </section>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Height-stable placeholder shown while the lazy TailwindScale chunk loads.
- * Reserves enough vertical space (export preview + dropdown + 11 rows worth)
- * to keep the page from jumping once the chunk finishes (CLS).
- */
-function TailwindScaleFallback() {
-  return (
-    <div
-      aria-hidden="true"
-      className="flex flex-col gap-4"
-      style={{ minHeight: '52rem' }}
-    >
-      <div className="h-8 w-48 bg-paper-2 motion-safe:animate-pulse" />
-      <div className="h-64 bg-paper-2 motion-safe:animate-pulse" />
-      <div className="overflow-hidden border-y border-hairline">
-        {Array.from({ length: 11 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-12 border-b border-hairline-2 bg-paper-2/60 last:border-b-0 motion-safe:animate-pulse"
-          />
-        ))}
       </div>
     </div>
   );
@@ -896,49 +933,22 @@ function PickerIcon({ className }: { className?: string }) {
   );
 }
 
-function ViewToggle({
+function AlgorithmToggle({
   view,
   onChange,
 }: {
   view: View;
   onChange: (v: View) => void;
 }) {
-  // Underline-tab style — Linear / editorial.
-  return (
-    <div role="tablist" aria-label="View" className="flex gap-6">
-      {(['ramp', 'scale'] as const).map(v => {
-        const active = view === v;
-        return (
-          <button
-            key={v}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            aria-label={v === 'ramp' ? 'Continuous ramp' : 'Tailwind scale'}
-            onClick={() => onChange(v)}
-            className={[
-              'relative -mb-px py-2 text-sm font-medium tracking-tight',
-              'focus-visible:outline-none',
-              active
-                ? 'text-ink after:absolute after:inset-x-0 after:-bottom-px after:h-[2px] after:bg-accent'
-                : 'text-mute hover:text-ink',
-            ].join(' ')}
-          >
-            {v === 'ramp' ? 'Continuous ramp' : 'Tailwind scale'}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function RampModeToggle({
-  mode,
-  onChange,
-}: {
-  mode: RampMode;
-  onChange: (m: RampMode) => void;
-}) {
+  // The single primary selector: a pill segmented control switching between
+  // the Tailwind 11-stop scale (default, left) and the OKLCH continuous ramp
+  // (right). `view` remains the underlying state — 'scale' = Tailwind,
+  // 'ramp' = OKLCH — so the `?view=` URL contract and stored preference are
+  // unchanged; only the labels are new.
+  const OPTIONS = [
+    { v: 'scale', label: 'Tailwind' },
+    { v: 'ramp', label: 'OKLCH' },
+  ] as const;
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
@@ -947,34 +957,34 @@ function RampModeToggle({
       </div>
       <div
         role="tablist"
-        aria-label="Ramp algorithm"
+        aria-label="Palette algorithm"
         className="relative inline-grid w-full grid-cols-2 rounded-full bg-paper-2 p-1 ring-1 ring-ink/10"
       >
-        {/* Sliding indicator */}
+        {/* Sliding indicator — left for Tailwind (default), right for OKLCH. */}
         <span
           aria-hidden="true"
           className={[
             'absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-ink shadow-sm',
             'transition-transform duration-200 ease-out motion-reduce:transition-none',
-            mode === 'classic' ? 'translate-x-full' : 'translate-x-0',
+            view === 'ramp' ? 'translate-x-full' : 'translate-x-0',
           ].join(' ')}
         />
-        {(['oklch', 'classic'] as const).map(m => {
-          const active = mode === m;
+        {OPTIONS.map(({ v, label }) => {
+          const active = view === v;
           return (
             <button
-              key={m}
+              key={v}
               type="button"
               role="tab"
               aria-selected={active}
-              onClick={() => onChange(m)}
+              onClick={() => onChange(v)}
               className={[
                 'relative z-10 rounded-full px-4 py-2 text-sm font-medium tracking-tight',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
                 active ? 'text-paper' : 'text-ink/70 hover:text-ink',
               ].join(' ')}
             >
-              {m === 'oklch' ? 'OKLCH' : 'Classic'}
+              {label}
             </button>
           );
         })}
@@ -1034,16 +1044,16 @@ function AlgorithmInfoButton() {
           }
         >
           <p className="mb-2">
-            <span className="font-mono font-semibold">OKLCH</span> walks the ramp in a
-            perceptually uniform color space. Lightness steps feel evenly spaced and
-            chroma stays controlled, so mid-tones don't go muddy. Use this for new
-            design systems.
+            <span className="font-mono font-semibold">Tailwind</span> builds an 11-stop
+            scale (50–950) snapped to your color's nearest stop — drop-in tokens for a
+            Tailwind theme, with copy-ready exports. Pick this to wire a color into a
+            design system.
           </p>
           <p>
-            <span className="font-mono font-semibold">Classic</span> reproduces the
-            0to255-style RGB walk that older palette tools and Tailwind scales use —
-            channels step by 17 toward white, then walk down toward black. Pick this
-            when you need to match shades from assets built with those older tools.
+            <span className="font-mono font-semibold">OKLCH</span> walks a 20-shade ramp
+            in a perceptually uniform color space. Lightness steps feel evenly spaced and
+            chroma stays controlled, so mid-tones don't go muddy. Pick this for a full
+            tint-to-shade range.
           </p>
         </div>
       )}

@@ -28,10 +28,11 @@ import { test, expect } from '@playwright/test';
 const DEV_URL = '/4040ff';
 
 test.describe('shade tool — smoke', () => {
-  test('renders 20 ramp rows for #4040ff', async ({ page }) => {
-    await page.goto(DEV_URL);
-    // Wait for the island to hydrate (ramp rows are SSR-rendered too, so
-    // they should appear basically immediately).
+  test('renders 20 OKLCH ramp rows for #4040ff', async ({ page }) => {
+    // The OKLCH ramp is no longer the default view (Tailwind is), so deep-link
+    // into it. Ramp rows are SSR-rendered, so they appear basically
+    // immediately after hydration.
+    await page.goto('/4040ff?view=ramp');
     const rows = page.locator('[data-shade-row="true"]');
     await expect(rows).toHaveCount(20);
 
@@ -56,9 +57,8 @@ test.describe('shade tool — smoke', () => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await page.goto(DEV_URL);
 
-    // Click the first non-endpoint shade (the white endpoint at index 0 is
-    // visible but a less interesting copy target). Pick the 5th row so the
-    // shade has a clear, distinct hex.
+    // Default view is the Tailwind scale (11 rows). Pick a mid-scale row so
+    // the shade has a clear, distinct hex to verify against the clipboard.
     const targetRow = page.locator('[data-shade-row="true"]').nth(5);
     const targetHex = await targetRow.getAttribute('data-hex');
     expect(targetHex).toBeTruthy();
@@ -84,12 +84,13 @@ test.describe('shade tool — smoke', () => {
       browserName !== 'chromium',
       'blob-URL download capture is only reliable in chromium under Playwright',
     );
-    await page.goto(DEV_URL);
+    // The ramp PNG button only exists in the OKLCH ramp view; deep-link in.
+    await page.goto('/4040ff?view=ramp');
 
     const downloadPromise = page.waitForEvent('download');
     await page.getByRole('button', { name: /download ramp as png/i }).first().click();
     const download = await downloadPromise;
-    // Default oklch ramp for #4040ff → uishades-4040ff-oklch.png
+    // OKLCH ramp for #4040ff → uishades-4040ff-oklch.png
     expect(download.suggestedFilename()).toBe('uishades-4040ff-oklch.png');
   });
 
@@ -108,20 +109,23 @@ test.describe('shade tool — smoke', () => {
     expect(download.suggestedFilename()).toBe('uishades-4040ff-scale.png');
   });
 
-  test('switching to Tailwind scale renders 11 rows with the anchor highlighted', async ({
+  test('switching to the Tailwind scale renders 11 rows with the anchor highlighted', async ({
     page,
     browserName,
   }) => {
-    // TODO: webkit times out before the React.lazy chunk for TailwindScale +
-    // ExportDropdown finishes loading on tab click. The `?view=scale` deep-link
-    // test below works in webkit because the scale view is server-prerendered
-    // there and the lazy chunk arrives with the initial hydration. Re-enable
-    // once we either pre-warm the chunk or raise the per-test timeout.
-    test.fixme(browserName === 'webkit', 'webkit lazy-load timing on tab click');
-    await page.goto(DEV_URL);
-    // Click the "Tailwind scale" tab (rendered both on mobile and desktop;
-    // playwright defaults to desktop viewport so click the first occurrence).
-    await page.getByRole('tab', { name: 'Tailwind scale' }).first().click();
+    // webkit under Playwright doesn't reliably fire React's onClick on the
+    // algorithm tab button, so the view never switches and the assertion sees
+    // the 20 ramp rows instead of 11. This is the same webkit click-delivery
+    // class as the picker-trigger / programmatic-focus quirks documented in the
+    // other specs (real Safari is unaffected) — NOT a lazy-load issue: the
+    // scale grid is shipped eagerly now, so a successful click renders the 11
+    // rows immediately.
+    test.fixme(browserName === 'webkit', 'webkit onClick delivery on the tab button');
+    // Start on the OKLCH ramp, then switch to Tailwind.
+    await page.goto('/4040ff?view=ramp');
+    // Click the "Tailwind" tab (rendered both on mobile and desktop; playwright
+    // defaults to desktop viewport so click the first occurrence).
+    await page.getByRole('tab', { name: 'Tailwind' }).first().click();
 
     const rows = page.locator('[data-shade-row="true"]');
     await expect(rows).toHaveCount(11);
@@ -137,12 +141,13 @@ test.describe('shade tool — smoke', () => {
     page,
     browserName,
   }) => {
-    // TODO: same webkit lazy-load timing as the test above. The `?view=scale`
-    // deep-link path renders Tailwind fine in webkit, so the chunk loads when
-    // requested at hydration time — only the click-to-load path is flaky.
-    test.fixme(browserName === 'webkit', 'webkit lazy-load timing on tab click');
+    // webkit under Playwright is flaky delivering clicks to the lazy export
+    // panel's controls (the "View code" modal never opens), so the preview
+    // assertion below times out. Same webkit click-delivery class as the other
+    // fixmes; real Safari is unaffected. Tailwind is the default view, so the
+    // controls are present on load and the dropdown chunk loads at hydration.
+    test.fixme(browserName === 'webkit', 'webkit click delivery on the lazy export panel');
     await page.goto(DEV_URL);
-    await page.getByRole('tab', { name: 'Tailwind scale' }).first().click();
 
     // Change the export-format dropdown.
     await page.getByLabel(/^Export as/).selectOption('tailwind-v3');

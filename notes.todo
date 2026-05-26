@@ -3,3 +3,53 @@
 https://maketintsandshades.com/
 
 ☐ What I'd really love is a color-dropper plugin that lets me choose a random color on a webpage, and change every pixel of that color to a different one specified by me.
+
+☐ Replace the color picker with native browser color picker across the site
+☐ Replace Copy as to View as
+☐ Think of view as to show as single label to clickable multiple time to change the value like how we have cc mode. or look at uicolors.app
+☐ Make the whole background pure white and allow the option to change to dark mode with pure black
+☐ Use the whole available viewport instead of the container. Basically make the layout fluid
+☐ Show the toast at the top instead of bottom for larger screens
+☐ Show contract WCAG too
+☐ Add spacing of 2 pixels between each ramp row
+
+https://www.producthunt.com/products/ui-colors-2/reviews - Read all the comments, and try to implement what the user wants
+
+☐ Look at different Color Pallette tools and read their comments. VERY IMPORTANT
+
+
+
+The biggest UX mistake developer tools make:
+They explain before demonstrating.
+
+Users don’t want:
+
+explanations
+technical context
+feature lists
+
+They want:
+
+immediate interaction
+instant results
+visual confidence
+
+Your /7f57ca page already does this better because:
+
+the palette is the hero
+the output is visible immediately
+there’s less cognitive overhead
+
+That’s closer to how successful tools behave.
+
+
+
+It asks users to:
+understand the product first
+
+But great utility tools let users:
+experience the product first
+
+Coolors
+UI Colors
+Tailwind Play
