@@ -111,6 +111,16 @@ function usePersistedState<T extends string>(
   // Track whether the URL already carried this preference at boot. If yes,
   // we do NOT defer to localStorage on hydration (URL wins).
   const urlHadValueAtBootRef = useRef<boolean>(false);
+  // Becomes true only when the value changes through the wrapped setter
+  // returned below (a real user interaction). The localStorage restore on
+  // mount uses the raw `setValue`, so it does NOT count as interaction — that
+  // keeps an already-clean URL (e.g. `/`) clean for returning visitors instead
+  // of dirtying it with a `?view=`/`?fmt=` derived from their stored pref.
+  const hasInteractedRef = useRef<boolean>(false);
+  const setValueAndMark = useCallback<Dispatch<SetStateAction<T>>>((next) => {
+    hasInteractedRef.current = true;
+    setValue(next);
+  }, []);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     let urlValue: T | null = null;
@@ -146,30 +156,31 @@ function usePersistedState<T extends string>(
     } catch {
       /* ignore */
     }
-    // Mirror to the URL too once the user has either deep-linked OR changed
-    // the value at runtime. The very first paint with an unstyled URL leaves
-    // the URL clean — only an interaction writes the param.
-    if (urlParam) {
-      try {
-        const url = new URL(window.location.href);
-        const hasNow = url.searchParams.get(urlParam) === value;
-        if (urlHadValueAtBootRef.current || !hasNow) {
-          if (value === initial && !urlHadValueAtBootRef.current) {
-            // Keep the URL clean when the value is the default and the user
-            // hasn't deep-linked the param.
-            url.searchParams.delete(urlParam);
-          } else {
-            url.searchParams.set(urlParam, value);
-            urlHadValueAtBootRef.current = true;
-          }
+    if (!urlParam) return;
+    // Only touch the URL once the user has deep-linked the param OR changed
+    // the value through an interaction. A localStorage restore on mount must
+    // NOT dirty a clean URL — otherwise a returning visitor whose stored pref
+    // differs from the default would land on `/?view=…` with no interaction.
+    if (!urlHadValueAtBootRef.current && !hasInteractedRef.current) return;
+    try {
+      const url = new URL(window.location.href);
+      const current = url.searchParams.get(urlParam);
+      if (value === initial && !urlHadValueAtBootRef.current) {
+        // Back to the default and not deep-linked → keep the URL clean.
+        if (current !== null) {
+          url.searchParams.delete(urlParam);
           window.history.replaceState(null, '', url.toString());
         }
-      } catch {
-        /* ignore — URL update is best-effort */
+      } else if (current !== value) {
+        url.searchParams.set(urlParam, value);
+        urlHadValueAtBootRef.current = true;
+        window.history.replaceState(null, '', url.toString());
       }
+    } catch {
+      /* ignore — URL update is best-effort */
     }
   }, [key, value, urlParam, initial]);
-  return [value, setValue];
+  return [value, setValueAndMark];
 }
 
 function normalizeHexInput(input: string): Hex {
@@ -357,7 +368,7 @@ function ShadeToolInner({
         userChoseRef.current = true;
         if (parsed !== hex) setHex(parsed);
       } catch {
-        pushToast(`Couldn't parse "${decoded}" — showing #4040ff instead.`);
+        pushToast(`Couldn't parse "${decoded}" — showing ${hex} instead.`);
       }
       return;
     }
@@ -371,7 +382,7 @@ function ShadeToolInner({
         const parsed = parseColor(decoded);
         if (parsed !== hex) setHex(parsed);
       } catch {
-        pushToast(`Couldn't parse "${decoded}" — showing #4040ff instead.`);
+        pushToast(`Couldn't parse "${decoded}" — showing ${hex} instead.`);
       }
       return;
     }
@@ -505,14 +516,20 @@ function ShadeToolInner({
             propped open by its content's min-content (long mono values, the
             header row), which otherwise overflows the grid on narrow screens. */}
         <section className="flex min-w-0 flex-col gap-4">
-          <div className="flex flex-col gap-3 md:hidden">
-            <AlgorithmToggle view={view} onChange={setView} />
-            <CopyFormatPicker
-              value={copyFormat}
-              onChange={setCopyFormat}
-              hasStop={view === 'scale'}
-            />
-            <ShareRow hex={hex} named={named} />
+          {/* Mobile (< md): the left rail is hidden, so the color input lives
+              here. Without this, the home page `/` and every /[hex] page would
+              have no way to enter or change a color on a phone. */}
+          <div className="flex flex-col gap-5 md:hidden">
+            <PreviewBlock hex={hex} named={named} onChange={handleChangeHex} />
+            <div className="flex flex-col gap-3 border-t border-hairline pt-5">
+              <AlgorithmToggle view={view} onChange={setView} />
+              <CopyFormatPicker
+                value={copyFormat}
+                onChange={setCopyFormat}
+                hasStop={view === 'scale'}
+              />
+              <ShareRow hex={hex} named={named} />
+            </div>
           </div>
 
           {/* Below lg the eyebrow heading is hidden: on a phone/tablet column

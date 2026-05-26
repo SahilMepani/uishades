@@ -10,9 +10,10 @@ import { useToast } from './Toast';
  * Behavior contract (per the spec):
  *   - Click on the row body = copy hex (or current copy-format preference)
  *   - Double-click on the row body = use that shade as the new source
- *   - Cmd/Ctrl-click on the "use as source" link = browser-native open-in-new-tab
- *     (we use a real `<a>` for the icon, not a JS handler)
- *   - Mobile: icons always shown; Desktop: icons revealed on hover/focus
+ *   - Cmd/Ctrl-click or middle-click on the row body = open the shade's own
+ *     page in a new tab. The explicit "use as source" icon anchor is
+ *     display:none in every view, so the row itself carries this (handleClick
+ *     / handleAuxClick below), replicating the old anchor's modifier-click.
  *
  * Keyboard:
  *   - Enter on focused row = copy
@@ -146,9 +147,17 @@ export default function ShadeRow({
   const handleClick = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
       if ((e.target as HTMLElement).closest('a')) return;
-      // The second click of a double-click also fires `click`, so without
-      // this guard we'd copy twice (and toast twice) before dblclick runs.
+      // The second click of a double-click also fires `click`, so without this
+      // guard we'd copy twice (and, for modifier-clicks, open two tabs) before
+      // dblclick runs. Must come before the modifier branch below.
       if (e.detail > 1) return;
+      // Modifier-click opens the shade's own page in a new tab — parity with
+      // the old per-row anchor's cmd/ctrl-click behavior now that the visible
+      // "use as source" icon is hidden in every view.
+      if (e.metaKey || e.ctrlKey) {
+        window.open(navHref, '_blank', 'noopener,noreferrer');
+        return;
+      }
       // Without clipboard the row needs *some* affordance — fall the click
       // back to navigation so it isn't a dead element.
       if (!canCopy) {
@@ -157,7 +166,19 @@ export default function ShadeRow({
       }
       handleCopy();
     },
-    [handleCopy, canCopy, onNavigate, shade.hex],
+    [handleCopy, canCopy, onNavigate, shade.hex, navHref],
+  );
+
+  // Middle-click opens the shade page in a new tab (the browser default for a
+  // real link; replicated here because the row is a div, not an anchor).
+  const handleAuxClick = useCallback(
+    (e: MouseEvent<HTMLDivElement>) => {
+      if (e.button === 1) {
+        e.preventDefault();
+        window.open(navHref, '_blank', 'noopener,noreferrer');
+      }
+    },
+    [navHref],
   );
 
   const handleDoubleClick = useCallback(() => {
@@ -197,7 +218,7 @@ export default function ShadeRow({
     .filter(Boolean)
     .join(' ');
   const ariaLabel = canCopy
-    ? `${visibleLabel}. Click to copy, double-click to use as source${shade.isInput ? ' (pinned source)' : ''}`
+    ? `${visibleLabel}. Click to copy, double-click or Shift+Enter to use as source${shade.isInput ? ' (pinned source)' : ''}`
     : `${visibleLabel}. Click to use as source${shade.isInput ? ' (pinned source)' : ''}`;
 
   return (
@@ -210,6 +231,7 @@ export default function ShadeRow({
       tabIndex={0}
       aria-label={ariaLabel}
       onClick={handleClick}
+      onAuxClick={handleAuxClick}
       onDoubleClick={handleDoubleClick}
       onKeyDown={handleKeyDown}
       style={

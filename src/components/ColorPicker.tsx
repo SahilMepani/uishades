@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { HexColorPicker } from 'react-colorful';
 import type { Hex } from '../lib/color/types';
 import { parseColor } from '../lib/color/parse';
@@ -60,7 +60,9 @@ export default function ColorPicker({
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const popoverId = 'color-picker-popover';
+  // Unique per instance — the tool renders two ColorPickers (the desktop left
+  // rail and the mobile panel), so a hardcoded id would collide.
+  const popoverId = useId();
 
   useEffect(() => {
     if (open) {

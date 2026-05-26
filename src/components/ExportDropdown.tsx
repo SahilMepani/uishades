@@ -104,6 +104,9 @@ export default function ExportDropdown({
 
   const [modalOpen, setModalOpen] = useState(false);
   const viewTriggerRef = useRef<HTMLButtonElement | null>(null);
+  // Stable identity so ExportModal's effects don't re-run (and eject focus)
+  // every time the parent re-renders — e.g. when switching format tabs.
+  const closeModal = useCallback(() => setModalOpen(false), []);
 
   return (
     <div className="flex flex-col gap-3" data-export-format={format}>
@@ -176,7 +179,7 @@ export default function ExportDropdown({
           canCopy={canCopy}
           onFormatChange={onFormatChange}
           onCopy={copyText}
-          onClose={() => setModalOpen(false)}
+          onClose={closeModal}
           triggerRef={viewTriggerRef}
         />
       )}
@@ -212,28 +215,32 @@ function ExportModal({
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const titleId = 'export-modal-title';
 
-  // Escape to close, lock body scroll while open, and restore focus to the
-  // triggering "View" button on close. Mirrors the close behaviour of the
-  // color picker / algorithm popovers but as a centered modal.
+  // Escape-to-close. Kept separate from the focus/scroll management below so
+  // that if `onClose`'s identity ever changes, only this cheap listener
+  // re-subscribes — focus is never disturbed.
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  // Body-scroll lock + focus management — strictly mount/unmount (triggerRef is
+  // stable). This must NOT depend on changing props (format, onClose, …): a
+  // re-render such as switching format tabs would otherwise run the cleanup
+  // and eject focus out of the open dialog onto the trigger button behind it.
+  useEffect(() => {
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const trigger = triggerRef.current;
+    // Move focus into the dialog so keyboard users land inside it.
+    dialogRef.current?.focus();
     return () => {
-      document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prevOverflow;
       trigger?.focus();
     };
-  }, [onClose, triggerRef]);
-
-  // Move focus into the dialog once mounted so keyboard users land inside it.
-  useEffect(() => {
-    dialogRef.current?.focus();
-  }, []);
+  }, [triggerRef]);
 
   if (typeof document === 'undefined') return null;
 

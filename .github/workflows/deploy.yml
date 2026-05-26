@@ -56,9 +56,23 @@ jobs:
         # Requires:
         #   - secrets.CLOUDFLARE_ZONE_ID   (the uishades.com zone id)
         #   - secrets.CLOUDFLARE_API_TOKEN scoped to include Zone > Cache Purge
+        #
+        # Best-effort: the site is already live by this step, so a missing zone
+        # id or a token without Cache-Purge scope must not fail the deploy.
+        # `continue-on-error` keeps the job green (the failure still surfaces as
+        # an annotation), and the empty-id guard skips cleanly rather than
+        # POSTing to a malformed `/zones//purge_cache` URL.
+        continue-on-error: true
+        env:
+          CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
+          if [ -z "$CF_ZONE_ID" ]; then
+            echo "::warning::CLOUDFLARE_ZONE_ID is not set — skipping edge cache purge."
+            exit 0
+          fi
           curl --fail --silent --show-error -X POST \
-            "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/purge_cache" \
+            -H "Authorization: Bearer ${CF_API_TOKEN}" \
             -H "Content-Type: application/json" \
             --data '{"purge_everything":true}'

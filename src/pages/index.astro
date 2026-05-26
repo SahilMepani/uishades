@@ -16,7 +16,10 @@ import { safeJsonForScript } from '../lib/safe-json';
 const TITLE = 'uishades.com — Free Tints and Shades of Any Hex Color';
 const DESCRIPTION =
   'Find tints and shades of any hex color, free. OKLCH ramps, Tailwind 11-stop scales, exports you can paste straight into your code.';
-const OG = 'https://uishades.com/og/777777.png';
+// Single source of truth for the home page's preview image — used for the
+// og:image/twitter:image meta AND the SoftwareApplication JSON-LD image, so
+// they can't drift apart. #4040ff is the seeded hero color shown on `/`.
+const OG = 'https://uishades.com/og/4040ff.png';
 
 const orgJsonLd = {
   '@context': 'https://schema.org',
@@ -83,7 +86,7 @@ const appJsonLd = {
   description={DESCRIPTION}
   canonical="https://uishades.com/"
   ogType="website"
-  ogImage="https://uishades.com/og/4040ff.png"
+  ogImage={OG}
   ogImageAlt="uishades.com — free tints and shades of any hex color"
   initialHex="#4040ff"
   prefs={readInitialPrefs(Astro.url)}
