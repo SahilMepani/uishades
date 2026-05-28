@@ -30,6 +30,22 @@
 import { Font } from 'astro:assets';
 ---
 
+{/* Pre-paint theme application. Runs synchronously before first paint so a
+    returning visitor's saved dark choice is applied with no flash of the
+    light default. Theme is a manual choice persisted to localStorage by the
+    footer ThemeToggle; the OS preference is intentionally not consulted.
+    `is:inline` keeps it un-bundled and blocking — it MUST run before the
+    body renders. Default (no stored value) stays light. */}
+<script is:inline>
+  (function () {
+    try {
+      if (localStorage.getItem('uishades:theme') === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    } catch (e) {}
+  })();
+</script>
+
 <!-- Google Tag Manager -->
 <script is:inline>
   (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':

@@ -10,6 +10,7 @@ import { DATE_PUBLISHED, DATE_MODIFIED } from '../../lib/site-meta';
 import { formatForCopy } from '../../lib/color/format';
 import '../../styles/global.css';
 import BaseHead from '../../components/BaseHead.astro';
+import ThemeToggle from '../../components/ThemeToggle.astro';
 import ShadeTool from '../../components/ShadeTool';
 import { NAMED_COLORS, findBySlug } from '../../lib/data/named-colors';
 import { toOklch, oklchToHex } from '../../lib/color/parse';
@@ -361,9 +362,10 @@ const faqJsonLd = {
           <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/80">
             <a href="/" class="text-ink hover:text-accent">uishades.com</a> — {color.name}
           </p>
-          <nav aria-label="Footer" class="flex gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <nav aria-label="Footer" class="flex items-center gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
             <a href={`/${color.hex.slice(1)}`} class="text-ink hover:text-accent">Open in tool</a>
             <a href={`/api/${color.hex.slice(1)}.json`} class="text-ink hover:text-accent">View JSON</a>
+            <ThemeToggle />
           </nav>
         </div>
       </footer>

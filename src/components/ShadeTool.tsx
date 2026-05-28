@@ -888,7 +888,7 @@ function CopyableValueRow({ label, value }: { label: string; value: string }) {
       className="-mx-2 flex cursor-pointer items-center justify-end gap-2 rounded-sm px-2 py-1 transition-colors duration-200 ease-out hover:bg-paper-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
     >
       {copied && (
-        <span className="rounded-sm bg-black px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-white">
+        <span className="rounded-sm bg-ink px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-paper">
           Copied
         </span>
       )}
@@ -906,17 +906,17 @@ function HintBanner({ onDismiss }: { onDismiss: () => void }) {
       type="button"
       aria-label="Dismiss tip: double-click a shade to use as your new source"
       onClick={onDismiss}
-      className="group flex w-full items-center justify-between gap-3 bg-black px-3.5 py-2 text-left text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+      className="group flex w-full items-center justify-between gap-3 bg-ink px-3.5 py-2 text-left text-sm text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
     >
       <span>
-        <span className="mr-2 font-mono text-[11px] uppercase tracking-[0.16em] text-white/60">
+        <span className="mr-2 font-mono text-[11px] uppercase tracking-[0.16em] text-paper/60">
           Tip
         </span>
         Double-click a shade to use as your new source.
       </span>
       <span
         aria-hidden="true"
-        className="-mr-1 inline-flex h-6 w-6 shrink-0 items-center justify-center text-white/70 transition-transform duration-150 ease-out group-hover:scale-150 group-hover:text-white group-focus-visible:scale-150 group-focus-visible:text-white motion-reduce:transition-none"
+        className="-mr-1 inline-flex h-6 w-6 shrink-0 items-center justify-center text-paper/70 transition-transform duration-150 ease-out group-hover:scale-150 group-hover:text-paper group-focus-visible:scale-150 group-focus-visible:text-paper motion-reduce:transition-none"
       >
         <svg viewBox="0 0 16 16" className="h-4 w-4">
           <path

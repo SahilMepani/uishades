@@ -135,9 +135,16 @@ Specific behaviours documented in the source comments:
   copies, Shift+Enter navigates, Escape closes the autocomplete listbox.
 - `prefers-reduced-motion` honoured throughout — every transition class
   is `motion-safe:transition-*` or wrapped in `@media (prefers-reduced-motion: reduce) { ... }`.
-- `prefers-color-scheme: dark` updates the page chrome (background,
-  link color, borders) on `/`, `/[hex]`, and `/colors/[name]`. The shade
-  swatches and ramps are never inverted — they're the colour content.
+- A manual light/dark toggle (footer control, persisted to
+  `localStorage['uishades:theme']`, default light) flips the page chrome
+  between a pure-white and a pure-black neutral grayscale theme on `/`,
+  `/[hex]`, and `/colors/[name]`. It is a deliberate choice, not an OS
+  follow; a pre-paint script in `BaseHead.astro` re-applies the saved
+  theme before first paint so there's no flash. Implemented by overriding
+  the `--color-*` tokens under `html.dark` in `global.css`, so every
+  `bg-paper`/`text-ink` utility inverts with no per-component edits. The
+  shade swatches and ramps are never inverted — they're the colour
+  content (inline styles, untouched by the token overrides).
 - All shade-row tap targets are ≥ 44×44 CSS px (tested in
   `tests/e2e/mobile.spec.ts`).
 
