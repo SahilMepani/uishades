@@ -29,7 +29,6 @@ interface Props {
   initialHex: Hex;
   prefs: InitialPrefs;
   h1: string; // sr-only heading text
-  footerLabel: string; // e.g. "#4040FF"
   footerHex: string; // e.g. "4040ff" (for the /api/<hex>.json link)
 }
 
@@ -45,7 +44,6 @@ const {
   initialHex,
   prefs,
   h1,
-  footerLabel,
   footerHex,
 } = Astro.props;
 ---
@@ -91,6 +89,17 @@ const {
     <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W6D48RVL" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
+    {/* Gutters = main's padding (px-6/lg:px-8) + ShadeTool's own grid gutter
+        (px-4/lg:px-8), so the brand and toggle align with the tool content
+        column below rather than with main's edge. */}
+    <header class="w-full px-10 lg:px-16">
+      <div class="flex items-center justify-between gap-4 border-b border-hairline py-4">
+        <a href="/" class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink hover:text-accent">uishades.com</a>
+        <div class="font-mono text-[11px] uppercase tracking-[0.14em]">
+          <ThemeToggle />
+        </div>
+      </div>
+    </header>
     <main class="w-full px-6 pb-24 lg:px-8">
       <h1 class="sr-only">{h1}</h1>
 
@@ -109,17 +118,13 @@ const {
       </noscript>
 
       <!-- Footer -->
-      <footer class="mt-20 border-t border-hairline pt-6">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between">
-          <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/80">
-            <a href="/" class="text-ink hover:text-accent">uishades.com</a> · {footerLabel}
-          </p>
-          <nav aria-label="Footer" class="flex items-center gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
-            <a href="/colors/coral" class="text-ink hover:text-accent">Named colors</a>
-            <a href={`/api/${footerHex}.json`} class="text-ink hover:text-accent">JSON API</a>
-            <ThemeToggle />
-          </nav>
-        </div>
+      {/* px-4/lg:px-8 is additive to main's padding so the footer's rule and
+          links share the same content column as the header and the tool. */}
+      <footer class="mt-20 px-4 lg:px-8">
+        <nav aria-label="Footer" class="flex items-center gap-5 border-t border-hairline pt-6 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <a href="/colors/coral" class="text-ink hover:text-accent">Named colors</a>
+          <a href={`/api/${footerHex}.json`} class="text-ink hover:text-accent">JSON API</a>
+        </nav>
       </footer>
     </main>
   </body>

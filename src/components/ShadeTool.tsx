@@ -496,7 +496,7 @@ function ShadeToolInner({
       <div className="grid w-full gap-8 px-4 py-8 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:grid-cols-[22rem_minmax(0,1fr)] lg:gap-14 lg:px-8 lg:py-12">
         {/* Left rail: preview + input + controls (sticky on desktop) */}
         <aside className="hidden md:block md:sticky md:top-8 md:self-start">
-          <PreviewBlock hex={hex} named={named} onChange={handleChangeHex} />
+          <PreviewBlock hex={hex} named={named} onChange={handleChangeHex} copyFormat={copyFormat} />
           <div className="mt-6 flex flex-col gap-5">
             <div className="border-t border-hairline pt-5">
               <AlgorithmToggle view={view} onChange={setView} />
@@ -520,7 +520,7 @@ function ShadeToolInner({
               here. Without this, the home page `/` and every /[hex] page would
               have no way to enter or change a color on a phone. */}
           <div className="flex flex-col gap-5 md:hidden">
-            <PreviewBlock hex={hex} named={named} onChange={handleChangeHex} />
+            <PreviewBlock hex={hex} named={named} onChange={handleChangeHex} copyFormat={copyFormat} />
             <div className="flex flex-col gap-3 border-t border-hairline pt-5">
               <AlgorithmToggle view={view} onChange={setView} />
               <CopyFormatPicker
@@ -680,10 +680,12 @@ function PreviewBlock({
   hex,
   named,
   onChange,
+  copyFormat,
 }: {
   hex: Hex;
   named: ReturnType<typeof findByHex>;
   onChange: (next: Hex) => void;
+  copyFormat: CopyFormat;
 }) {
   const oklchString = useMemo(() => formatForCopy(hex, 'oklch'), [hex]);
   const rgbString = useMemo(() => formatForCopy(hex, 'rgb'), [hex]);
@@ -788,6 +790,7 @@ function PreviewBlock({
         <ColorPicker
           hex={hex}
           onChange={onChange}
+          copyFormat={copyFormat}
           triggerLabel={`Color ${hex} — open color picker`}
           className="block h-full w-1/4 shrink-0"
         >

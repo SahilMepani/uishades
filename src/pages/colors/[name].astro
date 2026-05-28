@@ -229,6 +229,14 @@ const faqJsonLd = {
     <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W6D48RVL" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
+    <header class="mx-auto max-w-5xl px-6">
+      <div class="flex items-center justify-between gap-4 border-b border-hairline py-4">
+        <a href="/" class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink hover:text-accent">uishades.com</a>
+        <div class="font-mono text-[11px] uppercase tracking-[0.14em]">
+          <ThemeToggle />
+        </div>
+      </div>
+    </header>
     <main class="mx-auto max-w-5xl px-6 pt-10 pb-24 lg:pt-16">
       <!-- Editorial cover -->
       <section class="grid gap-10 lg:grid-cols-[5fr_4fr] lg:gap-14">
@@ -358,16 +366,10 @@ const faqJsonLd = {
 
       <!-- Footer / colophon -->
       <footer class="mt-20 border-t border-hairline pt-6">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between">
-          <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/80">
-            <a href="/" class="text-ink hover:text-accent">uishades.com</a> — {color.name}
-          </p>
-          <nav aria-label="Footer" class="flex items-center gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
-            <a href={`/${color.hex.slice(1)}`} class="text-ink hover:text-accent">Open in tool</a>
-            <a href={`/api/${color.hex.slice(1)}.json`} class="text-ink hover:text-accent">View JSON</a>
-            <ThemeToggle />
-          </nav>
-        </div>
+        <nav aria-label="Footer" class="flex items-center gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <a href={`/${color.hex.slice(1)}`} class="text-ink hover:text-accent">Open in tool</a>
+          <a href={`/api/${color.hex.slice(1)}.json`} class="text-ink hover:text-accent">View JSON</a>
+        </nav>
       </footer>
     </main>
   </body>

@@ -64,7 +64,6 @@ export default function ShadeRow({
   // washed-out badge background). 90% keeps the visual hierarchy intact
   // while clearing the audit threshold.
   const subtleFgClass = fg === 'white' ? 'text-white/90' : 'text-black/90';
-  const ringHoverClass = fg === 'white' ? 'ring-white/40' : 'ring-black/30';
 
   const navHref = `/${shade.hex.slice(1)}`;
 
@@ -249,9 +248,15 @@ export default function ShadeRow({
         // background; source row paints solid color.
         'group relative flex w-full items-center justify-between gap-3 py-3.5 pr-5 pl-[calc(20%+0.75rem)]',
         'cursor-pointer select-none',
-        'motion-safe:transition-[transform,box-shadow]',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
-        `hover:ring-2 hover:ring-inset ${ringHoverClass}`,
+        'motion-safe:transition-[box-shadow,transform] motion-safe:duration-150 motion-safe:ease-out',
+        // A persistent transparent ring keeps `box-shadow` declared at rest so
+        // the hover/focus ring fades its color in and out instead of snapping —
+        // box-shadow can't transition from `none`.
+        'ring-2 ring-transparent',
+        'focus-visible:outline-none focus-visible:ring-current focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
+        // Hover ring follows the page theme, not the swatch: `ring-ink` is the
+        // `--color-ink` token — near-black in light mode, near-white in dark.
+        'hover:z-20 hover:ring-ink',
         // Source row sits above its neighbors. The visual horizontal
         // overflow is drawn by two absolute spans inside the row (below)
         // so the row's layout box stays the same size as its siblings and
