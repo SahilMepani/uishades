@@ -60,7 +60,7 @@ export default function TailwindScale({
       <div
         role="list"
         aria-label="Tailwind 11-stop scale"
-        className="flex w-full flex-col border-b border-ink/15"
+        className="flex w-full flex-col gap-[2px] border-b border-ink/15"
       >
         {scale.shades.map((shade) => (
           <div role="listitem" key={shade.stop}>
