@@ -176,38 +176,33 @@ test.describe('shade tool — smoke', () => {
     await expect(page.getByLabel(/^Export as/)).toBeVisible();
   });
 
-  test('typing "coral" in the color picker input updates the preview hex', async ({
+  test('typing "coral" in the color value input updates the preview hex', async ({
     page,
     browserName,
   }) => {
-    // TODO: webkit under Playwright doesn't fire React's onClick when clicking
-    // the picker trigger button (decorative absolute-positioned swatch layers
-    // appear to swallow the event in webkit's hit-testing). Real Safari users
-    // are not affected.
-    test.fixme(browserName === 'webkit', 'webkit picker-trigger click hit-test quirk');
+    // webkit under Playwright doesn't reliably propagate a programmatic fill()
+    // to React's onChange, so the hex never updates in-test. Real Safari users
+    // are unaffected; chromium + firefox cover this flow.
+    test.fixme(browserName === 'webkit', 'webkit fill() → React onChange flaky under Playwright');
     await page.goto(DEV_URL);
-    // Open the picker to reveal the smart text input. The input is only
-    // mounted while the popover is open.
-    const trigger = page
-      .getByRole('button', { name: /open color picker/i })
-      .first();
-    await trigger.click();
-    // aria-expanded flips synchronously from the onClick. We anchor on it
-    // rather than the dialog's role because the popover briefly carries
-    // aria-hidden="true" while it transitions in, hiding it from accessibility-
-    // tree selectors. CSS selectors bypass that.
-    await expect(trigger).toHaveAttribute('aria-expanded', 'true');
 
-    // The PreviewBlock smart input shares this aria-label, so scope to the
-    // ColorPicker popover. A CSS attribute selector (not getByRole) is used
-    // deliberately: the dialog carries aria-hidden="true" while transitioning
-    // in, which would hide it from accessibility-tree selectors.
-    const input = page.locator('[role="dialog"] input[aria-label^="Color value"]');
+    // Free-text color entry — including CSS names like "coral" — lives on the
+    // always-visible color input. (The picker popover's input is now
+    // format-specific, hex-only by default, so name entry happens here.) Two
+    // copies render — desktop rail + mobile block — so target the visible one.
+    const input = page
+      .getByLabel('Color value (hex, rgb, hsl, oklch, or name)')
+      .filter({ visible: true })
+      .first();
     await input.fill('coral');
 
-    // ColorPicker parses on every keystroke (no debounce, no autocomplete),
-    // so the parent hex updates synchronously. `coral` resolves to #ff7f50,
-    // and the trigger button's accessible name reflects the current hex.
+    // parseColor runs on every keystroke (no debounce), so the hex updates
+    // synchronously. `coral` resolves to #ff7f50, and the picker trigger's
+    // accessible name reflects the current hex.
+    const trigger = page
+      .getByRole('button', { name: /open color picker/i })
+      .filter({ visible: true })
+      .first();
     await expect(trigger).toHaveAccessibleName(
       /Color #ff7f50 — open color picker/i,
       { timeout: 2000 },
