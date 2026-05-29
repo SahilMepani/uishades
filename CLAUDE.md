@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-`uishades.com` — a free, ad-free shade generator. Mirrors `0to255.com`'s URL structure (`/[hex]`, `/colors/[name]`) and adds an OKLCH-based ramp algorithm plus Tailwind / design-token exports. Astro 6 + React 19 island, deployed to Cloudflare Pages.
+`UIshades.com` — a free, ad-free shade generator. Mirrors `0to255.com`'s URL structure (`/[hex]`, `/colors/[name]`) and adds an OKLCH-based ramp algorithm plus Tailwind / design-token exports. Astro 6 + React 19 island, deployed to Cloudflare Pages.
 
 ## Commands
 

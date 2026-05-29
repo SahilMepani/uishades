@@ -17,9 +17,15 @@ import { POPULAR_HEXES } from './src/lib/data/popular-hexes.ts';
 // on-demand by the adapter. This gives us the same hybrid behavior the plan
 // asked for (pre-rendered curated set + SSR for arbitrary hexes at the edge).
 export default defineConfig({
-  site: 'https://uishades.com',
+  site: 'https://UIshades.com',
   output: 'static',
-  adapter: cloudflare(),
+  // `platformProxy` exposes the wrangler.toml bindings (the `DB` D1 binding) to
+  // the dev server so SSR routes can read them under `astro dev`. The SESSION
+  // KV used by Astro Sessions is auto-wired by the adapter, so it doesn't need
+  // a wrangler.toml entry. Access bindings/secrets at runtime via
+  // `import { env } from 'cloudflare:workers'` (Astro 6 removed
+  // `Astro.locals.runtime.env`).
+  adapter: cloudflare({ platformProxy: { enabled: true } }),
   // Canonical URLs carry no trailing slash (mirrors 0to255: /[hex],
   // /colors/[name]). `format: 'file'` emits `colors/coral.html` instead of
   // `colors/coral/index.html`, so Cloudflare Pages serves the bare URL at 200
@@ -39,7 +45,7 @@ export default defineConfig({
       // up on the first crawl. The static integration auto-includes the
       // pre-rendered pages on top of this list.
       customPages: POPULAR_HEXES.map(
-        (h) => `https://uishades.com/${h.slice(1)}`
+        (h) => `https://UIshades.com/${h.slice(1)}`
       ),
       // Exclude the dev-only host page (`/dev/tool/`) from search engines.
       // It carries `<meta name="robots" content="noindex,nofollow">` already

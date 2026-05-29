@@ -7,12 +7,12 @@ Short-form copy for the launch surface. Long-form is in
 
 ## Show HN
 
-**Title:** `Show HN: uishades.com – Free tints and shades of any hex color (0to255 replacement)`
+**Title:** `Show HN: UIshades.com – Free tints and shades of any hex color (0to255 replacement)`
 
 **Body:**
 
 0to255.com — the free shade generator most of us bookmarked years ago — went
-behind a paywall recently. uishades.com is a free replacement with the same URL
+behind a paywall recently. UIshades.com is a free replacement with the same URL
 structure (`/4040ff` works), so old bookmarks and Google results can swap the
 hostname and land where they expected. The defaults are different in three
 ways:
@@ -39,7 +39,7 @@ Tailwind-ready exports.
 
 **Description:**
 
-uishades.com is a free shade generator for designers and developers — type any
+UIshades.com is a free shade generator for designers and developers — type any
 hex, RGB, HSL, OKLCH, or CSS colour name and get a full ramp of tints and
 shades, plus a Tailwind-style 11-stop scale with paste-ready exports. The
 defaults use OKLCH, which keeps mid-shades on-hue across muddy colours where
@@ -62,7 +62,7 @@ contrast badges. Permanent URLs for every hex make sharing painless.
 ```
 0to255 — the free shade generator most of us had bookmarked for a decade — went paid recently.
 
-Built a replacement: uishades.com. Same URL structure (/4040ff works), free, with a better algorithm by default.
+Built a replacement: UIshades.com. Same URL structure (/4040ff works), free, with a better algorithm by default.
 
 Thread on what's different:
 ```
@@ -96,7 +96,7 @@ Cuts the spreadsheet round-trip designers were doing to ship brand ramps.
 ```
 Free, no signup, no ads. ~20KB per page. Runs on Cloudflare Workers, MIT licensed, fork-friendly.
 
-Try it: uishades.com
+Try it: UIshades.com
 Source: github.com/sahilmepani/uishades
 
 If you used to bookmark a 0to255 URL, swap the host and yours still works.
@@ -112,7 +112,7 @@ If you used to bookmark a 0to255 URL, swap the host and yours still works.
 
 0to255.com went behind a paywall earlier this year. It was the go-to free
 shade generator for a long time, and a lot of bookmarks and Google results
-now hit a login wall. I built [uishades.com](https://uishades.com) as a drop-in
+now hit a login wall. I built [UIshades.com](https://UIshades.com) as a drop-in
 replacement: same `/[hex]` URL structure, free forever, no ads. Defaults use
 OKLCH instead of the RGB-walk algorithm 0to255 used, which keeps mid-shades
 on-hue across muddy colours like olives and browns where the old algorithm
@@ -127,12 +127,12 @@ yet.
 
 ## Reddit /r/web_design
 
-**Title:** `uishades.com — free tints/shades tool with OKLCH ramps and WCAG contrast badges built in`
+**Title:** `UIshades.com — free tints/shades tool with OKLCH ramps and WCAG contrast badges built in`
 
 **Body:**
 
 Posting here because the contrast-badge feature is the bit designers will
-care about most. [uishades.com](https://uishades.com) generates a tint-and-shade
+care about most. [UIshades.com](https://UIshades.com) generates a tint-and-shade
 ramp from any hex (RGB, HSL, OKLCH, and CSS colour names all parse) and shows
 inline WCAG AA/AAA contrast ratios against pure white and pure black on every
 shade — no round trip to a separate contrast checker. The ramp itself is
@@ -156,5 +156,5 @@ Free OKLCH-based shade generator with Tailwind exports and WCAG contrast badges,
 ```
 
 **Body:** Use the long-form post from `docs/launch-blog-post.md` directly.
-Add a canonical link back to `https://uishades.com/blog/launch` (or wherever the
+Add a canonical link back to `https://UIshades.com/blog/launch` (or wherever the
 canonical version lives) to prevent SEO conflict if cross-posting.

@@ -20,23 +20,23 @@ Two sets below:
 
 ### Short reply (Reddit / forums, when someone complains about paywall)
 
-> Same boat. Been using uishades.com instead — free, no ads, same `/[hex]` URL structure so old bookmarks mostly still work. Has the classic ramp plus an OKLCH one and a Tailwind 50–950 export.
+> Same boat. Been using UIshades.com instead — free, no ads, same `/[hex]` URL structure so old bookmarks mostly still work. Has the classic ramp plus an OKLCH one and a Tailwind 50–950 export.
 
 ### When someone asks "what's a free alternative?"
 
-> uishades.com works for me. Hex or named color in the URL, gives you a 22-shade ramp with WCAG contrast badges on each step. Also exports as Tailwind scale, CSS vars, SCSS, or design tokens.
+> UIshades.com works for me. Hex or named color in the URL, gives you a 22-shade ramp with WCAG contrast badges on each step. Also exports as Tailwind scale, CSS vars, SCSS, or design tokens.
 
 ### Drive-by / one-liner
 
-> uishades.com is free if you just need shades. No signup.
+> UIshades.com is free if you just need shades. No signup.
 
 ### Tailwind / design-token threads specifically
 
-> If anyone needs a quick way to generate a Tailwind 50–950 scale from a brand hex, uishades.com does it (snaps your input to the nearest stop and fills the rest). Free, no account.
+> If anyone needs a quick way to generate a Tailwind 50–950 scale from a brand hex, UIshades.com does it (snaps your input to the nearest stop and fills the rest). Free, no account.
 
 ### OKLCH / color-science threads
 
-> uishades.com has an OKLCH ramp mode if you want perceptually-even steps instead of the usual RGB walk. Useful when the lighter end of a brand color goes washed-out in sRGB.
+> UIshades.com has an OKLCH ramp mode if you want perceptually-even steps instead of the usual RGB walk. Useful when the lighter end of a brand color goes washed-out in sRGB.
 
 ---
 
@@ -44,7 +44,7 @@ Two sets below:
 
 ### Show HN style (longer post)
 
-> uishades.com — built it after 0to255 went paywall. That was the tool I'd open ten times a day, and one morning I just didn't feel like paying for it. So.
+> UIshades.com — built it after 0to255 went paywall. That was the tool I'd open ten times a day, and one morning I just didn't feel like paying for it. So.
 >
 > Same URL structure (`/[hex]`, `/colors/[name]`) so old bookmarks still work. The classic ramp is in there. I also added an OKLCH ramp because the regular RGB walk goes weirdly grey near white, and a Tailwind 50–950 export because I kept wanting one. WCAG contrast on each shade.
 >
@@ -54,11 +54,11 @@ Two sets below:
 
 ### Reddit reply (when someone complains about the paywall)
 
-> Same. That paywall is the reason I ended up building a free one — uishades.com. Same `/[hex]` URL so old bookmarks mostly work. Has an OKLCH ramp option and a Tailwind 50–950 export. Tell me if anything's busted.
+> Same. That paywall is the reason I ended up building a free one — UIshades.com. Same `/[hex]` URL so old bookmarks mostly work. Has an OKLCH ramp option and a Tailwind 50–950 export. Tell me if anything's busted.
 
 ### /r/SideProject standalone post
 
-> **Free 0to255 alternative — uishades.com**
+> **Free 0to255 alternative — UIshades.com**
 >
 > I used 0to255 constantly and got tired of bouncing off the paywall, so I built this. Same URL pattern. OKLCH ramp option for the lighter end (RGB ramps go grey near white). Tailwind 50–950 export. WCAG contrast on each shade.
 >
@@ -66,7 +66,7 @@ Two sets below:
 
 ### Discord / Slack drop
 
-> Built a free shade generator because the 0to255 paywall annoyed me — uishades.com. Same URL pattern, has an OKLCH ramp and a Tailwind 50–950 export. Yell at me if it breaks.
+> Built a free shade generator because the 0to255 paywall annoyed me — UIshades.com. Same URL pattern, has an OKLCH ramp and a Tailwind 50–950 export. Yell at me if it breaks.
 
 ---
 
@@ -76,35 +76,35 @@ Twitter conventions: lowercase-first is normal in dev twitter, keep it short, UR
 
 ### Launch tweet (transparent)
 
-> 0to255 was my go-to until it went paywall. so i built a free one → uishades.com
+> 0to255 was my go-to until it went paywall. so i built a free one → UIshades.com
 >
 > same `/[hex]` URL pattern. added an OKLCH ramp and a Tailwind 50–950 export.
 
 ### Reply when someone complains about the 0to255 paywall (transparent)
 
-> i built a free alternative after the same gripe → uishades.com. same URL pattern, has an OKLCH ramp and a Tailwind 50–950 export
+> i built a free alternative after the same gripe → UIshades.com. same URL pattern, has an OKLCH ramp and a Tailwind 50–950 export
 
 ### Reply (anonymous / "fellow user")
 
-> uishades.com if you want a free one. same `/[hex]` URL pattern as 0to255, Tailwind 50–950 export, OKLCH ramp option
+> UIshades.com if you want a free one. same `/[hex]` URL pattern as 0to255, Tailwind 50–950 export, OKLCH ramp option
 
 ### Thread version (3 tweets)
 
-1. 0to255 was the tool i opened ten times a day. when it went paywall i started building a replacement. it's live → uishades.com
+1. 0to255 was the tool i opened ten times a day. when it went paywall i started building a replacement. it's live → UIshades.com
 2. kept the same URL structure (`/[hex]`, `/colors/[name]`) so old bookmarks still work. the classic ramp is in there too.
 3. added an OKLCH ramp because the RGB walk goes grey near white, plus a Tailwind 50–950 scale export and WCAG contrast on every shade. free. tell me what's broken.
 
 ### Feature spotlight tweets (for follow-up posts after launch)
 
-**(a)** OKLCH ramps give perceptually-even shades. the classic RGB walk goes washed-out near white. uishades.com has both side by side, so you can see the difference on your own brand color.
+**(a)** OKLCH ramps give perceptually-even shades. the classic RGB walk goes washed-out near white. UIshades.com has both side by side, so you can see the difference on your own brand color.
 
-**(b)** need a Tailwind 50–950 scale from a brand hex? uishades.com snaps your input to the nearest stop and fills the rest. copy-paste straight into tailwind.config.
+**(b)** need a Tailwind 50–950 scale from a brand hex? UIshades.com snaps your input to the nearest stop and fills the rest. copy-paste straight into tailwind.config.
 
-**(c)** every shade on uishades.com shows its WCAG contrast against white and black. you can see at a glance whether your 200 is safe to use as text.
+**(c)** every shade on UIshades.com shows its WCAG contrast against white and black. you can see at a glance whether your 200 is safe to use as text.
 
 ### Quote-tweet a 0to255 complaint
 
-> been there. built uishades.com as a free version — same URL pattern, has OKLCH + Tailwind exports
+> been there. built UIshades.com as a free version — same URL pattern, has OKLCH + Tailwind exports
 
 ---
 
@@ -118,7 +118,7 @@ LinkedIn conventions: first line is a hook (the feed truncates after ~3 lines on
 
 > 0to255 was my go-to color tool for years. Then it went paywall.
 >
-> So I built a free replacement: uishades.com
+> So I built a free replacement: UIshades.com
 >
 > It keeps the same `/[hex]` URL structure so old bookmarks still work. I added an OKLCH ramp option (perceptually-even steps, useful when the classic RGB walk goes washed-out near white) and a Tailwind 50–950 scale export, because those are the two things I kept wanting from the original.
 >
@@ -128,7 +128,7 @@ LinkedIn conventions: first line is a hook (the feed truncates after ~3 lines on
 
 ### Shorter announcement post (transparent)
 
-> Shipped a free 0to255 alternative this month: uishades.com
+> Shipped a free 0to255 alternative this month: UIshades.com
 >
 > I used 0to255 daily until the paywall hit, so I built one. Same `/[hex]` URL pattern, added an OKLCH ramp for perceptually-even steps, and a Tailwind 50–950 scale export. Each shade shows WCAG contrast.
 >
@@ -136,15 +136,15 @@ LinkedIn conventions: first line is a hook (the feed truncates after ~3 lines on
 
 ### Comment in a thread (when someone shares a "designer tools" list or asks for color tool recs)
 
-> +1 for the 0to255 paywall frustration — I ended up building a free version, uishades.com. Same `/[hex]` URL pattern, with an OKLCH ramp option and a Tailwind 50–950 export. Sharing in case it's useful.
+> +1 for the 0to255 paywall frustration — I ended up building a free version, UIshades.com. Same `/[hex]` URL pattern, with an OKLCH ramp option and a Tailwind 50–950 export. Sharing in case it's useful.
 
 ### Comment in a thread (anonymous / "fellow user" version)
 
-> If you're looking for a free option, uishades.com works well. Same URL pattern as 0to255, with a Tailwind 50–950 export and an OKLCH ramp mode.
+> If you're looking for a free option, UIshades.com works well. Same URL pattern as 0to255, with a Tailwind 50–950 export and an OKLCH ramp mode.
 
 ### "Lessons learned" style follow-up (a week or two after launch)
 
-> A few weeks ago I shipped a free alternative to 0to255 because the paywall finally annoyed me enough to act: uishades.com.
+> A few weeks ago I shipped a free alternative to 0to255 because the paywall finally annoyed me enough to act: UIshades.com.
 >
 > Two things surprised me building it:
 >
@@ -171,13 +171,13 @@ PH conventions: tagline is 60 chars max, description is 260 chars max, and your 
 
 ### Description (260 char limit)
 
-> uishades.com generates a 22-shade ramp from any hex or named color. Same `/[hex]` URL pattern as 0to255, with an OKLCH ramp option for perceptually-even steps, a Tailwind 50–950 export, and WCAG contrast on every shade. Free, no signup.
+> UIshades.com generates a 22-shade ramp from any hex or named color. Same `/[hex]` URL pattern as 0to255, with an OKLCH ramp option for perceptually-even steps, a Tailwind 50–950 export, and WCAG contrast on every shade. Free, no signup.
 
 ### Maker's first comment (the real pitch)
 
 > Maker here.
 >
-> 0to255 was the color tool I'd open ten times a day — until it went paywall. One morning I just didn't feel like paying for it, so I started building a free version. uishades.com is what came out of that.
+> 0to255 was the color tool I'd open ten times a day — until it went paywall. One morning I just didn't feel like paying for it, so I started building a free version. UIshades.com is what came out of that.
 >
 > It keeps the same `/[hex]` and `/colors/[name]` URL pattern, so old bookmarks still work. I reverse-engineered the original classic ramp and it's in there. A few things I added because I'd been wanting them:
 >
@@ -212,7 +212,7 @@ IH conventions: builder-to-builder, transparent about stack and economics, expli
 
 ### Launch / milestone post
 
-> **Shipped a free 0to255 alternative — uishades.com**
+> **Shipped a free 0to255 alternative — UIshades.com**
 >
 > 0to255 was the color tool I'd open ten times a day. When it went paywall I figured someone would clone it fast. Nobody did, so I built one.
 >
@@ -226,7 +226,7 @@ IH conventions: builder-to-builder, transparent about stack and economics, expli
 
 ### Follow-up / progress post (a few weeks in)
 
-> Quick update on uishades.com, my free 0to255 alternative.
+> Quick update on UIshades.com, my free 0to255 alternative.
 >
 > A few things I learned shipping this:
 >
@@ -240,15 +240,15 @@ IH conventions: builder-to-builder, transparent about stack and economics, expli
 
 ### Comment in a thread where someone shares a side project or asks for tool recs
 
-> Built something adjacent last month — uishades.com, free 0to255 alternative. Same hex-to-ramp idea, added an OKLCH ramp and a Tailwind 50–950 export. Cloudflare free tier, $0/month to run. No monetization plan beyond a tip jar if hosting ever requires it.
+> Built something adjacent last month — UIshades.com, free 0to255 alternative. Same hex-to-ramp idea, added an OKLCH ramp and a Tailwind 50–950 export. Cloudflare free tier, $0/month to run. No monetization plan beyond a tip jar if hosting ever requires it.
 
 ### Reply when someone asks about monetization (common IH topic)
 
-> I made the call up front not to monetize uishades.com unless hosting forces my hand. The math: Cloudflare Pages free tier covers way more traffic than I expect, and the build cost is time I already spent. Marginal cost of keeping it free is basically zero. If it does take off, a tip jar before ads.
+> I made the call up front not to monetize UIshades.com unless hosting forces my hand. The math: Cloudflare Pages free tier covers way more traffic than I expect, and the build cost is time I already spent. Marginal cost of keeping it free is basically zero. If it does take off, a tip jar before ads.
 
 ### Reply in "what tools do you use" / "designer tools" threads
 
-> For color work I've been using uishades.com (full disclosure: I built it after the 0to255 paywall). Hex or named color in, 22-shade ramp out. OKLCH or classic RGB walk, your pick. Tailwind 50–950 export if you need it. Free.
+> For color work I've been using UIshades.com (full disclosure: I built it after the 0to255 paywall). Hex or named color in, 22-shade ramp out. OKLCH or classic RGB walk, your pick. Tailwind 50–950 export if you need it. Free.
 
 ---
 

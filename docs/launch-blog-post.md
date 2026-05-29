@@ -10,7 +10,7 @@ since the late 2000s now landed on a login wall. Google results began routing
 traffic to a page that asked for a credit card before showing the colour you
 typed into the address bar.
 
-We built **[uishades.com](https://uishades.com)** to take that traffic back.
+We built **[UIshades.com](https://UIshades.com)** to take that traffic back.
 
 The site is free. There are no ads, no signup, no upgrade prompts. Type any
 hex into the box and you get the same kind of gradient 0to255 used to give
@@ -113,7 +113,7 @@ the tool.
 
 ## Try it
 
-[uishades.com](https://uishades.com). Free, fast, no signup. Drop in any hex,
+[UIshades.com](https://UIshades.com). Free, fast, no signup. Drop in any hex,
 any rgb(), any hsl(), any oklch(), or any CSS colour name. Bookmark the
 specific shades you use most. If you find it useful, share it with someone
 who used to bookmark 0to255.

@@ -109,7 +109,7 @@ export function renderOgImage(canonical: Hex, variant: OgVariant = 'landscape'):
         ${stripCells}
         <div style="position:absolute; right: 32px; bottom: 24px; color:${wordmarkInk};
                     font-size: ${spec.wordmarkFontSize}px; font-weight: 700; letter-spacing: -0.01em;">
-          uishades.com
+          UIshades.com
         </div>
       </div>
     </div>

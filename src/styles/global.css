@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * uishades.com — editorial design system.
+ * UIshades.com — editorial design system.
  *
  * Neutral high-contrast chrome: a pure-white page in light mode, a pure-black
  * page in dark mode, with a mirrored grayscale ramp for hover surfaces,
@@ -122,7 +122,7 @@ a { color: inherit; }
 }
 
 /* "Index number" — small superscript number with a hair rule under it.
-   Used for the numbered "Why uishades.com" cards on the home and the
+   Used for the numbered "Why UIshades.com" cards on the home and the
    complementary/triadic swatches on the named-color pages. */
 .idx {
   font-family: var(--font-mono);

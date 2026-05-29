@@ -37,6 +37,16 @@ const GTM = 'https://www.googletagmanager.com';
 const GA = 'https://www.google-analytics.com';
 const GA_REGIONS = 'https://*.google-analytics.com';
 const GA_ALT = 'https://analytics.google.com';
+// OAuth profile avatars: Google serves from lh3/lh4/...googleusercontent.com,
+// GitHub from avatars.githubusercontent.com. AuthMenu renders <img> from these
+// for signed-in users, so img-src must allow them or they're blocked in prod.
+const AVATARS = 'https://*.googleusercontent.com https://avatars.githubusercontent.com';
+
+// Per-user API responses must never enter the 30-day edge cache that fronts
+// /[hex]. Routes already set `private, no-store`, but force it here too so a new
+// endpoint under these prefixes can't leak one user's data by forgetting to.
+// (Public, cacheable endpoints like /api/[hex].json are NOT in this list.)
+const PRIVATE_API_PREFIXES = ['/api/me', '/api/presets', '/api/auth/'];
 
 const SECURITY_HEADERS: Record<string, string> = {
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
@@ -49,7 +59,7 @@ const SECURITY_HEADERS: Record<string, string> = {
     "default-src 'self'",
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self' data:",
-    `img-src 'self' data: blob: ${GTM} ${GA}`,
+    `img-src 'self' data: blob: ${GTM} ${GA} ${AVATARS}`,
     `script-src 'self' 'unsafe-inline' ${GTM}`,
     `connect-src 'self' ${GTM} ${GA} ${GA_REGIONS} ${GA_ALT}`,
     `frame-src ${GTM}`,
@@ -61,10 +71,13 @@ const SECURITY_HEADERS: Record<string, string> = {
   ].join('; '),
 };
 
-export const onRequest = defineMiddleware(async (_context, next) => {
+export const onRequest = defineMiddleware(async (context, next) => {
   const response = await next();
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
     response.headers.set(name, value);
+  }
+  if (PRIVATE_API_PREFIXES.some((p) => context.url.pathname.startsWith(p))) {
+    response.headers.set('Cache-Control', 'private, no-store');
   }
   return response;
 });

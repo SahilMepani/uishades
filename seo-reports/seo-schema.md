@@ -1,4 +1,4 @@
-# Structured-Data Audit — uishades.com
+# Structured-Data Audit — UIshades.com
 
 **Date:** 2026-05-23
 **Scope:** http://localhost:4321/ (home), /colors/coral (named-color page), /4040ff (hex page)
@@ -17,8 +17,8 @@
 {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  "name": "uishades.com",
-  "url": "https://uishades.com/",
+  "name": "UIshades.com",
+  "url": "https://UIshades.com/",
   "description": "Find tints and shades of any hex color, free. OKLCH ramps, Tailwind 11-stop scales, exports you can paste straight into your code.",
   "applicationCategory": "DesignApplication",
   "operatingSystem": "Any",
@@ -48,7 +48,7 @@
   "name": "Coral",
   "alternateName": [],
   "description": "Coral is the warm pink-orange named after the living reef organism...",
-  "url": "https://uishades.com/colors/coral",
+  "url": "https://UIshades.com/colors/coral",
   "identifier": "#FF7F50",
   "color": "#ff7f50"
 }
@@ -78,7 +78,7 @@
   "@type": "Thing",
   "name": "Hex color #4040FF",
   "description": "Tints and shades of #4040FF. OKLCH ramp, 11-stop Tailwind scale, copy-ready exports.",
-  "url": "https://uishades.com/4040ff",
+  "url": "https://UIshades.com/4040ff",
   "identifier": "#4040FF"
 }
 ```
@@ -109,7 +109,7 @@ None present on any sampled URL. The only `property="..."` attributes are Open G
 | 1 | **`WebSite` + `SearchAction`** | `index.astro` (additional JSON-LD block) | Enables sitelinks search box for branded queries on Google. High ROI, one-time. |
 | 2 | **`BreadcrumbList`** | `colors/[name].astro` and `[hex].astro` | Eligible for breadcrumb rich result; replaces the URL slug in SERPs with a clean trail. Per-page. |
 | 3 | **Upgrade `Thing`  `CreativeWork`** on color pages | `colors/[name].astro`, `[hex].astro` | Activates `image`, `author`, `datePublished`, `keywords` properties that `Thing` ignores. Required before any rich-result eligibility. |
-| 4 | **`Organization` with `@id`** | `index.astro` (additional block) | Lets every other JSON-LD reference `"publisher": { "@id": "https://uishades.com/#org" }` without duplication. Foundation for E-E-A-T signaling. |
+| 4 | **`Organization` with `@id`** | `index.astro` (additional block) | Lets every other JSON-LD reference `"publisher": { "@id": "https://UIshades.com/#org" }` without duplication. Foundation for E-E-A-T signaling. |
 | 5 | **`SoftwareApplication` upgrade with `featureList` + `screenshot`** | `index.astro` (replace existing block) | Pushes the WebApplication entity toward rich-result eligibility once you add a public review/rating. |
 | 6 | **`ImageObject` for `/og/[hex].png`** | Add via `image` on color pages | Improves image-search surfacing of OG cards; cheap to add. |
 | 7 | **`CollectionPage` index** | Future `/colors/` index page (does not yet exist) | If/when a named-colors index ships, mark it as `CollectionPage` with `mainEntity` = `ItemList` of `CreativeWork` entries. |
@@ -134,12 +134,12 @@ These are two additional JSON-LD blocks for the home page (keep the existing `We
 const orgJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  '@id': 'https://uishades.com/#org',
-  name: 'uishades.com',
-  url: 'https://uishades.com/',
+  '@id': 'https://UIshades.com/#org',
+  name: 'UIshades.com',
+  url: 'https://UIshades.com/',
   logo: {
     '@type': 'ImageObject',
-    url: 'https://uishades.com/favicon.svg',
+    url: 'https://UIshades.com/favicon.svg',
     width: 512,
     height: 512,
   },
@@ -151,17 +151,17 @@ const orgJsonLd = {
 const websiteJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
-  '@id': 'https://uishades.com/#website',
-  url: 'https://uishades.com/',
-  name: 'uishades.com',
+  '@id': 'https://UIshades.com/#website',
+  url: 'https://UIshades.com/',
+  name: 'UIshades.com',
   description: DESCRIPTION,
   inLanguage: 'en',
-  publisher: { '@id': 'https://uishades.com/#org' },
+  publisher: { '@id': 'https://UIshades.com/#org' },
   potentialAction: {
     '@type': 'SearchAction',
     target: {
       '@type': 'EntryPoint',
-      urlTemplate: 'https://uishades.com/{search_term_string}',
+      urlTemplate: 'https://UIshades.com/{search_term_string}',
     },
     'query-input': 'required name=search_term_string',
   },
@@ -181,9 +181,9 @@ const websiteJsonLd = {
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
-  '@id': 'https://uishades.com/#app',
-  name: 'uishades.com',
-  url: 'https://uishades.com/',
+  '@id': 'https://UIshades.com/#app',
+  name: 'UIshades.com',
+  url: 'https://UIshades.com/',
   description: DESCRIPTION,
   applicationCategory: 'DesignApplication',
   applicationSubCategory: 'Color Tool',
@@ -192,9 +192,9 @@ const jsonLd = {
   inLanguage: 'en',
   isAccessibleForFree: true,
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-  publisher: { '@id': 'https://uishades.com/#org' },
-  image: 'https://uishades.com/og/777777.png',
-  screenshot: 'https://uishades.com/og/777777.png',
+  publisher: { '@id': 'https://UIshades.com/#org' },
+  image: 'https://UIshades.com/og/777777.png',
+  screenshot: 'https://UIshades.com/og/777777.png',
   featureList: [
     'OKLCH-anchored color ramps',
     'Classic RGB-walk shade algorithm',
@@ -220,13 +220,13 @@ const breadcrumbJsonLd = {
       '@type': 'ListItem',
       position: 1,
       name: 'Home',
-      item: 'https://uishades.com/',
+      item: 'https://UIshades.com/',
     },
     {
       '@type': 'ListItem',
       position: 2,
       name: 'Named colors',
-      item: `https://uishades.com/colors/${color.slug}`,
+      item: `https://UIshades.com/colors/${color.slug}`,
     },
     {
       '@type': 'ListItem',
@@ -249,8 +249,8 @@ const colorPageJsonLd = {
   identifier: color.hex.toUpperCase(),
   inLanguage: 'en',
   isAccessibleForFree: true,
-  isPartOf: { '@id': 'https://uishades.com/#website' },
-  publisher: { '@id': 'https://uishades.com/#org' },
+  isPartOf: { '@id': 'https://UIshades.com/#website' },
+  publisher: { '@id': 'https://UIshades.com/#org' },
   image: {
     '@type': 'ImageObject',
     url: ogImage,
@@ -296,7 +296,7 @@ const breadcrumbItems = [
     '@type': 'ListItem',
     position: 1,
     name: 'Home',
-    item: 'https://uishades.com/',
+    item: 'https://UIshades.com/',
   },
   {
     '@type': 'ListItem',
@@ -325,8 +325,8 @@ const hexPageJsonLd = {
   identifier: hexLabel,
   inLanguage: 'en',
   isAccessibleForFree: true,
-  isPartOf: { '@id': 'https://uishades.com/#website' },
-  publisher: { '@id': 'https://uishades.com/#org' },
+  isPartOf: { '@id': 'https://UIshades.com/#website' },
+  publisher: { '@id': 'https://UIshades.com/#org' },
   image: {
     '@type': 'ImageObject',
     url: ogImage,

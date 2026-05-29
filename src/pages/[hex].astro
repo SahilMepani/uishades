@@ -38,16 +38,16 @@ const named = findByHex(canonical);
 
 const hexLabel = canonical.toUpperCase();
 const TITLE = named
-  ? `Hex Color ${hexLabel} Tints & Shades · ${named.name} | uishades.com`
-  : `Hex Color ${hexLabel} Tints & Shades | uishades.com`;
+  ? `Hex Color ${hexLabel} Tints & Shades · ${named.name} | UIshades.com`
+  : `Hex Color ${hexLabel} Tints & Shades | UIshades.com`;
 
 const DESCRIPTION = named
   ? `${hexLabel}, also known as ${named.name}. Browse tints and shades, with Tailwind-ready exports. Free.`
   : `Tints and shades of ${hexLabel}. OKLCH ramp, 11-stop Tailwind scale, copy-ready exports.`;
 
-const ogImage = `https://uishades.com/og/${canonical.slice(1)}.png`;
-const ogImagePin = `https://uishades.com/og/pin/${canonical.slice(1)}.png`;
-const canonicalUrl = `https://uishades.com/${canonical.slice(1)}`;
+const ogImage = `https://UIshades.com/og/${canonical.slice(1)}.png`;
+const ogImagePin = `https://UIshades.com/og/pin/${canonical.slice(1)}.png`;
+const canonicalUrl = `https://UIshades.com/${canonical.slice(1)}`;
 
 const breadcrumbJsonLd = {
   '@context': 'https://schema.org',
@@ -57,7 +57,7 @@ const breadcrumbJsonLd = {
       '@type': 'ListItem',
       position: 1,
       name: 'Home',
-      item: 'https://uishades.com/',
+      item: 'https://UIshades.com/',
     },
     {
       '@type': 'ListItem',
@@ -83,8 +83,8 @@ const hexPageJsonLd = {
   identifier: hexLabel,
   inLanguage: 'en',
   isAccessibleForFree: true,
-  isPartOf: { '@id': 'https://uishades.com/#website' },
-  publisher: { '@id': 'https://uishades.com/#org' },
+  isPartOf: { '@id': 'https://UIshades.com/#website' },
+  publisher: { '@id': 'https://UIshades.com/#org' },
   image: {
     '@type': 'ImageObject',
     url: ogImage,

@@ -1,4 +1,4 @@
-# uishades.com
+# UIshades.com
 
 A free, fast, ad-free shade generator. Mirrors the URL structure of
 `0to255.com` (`/[hex]`, `/colors/[name]`) and ships an OKLCH-based algorithm

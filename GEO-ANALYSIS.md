@@ -1,8 +1,8 @@
-# GEO Analysis — uishades.com
+# GEO Analysis — UIshades.com
 
 **Date:** 2026-05-24
 **Auditor:** `seo-geo` skill (Claude Code)
-**URLs audited:** `https://uishades.com/`, `https://uishades.com/colors/coral`, `https://uishades.com/4040ff`
+**URLs audited:** `https://UIshades.com/`, `https://UIshades.com/colors/coral`, `https://UIshades.com/4040ff`
 **Supersedes:** the 2026-05-23 report (`3 / 100 — Critical Blocker`). **All three re-audit criteria now pass** — the site returns `server: cloudflare`, robots.txt is no longer `Disallow: /`, and `/` serves the real Astro v6.3.7 build, not the Hostinger parking page. The deployment blocker is resolved; this is a fresh, full audit.
 
 ---
@@ -29,7 +29,7 @@ The fundamentals are strong: the OKLCH shade ramp **is server-rendered** (verifi
 
 ## AI Crawler Access Status
 
-Live `https://uishades.com/robots.txt` (Cloudflare Managed block prepended to the repo's file):
+Live `https://UIshades.com/robots.txt` (Cloudflare Managed block prepended to the repo's file):
 
 ```
 User-agent: *
@@ -47,7 +47,7 @@ User-agent: GPTBot                 Disallow: /
 User-agent: meta-externalagent     Disallow: /
 
 User-agent: *                      Allow: /
-Sitemap: https://uishades.com/sitemap-index.xml
+Sitemap: https://UIshades.com/sitemap-index.xml
 ```
 
 | Crawler | Role | Status | GEO impact |
@@ -142,7 +142,7 @@ Brand mentions correlate ~3× more strongly with AI visibility than backlinks �
 
 | Surface | Presence | Note |
 |---|---|---|
-| Google search ("uishades.com OKLCH shade generator") | ❌ Not surfaced | Domain is ~1 day live; not yet indexed/ranked. |
+| Google search ("UIshades.com OKLCH shade generator") | ❌ Not surfaced | Domain is ~1 day live; not yet indexed/ranked. |
 | Reddit | ❌ None | Directly caps Perplexity (cites Reddit ~47%). |
 | YouTube | ❌ None | YouTube mentions are the strongest single AI-citation correlate (~0.74). |
 | Wikipedia / Wikidata | ❌ None | Expected for a new tool; don't self-create. |
@@ -179,7 +179,7 @@ This is normal for a day-old domain, but it's the ceiling on AI visibility until
 ## Minor / Technical Findings
 
 - **Canonical ↔ trailing-slash mismatch — RESOLVED in code (pending deploy).** Set `trailingSlash: 'never'` + `build: { format: 'file' }` in `astro.config.mjs`. Now `/colors/coral` serves `200` and `/colors/coral/` + `/4040ff/` `301`→ the bare URL, matching every page's no-slash `<link rel="canonical">`. Verified locally: file-format build output, sitemap emits no-slash named URLs, preview redirects confirmed, 68 unit + 3 a11y E2E tests pass. **Purge the Cloudflare cache after deploy** so the old `307`s age out.
-- **Host canonicalization — add a `www`→apex 301.** DNS (verified) shows both `uishades.com` and `www.uishades.com` as Cloudflare Worker routes to the same `uishades` deployment — no Hostinger record. Both serve `200` with no redirect, so the site is reachable on two hosts. Since the codebase canonicalizes to the **apex**, add a 301 `www`→apex (Cloudflare Rules → Redirect Rules, or in `src/middleware.ts`). Canonical tags already point at the apex, so this is cleanup, not urgent. *(An earlier `server: hcdn` reading on the apex during this audit was a stale local-DNS-cache artifact on the auditing machine — not a production issue; forcing the apex to Cloudflare's authoritative edge returns the real site.)*
+- **Host canonicalization — add a `www`→apex 301.** DNS (verified) shows both `UIshades.com` and `www.UIshades.com` as Cloudflare Worker routes to the same `uishades` deployment — no Hostinger record. Both serve `200` with no redirect, so the site is reachable on two hosts. Since the codebase canonicalizes to the **apex**, add a 301 `www`→apex (Cloudflare Rules → Redirect Rules, or in `src/middleware.ts`). Canonical tags already point at the apex, so this is cleanup, not urgent. *(An earlier `server: hcdn` reading on the apex during this audit was a stale local-DNS-cache artifact on the auditing machine — not a production issue; forcing the apex to Cloudflare's authoritative edge returns the real site.)*
 - **Security headers are solid** (HSTS, CSP, X-Content-Type-Options, X-Frame-Options: DENY, Referrer-Policy, Permissions-Policy) — no GEO penalty, noted as healthy.
 - **IndexNow not wired** — cheap Bing/Copilot freshness signal if added to the deploy step.
 
@@ -188,7 +188,7 @@ This is normal for a day-old domain, but it's the ceiling on AI visibility until
 ## Appendix: `public/llms.txt` template
 
 ```
-# uishades.com
+# UIshades.com
 
 > Free, ad-free generator for tints and shades of any color. Convert any hex,
 > rgb(), hsl(), oklch(), or CSS color name into a 20-step OKLCH perceptual ramp
@@ -196,9 +196,9 @@ This is normal for a day-old domain, but it's the ceiling on AI visibility until
 > 0to255.com's URL structure: /[hex] and /colors/[name] permanent links.
 
 ## Core pages
-- [Home](https://uishades.com/): Generate tints and shades from any color.
-- [Named colors](https://uishades.com/colors/coral): 209 CSS named colors, each with an OKLCH ramp, aliases, harmony palette, and contrast badges.
-- [Hex URLs](https://uishades.com/4040ff): Permanent /[hex] page for any 3/6/8-digit hex.
+- [Home](https://UIshades.com/): Generate tints and shades from any color.
+- [Named colors](https://UIshades.com/colors/coral): 209 CSS named colors, each with an OKLCH ramp, aliases, harmony palette, and contrast badges.
+- [Hex URLs](https://UIshades.com/4040ff): Permanent /[hex] page for any 3/6/8-digit hex.
 
 ## How the ramps work
 - OKLCH mode: 20-shade perceptual ramp at evenly spaced lightness (L≈0.95 down to L≈0.06). The input hex is pinned to its nearest lightness step. Chroma uses a bell-curve multiplier (1.0 mid-lightness, 0.3 at the extremes) to stay inside the sRGB gamut and avoid washed-out clipping near white/black.
@@ -210,7 +210,7 @@ This is normal for a day-old domain, but it's the ceiling on AI visibility until
 
 ## Notes
 - Free, no ads, no signup. WCAG contrast badge on every shade.
-- JSON API: https://uishades.com/api/[hex].json
+- JSON API: https://UIshades.com/api/[hex].json
 ```
 
 ---

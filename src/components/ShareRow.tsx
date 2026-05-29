@@ -74,7 +74,7 @@ export default function ShareRow({ hex, named }: ShareRowProps) {
       url = window.location.href;
     }
     const label = named ? `${named.name} (${hex.toUpperCase()})` : hex.toUpperCase();
-    const title = `Tints and shades of ${label} — uishades.com`;
+    const title = `Tints and shades of ${label} — UIshades.com`;
     return { url, title };
   }, [hex, named]);
 
@@ -83,7 +83,7 @@ export default function ShareRow({ hex, named }: ShareRowProps) {
       const origin = window.location.origin;
       return `${origin}/og/pin/${hex.slice(1)}.png`;
     } catch {
-      return `https://uishades.com/og/pin/${hex.slice(1)}.png`;
+      return `https://UIshades.com/og/pin/${hex.slice(1)}.png`;
     }
   }, [hex]);
 

@@ -1,4 +1,4 @@
-# Image SEO and Performance Audit — uishades.com
+# Image SEO and Performance Audit — UIshades.com
 
 **Scope:** `/`, `/colors/coral`, `/4040ff` against `http://localhost:4321`
 **Date:** 2026-05-23
@@ -8,7 +8,7 @@
 
 ## TL;DR
 
-uishades.com is a near-zero raster-image site. The audited pages render **no `<img>` tags, no `<picture>`, no CSS `background-image`, and no `srcset`** — all icons are inline SVG marked `aria-hidden="true"`. The only image surface area is:
+UIshades.com is a near-zero raster-image site. The audited pages render **no `<img>` tags, no `<picture>`, no CSS `background-image`, and no `srcset`** — all icons are inline SVG marked `aria-hidden="true"`. The only image surface area is:
 
 1. The site favicon pair (`/favicon.svg`, `/favicon.ico`)
 2. The dynamic Open Graph endpoint `/og/[hex].png` (`workers-og`, Cloudflare-only)
@@ -23,9 +23,9 @@ Because there are no rendered raster images on any page, the usual image-SEO fai
 
 | Page | `<img>` count | `<picture>` | CSS bg-image | `og:image` | `twitter:image` | favicon refs | Inline SVG icons (decorative) |
 |---|---|---|---|---|---|---|---|
-| `/` | 0 | 0 | 0 | `https://uishades.com/og/777777.png` | same | `/favicon.svg`, `/favicon.ico` | 1 |
-| `/colors/coral` | 0 | 0 | 0 | `https://uishades.com/og/ff7f50.png` | same | same | 26 |
-| `/4040ff` | 0 | 0 | 0 | `https://uishades.com/og/4040ff.png` | same | same | 26 |
+| `/` | 0 | 0 | 0 | `https://UIshades.com/og/777777.png` | same | `/favicon.svg`, `/favicon.ico` | 1 |
+| `/colors/coral` | 0 | 0 | 0 | `https://UIshades.com/og/ff7f50.png` | same | same | 26 |
+| `/4040ff` | 0 | 0 | 0 | `https://UIshades.com/og/4040ff.png` | same | same | 26 |
 
 ### Asset details (all resources discovered)
 

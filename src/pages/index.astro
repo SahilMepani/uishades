@@ -13,23 +13,23 @@ import ColorToolLayout from '../layouts/ColorToolLayout.astro';
 import { readInitialPrefs } from '../lib/url-prefs';
 import { safeJsonForScript } from '../lib/safe-json';
 
-const TITLE = 'uishades.com — Free Tints and Shades of Any Hex Color';
+const TITLE = 'UIshades.com — Free Tints and Shades of Any Hex Color';
 const DESCRIPTION =
   'Find tints and shades of any hex color, free. OKLCH ramps, Tailwind 11-stop scales, exports you can paste straight into your code.';
 // Single source of truth for the home page's preview image — used for the
 // og:image/twitter:image meta AND the SoftwareApplication JSON-LD image, so
 // they can't drift apart. #4040ff is the seeded hero color shown on `/`.
-const OG = 'https://uishades.com/og/4040ff.png';
+const OG = 'https://UIshades.com/og/4040ff.png';
 
 const orgJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  '@id': 'https://uishades.com/#org',
-  name: 'uishades.com',
-  url: 'https://uishades.com/',
+  '@id': 'https://UIshades.com/#org',
+  name: 'UIshades.com',
+  url: 'https://UIshades.com/',
   logo: {
     '@type': 'ImageObject',
-    url: 'https://uishades.com/favicon.svg',
+    url: 'https://UIshades.com/favicon.svg',
     width: 512,
     height: 512,
   },
@@ -38,17 +38,17 @@ const orgJsonLd = {
 const websiteJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
-  '@id': 'https://uishades.com/#website',
-  url: 'https://uishades.com/',
-  name: 'uishades.com',
+  '@id': 'https://UIshades.com/#website',
+  url: 'https://UIshades.com/',
+  name: 'UIshades.com',
   description: DESCRIPTION,
   inLanguage: 'en',
-  publisher: { '@id': 'https://uishades.com/#org' },
+  publisher: { '@id': 'https://UIshades.com/#org' },
   potentialAction: {
     '@type': 'SearchAction',
     target: {
       '@type': 'EntryPoint',
-      urlTemplate: 'https://uishades.com/?hex={search_term_string}',
+      urlTemplate: 'https://UIshades.com/?hex={search_term_string}',
     },
     'query-input': 'required name=search_term_string',
   },
@@ -57,9 +57,9 @@ const websiteJsonLd = {
 const appJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
-  '@id': 'https://uishades.com/#app',
-  name: 'uishades.com',
-  url: 'https://uishades.com/',
+  '@id': 'https://UIshades.com/#app',
+  name: 'UIshades.com',
+  url: 'https://UIshades.com/',
   description: DESCRIPTION,
   applicationCategory: 'DesignApplication',
   applicationSubCategory: 'Color Tool',
@@ -68,7 +68,7 @@ const appJsonLd = {
   inLanguage: 'en',
   isAccessibleForFree: true,
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-  publisher: { '@id': 'https://uishades.com/#org' },
+  publisher: { '@id': 'https://UIshades.com/#org' },
   image: OG,
   screenshot: OG,
   featureList: [
@@ -84,10 +84,10 @@ const appJsonLd = {
 <ColorToolLayout
   title={TITLE}
   description={DESCRIPTION}
-  canonical="https://uishades.com/"
+  canonical="https://UIshades.com/"
   ogType="website"
   ogImage={OG}
-  ogImageAlt="uishades.com — free tints and shades of any hex color"
+  ogImageAlt="UIshades.com — free tints and shades of any hex color"
   initialHex="#4040ff"
   prefs={readInitialPrefs(Astro.url)}
   h1="Tints & shades of any hex color — free OKLCH ramps and Tailwind scales"

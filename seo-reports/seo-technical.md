@@ -1,4 +1,4 @@
-# Technical SEO Audit — uishades.com (local dev)
+# Technical SEO Audit — UIshades.com (local dev)
 
 - Environment: `http://localhost:4321/` (Astro v6.3.7 dev server)
 - Date: 2026-05-23
@@ -15,7 +15,7 @@
 
 | Check | Result |
 |---|---|
-| `/robots.txt` 200, correct body | PASS — `User-agent: *` / `Allow: /` / `Sitemap: https://uishades.com/sitemap-index.xml` |
+| `/robots.txt` 200, correct body | PASS — `User-agent: *` / `Allow: /` / `Sitemap: https://UIshades.com/sitemap-index.xml` |
 | Robots meta on indexable pages | PASS — no `noindex`/`nofollow` on `/`, `/4040ff`, `/colors/coral` |
 | Robots meta on `/dev/tool` | PASS — `<meta name="robots" content="noindex,nofollow">` present and verified in raw HTML |
 | `X-Robots-Tag` header coverage | INFO — not set anywhere. Fine for HTML (meta tag handles it); could be added to `/api/[hex].json` and `/og/[hex].png` for belt-and-braces |
@@ -30,9 +30,9 @@
 
 | Check | Result |
 |---|---|
-| Canonical on `/` | PASS — `https://uishades.com/` |
-| Canonical on `/4040ff` | PASS — `https://uishades.com/4040ff` (matches the lowercase hex slug) |
-| Canonical on `/colors/coral` | PASS — `https://uishades.com/colors/coral` |
+| Canonical on `/` | PASS — `https://UIshades.com/` |
+| Canonical on `/4040ff` | PASS — `https://UIshades.com/4040ff` (matches the lowercase hex slug) |
+| Canonical on `/colors/coral` | PASS — `https://UIshades.com/colors/coral` |
 | Self-referencing canonicals on absolute URL | PASS |
 | `noindex` misuse | PASS — only on `/dev/tool` |
 | Duplicate-content risk | LOW — `/4040ff` and `/colors/[name-mapping-to-4040ff]` could collide. `coral` (`#ff7f50`) and `/ff7f50` would both target the same color but have different canonicals, different titles, and different content (the named page has a blurb; the hex page is bare). Acceptable but worth keeping eyes on as the data set grows. |
@@ -133,7 +133,7 @@ Hand-off to the schema agent for type-fit critique (e.g. `Thing` is generic; cou
 
 ### 8. JavaScript rendering — **WARN** (one finding)
 
-- **Home (`/`)** — Mostly static HTML. Carries a small `HomeColorPicker` island (`client="idle"`). Visible content (H1, "Why uishades.com" section, H3 cards) is in the raw HTML. **NOTE:** CLAUDE.md states the home has "no React island", but the dev response includes an `<astro-island>` for `HomeColorPicker`. Either CLAUDE.md is stale or this is recent. Not an SEO problem (content is in the SSR HTML), but worth reconciling the docs.
+- **Home (`/`)** — Mostly static HTML. Carries a small `HomeColorPicker` island (`client="idle"`). Visible content (H1, "Why UIshades.com" section, H3 cards) is in the raw HTML. **NOTE:** CLAUDE.md states the home has "no React island", but the dev response includes an `<astro-island>` for `HomeColorPicker`. Either CLAUDE.md is stale or this is recent. Not an SEO problem (content is in the SSR HTML), but worth reconciling the docs.
 - **`/colors/coral`** — H1 (`Coral`) and H2 (`Related colors`) are in static HTML. The ShadeTool island hydrates with `client="load"` but the page is indexable without JS because the blurb, related-colour list, and H1 are server-rendered.
 - **`/4040ff`** — *FINDING:* **No `<h1>` in the raw HTML.** The only content the crawler sees server-rendered outside the ShadeTool island is meta/title/JSON-LD plus an empty shell that says "Loading…" (per source). The ShadeTool SSR happens inside the island and Googlebot does render JS — but relying on hydration for the primary H1 weakens the page's static-HTML SEO. Add a server-rendered `<h1>Hex Color #4040FF Tints & Shades</h1>` (or similar) in `[hex].astro` so the H1 exists pre-hydration.
 - **`/dev/tool`** — React island hydrates, but the page is `noindex,nofollow` so this is irrelevant for SEO.
@@ -188,9 +188,9 @@ Hand-off to the schema agent for type-fit critique (e.g. `Thing` is generic; cou
 
 | URL | Status | Canonical | H1 (raw HTML) | Robots meta | Island |
 |---|---|---|---|---|---|
-| `/` | 200 | `https://uishades.com/` | yes | (none — indexable) | `HomeColorPicker` @ `client:idle` |
-| `/colors/coral` | 200 | `https://uishades.com/colors/coral` | yes (`Coral`) | (none — indexable) | `ShadeTool` @ `client:load` |
-| `/4040ff` | 200 (`cache-control: public, s-maxage=2592000, swr=86400`) | `https://uishades.com/4040ff` | **no** | (none — indexable) | `ShadeTool` @ `client:load` |
+| `/` | 200 | `https://UIshades.com/` | yes | (none — indexable) | `HomeColorPicker` @ `client:idle` |
+| `/colors/coral` | 200 | `https://UIshades.com/colors/coral` | yes (`Coral`) | (none — indexable) | `ShadeTool` @ `client:load` |
+| `/4040ff` | 200 (`cache-control: public, s-maxage=2592000, swr=86400`) | `https://UIshades.com/4040ff` | **no** | (none — indexable) | `ShadeTool` @ `client:load` |
 | `/dev/tool` | 200 in dev (404 in prod per config) | n/a | n/a | `noindex,nofollow` | `ShadeTool` @ `client:load` |
 | `/robots.txt` | 200 | n/a | n/a | n/a | n/a |
 | `/sitemap-index.xml` | 404 in dev (built at `astro build` time) | n/a | n/a | n/a | n/a |

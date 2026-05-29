@@ -1,4 +1,4 @@
-# SEO Audit — uishades.com Home Page
+# SEO Audit — UIshades.com Home Page
 
 **Target:** http://localhost:4321/ (dev server)
 **Date:** 2026-05-23
@@ -10,7 +10,7 @@
 
 | Category               | Score   | Notes |
 |------------------------|---------|-------|
-| On-Page SEO            | 76/100  | Strong title/meta. H1 on home is good, but H1 ambiguous to crawlers (the brand name "uishades.com" only appears in eyebrow text); single internal nav link is anemic. |
+| On-Page SEO            | 76/100  | Strong title/meta. H1 on home is good, but H1 ambiguous to crawlers (the brand name "UIshades.com" only appears in eyebrow text); single internal nav link is anemic. |
 | Content Quality        | 58/100  | Only 143 visible words on home — thin for a landing page targeting "tints and shades" SERPs. |
 | Technical              | 80/100  | Canonical present, OG/Twitter complete, JSON-LD present. Missing meta robots (default OK), missing hreflang (single-locale OK), no `noindex` leakage. |
 | Images                 | 95/100  | Home page has zero `<img>` tags — nothing to flag. (OG image referenced but not embedded.) |
@@ -21,16 +21,16 @@
 
 ## Page Snapshot — `/`
 
-- **Title** (62 chars): `uishades.com — Free Tints and Shades of Any Hex Color` — good length, primary kw present.
+- **Title** (62 chars): `UIshades.com — Free Tints and Shades of Any Hex Color` — good length, primary kw present.
 - **Description** (152 chars): `Find tints and shades of any hex color, free. OKLCH ramps, Tailwind 11-stop scales, exports you can paste straight into your code.` — well crafted, length ideal.
-- **Canonical:** `https://uishades.com/` (correct, absolute).
+- **Canonical:** `https://UIshades.com/` (correct, absolute).
 - **H1** (single): `Tints & shades of any color.` — keyword-aligned but does not contain the brand name.
-- **H2:** `Why uishades.com` (sr-only — fine for a11y but Google does honor visually-hidden headings).
+- **H2:** `Why UIshades.com` (sr-only — fine for a11y but Google does honor visually-hidden headings).
 - **H3** ×3: `Free, forever.`, `Better algorithm.`, `Tailwind-first exports.`
 - **Heading order:** H1 → H2 → H3, no skips. Clean.
 - **Word count (visible):** 143 words.
 - **Internal links:** 2 (`/`, `/colors/coral`). External: `astro.build`, `culorijs.org`.
-- **OG/Twitter:** Both complete — `og:type=website`, `og:image=https://uishades.com/og/777777.png`, twitter `summary_large_image`.
+- **OG/Twitter:** Both complete — `og:type=website`, `og:image=https://UIshades.com/og/777777.png`, twitter `summary_large_image`.
 - **JSON-LD:** `WebApplication` schema, name/url/description/offers (price 0). (Schema validation deferred to schema agent.)
 - **Hreflang:** None present. Acceptable for English-only site, but if international rollout is planned, add `<link rel="alternate" hreflang="x-default">` at minimum.
 - **Meta robots:** Not set. Default `index,follow` applies — fine.
@@ -45,14 +45,14 @@
 ## Other Routes (Sampled)
 
 ### `/colors/coral` (prerendered)
-- Title: `Coral (#FF7F50) Color Shades, Tints & Palette | uishades.com` — 60 chars, ideal.
+- Title: `Coral (#FF7F50) Color Shades, Tints & Palette | UIshades.com` — 60 chars, ideal.
 - Description: `Coral is the warm pink-orange named after the living reef organism...` — engaging, but ends in `…but` (truncated mid-sentence). **Fix:** finish the sentence or trim cleanly.
 - H1 ×1, H2 ×2 (`palette-title`, `related-title`). Good structure.
 - Word count: 279 — much healthier than home.
 - OG `og:type=article` — correct for content pages.
 
 ### `/4040ff` (SSR)
-- Title: `Hex Color #4040FF Tints & Shades | uishades.com` — 50 chars, good.
+- Title: `Hex Color #4040FF Tints & Shades | UIshades.com` — 50 chars, good.
 - Description: `Tints and shades of #4040FF. OKLCH ramp, 11-stop Tailwind scale, copy-ready exports.` — 86 chars, slightly short but fine.
 - **H1: missing in SSR HTML.** The page renders only the React island shell server-side; the heading is injected post-hydration. Googlebot renders JS so it'll eventually see it, but it adds a render-tier-2 dependency for the highest-fan-out URL family on the site.
 - Word count: 138 (but most of that is hex values like `#4040ff`, `Click to copy`).
@@ -77,10 +77,10 @@
   *Fix:* Self-host the two families and inline the `@font-face` rules with `font-display: swap`, OR drop to a single weight per family (currently 5+3 weights are loaded). Saves ~150–250 ms on cold loads.
 
 ### Medium
-- **H1 on `/` does not contain the brand name `uishades.com`.** The eyebrow `<p>UISHADES.COM — free, fast, OKLCH</p>` carries the brand but `<p>` is weak signal.
-  *Fix:* Either move the brand into the H1 (`Tints & shades of any color · uishades.com`) or wrap the eyebrow in a semantic element (it's editorial chrome, so this is a judgment call — current state is acceptable).
+- **H1 on `/` does not contain the brand name `UIshades.com`.** The eyebrow `<p>UISHADES.COM — free, fast, OKLCH</p>` carries the brand but `<p>` is weak signal.
+  *Fix:* Either move the brand into the H1 (`Tints & shades of any color · UIshades.com`) or wrap the eyebrow in a semantic element (it's editorial chrome, so this is a judgment call — current state is acceptable).
 - **`H2` on `/` is `sr-only`.** Google generally indexes it, but a visible section heading would be stronger.
-  *Fix:* Optional — promote the sr-only H2 `Why uishades.com` to a visible heading above the 3-up grid, or add a visible H2 like `Tints, shades, and design-ready exports`.
+  *Fix:* Optional — promote the sr-only H2 `Why UIshades.com` to a visible heading above the 3-up grid, or add a visible H2 like `Tints, shades, and design-ready exports`.
 - **GTM loads synchronously in `<head>` before `</head>`.** It's set to `async` inside the snippet, but the `<script>` block itself executes during head parse.
   *Fix:* Move GTM injection to just before `</body>`, or behind a consent gate, to avoid main-thread contention during the critical render path.
 - **Inline `<style>` blocks ship ~70 KB of Tailwind CSS in each route's HTML during dev.** Production build will inline only critical CSS via Astro's pipeline — verify the production HTML is smaller. (Not a fix, just confirm.)
@@ -90,7 +90,7 @@
 - **No `lastmod` on home in sitemap** (sitemap is auto-generated). Consider injecting freshness signals if the home page copy changes.
 - **External links** to `astro.build` and `culorijs.org` use `rel="noopener"` but not `rel="nofollow"` or `rel="ugc"`. These are editorial endorsements, so current state is appropriate — flagging only because some auditors will note it.
 - **`Generator: Astro v6.3.7` meta** leaks the framework version. Not a security risk (the framework is open source) but trivial to remove if you want to reduce fingerprinting surface.
-- **Twitter card `summary_large_image`** with a 1200×630 PNG — confirm the OG image exists at `https://uishades.com/og/777777.png`. (Cannot verify in dev; sample to make sure the `/og/[hex].png` endpoint returns 200 for `777777`.)
+- **Twitter card `summary_large_image`** with a 1200×630 PNG — confirm the OG image exists at `https://UIshades.com/og/777777.png`. (Cannot verify in dev; sample to make sure the `/og/[hex].png` endpoint returns 200 for `777777`.)
 
 ---
 

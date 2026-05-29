@@ -51,7 +51,7 @@ const related = (color.related || [])
   .filter((c): c is NonNullable<typeof c> => !!c)
   .slice(0, 3);
 
-const TITLE = `${color.name} (${color.hex.toUpperCase()}) Color Shades, Tints & Palette | uishades.com`;
+const TITLE = `${color.name} (${color.hex.toUpperCase()}) Color Shades, Tints & Palette | UIshades.com`;
 
 function buildDescription(blurb: string): string {
   // Strip inline `code` ticks before any length math so character budgets
@@ -78,9 +78,9 @@ function buildDescription(blurb: string): string {
 }
 const DESCRIPTION = buildDescription(color.blurb);
 
-const canonicalUrl = `https://uishades.com/colors/${color.slug}`;
-const ogImage = `https://uishades.com/og/${color.hex.slice(1)}.png`;
-const ogImagePin = `https://uishades.com/og/pin/${color.hex.slice(1)}.png`;
+const canonicalUrl = `https://UIshades.com/colors/${color.slug}`;
+const ogImage = `https://UIshades.com/og/${color.hex.slice(1)}.png`;
+const ogImagePin = `https://UIshades.com/og/pin/${color.hex.slice(1)}.png`;
 
 const plainBlurb = color.blurb.replace(/`([^`]+)`/g, '$1');
 
@@ -92,7 +92,7 @@ const breadcrumbJsonLd = {
       '@type': 'ListItem',
       position: 1,
       name: 'Home',
-      item: 'https://uishades.com/',
+      item: 'https://UIshades.com/',
     },
     {
       '@type': 'ListItem',
@@ -117,8 +117,8 @@ const colorPageJsonLd = {
   identifier: color.hex.toUpperCase(),
   inLanguage: 'en',
   isAccessibleForFree: true,
-  isPartOf: { '@id': 'https://uishades.com/#website' },
-  publisher: { '@id': 'https://uishades.com/#org' },
+  isPartOf: { '@id': 'https://UIshades.com/#website' },
+  publisher: { '@id': 'https://UIshades.com/#org' },
   image: {
     '@type': 'ImageObject',
     url: ogImage,
@@ -231,7 +231,7 @@ const faqJsonLd = {
     <!-- End Google Tag Manager (noscript) -->
     <header class="mx-auto max-w-5xl px-6">
       <div class="flex items-center justify-between gap-4 border-b border-hairline py-4">
-        <a href="/" class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink hover:text-accent">uishades.com</a>
+        <a href="/" class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink hover:text-accent">UIshades.com</a>
         <div class="font-mono text-[11px] uppercase tracking-[0.14em]">
           <ThemeToggle />
         </div>

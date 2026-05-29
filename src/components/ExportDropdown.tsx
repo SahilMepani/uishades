@@ -258,7 +258,10 @@ function ExportModal({
         aria-labelledby={titleId}
         tabIndex={-1}
         className={
-          'relative z-10 flex max-h-[85vh] w-full max-w-2xl flex-col border border-hairline bg-paper ' +
+          // Fixed height (not max-h) so the centered dialog stays put when the
+          // active tab's code is shorter or longer — short formats get
+          // whitespace, tall ones (the JSON exports) scroll inside the <pre>.
+          'relative z-10 flex h-[75vh] w-full max-w-2xl flex-col border border-hairline bg-paper ' +
           'shadow-[0_24px_64px_rgba(17,17,16,0.28)] focus:outline-none'
         }
       >
@@ -333,7 +336,7 @@ function ExportModal({
           <pre
             data-export-preview="true"
             className={
-              'h-full max-h-[60vh] overflow-auto bg-paper-2 p-5 pr-20 font-mono text-[12px] ' +
+              'h-full overflow-auto bg-paper-2 p-5 pr-20 font-mono text-[12px] ' +
               'leading-relaxed text-ink-2'
             }
           >

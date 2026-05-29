@@ -90,7 +90,16 @@ function formatChannels(hex: Hex, fmt: ChannelFormat): string {
 function parseChannels(raw: string, fmt: ChannelFormat): Hex {
   const v = raw.trim();
   if (fmt === 'hex' || v.includes('(')) return parseColor(v);
-  return parseColor(`${fmt}(${v})`);
+  try {
+    return parseColor(`${fmt}(${v})`);
+  } catch (err) {
+    // Not valid channel digits for this format — fall back to parsing it
+    // verbatim ONLY if it contains a letter: a CSS named color ('coral') or a
+    // bare hex like 'ff0000'. A pure-numeric value ('255') stays channel input
+    // and must NOT be reinterpreted as the 3-digit hex '#225555'.
+    if (/[a-z]/i.test(v)) return parseColor(v);
+    throw err;
+  }
 }
 
 // Sniff the format of a pasted/typed value so the dropdown can switch to match
