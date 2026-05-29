@@ -15,12 +15,16 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "lhci": "lhci autorun",
+    "db:migrate": "wrangler d1 migrations apply uishades --remote",
+    "db:migrate:local": "wrangler d1 migrations apply uishades --local",
+    "cf-typegen": "wrangler types",
     "prepare": "git config core.hooksPath scripts/git-hooks || true"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.5.4",
     "@astrojs/react": "^5.0.5",
     "@astrojs/sitemap": "^3.7.2",
+    "arctic": "^3.7.0",
     "astro": "^6.3.7",
     "culori": "^4.0.2",
     "react": "^19.2.6",
@@ -39,6 +43,7 @@
     "@vitest/ui": "^4.1.7",
     "playwright": "^1.60.0",
     "tailwindcss": "^4.3.0",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.7",
+    "wrangler": "^4.95.0"
   }
 }

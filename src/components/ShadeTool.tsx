@@ -25,6 +25,9 @@ import ContinuousRamp from './ContinuousRamp';
 import { ToastProvider, useToast } from './Toast';
 import ColorPicker from './ColorPicker';
 import ShareRow from './ShareRow';
+import AuthMenu from './AuthMenu';
+import PresetsPanel from './PresetsPanel';
+import type { MeResponse, Preset } from '../lib/auth/types';
 
 // The Tailwind scale is the default view, so its grid ships eagerly and is
 // server-rendered — real content on first paint, no skeleton flash. Only the
@@ -474,6 +477,159 @@ function ShadeToolInner({
     // intentionally no-op; ExportDropdown owns the toast
   }, []);
 
+  // --- Account + saved presets ---------------------------------------------
+  // Per-user state is fetched client-side from the credentialed `/api/me` on
+  // mount — never server-rendered, since `/[hex]` HTML is edge-cached for 30
+  // days and SSR'd per-user state would leak across visitors.
+  const [authUser, setAuthUser] = useState<MeResponse['user']>(null);
+  const [presets, setPresets] = useState<Preset[]>([]);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/me', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? (r.json() as Promise<MeResponse>) : { user: null, presets: [] }))
+      .then((data) => {
+        if (cancelled) return;
+        setAuthUser(data.user);
+        setPresets(data.presets ?? []);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setAuthLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // One-shot sign-in outcome from the magic-link / OAuth callbacks (they
+  // redirect to `/?signin=…`); surface it, then strip the param.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let status: string | null = null;
+    try {
+      const url = new URL(window.location.href);
+      status = url.searchParams.get('signin');
+      if (status) {
+        url.searchParams.delete('signin');
+        window.history.replaceState(null, '', url.toString());
+      }
+    } catch {
+      return;
+    }
+    const messages: Record<string, string> = {
+      expired: 'That sign-in link expired. Request a new one.',
+      invalid: 'That sign-in link was invalid.',
+      unverified: "Couldn't sign in — your provider email isn't verified.",
+      error: 'Sign-in failed. Please try again.',
+    };
+    if (status && messages[status]) pushToast(messages[status], { durationMs: 3500 });
+  }, [pushToast]);
+
+  const handleRequestMagicLink = useCallback(
+    async (email: string) => {
+      try {
+        const res = await fetch('/api/auth/magic', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ email }),
+        });
+        if (res.status === 429) {
+          pushToast('Too many requests — try again later.', { durationMs: 3000 });
+          return;
+        }
+        if (!res.ok) {
+          pushToast('Please enter a valid email.', { durationMs: 3000 });
+          return;
+        }
+        pushToast('Check your inbox for a sign-in link.', { durationMs: 3500 });
+      } catch {
+        pushToast("Couldn't send the link. Please try again.", { durationMs: 3000 });
+      }
+    },
+    [pushToast],
+  );
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+    } catch {
+      /* clear local state regardless */
+    }
+    setAuthUser(null);
+    setPresets([]);
+    pushToast('Signed out.');
+  }, [pushToast]);
+
+  const handleSavePreset = useCallback(
+    async (name: string) => {
+      try {
+        const res = await fetch('/api/presets', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ name, hex, view, copyFormat, exportFormat }),
+        });
+        if (res.status === 401) {
+          pushToast('Sign in to save presets.', { durationMs: 3000 });
+          return;
+        }
+        if (!res.ok) {
+          pushToast("Couldn't save the preset.", { durationMs: 3000 });
+          return;
+        }
+        const { preset } = (await res.json()) as { preset: Preset };
+        setPresets((prev) => [preset, ...prev]);
+        pushToast(`Saved "${preset.name}".`);
+      } catch {
+        pushToast("Couldn't save the preset.", { durationMs: 3000 });
+      }
+    },
+    [hex, view, copyFormat, exportFormat, pushToast],
+  );
+
+  const handleLoadPreset = useCallback(
+    (preset: Preset) => {
+      // Use the gated setters so URL + localStorage stay in sync (not raw setHex).
+      handleChangeHex(preset.hex);
+      setView(preset.view);
+      setCopyFormat(preset.copyFormat);
+      if (preset.exportFormat) setExportFormat(preset.exportFormat);
+      pushToast(`Loaded "${preset.name}".`);
+    },
+    [handleChangeHex, setView, setCopyFormat, setExportFormat, pushToast],
+  );
+
+  const handleDeletePreset = useCallback(
+    async (id: string) => {
+      setPresets((p) => p.filter((x) => x.id !== id)); // optimistic
+      try {
+        const res = await fetch(`/api/presets/${id}`, {
+          method: 'DELETE',
+          credentials: 'same-origin',
+        });
+        if (!res.ok) throw new Error('delete failed');
+      } catch {
+        // Re-sync from the server instead of restoring a stale local snapshot:
+        // a snapshot captured at call time can resurrect a preset that an
+        // overlapping delete already removed.
+        try {
+          const r = await fetch('/api/presets', { credentials: 'same-origin' });
+          if (r.ok) {
+            const data = (await r.json()) as { presets: Preset[] };
+            setPresets(data.presets ?? []);
+          }
+        } catch {
+          /* leave optimistic state if the resync also fails */
+        }
+        pushToast("Couldn't delete the preset.", { durationMs: 3000 });
+      }
+    },
+    [pushToast],
+  );
+
   return (
     <div className="text-ink">
       {/* Mobile sticky header: visible only < lg */}
@@ -508,6 +664,22 @@ function ShadeToolInner({
               hasStop={view === 'scale'}
             />
             <ShareRow hex={hex} named={named} />
+            <div className="border-t border-hairline pt-5">
+              <AuthMenu
+                user={authUser}
+                loading={authLoading}
+                onRequestMagicLink={handleRequestMagicLink}
+                onLogout={handleLogout}
+              />
+            </div>
+            <PresetsPanel
+              user={authUser}
+              presets={presets}
+              currentHex={hex}
+              onSave={handleSavePreset}
+              onLoad={handleLoadPreset}
+              onDelete={handleDeletePreset}
+            />
           </div>
         </aside>
 
@@ -529,6 +701,22 @@ function ShadeToolInner({
                 hasStop={view === 'scale'}
               />
               <ShareRow hex={hex} named={named} />
+              <div className="border-t border-hairline pt-3">
+                <AuthMenu
+                  user={authUser}
+                  loading={authLoading}
+                  onRequestMagicLink={handleRequestMagicLink}
+                  onLogout={handleLogout}
+                />
+              </div>
+              <PresetsPanel
+                user={authUser}
+                presets={presets}
+                currentHex={hex}
+                onSave={handleSavePreset}
+                onLoad={handleLoadPreset}
+                onDelete={handleDeletePreset}
+              />
             </div>
           </div>
 

@@ -37,6 +37,28 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Verify D1 database_id is configured
+        # Fail loudly here rather than letting the migration step / runtime hit
+        # a non-existent database. The binding id is committed in wrangler.toml
+        # and must be replaced with the real `wrangler d1 create` id before the
+        # first deploy that depends on the DB.
+        run: |
+          if grep -q 'REPLACE_WITH_D1_DATABASE_ID' wrangler.toml; then
+            echo "::error::wrangler.toml still has the placeholder database_id. Run 'wrangler d1 create uishades' and paste the id before deploying."
+            exit 1
+          fi
+
+      - name: Apply D1 migrations
+        # Land schema BEFORE deploying code that depends on it. Reads the D1
+        # binding from wrangler.toml (database_name = "uishades"); applies any
+        # unapplied files in migrations/. The API token must include D1 edit
+        # scope, and database_id in wrangler.toml must be filled in.
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 migrations apply uishades --remote
+
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v4
         with:
@@ -54,7 +76,7 @@ jobs:
         # fresh with the deploy; this only matters for /[hex].
         #
         # Requires:
-        #   - secrets.CLOUDFLARE_ZONE_ID   (the uishades.com zone id)
+        #   - secrets.CLOUDFLARE_ZONE_ID   (the UIshades.com zone id)
         #   - secrets.CLOUDFLARE_API_TOKEN scoped to include Zone > Cache Purge
         #
         # Best-effort: the site is already live by this step, so a missing zone

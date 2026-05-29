@@ -7,3 +7,14 @@ compatibility_flags = ["nodejs_compat"]
 # project-level metadata. Deploy with:
 #   npx wrangler deploy --config dist/server/wrangler.json
 # Custom domain is configured in the Cloudflare dashboard post-deploy.
+
+# D1 (auth + presets). The adapter merges this binding into the generated
+# dist/server/wrangler.json at build, and `platformProxy` (astro.config.mjs)
+# reads it for local `astro dev`. Create the DB with `wrangler d1 create
+# uishades` and paste the returned id below.
+# The SESSION KV binding is NOT declared here on purpose — the adapter wires it
+# automatically and Wrangler auto-provisions it on deploy.
+[[d1_databases]]
+binding = "DB"
+database_name = "uishades"
+database_id = "e9c431e7-4733-44aa-9862-ddef49d205d4"
