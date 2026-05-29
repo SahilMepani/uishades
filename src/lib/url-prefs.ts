@@ -13,14 +13,17 @@ import type { CopyFormat, ExportFormat } from './color/types';
 type View = 'ramp' | 'scale';
 
 const VIEW_VALUES: readonly View[] = ['ramp', 'scale'] as const;
-const FMT_VALUES: readonly ExportFormat[] = [
+// Exported as the single source of truth for the copy/export format
+// vocabularies — the presets API validates against these same lists so a new
+// format can't be accepted by `?fmt=`/`?copy=` yet silently dropped on save.
+export const FMT_VALUES: readonly ExportFormat[] = [
   'tailwind-v4',
   'tailwind-v3',
   'css-vars',
   'w3c-tokens',
   'figma-vars',
 ] as const;
-const COPY_VALUES: readonly CopyFormat[] = [
+export const COPY_VALUES: readonly CopyFormat[] = [
   'hex',
   'rgb',
   'hsl',
