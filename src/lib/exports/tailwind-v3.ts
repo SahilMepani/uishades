@@ -28,7 +28,11 @@ export function toTailwindV3(scale: TailwindScale, name: string): string {
     `  theme: {`,
     `    extend: {`,
     `      colors: {`,
-    `        ${slug}: {`,
+    // Quote the group key: `slug` may be hyphenated (sanitizeName keeps `-`),
+    // and a bare hyphenated identifier (`burnt-orange:`) is a SyntaxError when
+    // the pasted config is require()'d. The 50…950 stop keys below are quoted
+    // for the same reason.
+    `        '${slug}': {`,
     entries,
     `        },`,
     `      },`,

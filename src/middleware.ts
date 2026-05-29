@@ -1,9 +1,15 @@
 /**
- * Astro middleware — applies HTTP security headers to every response.
+ * Astro middleware — applies HTTP security headers and enforces a same-origin
+ * CSRF check on state-changing API requests.
  *
- * Auto-discovered by Astro from `src/middleware.ts`. Runs on both
- * pre-rendered pages (at request time) and on-demand SSR routes such as
- * `/[hex]`. The `next()` response is mutated in place, then returned.
+ * Auto-discovered by Astro from `src/middleware.ts`. IMPORTANT: under
+ * `output: 'static'` this only runs at request time for ON-DEMAND SSR routes
+ * (`/[hex]`, `/api/*`, `/og/*`). Pre-rendered pages (the home page and every
+ * `/colors/*` page) are emitted as static `.html` and served by the Cloudflare
+ * Workers asset layer WITHOUT invoking the worker, so these headers never reach
+ * them at runtime — their copy of the same header set is shipped via
+ * `public/_headers` (keep the two in sync). The `next()` response is mutated in
+ * place, then returned.
  *
  * Header rationale (see audit Tier 1.4 + open decision 3):
  *
@@ -32,6 +38,7 @@
  *   broken in production.
  */
 import { defineMiddleware } from 'astro:middleware';
+import { isCsrfBlocked } from './lib/auth/csrf';
 
 const GTM = 'https://www.googletagmanager.com';
 const GA = 'https://www.google-analytics.com';
@@ -72,6 +79,18 @@ const SECURITY_HEADERS: Record<string, string> = {
 };
 
 export const onRequest = defineMiddleware(async (context, next) => {
+  // Reject cross-origin state-changing requests BEFORE the handler runs, so a
+  // CSRF POST never reaches token-consuming / mutating logic.
+  if (isCsrfBlocked(context.request, context.url)) {
+    return new Response(JSON.stringify({ error: 'forbidden' }), {
+      status: 403,
+      headers: {
+        'content-type': 'application/json; charset=utf-8',
+        'cache-control': 'private, no-store',
+      },
+    });
+  }
+
   const response = await next();
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
     response.headers.set(name, value);

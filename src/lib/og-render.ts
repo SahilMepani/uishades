@@ -17,6 +17,7 @@
 import { ImageResponse } from 'workers-og';
 import { oklchRamp } from './color/ramp';
 import { contrastRatio } from './color/contrast';
+import { ogStripIndices } from './og-strip';
 import type { Hex } from './color/types';
 
 export type OgVariant = 'landscape' | 'pin';
@@ -73,13 +74,7 @@ export function renderOgImage(canonical: Hex, variant: OgVariant = 'landscape'):
 
   const ramp = oklchRamp(canonical);
   const ix = ramp.inputIndex;
-  const stripIndices = [
-    Math.max(1, Math.floor(ix * 0.25)),
-    Math.max(1, Math.floor(ix * 0.65)),
-    ix,
-    Math.min(20, Math.ceil(ix + (21 - ix) * 0.35)),
-    Math.min(20, Math.ceil(ix + (21 - ix) * 0.75)),
-  ];
+  const stripIndices = ogStripIndices(ix, ramp.shades.length);
   const strip = stripIndices.map((i) => ramp.shades[i].hex);
 
   const ink = pickInkOver(canonical);

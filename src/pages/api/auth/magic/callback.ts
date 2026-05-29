@@ -12,7 +12,9 @@
  *   POST (same URL, token in the form body)
  *     Consumes the token (single-use), find-or-creates the user by this
  *     inherently-verified email, regenerates the session, sets userId → home.
- *     Same-origin form POST, so Astro's origin check covers CSRF.
+ *     This is a state-changing POST, so the same-origin CSRF check in
+ *     `src/middleware.ts` gates it (Astro's built-in `security.checkOrigin` is a
+ *     no-op under `output: 'static'`, so we enforce origin there ourselves).
  */
 export const prerender = false;
 
