@@ -13,7 +13,11 @@
 import { escapeHtml } from './http';
 
 const BREVO_ENDPOINT = 'https://api.brevo.com/v3/smtp/email';
-const DEFAULT_FROM_EMAIL = 'login@UIshades.com';
+// Must match the verified Brevo sender / authenticated domain EXACTLY. Brevo's
+// API does a case-sensitive match on this string, and the verified sender is
+// `login@uishades.com` (lowercase) — capitalizing the domain gets the send
+// accepted (2xx) but asynchronously rejected ("sender is not valid").
+const DEFAULT_FROM_EMAIL = 'login@uishades.com';
 const DEFAULT_FROM_NAME = 'uiShades';
 
 export interface SendMagicLinkInput {

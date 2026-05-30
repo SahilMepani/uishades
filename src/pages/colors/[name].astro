@@ -11,6 +11,7 @@ import { formatForCopy } from '../../lib/color/format';
 import '../../styles/global.css';
 import BaseHead from '../../components/BaseHead.astro';
 import ThemeToggle from '../../components/ThemeToggle.astro';
+import HeaderAuth from '../../components/HeaderAuth';
 import ShadeTool from '../../components/ShadeTool';
 import { NAMED_COLORS, findBySlug } from '../../lib/data/named-colors';
 import { toOklch, oklchToHex } from '../../lib/color/parse';
@@ -232,7 +233,8 @@ const faqJsonLd = {
     <header class="mx-auto max-w-5xl px-6">
       <div class="flex items-center justify-between gap-4 border-b border-hairline py-4">
         <a href="/" class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink hover:text-accent">UIshades.com</a>
-        <div class="font-mono text-[11px] uppercase tracking-[0.14em]">
+        <div class="flex items-center gap-4 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <HeaderAuth client:load />
           <ThemeToggle />
         </div>
       </div>

@@ -25,7 +25,6 @@ import ContinuousRamp from './ContinuousRamp';
 import { ToastProvider, useToast } from './Toast';
 import ColorPicker from './ColorPicker';
 import ShareRow from './ShareRow';
-import AuthMenu from './AuthMenu';
 import PresetsPanel from './PresetsPanel';
 import type { MeResponse, Preset } from '../lib/auth/types';
 
@@ -527,42 +526,6 @@ function ShadeToolInner({
     if (status && messages[status]) pushToast(messages[status], { durationMs: 3500 });
   }, [pushToast]);
 
-  const handleRequestMagicLink = useCallback(
-    async (email: string) => {
-      try {
-        const res = await fetch('/api/auth/magic', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify({ email }),
-        });
-        if (res.status === 429) {
-          pushToast('Too many requests — try again later.', { durationMs: 3000 });
-          return;
-        }
-        if (!res.ok) {
-          pushToast('Please enter a valid email.', { durationMs: 3000 });
-          return;
-        }
-        pushToast('Check your inbox for a sign-in link.', { durationMs: 3500 });
-      } catch {
-        pushToast("Couldn't send the link. Please try again.", { durationMs: 3000 });
-      }
-    },
-    [pushToast],
-  );
-
-  const handleLogout = useCallback(async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
-    } catch {
-      /* clear local state regardless */
-    }
-    setAuthUser(null);
-    setPresets([]);
-    pushToast('Signed out.');
-  }, [pushToast]);
-
   const handleSavePreset = useCallback(
     async (name: string) => {
       try {
@@ -664,14 +627,6 @@ function ShadeToolInner({
               hasStop={view === 'scale'}
             />
             <ShareRow hex={hex} named={named} />
-            <div className="border-t border-hairline pt-5">
-              <AuthMenu
-                user={authUser}
-                loading={authLoading}
-                onRequestMagicLink={handleRequestMagicLink}
-                onLogout={handleLogout}
-              />
-            </div>
             <PresetsPanel
               user={authUser}
               presets={presets}
@@ -701,14 +656,6 @@ function ShadeToolInner({
                 hasStop={view === 'scale'}
               />
               <ShareRow hex={hex} named={named} />
-              <div className="border-t border-hairline pt-3">
-                <AuthMenu
-                  user={authUser}
-                  loading={authLoading}
-                  onRequestMagicLink={handleRequestMagicLink}
-                  onLogout={handleLogout}
-                />
-              </div>
               <PresetsPanel
                 user={authUser}
                 presets={presets}

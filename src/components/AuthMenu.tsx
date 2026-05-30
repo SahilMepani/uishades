@@ -109,7 +109,7 @@ function SignedOut({
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
         <span className="eyebrow">Account</span>
-        <p className="text-xs leading-relaxed text-mute">
+        <p className="font-mono text-[11px] leading-relaxed text-mute">
           Sign in to save palettes across devices.
         </p>
       </div>

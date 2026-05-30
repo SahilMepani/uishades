@@ -17,6 +17,7 @@
     "lhci": "lhci autorun",
     "db:migrate": "wrangler d1 migrations apply uishades --remote",
     "db:migrate:local": "wrangler d1 migrations apply uishades --local",
+    "db:dev": "bash scripts/db-dev.sh",
     "cf-typegen": "wrangler types",
     "prepare": "git config core.hooksPath scripts/git-hooks || true"
   },
