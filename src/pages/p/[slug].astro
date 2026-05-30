@@ -43,13 +43,16 @@ if (!palette) {
 
 const isPublic = palette.visibility === 'public' && !palette.flagged;
 
-// Fire-and-forget view bump — never await it into the response path. Prefer
-// the Cloudflare `ctx.waitUntil` so the write survives the response when the
-// adapter exposes it; otherwise just kick the promise and swallow errors.
+// Fire-and-forget view bump — never await it into the response path. Use the
+// Cloudflare ExecutionContext's `waitUntil` so the write survives the response.
+// In Astro v6 + @astrojs/cloudflare this is `Astro.locals.cfContext`
+// (`Astro.locals.runtime.ctx` was REMOVED — reading it THROWS, which 500'd this
+// page for every real palette). Guarded so a missing context stays best-effort.
 if (isPublic) {
   const bump = incrementPaletteView(env.DB, palette.id).catch(() => {});
-  const runtime = (Astro.locals as { runtime?: { ctx?: { waitUntil?: (p: Promise<unknown>) => void } } }).runtime;
-  runtime?.ctx?.waitUntil?.(bump);
+  const cfContext = (Astro.locals as { cfContext?: { waitUntil?: (p: Promise<unknown>) => void } })
+    .cfContext;
+  cfContext?.waitUntil?.(bump);
 }
 
 const HeroMock = HERO_MOCK.Component;

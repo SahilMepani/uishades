@@ -42,6 +42,11 @@ jobs:
       - name: Apply D1 migrations (local) for the preview server
         run: npm run db:migrate:local
 
+      # Seed one stable public palette so the suite exercises the happy paths
+      # (real /p/[slug], /u/[handle], non-empty /explore), not only 404 misses.
+      - name: Seed e2e fixtures
+        run: npx wrangler d1 execute uishades --local --file=tests/fixtures/seed-e2e.sql
+
       - name: E2E tests (Playwright)
         run: npm run test:e2e
 
