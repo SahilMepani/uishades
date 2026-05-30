@@ -52,8 +52,17 @@ const AVATARS = 'https://*.googleusercontent.com https://avatars.githubuserconte
 // Per-user API responses must never enter the 30-day edge cache that fronts
 // /[hex]. Routes already set `private, no-store`, but force it here too so a new
 // endpoint under these prefixes can't leak one user's data by forgetting to.
-// (Public, cacheable endpoints like /api/[hex].json are NOT in this list.)
-const PRIVATE_API_PREFIXES = ['/api/me', '/api/presets', '/api/auth/'];
+//
+// `/api/palettes` covers the owner CRUD plus `/api/palettes/[id]/vote` and
+// `/.../report` — all per-user / mutating, none public-cacheable (the PUBLIC
+// palette JSON lives at `/api/p/*.json`, NOT under this prefix). Belt-and-braces
+// backstop so the vote endpoint's `private, no-store` can't regress.
+//
+// Public, cacheable endpoints are deliberately NOT in this list so their own
+// Cache-Control survives: `/api/[hex].json`, `/api/p/*.json`, `/api/explore`
+// (anonymous body is public-cacheable; signed-in sets its own no-store), and
+// `/api/u/*.json` (public profile data).
+const PRIVATE_API_PREFIXES = ['/api/me', '/api/presets', '/api/auth/', '/api/palettes'];
 
 const SECURITY_HEADERS: Record<string, string> = {
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
