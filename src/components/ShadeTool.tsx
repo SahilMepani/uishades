@@ -702,7 +702,7 @@ function ShadeToolInner({
             </div>
           </div>
 
-          <div className="flex flex-col gap-2.5">
+          <div className="relative flex flex-col gap-2.5">
             {showHintBanner && <HintBanner onDismiss={dismissHintBanner} />}
             {view === 'ramp' ? (
               <ContinuousRamp
@@ -1044,12 +1044,13 @@ function HintBanner({ onDismiss }: { onDismiss: () => void }) {
       type="button"
       aria-label="Dismiss tip: double-click a shade to use as your new source"
       onClick={onDismiss}
-      className="group flex w-full items-center justify-between gap-3 bg-ink px-3.5 py-2 text-left text-sm text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+      className="group flex w-auto self-end items-center gap-3 bg-ink px-3.5 py-2 text-left text-sm text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 min-[1400px]:absolute min-[1400px]:right-0 min-[1400px]:top-0 min-[1400px]:z-10 min-[1400px]:self-auto"
     >
-      <span>
-        <span className="mr-2 font-mono text-[11px] uppercase tracking-[0.16em] text-paper/60">
-          Tip
-        </span>
+      <span className="inline-flex items-center">
+        <StarIcon
+          aria-hidden="true"
+          className="mr-2 h-5 w-5 shrink-0 text-yellow-400"
+        />
         Double-click a shade to use as your new source.
       </span>
       <span
@@ -1067,6 +1068,17 @@ function HintBanner({ onDismiss }: { onDismiss: () => void }) {
         </svg>
       </span>
     </button>
+  );
+}
+
+function StarIcon({ className, ...props }: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 16 16" className={className ?? 'h-4 w-4'} {...props}>
+      <path
+        d="M8 1.5l1.86 3.77 4.16.6-3.01 2.93.71 4.14L8 11.49l-3.72 1.95.71-4.14L1.98 5.87l4.16-.6L8 1.5Z"
+        fill="currentColor"
+      />
+    </svg>
   );
 }
 
@@ -1134,7 +1146,7 @@ function AlgorithmToggle({
               aria-selected={active}
               onClick={() => onChange(v)}
               className={[
-                'relative z-10 rounded-full px-4 py-2 text-sm font-medium tracking-tight',
+                'relative z-10 rounded-full px-4 py-2 font-mono text-sm font-medium uppercase tracking-tight',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
                 active ? 'text-paper' : 'text-ink/70 hover:text-ink',
               ].join(' ')}

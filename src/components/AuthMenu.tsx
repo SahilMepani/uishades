@@ -144,7 +144,7 @@ function SignedOut({
         <button
           type="submit"
           disabled={submitting}
-          className="border border-ink/20 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.16em] text-ink transition-colors duration-200 ease-out hover:border-ink/40 hover:bg-paper-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-default disabled:opacity-60"
+          className="bg-ink px-3 py-2 font-mono text-[11px] uppercase tracking-[0.16em] text-paper transition-colors duration-200 ease-out hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-default disabled:opacity-60"
         >
           {submitting ? 'Sending…' : 'Email me a sign-in link'}
         </button>

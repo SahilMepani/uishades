@@ -255,14 +255,16 @@ select:not(:disabled),
   }
 }
 
-/* Theme toggle (ThemeToggle.astro): show the icon + label for the theme the
-   click will switch TO. Driven purely by the `.dark` class on <html>, so the
-   control reflects the active theme even before its wiring script runs (the
-   pre-paint script in BaseHead sets the class before first paint). */
-[data-theme-icon="sun"],
-[data-theme-label="light"] { display: none; }
-[data-theme-icon="moon"]  { display: inline-flex; }
-html.dark [data-theme-icon="moon"],
-html.dark [data-theme-label="dark"]  { display: none; }
-html.dark [data-theme-icon="sun"]    { display: inline-flex; }
-html.dark [data-theme-label="light"] { display: inline; }
+/* Theme switch (ThemeToggle.astro): a segmented sun (light) / moon (dark)
+   pill. The sliding indicator and active-icon colour are driven purely by the
+   `.dark` class on <html>, so the control reflects the active theme even
+   before its wiring script runs (the pre-paint script in BaseHead sets the
+   class before first paint). The indicator is `bg-ink`, so the active icon is
+   `--color-paper` for contrast; both tokens flip with the theme. */
+[data-theme-indicator] { transform: translateX(0); }
+html.dark [data-theme-indicator] { transform: translateX(100%); }
+
+[data-theme-set="light"] { color: var(--color-paper); }
+[data-theme-set="dark"]  { color: var(--color-mute); }
+html.dark [data-theme-set="light"] { color: var(--color-mute); }
+html.dark [data-theme-set="dark"]  { color: var(--color-paper); }

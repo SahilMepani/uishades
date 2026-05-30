@@ -10,5 +10,8 @@ declare namespace Cloudflare {
     GITHUB_CLIENT_ID: string;
     GITHUB_CLIENT_SECRET: string;
     BREVO_API_KEY: string;
+    // Inbox the footer feedback form delivers to. Required for /api/feedback to
+    // send — set as a Worker secret (and in .dev.vars for local dev).
+    FEEDBACK_RECIPIENT_EMAIL: string;
   }
 }

@@ -20,6 +20,32 @@ const BREVO_ENDPOINT = 'https://api.brevo.com/v3/smtp/email';
 const DEFAULT_FROM_EMAIL = 'login@uishades.com';
 const DEFAULT_FROM_NAME = 'uiShades';
 
+/**
+ * POST a payload to Brevo's transactional-email endpoint. Shared by every
+ * sender below so the auth key header, content-type, and 4xx/5xx handling live
+ * in exactly one place. `sender` defaults to the verified `login@uishades.com`
+ * identity (see the case-sensitivity note above) unless a payload overrides it.
+ */
+async function postToBrevo(apiKey: string, payload: Record<string, unknown>): Promise<void> {
+  const res = await fetch(BREVO_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'api-key': apiKey,
+      'content-type': 'application/json',
+      accept: 'application/json',
+    },
+    body: JSON.stringify({
+      sender: { name: DEFAULT_FROM_NAME, email: DEFAULT_FROM_EMAIL },
+      ...payload,
+    }),
+  });
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`Brevo send failed (${res.status}): ${detail.slice(0, 300)}`);
+  }
+}
+
 export interface SendMagicLinkInput {
   apiKey: string;
   to: string;
@@ -40,24 +66,57 @@ export async function sendMagicLinkEmail(input: SendMagicLinkInput): Promise<voi
     `background:#4040ff;color:#fff;border-radius:8px;text-decoration:none">Sign in</a></p>` +
     `<p style="color:#666;font-size:13px">If you didn't request this, you can ignore this email.</p>`;
 
-  const res = await fetch(BREVO_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'api-key': input.apiKey,
-      'content-type': 'application/json',
-      accept: 'application/json',
-    },
-    body: JSON.stringify({
-      sender: { name: input.fromName ?? DEFAULT_FROM_NAME, email: input.fromEmail ?? DEFAULT_FROM_EMAIL },
-      to: [{ email: input.to }],
-      subject,
-      htmlContent,
-      textContent,
-    }),
+  await postToBrevo(input.apiKey, {
+    sender: { name: input.fromName ?? DEFAULT_FROM_NAME, email: input.fromEmail ?? DEFAULT_FROM_EMAIL },
+    to: [{ email: input.to }],
+    subject,
+    htmlContent,
+    textContent,
   });
+}
 
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '');
-    throw new Error(`Brevo send failed (${res.status}): ${detail.slice(0, 300)}`);
-  }
+export interface SendFeedbackInput {
+  apiKey: string;
+  /** Site-owner inbox the feedback is delivered to. */
+  to: string;
+  /** Submitter-supplied display name. */
+  name: string;
+  /** Submitter's email — used as Reply-To so the owner can just hit reply. */
+  fromUserEmail: string;
+  /** Submitter's message body. */
+  message: string;
+}
+
+/**
+ * Deliver a visitor's feedback to the site owner. Sent FROM the verified
+ * `login@uishades.com` sender (so it passes SPF/DKIM) with the visitor's address
+ * as Reply-To. All three user-supplied fields are HTML-escaped before they land
+ * in the markup body; the name is also newline-stripped before going into the
+ * subject so it can't smuggle extra header-ish content.
+ */
+export async function sendFeedbackEmail(input: SendFeedbackInput): Promise<void> {
+  const subjectName = input.name.replace(/[\r\n]+/g, ' ').trim() || 'a visitor';
+  const subject = `uiShades feedback from ${subjectName}`.slice(0, 200);
+
+  const safeName = escapeHtml(input.name);
+  const safeEmail = escapeHtml(input.fromUserEmail);
+  const safeMessage = escapeHtml(input.message).replace(/\n/g, '<br>');
+
+  const textContent =
+    `New feedback from uiShades\n\n` +
+    `Name: ${input.name}\n` +
+    `Email: ${input.fromUserEmail}\n\n` +
+    `${input.message}\n`;
+  const htmlContent =
+    `<p><strong>New feedback from uiShades</strong></p>` +
+    `<p>Name: ${safeName}<br>Email: ${safeEmail}</p>` +
+    `<p style="white-space:pre-wrap">${safeMessage}</p>`;
+
+  await postToBrevo(input.apiKey, {
+    to: [{ email: input.to }],
+    replyTo: { email: input.fromUserEmail, name: subjectName },
+    subject,
+    htmlContent,
+    textContent,
+  });
 }

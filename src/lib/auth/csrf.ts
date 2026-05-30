@@ -12,7 +12,7 @@
 // State-changing requests under these prefixes must be same-origin. OAuth
 // callbacks are GET (idempotent, protected by the OAuth state/PKCE check) and
 // so are never gated here.
-export const CSRF_PROTECTED_PREFIXES = ['/api/auth/', '/api/presets'];
+export const CSRF_PROTECTED_PREFIXES = ['/api/auth/', '/api/presets', '/api/feedback'];
 const STATE_CHANGING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 /**

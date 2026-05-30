@@ -14,6 +14,7 @@ import '../styles/global.css';
 import BaseHead from '../components/BaseHead.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import HeaderAuth from '../components/HeaderAuth';
+import FeedbackLink from '../components/FeedbackLink';
 import ShadeTool from '../components/ShadeTool';
 import type { Hex } from '../lib/color/types';
 import type { InitialPrefs } from '../lib/url-prefs';
@@ -126,6 +127,7 @@ const {
         <nav aria-label="Footer" class="flex items-center gap-5 border-t border-hairline pt-6 font-mono text-[11px] uppercase tracking-[0.14em]">
           <a href="/colors/coral" class="text-ink hover:text-accent">Named colors</a>
           <a href={`/api/${footerHex}.json`} class="text-ink hover:text-accent">JSON API</a>
+          <FeedbackLink client:load />
         </nav>
       </footer>
     </main>

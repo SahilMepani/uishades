@@ -2,44 +2,43 @@
 /**
  * ThemeToggle — header light/dark switch.
  *
- * Styling: inherits the header bar's mono/uppercase/tracking so its
- * "Dark" / "Light" label reads the same as it did in the footer. It only
- * needs `text-ink hover:text-accent` to match the surrounding chrome.
+ * A segmented pill (sun = light, moon = dark) mirroring the tool's
+ * Algorithm/Copy toggles: both icons are always visible and a sliding
+ * indicator marks the active theme. No text labels.
  *
  * Behaviour split:
  *   - The pre-paint script in BaseHead sets the initial `.dark` class on
  *     <html> before first paint (no flash).
- *   - Icon + label visibility is driven entirely by CSS keyed on `html.dark`
- *     (see global.css), so the control shows the correct affordance even
- *     before the wiring script below runs.
- *   - This component's script handles the click: flip the class, persist to
- *     localStorage, and keep the aria state in sync. It's a processed (not
- *     inline) script, so Astro bundles + dedupes it — it runs once for the
- *     page regardless of how many footers render it.
+ *   - The sliding indicator + active-icon colour are driven entirely by CSS
+ *     keyed on `html.dark` (see global.css), so the control shows the correct
+ *     affordance even before the wiring script below runs.
+ *   - This component's script handles the click: set the chosen theme,
+ *     persist to localStorage, and keep the aria state in sync. It's a
+ *     processed (not inline) script, so Astro bundles + dedupes it — it runs
+ *     once for the page regardless of how many headers render it.
  */
 ---
 
-<button
-  type="button"
-  data-theme-toggle
-  data-theme-bound="0"
-  aria-pressed="false"
-  aria-label="Switch to dark theme"
-  class="inline-flex items-center gap-1.5 text-ink transition-colors duration-150 ease-out hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
+<div
+  role="group"
+  aria-label="Color theme"
+  class="relative inline-grid grid-cols-2 rounded-full bg-paper-2 p-0.5 ring-1 ring-ink/10"
 >
-  <span data-theme-icon="moon" class="h-3.5 w-3.5 items-center justify-center" aria-hidden="true">
-    <svg viewBox="0 0 16 16" class="h-3.5 w-3.5">
-      <path
-        d="M13.5 9.2A5.2 5.2 0 0 1 6.8 2.5a5.2 5.2 0 1 0 6.7 6.7Z"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.4"
-        stroke-linejoin="round"
-      />
-    </svg>
-  </span>
-  <span data-theme-icon="sun" class="h-3.5 w-3.5 items-center justify-center" aria-hidden="true">
-    <svg viewBox="0 0 16 16" class="h-3.5 w-3.5">
+  {/* Sliding indicator — left for light (sun), right for dark (moon). */}
+  <span
+    data-theme-indicator
+    aria-hidden="true"
+    class="absolute inset-y-0.5 left-0.5 w-[calc(50%-0.125rem)] rounded-full bg-ink shadow-sm transition-transform duration-200 ease-out motion-reduce:transition-none"
+  ></span>
+  <button
+    type="button"
+    data-theme-set="light"
+    data-theme-bound="0"
+    aria-label="Switch to light theme"
+    aria-pressed="false"
+    class="relative z-10 inline-flex h-6 w-7 items-center justify-center rounded-full transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
+  >
+    <svg viewBox="0 0 16 16" class="h-3.5 w-3.5" aria-hidden="true">
       <circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.4" />
       <path
         d="M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3 3l1.1 1.1M11.9 11.9 13 13M13 3l-1.1 1.1M4.1 11.9 3 13"
@@ -49,10 +48,26 @@
         stroke-linecap="round"
       />
     </svg>
-  </span>
-  <span data-theme-label="dark">Dark</span>
-  <span data-theme-label="light">Light</span>
-</button>
+  </button>
+  <button
+    type="button"
+    data-theme-set="dark"
+    data-theme-bound="0"
+    aria-label="Switch to dark theme"
+    aria-pressed="false"
+    class="relative z-10 inline-flex h-6 w-7 items-center justify-center rounded-full transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
+  >
+    <svg viewBox="0 0 16 16" class="h-3.5 w-3.5" aria-hidden="true">
+      <path
+        d="M13.5 9.2A5.2 5.2 0 0 1 6.8 2.5a5.2 5.2 0 1 0 6.7 6.7Z"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.4"
+        stroke-linejoin="round"
+      />
+    </svg>
+  </button>
+</div>
 
 <script>
   const KEY = 'uishades:theme';
@@ -62,9 +77,10 @@
 
   function syncButtons() {
     const dark = isDark();
-    document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((btn) => {
-      btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
-      btn.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+    document.querySelectorAll<HTMLButtonElement>('[data-theme-set]').forEach((btn) => {
+      const setsDark = btn.dataset.themeSet === 'dark';
+      // The button for the *active* theme is "pressed".
+      btn.setAttribute('aria-pressed', setsDark === dark ? 'true' : 'false');
     });
   }
 
@@ -78,11 +94,11 @@
     syncButtons();
   }
 
-  document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((btn) => {
+  document.querySelectorAll<HTMLButtonElement>('[data-theme-set]').forEach((btn) => {
     // Per-button guard so a re-run (or a second instance) can't double-bind.
     if (btn.dataset.themeBound === '1') return;
     btn.dataset.themeBound = '1';
-    btn.addEventListener('click', () => setTheme(!isDark()));
+    btn.addEventListener('click', () => setTheme(btn.dataset.themeSet === 'dark'));
   });
 
   syncButtons();

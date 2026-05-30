@@ -84,7 +84,7 @@ export default function HeaderAuth() {
           onClick={() => setOpen(true)}
           aria-haspopup="dialog"
           aria-label="Account"
-          className="inline-flex items-center gap-1.5 text-ink transition-colors duration-150 ease-out hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
+          className="inline-flex items-center gap-1.5 uppercase text-ink transition-colors duration-150 ease-out hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
         >
           {user.avatarUrl ? (
             <img
@@ -111,7 +111,7 @@ export default function HeaderAuth() {
           onClick={() => setOpen(true)}
           aria-haspopup="dialog"
           disabled={loading}
-          className="inline-flex items-center text-ink transition-colors duration-150 ease-out hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none disabled:opacity-60"
+          className="inline-flex items-center uppercase text-ink transition-colors duration-150 ease-out hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none disabled:opacity-60"
         >
           Sign in
         </button>
@@ -148,6 +148,20 @@ function AuthModal({
 }) {
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const [status, setStatus] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  // Drives the enter/exit fade. Starts false so the first paint is transparent,
+  // then flips true on the next frame; `requestClose` flips it back and defers
+  // the real unmount until the transition has run.
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setShow(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const requestClose = useCallback(() => {
+    setShow(false);
+    window.setTimeout(onClose, 200);
+  }, [onClose]);
 
   // Wrap the request so a sent link / error is surfaced inline in the popup
   // (this island has no toast system of its own).
@@ -171,11 +185,11 @@ function AuthModal({
   // re-render never disturbs focus.
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') requestClose();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [requestClose]);
 
   // Body-scroll lock + focus management — strictly mount/unmount (triggerRef is
   // stable). Must not depend on changing props/state or a re-render would eject
@@ -197,8 +211,11 @@ function AuthModal({
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-[12vh]">
       <div
         aria-hidden="true"
-        onClick={onClose}
-        className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"
+        onClick={requestClose}
+        className={
+          'absolute inset-0 bg-black/40 backdrop-blur-[1px] transition-opacity duration-200 ease-out motion-reduce:transition-none ' +
+          (show ? 'opacity-100' : 'opacity-0')
+        }
       />
       <div
         ref={dialogRef}
@@ -206,11 +223,14 @@ function AuthModal({
         aria-modal="true"
         aria-label="Account"
         tabIndex={-1}
-        className="relative z-10 w-full max-w-sm border border-hairline bg-paper p-6 shadow-[0_24px_64px_rgba(17,17,16,0.28)] focus:outline-none"
+        className={
+          'relative z-10 w-full max-w-sm border border-hairline bg-paper p-6 shadow-[0_24px_64px_rgba(17,17,16,0.28)] transition-all duration-200 ease-out focus:outline-none motion-reduce:transition-none ' +
+          (show ? 'translate-y-0 opacity-100' : 'translate-y-1 opacity-0')
+        }
       >
         <button
           type="button"
-          onClick={onClose}
+          onClick={requestClose}
           aria-label="Close account dialog"
           className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center text-mute transition-colors duration-150 ease-out hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
         >
