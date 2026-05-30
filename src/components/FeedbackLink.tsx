@@ -70,7 +70,9 @@ function FeedbackModal({
   useEffect(() => {
     let cancelled = false;
     fetch('/api/me', { credentials: 'same-origin' })
-      .then((r) => (r.ok ? (r.json() as Promise<MeResponse>) : { user: null, presets: [] }))
+      .then((r): Promise<MeResponse> =>
+        r.ok ? r.json() : Promise.resolve({ user: null, presets: [], plan: 'free', handle: null }),
+      )
       .then((data) => {
         if (!cancelled && data.user?.email) {
           setEmail((prev) => prev || data.user!.email);

@@ -33,7 +33,9 @@ export default function HeaderAuth() {
   useEffect(() => {
     let cancelled = false;
     fetch('/api/me', { credentials: 'same-origin' })
-      .then((r) => (r.ok ? (r.json() as Promise<MeResponse>) : { user: null, presets: [] }))
+      .then((r): Promise<MeResponse> =>
+        r.ok ? r.json() : Promise.resolve({ user: null, presets: [], plan: 'free', handle: null }),
+      )
       .then((data) => {
         if (!cancelled) setUser(data.user);
       })
@@ -251,6 +253,16 @@ function AuthModal({
           onRequestMagicLink={requestMagicLink}
           onLogout={onLogout}
         />
+
+        {user && (
+          <a
+            href="/me/palettes"
+            className="mt-4 flex items-center justify-between border-t border-hairline pt-4 font-mono text-[11px] uppercase tracking-[0.14em] text-ink transition-colors duration-150 ease-out hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
+          >
+            <span>My palettes</span>
+            <span aria-hidden="true">→</span>
+          </a>
+        )}
 
         {status && (
           <p

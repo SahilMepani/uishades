@@ -13,5 +13,8 @@ declare namespace Cloudflare {
     // Inbox the footer feedback form delivers to. Required for /api/feedback to
     // send — set as a Worker secret (and in .dev.vars for local dev).
     FEEDBACK_RECIPIENT_EMAIL: string;
+    // Optional. Arms the one-time POST /api/admin/backfill route (legacy presets
+    // → palettes). Unset = route is inert (404). Set transiently for the run.
+    ADMIN_BACKFILL_TOKEN?: string;
   }
 }

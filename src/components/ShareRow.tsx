@@ -14,7 +14,16 @@ import type { Hex } from '../lib/color/types';
  * The "URL" we share is whatever `window.location` currently is, with any
  * one-shot params (e.g. `seed`) stripped — this preserves deep-linked
  * `?view=scale&mode=oklch` style state but doesn't leak raw user input.
- * On /dev/* the whole row is hidden, since those URLs 404 in production.
+ * On /dev/* and /me/* the whole row is hidden, since those URLs 404 in
+ * production or are private editor routes that shouldn't be shared.
+ *
+ * Palette pages override the hex-derived defaults via the optional props:
+ *   - `shareUrl` — the canonical URL to share (e.g. `/p/[slug]`); overrides
+ *     the `window.location`-derived default.
+ *   - `title` — the share title; overrides the "Tints and shades of …" default.
+ *   - `pinMedia` — the Pinterest media image URL; overrides the per-hex
+ *     `/og/pin/<hex>.png` default.
+ * Existing `/[hex]` callers pass none of these and behave exactly as before.
  */
 
 interface NamedColor {
@@ -25,6 +34,12 @@ interface NamedColor {
 interface ShareRowProps {
   hex: Hex;
   named?: NamedColor | null;
+  /** Override the shared URL (default: current location, `seed` stripped). */
+  shareUrl?: string;
+  /** Override the share title (default: "Tints and shades of <label> — UIshades.com"). */
+  title?: string;
+  /** Override the Pinterest media image (default: `/og/pin/<hex>.png`). */
+  pinMedia?: string;
 }
 
 function shareUrlFor(
@@ -45,16 +60,18 @@ function shareUrlFor(
   }
 }
 
-export default function ShareRow({ hex, named }: ShareRowProps) {
+export default function ShareRow({ hex, named, shareUrl, title, pinMedia }: ShareRowProps) {
   const { pushToast } = useToast();
   const [canNativeShare, setCanNativeShare] = useState(false);
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    // Suppress on the dev hosting route — those URLs 404 in production
-    // builds and would produce a dead share link.
-    if (window.location.pathname.startsWith('/dev/')) {
+    // Suppress on the dev hosting route (those URLs 404 in production) and on
+    // the private `/me/*` editor routes (sharing a private editor URL would
+    // produce a dead/owner-only link).
+    const path = window.location.pathname;
+    if (path.startsWith('/dev/') || path.startsWith('/me/')) {
       setHidden(true);
       return;
     }
@@ -65,27 +82,46 @@ export default function ShareRow({ hex, named }: ShareRowProps) {
   }, []);
 
   const buildPayload = useCallback(() => {
+    // An explicit `shareUrl` (e.g. /p/[slug]) wins; otherwise derive from the
+    // current location with one-shot params stripped. A relative override is
+    // resolved against the current origin so the copied/opened link is absolute.
     let url = '';
-    try {
-      const u = new URL(window.location.href);
-      u.searchParams.delete('seed');
-      url = u.toString();
-    } catch {
-      url = window.location.href;
+    if (shareUrl) {
+      try {
+        url = new URL(shareUrl, window.location.origin).toString();
+      } catch {
+        url = shareUrl;
+      }
+    } else {
+      try {
+        const u = new URL(window.location.href);
+        u.searchParams.delete('seed');
+        url = u.toString();
+      } catch {
+        url = window.location.href;
+      }
     }
     const label = named ? `${named.name} (${hex.toUpperCase()})` : hex.toUpperCase();
-    const title = `Tints and shades of ${label} — UIshades.com`;
-    return { url, title };
-  }, [hex, named]);
+    const resolvedTitle = title ?? `Tints and shades of ${label} — UIshades.com`;
+    return { url, title: resolvedTitle };
+  }, [hex, named, shareUrl, title]);
 
   const pinterestMediaUrl = useCallback((): string => {
+    const fallbackOrigin = 'https://UIshades.com';
+    if (pinMedia) {
+      try {
+        return new URL(pinMedia, window.location.origin).toString();
+      } catch {
+        return pinMedia;
+      }
+    }
     try {
       const origin = window.location.origin;
       return `${origin}/og/pin/${hex.slice(1)}.png`;
     } catch {
-      return `https://UIshades.com/og/pin/${hex.slice(1)}.png`;
+      return `${fallbackOrigin}/og/pin/${hex.slice(1)}.png`;
     }
-  }, [hex]);
+  }, [hex, pinMedia]);
 
   const handleCopy = useCallback(() => {
     if (typeof window === 'undefined') return;

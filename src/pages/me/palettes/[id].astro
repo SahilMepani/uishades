@@ -1,0 +1,75 @@
+---
+/**
+ * /me/palettes/[id] — the owner-only palette editor.
+ *
+ * SSR-only (`prerender = false`), `noindex`. 404s if the visitor isn't signed
+ * in or doesn't own the palette (no existence leak: a non-owner gets the same
+ * 404 as a missing id). The page is a shell hosting the `PaletteEditor` client
+ * island, which re-fetches `/api/palettes/[id]` itself — so no per-user palette
+ * data is server-rendered into a (never-cached) response.
+ */
+export const prerender = false;
+
+import { env } from 'cloudflare:workers';
+import '../../../styles/global.css';
+import BaseHead from '../../../components/BaseHead.astro';
+import ThemeToggle from '../../../components/ThemeToggle.astro';
+import HeaderAuth from '../../../components/HeaderAuth';
+import FeedbackLink from '../../../components/FeedbackLink';
+import PaletteEditor from '../../../components/PaletteEditor';
+import { currentUserId } from '../../../lib/auth/session';
+
+const userId = await currentUserId(Astro.session);
+if (!userId) {
+  return Astro.redirect('/');
+}
+
+const id = Astro.params.id ?? '';
+// Owner-only gate via an owner-scoped existence check — a missing palette OR
+// one owned by someone else both 404 (no existence leak). The island re-fetches
+// the full palette through `/api/palettes/[id]`, which is itself owner-scoped.
+const owned = await env.DB.prepare(
+  'SELECT id FROM palettes WHERE id = ? AND user_id = ?',
+)
+  .bind(id, userId)
+  .first<{ id: string }>();
+if (!owned) {
+  return new Response(null, { status: 404 });
+}
+
+Astro.response.headers.set('Cache-Control', 'private, no-store');
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead />
+    <title>Edit palette | UIshades.com</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content="Edit your palette on UIshades.com." />
+  </head>
+  <body class="bg-paper text-ink">
+    <header class="w-full px-10 lg:px-16">
+      <div class="flex items-center justify-between gap-4 border-b border-hairline py-4">
+        <a href="/" class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink hover:text-accent">UIshades.com</a>
+        <div class="flex items-center gap-4 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <a href="/me/palettes" class="text-ink hover:text-accent">My palettes</a>
+          <HeaderAuth client:load />
+          <ThemeToggle />
+        </div>
+      </div>
+    </header>
+    <main class="mx-auto w-full max-w-5xl px-6 py-12 pb-24 lg:px-8">
+      <a href="/me/palettes" class="mb-6 inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-mute hover:text-ink">
+        ← All palettes
+      </a>
+      <PaletteEditor client:load />
+      <footer class="mt-20">
+        <nav aria-label="Footer" class="flex items-center gap-5 border-t border-hairline pt-6 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <a href="/me/palettes" class="text-ink hover:text-accent">My palettes</a>
+          <FeedbackLink client:load />
+        </nav>
+      </footer>
+    </main>
+  </body>
+</html>

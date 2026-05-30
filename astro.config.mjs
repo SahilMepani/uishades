@@ -9,6 +9,14 @@ import tailwindcss from '@tailwindcss/vite';
 // pre-rendered URLs (home + ~209 named-color pages), so without this Google
 // would never find the popular hex set without warming each one by hand.
 import { POPULAR_HEXES } from './src/lib/data/popular-hexes.ts';
+// Phase 2: `/p/[slug]` palette pages and `/u/[handle]` profiles are SSR-only,
+// so `@astrojs/sitemap` can't enumerate them. We inject best-effort static
+// seed lists (see the module header for the D1-regeneration hook — the build
+// process has no DB binding, so these can't be queried live here).
+import {
+  SITEMAP_PALETTE_SLUGS,
+  SITEMAP_PROFILE_HANDLES,
+} from './src/lib/data/sitemap-seed.ts';
 
 // https://astro.build/config
 // NOTE: In Astro 5+ the explicit `output: 'hybrid'` mode was removed and merged
@@ -43,10 +51,18 @@ export default defineConfig({
       // `trailingSlash` option in this version — passing one aborts emission.
       // Inject the popular-hex URLs into the sitemap so Googlebot picks them
       // up on the first crawl. The static integration auto-includes the
-      // pre-rendered pages on top of this list.
-      customPages: POPULAR_HEXES.map(
-        (h) => `https://UIshades.com/${h.slice(1)}`
-      ),
+      // pre-rendered pages on top of this list. We also inject:
+      //   - `/explore` (SSR index, not auto-enumerated),
+      //   - public palette slugs (`/p/<slug>`) — featured + top-voted seed,
+      //   - active profile handles (`/u/<handle>`),
+      // from `sitemap-seed.ts` (empty until its D1-regeneration hook is wired;
+      // safe no-op when empty — in-page links still drive discovery).
+      customPages: [
+        'https://UIshades.com/explore',
+        ...POPULAR_HEXES.map((h) => `https://UIshades.com/${h.slice(1)}`),
+        ...SITEMAP_PALETTE_SLUGS.map((s) => `https://UIshades.com/p/${s}`),
+        ...SITEMAP_PROFILE_HANDLES.map((h) => `https://UIshades.com/u/${h}`),
+      ],
       // Exclude the dev-only host page (`/dev/tool/`) from search engines.
       // It carries `<meta name="robots" content="noindex,nofollow">` already
       // but the sitemap is a stronger discovery signal we should not send.

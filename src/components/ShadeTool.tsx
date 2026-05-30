@@ -64,6 +64,13 @@ const STORAGE_KEYS = {
 
 type View = 'ramp' | 'scale';
 
+/** One color collected into the "Add to palette" working tray. */
+interface TrayColor {
+  hex: Hex;
+  view: View;
+  copyFormat: CopyFormat;
+}
+
 /**
  * Lazy initializer that reads a value from localStorage on the client,
  * falling back to `fallback` during SSR or if the entry is invalid.
@@ -487,7 +494,9 @@ function ShadeToolInner({
   useEffect(() => {
     let cancelled = false;
     fetch('/api/me', { credentials: 'same-origin' })
-      .then((r) => (r.ok ? (r.json() as Promise<MeResponse>) : { user: null, presets: [] }))
+      .then((r): Promise<MeResponse> =>
+        r.ok ? r.json() : Promise.resolve({ user: null, presets: [], plan: 'free', handle: null }),
+      )
       .then((data) => {
         if (cancelled) return;
         setAuthUser(data.user);
@@ -593,6 +602,88 @@ function ShadeToolInner({
     [pushToast],
   );
 
+  // --- Palette tray ---------------------------------------------------------
+  // The ONLY behavioural addition to the core tool. "Add to palette" pushes the
+  // current {hex, view, copyFormat} into a small working tray; "Save palette →"
+  // names it and POSTs to /api/palettes, then routes to the owner editor. Gated
+  // on signed-in (reuses the same /api/me probe + the AuthMenu sign-in modal
+  // surfaced by the header's HeaderAuth island). Nothing here touches the
+  // URL/localStorage of the free tool, so `/` and `/[hex]` stay identical until
+  // the user explicitly clicks Add.
+  const [tray, setTray] = useState<TrayColor[]>([]);
+  const handleAddToTray = useCallback(() => {
+    setTray((prev) => {
+      if (prev.length >= 8) {
+        pushToast('A palette can hold up to 8 colors.', { durationMs: 3000 });
+        return prev;
+      }
+      if (prev.some((c) => c.hex === hex)) {
+        pushToast('That color is already in the tray.', { durationMs: 2500 });
+        return prev;
+      }
+      pushToast(`Added ${hex} to the tray.`);
+      return [...prev, { hex, view, copyFormat }];
+    });
+  }, [hex, view, copyFormat, pushToast]);
+
+  const handleRemoveFromTray = useCallback((index: number) => {
+    setTray((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const handleClearTray = useCallback(() => setTray([]), []);
+
+  const handleSavePalette = useCallback(
+    async (name: string) => {
+      if (!authUser) {
+        pushToast('Sign in to save palettes.', { durationMs: 3000 });
+        return;
+      }
+      if (tray.length < 2) {
+        pushToast('Add at least 2 colors to save a palette.', { durationMs: 3000 });
+        return;
+      }
+      try {
+        const res = await fetch('/api/palettes', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            name,
+            colors: tray.map((c) => ({
+              hex: c.hex,
+              view: c.view,
+              copyFormat: c.copyFormat,
+            })),
+          }),
+        });
+        if (res.status === 401) {
+          pushToast('Sign in to save palettes.', { durationMs: 3000 });
+          return;
+        }
+        if (res.status === 403) {
+          pushToast("You've reached the saved-palette limit.", { durationMs: 3000 });
+          return;
+        }
+        if (!res.ok) {
+          pushToast("Couldn't save the palette.", { durationMs: 3000 });
+          return;
+        }
+        const { palette } = (await res.json()) as { palette: { id: string } };
+        window.location.href = `/me/palettes/${palette.id}`;
+      } catch {
+        pushToast("Couldn't save the palette.", { durationMs: 3000 });
+      }
+    },
+    [authUser, tray, pushToast],
+  );
+
+  // A friendly default palette name: the current color's friendly name, else
+  // "Untitled palette". Matches the plan's pre-fill suggestion.
+  const defaultPaletteName = useMemo(
+    () => (named?.name ? named.name : 'Untitled palette'),
+    [named],
+  );
+
   return (
     <div className="text-ink">
       {/* Mobile sticky header: visible only < lg */}
@@ -627,6 +718,16 @@ function ShadeToolInner({
               hasStop={view === 'scale'}
             />
             <ShareRow hex={hex} named={named} />
+            <PaletteTray
+              tray={tray}
+              currentHex={hex}
+              signedIn={!!authUser}
+              defaultName={defaultPaletteName}
+              onAdd={handleAddToTray}
+              onRemove={handleRemoveFromTray}
+              onClear={handleClearTray}
+              onSave={handleSavePalette}
+            />
             <PresetsPanel
               user={authUser}
               presets={presets}
@@ -656,6 +757,16 @@ function ShadeToolInner({
                 hasStop={view === 'scale'}
               />
               <ShareRow hex={hex} named={named} />
+              <PaletteTray
+                tray={tray}
+                currentHex={hex}
+                signedIn={!!authUser}
+                defaultName={defaultPaletteName}
+                onAdd={handleAddToTray}
+                onRemove={handleRemoveFromTray}
+                onClear={handleClearTray}
+                onSave={handleSavePalette}
+              />
               <PresetsPanel
                 user={authUser}
                 presets={presets}
@@ -1337,6 +1448,179 @@ function CopyFormatPicker({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/**
+ * "Add to palette" tray — the single new verb in the tool's left rail.
+ *
+ * Collects the current `{hex, view, copyFormat}` into a working strip of
+ * swatches. "Save palette →" reveals an inline name field (pre-filled with the
+ * current color's friendly name) and, on submit, hands the tray off to the
+ * parent's `onSave` which POSTs to `/api/palettes` and routes to the editor.
+ *
+ * Anti-overwhelm: the tray is empty (just the "Add" button) until the user
+ * opts in, so the calm single-color view is unchanged for casual visitors. The
+ * tray needs ≥2 colors before saving (the palette model is multi-color); the
+ * Save button stays disabled until then with an inline hint.
+ */
+function PaletteTray({
+  tray,
+  currentHex,
+  signedIn,
+  defaultName,
+  onAdd,
+  onRemove,
+  onClear,
+  onSave,
+}: {
+  tray: TrayColor[];
+  currentHex: Hex;
+  signedIn: boolean;
+  defaultName: string;
+  onAdd: () => void;
+  onRemove: (index: number) => void;
+  onClear: () => void;
+  onSave: (name: string) => void;
+}) {
+  const [naming, setNaming] = useState(false);
+  const [name, setName] = useState('');
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const alreadyInTray = tray.some((c) => c.hex === currentHex);
+  const canSave = tray.length >= 2;
+
+  const beginNaming = useCallback(() => {
+    setName(defaultName);
+    setNaming(true);
+  }, [defaultName]);
+
+  useEffect(() => {
+    if (naming) inputRef.current?.select();
+  }, [naming]);
+
+  const submit = useCallback(() => {
+    const trimmed = name.trim().slice(0, 60);
+    onSave(trimmed.length > 0 ? trimmed : 'Untitled palette');
+  }, [name, onSave]);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <span className="eyebrow">Palette</span>
+        {tray.length > 0 && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="font-mono text-[10px] uppercase tracking-[0.14em] text-mute transition-colors duration-150 ease-out hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      {tray.length > 0 && (
+        <ul className="flex flex-wrap gap-1.5">
+          {tray.map((c, i) => (
+            <li key={`${c.hex}-${i}`} className="group relative">
+              <span
+                className="block h-9 w-9 rounded-sm ring-1 ring-ink/15"
+                style={{ backgroundColor: c.hex }}
+                title={c.hex}
+              />
+              <button
+                type="button"
+                aria-label={`Remove ${c.hex} from palette`}
+                onClick={() => onRemove(i)}
+                className="absolute -right-1.5 -top-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-ink text-paper opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
+              >
+                <svg viewBox="0 0 16 16" aria-hidden="true" className="h-2.5 w-2.5">
+                  <path d="M3 3l10 10M13 3L3 13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <button
+        type="button"
+        onClick={onAdd}
+        disabled={alreadyInTray || tray.length >= 8}
+        className="inline-flex items-center justify-center gap-1.5 border border-ink/20 bg-paper-2 px-3 py-2 font-mono text-xs uppercase tracking-tight text-ink transition-colors duration-150 ease-out hover:bg-paper-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-default disabled:opacity-50 motion-reduce:transition-none"
+      >
+        <svg viewBox="0 0 16 16" aria-hidden="true" className="h-3.5 w-3.5">
+          <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+        {alreadyInTray ? 'In palette' : 'Add to palette'}
+      </button>
+
+      {tray.length > 0 && !naming && (
+        <button
+          type="button"
+          onClick={beginNaming}
+          disabled={!canSave}
+          className="inline-flex items-center justify-center gap-1.5 bg-ink px-3 py-2 font-mono text-xs uppercase tracking-tight text-paper transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-default disabled:opacity-40 motion-reduce:transition-none"
+        >
+          Save palette →
+        </button>
+      )}
+
+      {tray.length > 0 && !canSave && (
+        <p className="font-mono text-[10px] leading-relaxed text-mute">
+          Add at least 2 colors to save a palette.
+        </p>
+      )}
+
+      {!signedIn && tray.length > 0 && (
+        <p className="font-mono text-[10px] leading-relaxed text-mute">
+          Sign in to save — your tray is kept while you do.
+        </p>
+      )}
+
+      {naming && (
+        <div className="flex flex-col gap-2">
+          <label className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-mute">
+              Palette name
+            </span>
+            <input
+              ref={inputRef}
+              type="text"
+              value={name}
+              maxLength={60}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  submit();
+                } else if (e.key === 'Escape') {
+                  setNaming(false);
+                }
+              }}
+              placeholder="Untitled palette"
+              className="border border-ink/20 bg-paper px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+            />
+          </label>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={submit}
+              className="inline-flex flex-1 items-center justify-center bg-ink px-3 py-2 font-mono text-xs uppercase tracking-tight text-paper transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={() => setNaming(false)}
+              className="inline-flex items-center justify-center border border-ink/20 px-3 py-2 font-mono text-xs uppercase tracking-tight text-ink transition-colors duration-150 ease-out hover:bg-paper-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
