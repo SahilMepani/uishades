@@ -843,7 +843,9 @@ export async function listPublicPalettes(
   db: D1Database,
   opts: ListPublicOptions = {},
 ): Promise<ExploreResponse> {
-  const limit = Math.min(Math.max(opts.limit ?? 24, 1), 60);
+  // Default page size for the public gallery (/explore SSR first paint + the
+  // /api/explore "Load more" feed). 20 per page; ExploreGrid appends via cursor.
+  const limit = Math.min(Math.max(opts.limit ?? 20, 1), 60);
   const sort: ExploreSort = opts.sort ?? 'top';
   const where: string[] = ["p.visibility = 'public'", 'p.flagged = 0'];
   const binds: unknown[] = [];
