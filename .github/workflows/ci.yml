@@ -33,6 +33,15 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium firefox webkit
 
+      # The Playwright suite runs against `npm run preview` (the built worker on
+      # a local miniflare D1). That D1 starts empty, so the palettes feature's
+      # endpoints/pages (/api/explore, /p/[slug], /u/[handle]) 500 on a missing
+      # `palettes` table unless the schema is applied first. `--local` is offline
+      # (no Cloudflare auth) and writes the same `.wrangler/state` the preview
+      # server reads.
+      - name: Apply D1 migrations (local) for the preview server
+        run: npm run db:migrate:local
+
       - name: E2E tests (Playwright)
         run: npm run test:e2e
 
