@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+﻿import { test, expect } from '@playwright/test';
 
 /**
  * Tool UI smoke tests.
@@ -160,6 +160,36 @@ test.describe('shade tool — smoke', () => {
     const text = await preview.innerText();
     expect(text).toContain('extend:');
     expect(text).toContain('colors:');
+  });
+
+  test('OKLCH view exports index tokens with a hex/oklch value toggle', async ({
+    page,
+    browserName,
+  }) => {
+    // Same webkit lazy-export-panel click-delivery flakiness as the Tailwind
+    // export test above; real Safari is unaffected.
+    test.fixme(browserName === 'webkit', 'webkit click delivery on the lazy export panel');
+
+    await page.goto('/4040ff?view=ramp');
+
+    // The export dropdown now exists in the OKLCH view too.
+    await page.getByLabel(/^Export as/).selectOption('css-vars');
+
+    // Default value mode is OKLCH, so the copied/viewed code uses oklch() and
+    // index-based token names (--brand-1 ... --brand-20).
+    await page.getByRole('button', { name: /view export code/i }).click();
+    const preview = page.locator('pre[data-export-preview="true"]');
+    await expect(preview).toBeVisible();
+    let text = await preview.innerText();
+    expect(text).toContain('--brand-1:');
+    expect(text).toContain('--brand-20:');
+    expect(text).toContain('oklch(');
+
+    // Flip to Hex via the value toggle; the same format now emits hex values.
+    await page.getByRole('button', { name: 'Hex' }).click();
+    text = await preview.innerText();
+    expect(text).toContain('--brand-1: #');
+    expect(text).not.toContain('oklch(');
   });
 
   test('deep-link `?view=scale` starts on the Tailwind scale view', async ({
