@@ -131,7 +131,7 @@ export default function ShadeRow({
         // write actually resolved - otherwise the user sees "Copied" but
         // nothing's on their clipboard. The parent's onCopy callback is
         // still useful as a "row was successfully copied" signal.
-        pushToast('Copied');
+        pushToast(`Copied ${text}`);
         onCopy(shade.hex);
         setJustCopied(true);
       },

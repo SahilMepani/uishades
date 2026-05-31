@@ -256,4 +256,65 @@ test.describe('shade tool — smoke', () => {
     await page.keyboard.press('ArrowRight');
     await expect(value).not.toHaveValue(before);
   });
+
+  test('single-clicking a palette swatch sets the live color without opening the picker', async ({
+    page,
+  }) => {
+    await page.goto('/ff7f50');
+
+    // The tray auto-seeds with the landing color (#ff7f50). Navigate away so the
+    // live color differs from the swatch, then single-click the swatch.
+    const input = page
+      .getByLabel('Color value (hex, rgb, hsl, oklch, or name)')
+      .filter({ visible: true })
+      .first();
+    await input.fill('4040ff');
+
+    const swatch = page
+      .getByRole('button', { name: /^Use #ff7f50/ })
+      .filter({ visible: true })
+      .first();
+    await expect(swatch).toBeVisible();
+    await swatch.click();
+
+    // A single click must NOT open the picker dialog...
+    await expect(page.locator('[role="dialog"]').filter({ visible: true })).toHaveCount(0);
+    // ...but it DOES make the swatch's color the live page color (URL is hex-synced).
+    await expect(page).toHaveURL(/ff7f50/i);
+  });
+
+  test('double-clicking a palette swatch re-opens the picker and edits that color in place', async ({
+    page,
+    browserName,
+  }) => {
+    test.fixme(browserName === 'webkit', 'webkit click delivery on the picker trigger');
+    await page.goto('/4040ff');
+
+    // The tray auto-seeds with the landing color, so a swatch for #4040ff exists.
+    const swatch = page
+      .getByRole('button', { name: /^Use #4040ff/ })
+      .filter({ visible: true })
+      .first();
+    await expect(swatch).toBeVisible();
+    await swatch.dblclick();
+
+    // The same top picker opens, pre-seeded with the swatch's color.
+    const dialog = page.locator('[role="dialog"]').filter({ visible: true }).first();
+    await expect(dialog).toBeVisible();
+
+    // Nudge the red channel one step: 0x40 -> 0x41, so #4040ff -> #4140ff.
+    await dialog.locator('select[aria-label="Color value format"]').selectOption('rgb');
+    await dialog.locator('.channel-slider').first().focus();
+    await page.keyboard.press('ArrowRight');
+
+    // A normal close (click outside, not Escape) commits the edit in place.
+    await page.getByText(/stops ·/).first().click();
+    await expect(dialog).toBeHidden();
+
+    // The swatch was updated in place: the old color is gone, the new one is present.
+    await expect(page.getByRole('button', { name: /^Use #4040ff/ })).toHaveCount(0);
+    await expect(
+      page.getByRole('button', { name: /^Use #4140ff/ }).first(),
+    ).toBeVisible();
+  });
 });

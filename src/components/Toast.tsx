@@ -12,7 +12,7 @@ import {
 /**
  * Minimal toast queue.
  *
- * - State-based stack rendered at the bottom-right of the viewport.
+ * - State-based stack rendered at the top-center of the viewport.
  * - Each toast auto-dismisses after 1.2s.
  * - Exposes `pushToast(message)` via context so any descendant of
  *   `<ToastProvider>` can fire a toast without prop drilling.
@@ -47,7 +47,7 @@ export function useToast(): ToastContextValue {
   return ctx;
 }
 
-const TOAST_LIFETIME_MS = 1200;
+const TOAST_LIFETIME_MS = 3200;
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastEntry[]>([]);
@@ -76,7 +76,7 @@ function ToastStack({ toasts }: { toasts: ToastEntry[] }) {
     <div
       aria-live="polite"
       aria-atomic="true"
-      className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2"
+      className="pointer-events-none fixed top-4 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center gap-2"
     >
       {toasts.map(t => (
         <ToastBubble key={t.id} message={t.message} />
@@ -95,10 +95,10 @@ function ToastBubble({ message }: { message: string }) {
     <div
       role="status"
       className={
-        'pointer-events-auto bg-ink px-4 py-2.5 font-mono text-[12px] tracking-tight text-paper ' +
+        'pointer-events-auto bg-ink px-[19px] py-[12px] font-mono text-[14px] tracking-tight text-paper ' +
         'shadow-[0_8px_24px_rgba(17,17,16,0.18)] ' +
         'motion-safe:transition motion-safe:duration-200 ' +
-        (shown ? 'opacity-100 translate-y-0' : 'opacity-0 motion-safe:translate-y-2')
+        (shown ? 'opacity-100 translate-y-0' : 'opacity-0 motion-safe:-translate-y-2')
       }
     >
       {message}

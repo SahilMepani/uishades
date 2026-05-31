@@ -573,10 +573,10 @@ function ShadeToolInner({
         return prev;
       }
       if (prev.some((c) => c.hex === hex)) {
-        pushToast('That color is already in the tray.', { durationMs: 2500 });
+        pushToast('That color is already in the palette.', { durationMs: 2500 });
         return prev;
       }
-      pushToast(`Added ${hex} to the tray.`);
+      pushToast(`Added ${hex} to the palette.`);
       return [...prev, { hex, view, copyFormat }];
     });
   }, [hex, view, copyFormat, pushToast]);
@@ -589,23 +589,74 @@ function ShadeToolInner({
   const desktopPickerRef = useRef<ColorPickerHandle>(null);
   const mobilePickerRef = useRef<ColorPickerHandle>(null);
   const addToTrayOnCloseRef = useRef(false);
+  // Index of the tray swatch currently being edited through the picker, or null
+  // when the picker isn't in edit mode. Mutually exclusive with
+  // `addToTrayOnCloseRef`: a swatch click arms this, the "+" arms that.
+  const editTrayIndexRef = useRef<number | null>(null);
+  // The color the edited swatch held when the picker opened, so we can skip the
+  // write-back + toast when the user closes without actually changing it.
+  const editTrayOriginalHexRef = useRef<Hex | null>(null);
 
   const openPickerForPalette = useCallback((picker: ColorPickerHandle | null) => {
     addToTrayOnCloseRef.current = true;
     picker?.open();
   }, []);
 
+  // Single-clicking a palette swatch just makes it the live page color - it does
+  // not open the picker.
+  const selectTrayColor = useCallback(
+    (index: number) => {
+      const target = tray[index];
+      if (target) handleChangeHex(target.hex);
+    },
+    [tray, handleChangeHex],
+  );
+
+  // Double-clicking a palette swatch opens the SAME top picker pre-seeded with
+  // that swatch's color (it becomes the live page color), then writes the
+  // adjusted color back into that swatch on close.
+  const openPickerForEdit = useCallback(
+    (index: number, picker: ColorPickerHandle | null) => {
+      const target = tray[index];
+      if (!target) return;
+      editTrayIndexRef.current = index;
+      editTrayOriginalHexRef.current = target.hex;
+      handleChangeHex(target.hex);
+      picker?.open();
+    },
+    [tray, handleChangeHex],
+  );
+
   const handlePickerOpenChange = useCallback(
     (open: boolean, canceled: boolean) => {
+      if (open) return;
+      // Editing an existing swatch: write the live color back into that slot in
+      // place (preserving its view/copyFormat). An Escape dismiss (canceled)
+      // leaves the swatch untouched.
+      if (editTrayIndexRef.current !== null) {
+        const idx = editTrayIndexRef.current;
+        const originalHex = editTrayOriginalHexRef.current;
+        editTrayIndexRef.current = null;
+        editTrayOriginalHexRef.current = null;
+        // Skip the write-back + toast if the picker closed on the same color it
+        // opened with (or was dismissed via Escape) - nothing actually changed.
+        if (!canceled && hex !== originalHex) {
+          setTray((prev) =>
+            prev.map((c, i) => (i === idx ? { ...c, hex } : c)),
+          );
+          pushToast(`Updated palette color to ${hex}.`);
+        }
+        return;
+      }
       // Only a "+"-initiated open arms the add-on-close; a normal top-swatch
       // open/close leaves the flag false and adds nothing. Any close consumes
       // the flag, but an Escape dismiss (canceled) appends nothing.
-      if (!open && addToTrayOnCloseRef.current) {
+      if (addToTrayOnCloseRef.current) {
         addToTrayOnCloseRef.current = false;
         if (!canceled) handleAddToTray();
       }
     },
-    [handleAddToTray],
+    [handleAddToTray, hex, pushToast],
   );
 
   const handleRemoveFromTray = useCallback((index: number) => {
@@ -693,39 +744,37 @@ function ShadeToolInner({
 
       <div className="grid w-full gap-8 px-4 py-8 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:grid-cols-[22rem_minmax(0,1fr)] lg:gap-14 lg:px-8 lg:py-12">
         {/* Left rail: preview + input + controls (sticky on desktop) */}
-        <aside className="hidden md:block md:sticky md:top-8 md:self-start">
-          <PreviewBlock
-            hex={hex}
-            named={named}
-            onChange={handleChangeHex}
-            copyFormat={copyFormat}
-            onAddToPalette={handleAddToTray}
-            inPalette={tray.some((c) => c.hex === hex)}
-            paletteFull={tray.length >= 8}
-            pickerRef={desktopPickerRef}
-            onPickerOpenChange={handlePickerOpenChange}
-          />
-          <div className="mt-6 flex flex-col gap-5">
-            <div className="border-t border-hairline pt-5">
+        <aside className="hidden md:flex md:flex-col md:self-stretch">
+          {/* Preview + palette tray stay pinned near the top while the long
+              shade list scrolls; Share is pushed to the bottom of the rail
+              (mt-auto) so it lines up with the bottom of the shade grid. */}
+          <div className="md:sticky md:top-8">
+            <PreviewBlock
+              hex={hex}
+              named={named}
+              onChange={handleChangeHex}
+              copyFormat={copyFormat}
+              onAddToPalette={handleAddToTray}
+              inPalette={tray.some((c) => c.hex === hex)}
+              paletteFull={tray.length >= 8}
+              pickerRef={desktopPickerRef}
+              onPickerOpenChange={handlePickerOpenChange}
+            />
+            <div className="mt-6 border-t border-hairline pt-5">
               <PaletteTray
                 tray={tray}
                 signedIn={!!authUser}
                 defaultName={defaultPaletteName}
                 onAddViaPicker={() => openPickerForPalette(desktopPickerRef.current)}
+                onSelectColor={selectTrayColor}
+                onEditColor={(i) => openPickerForEdit(i, desktopPickerRef.current)}
                 onRemove={handleRemoveFromTray}
                 onClear={handleClearTray}
                 onSave={handleSavePalette}
               />
             </div>
-            <div className="border-t border-hairline pt-5">
-              <AlgorithmToggle view={view} onChange={setView} />
-            </div>
-
-            <CopyFormatPicker
-              value={copyFormat}
-              onChange={setCopyFormat}
-              hasStop={view === 'scale'}
-            />
+          </div>
+          <div className="mt-auto pt-8">
             <ShareRow hex={hex} named={named} />
           </div>
         </aside>
@@ -756,35 +805,26 @@ function ShadeToolInner({
                 signedIn={!!authUser}
                 defaultName={defaultPaletteName}
                 onAddViaPicker={() => openPickerForPalette(mobilePickerRef.current)}
+                onSelectColor={selectTrayColor}
+                onEditColor={(i) => openPickerForEdit(i, mobilePickerRef.current)}
                 onRemove={handleRemoveFromTray}
                 onClear={handleClearTray}
                 onSave={handleSavePalette}
-              />
-              <AlgorithmToggle view={view} onChange={setView} />
-              <CopyFormatPicker
-                value={copyFormat}
-                onChange={setCopyFormat}
-                hasStop={view === 'scale'}
               />
               <ShareRow hex={hex} named={named} />
             </div>
           </div>
 
-          {/* Below lg the eyebrow heading is hidden: on a phone/tablet column
-              "eyebrow · stops · mode · PNG" is wider than the column and forces
-              horizontal overflow. Dropping the eyebrow frees ~160px so the
-              metadata + PNG fit. With the eyebrow gone only one child remains,
-              so right-align it (justify-end) rather than spread it
-              (justify-between). The sr-only <h1> still carries the heading. */}
-          <div className={`flex items-center justify-end gap-4 lg:justify-between${view === 'scale' ? ' border-b border-hairline pb-2' : ''}`}>
-            {view === 'ramp' ? (
-              <span className="eyebrow hidden lg:inline">Tints and Shades</span>
-            ) : (
-              <span className="eyebrow hidden lg:inline">Scale</span>
-            )}
+          {/* Metadata row: the algorithm toggle + stops · PNG on the left, the
+              "Copy as" picker on the right. The sr-only <h1> still carries the
+              heading. The algorithm toggle lives here (compact, inline) for both
+              breakpoints rather than in the left rail / mobile control stack. */}
+          <div className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-3${view === 'scale' ? ' border-b border-hairline pb-2' : ''}`}>
             <div className="flex items-center gap-3">
+              <AlgorithmToggle view={view} onChange={setView} compact />
+              <span aria-hidden="true" className="font-mono text-[11px] text-mute">·</span>
               <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-                {view === 'ramp' ? `${ramp.shades.length} stops · ${ramp.mode}` : `11 stops · anchor ${scale.anchorStop}`}
+                {view === 'ramp' ? `${ramp.shades.length} stops` : '11 stops'}
               </span>
               <span aria-hidden="true" className="font-mono text-[11px] text-mute">·</span>
               {view === 'ramp' ? (
@@ -803,6 +843,28 @@ function ShadeToolInner({
                 />
               )}
             </div>
+            {/* Inline in the header only at lg+: below that the header
+                already drops the eyebrow to avoid overflowing the narrower
+                md column, so the picker moves to its own full-width row above
+                the shade list instead. */}
+            <div className="hidden lg:flex">
+              <CopyFormatPicker
+                value={copyFormat}
+                onChange={setCopyFormat}
+                hasStop={view === 'scale'}
+                compact
+              />
+            </div>
+          </div>
+
+          {/* Below lg the header is too tight to hold the picker inline, so it
+              lives here as a full-width row directly above the shades. */}
+          <div className="lg:hidden">
+            <CopyFormatPicker
+              value={copyFormat}
+              onChange={setCopyFormat}
+              hasStop={view === 'scale'}
+            />
           </div>
 
           <div className="relative flex flex-col gap-2.5">
@@ -1229,9 +1291,17 @@ function PickerIcon({ className }: { className?: string }) {
 function AlgorithmToggle({
   view,
   onChange,
+  compact = false,
 }: {
   view: View;
   onChange: (v: View) => void;
+  /**
+   * Inline variant for the shades-column header row: drops the stacked
+   * "Algorithm" eyebrow and tightens the pill so it can sit to the left of the
+   * "N stops · PNG" metadata. The default (stacked) variant is used in the
+   * left rail / mobile control stack.
+   */
+  compact?: boolean;
 }) {
   // The single primary selector: a pill segmented control switching between
   // the Tailwind 11-stop scale (default, left) and the OKLCH continuous ramp
@@ -1242,46 +1312,66 @@ function AlgorithmToggle({
     { v: 'scale', label: 'Tailwind' },
     { v: 'ramp', label: 'OKLCH' },
   ] as const;
+  const pill = (
+    <div
+      role="tablist"
+      aria-label="Palette algorithm"
+      className={[
+        'relative inline-grid grid-cols-2 rounded-full bg-paper-2 ring-1 ring-ink/10',
+        compact ? 'p-0.5' : 'w-full p-1',
+      ].join(' ')}
+    >
+      {/* Sliding indicator - left for Tailwind (default), right for OKLCH. */}
+      <span
+        aria-hidden="true"
+        className={[
+          'absolute rounded-full bg-ink shadow-sm',
+          compact
+            ? 'inset-y-0.5 left-0.5 w-[calc(50%-0.125rem)]'
+            : 'inset-y-1 left-1 w-[calc(50%-0.25rem)]',
+          'transition-transform duration-200 ease-out motion-reduce:transition-none',
+          view === 'ramp' ? 'translate-x-full' : 'translate-x-0',
+        ].join(' ')}
+      />
+      {OPTIONS.map(({ v, label }) => {
+        const active = view === v;
+        return (
+          <button
+            key={v}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(v)}
+            className={[
+              'relative z-10 rounded-full font-mono font-medium uppercase tracking-tight',
+              compact ? 'px-2.5 py-1 text-[11px]' : 'px-4 py-2 text-sm',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
+              active ? 'text-paper' : 'text-ink/70 hover:text-ink',
+            ].join(' ')}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  if (compact) {
+    return (
+      <div className="flex items-center gap-1.5">
+        {pill}
+        <AlgorithmInfoButton />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
         <span className="eyebrow">Algorithm</span>
         <AlgorithmInfoButton />
       </div>
-      <div
-        role="tablist"
-        aria-label="Palette algorithm"
-        className="relative inline-grid w-full grid-cols-2 rounded-full bg-paper-2 p-1 ring-1 ring-ink/10"
-      >
-        {/* Sliding indicator - left for Tailwind (default), right for OKLCH. */}
-        <span
-          aria-hidden="true"
-          className={[
-            'absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-ink shadow-sm',
-            'transition-transform duration-200 ease-out motion-reduce:transition-none',
-            view === 'ramp' ? 'translate-x-full' : 'translate-x-0',
-          ].join(' ')}
-        />
-        {OPTIONS.map(({ v, label }) => {
-          const active = view === v;
-          return (
-            <button
-              key={v}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => onChange(v)}
-              className={[
-                'relative z-10 rounded-full px-4 py-2 font-mono text-sm font-medium uppercase tracking-tight',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
-                active ? 'text-paper' : 'text-ink/70 hover:text-ink',
-              ].join(' ')}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
+      {pill}
     </div>
   );
 }
@@ -1363,107 +1453,99 @@ const COPY_FORMAT_LABELS: Record<CopyFormat, string> = {
   tailwindClass: 'bg-name-500',
 };
 
+/**
+ * "Copy as" format picker. Always a native `<select>` (the option popup can't
+ * be styled without JS - that's fine); `appearance-none` strips the native
+ * chrome so the box matches the surrounding controls, with our own overlaid,
+ * non-interactive chevron.
+ *
+ * `compact` renders the in-header desktop form: an inline "Copy as" label + a
+ * small box sized to match the Download PNG button. The default (non-compact)
+ * form is the full-width mobile row with a stacked eyebrow label.
+ *
+ * `cssVar`/`tailwindClass` require a stop number, so they only appear when
+ * `hasStop` is true (the Tailwind-scale view).
+ */
 function CopyFormatPicker({
   value,
   onChange,
   hasStop,
+  compact = false,
 }: {
   value: CopyFormat;
   onChange: (f: CopyFormat) => void;
   hasStop: boolean;
+  compact?: boolean;
 }) {
   const formats = (Object.keys(COPY_FORMAT_LABELS) as CopyFormat[]).filter(k => {
     const requiresStop = k === 'cssVar' || k === 'tailwindClass';
     return !(requiresStop && !hasStop);
   });
-  // Tailwind-scale view has 6 formats - too many to fit in a single pill
-  // row at readable sizes, so render a dropdown there. The continuous-ramp
-  // view only has 4 short formats and stays as a single-row segmented
-  // control.
-  if (formats.length > 4) {
+  const options = formats.map(k => (
+    <option key={k} value={k}>
+      {COPY_FORMAT_LABELS[k]}
+    </option>
+  ));
+
+  if (compact) {
     return (
-      <label className="flex flex-col gap-2 text-base">
-        <span className="eyebrow">Copy as</span>
-        {/* `appearance-none` strips the native control chrome so the box can
-            match the Download button (hairline border, paper-2 hover, accent
-            focus); the chevron below is our own, overlaid and non-interactive.
-            The option popup itself can't be styled without JS - that's fine. */}
+      <label className="inline-flex items-center gap-2">
+        <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
+          Copy as
+        </span>
         <div className="relative">
           <select
             value={value}
             onChange={(e) => onChange(e.target.value as CopyFormat)}
+            aria-label="Copy as"
             className={
-              'w-full appearance-none border border-ink/20 bg-paper-2 py-2.5 pl-3 pr-9 ' +
-              'font-mono text-sm text-ink transition-colors duration-150 ease-out ' +
-              'motion-reduce:transition-none ' +
+              'appearance-none border border-ink/20 bg-transparent py-1 pl-2.5 pr-7 ' +
+              'font-mono text-xs text-ink transition-colors duration-150 ease-out ' +
+              'motion-reduce:transition-none hover:border-ink/40 hover:bg-paper-2 ' +
               'focus-visible:outline-none focus-visible:border-accent ' +
               'focus-visible:ring-2 focus-visible:ring-accent/30'
             }
           >
-            {formats.map(k => (
-              <option key={k} value={k}>
-                {COPY_FORMAT_LABELS[k]}
-              </option>
-            ))}
+            {options}
           </select>
           <svg
             aria-hidden="true"
             viewBox="0 0 16 16"
-            className="pointer-events-none absolute right-3 top-1/2 h-[1.2rem] w-[1.2rem] -translate-y-1/2 text-mute"
+            className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-mute"
           >
-            <path
-              d="M4 6.5 8 10.5l4-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
+            <path d="M4 6.5 8 10.5l4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
           </svg>
         </div>
       </label>
     );
   }
-  const activeIndex = Math.max(0, formats.indexOf(value));
+
   return (
-    <div className="flex flex-col gap-2">
+    <label className="flex flex-col gap-2 text-base">
       <span className="eyebrow">Copy as</span>
-      <div
-        role="tablist"
-        aria-label="Copy format"
-        className="relative grid grid-cols-4 gap-1 rounded-full bg-paper-2 p-1 ring-1 ring-ink/10"
-      >
-        {/* Sliding indicator - matches the Algorithm toggle pattern.
-            Pill width equals one column; translateX by (100% + gap) per step.
-            p-1 = 0.25rem, gap-1 = 0.25rem → 4-col inner is (100% - 1.25rem)/4. */}
-        <span
+      <div className="relative">
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value as CopyFormat)}
+          className={
+            'w-full appearance-none border border-ink/20 bg-paper-2 py-2.5 pl-3 pr-9 ' +
+            'font-mono text-sm text-ink transition-colors duration-150 ease-out ' +
+            'motion-reduce:transition-none ' +
+            'focus-visible:outline-none focus-visible:border-accent ' +
+            'focus-visible:ring-2 focus-visible:ring-accent/30'
+          }
+        >
+          {options}
+        </select>
+        <svg
           aria-hidden="true"
-          className="absolute inset-y-1 left-1 rounded-full bg-ink shadow-sm transition-transform duration-200 ease-out motion-reduce:transition-none"
-          style={{
-            width: 'calc((100% - 1.25rem) / 4)',
-            transform: `translateX(calc(${activeIndex} * (100% + 0.25rem)))`,
-          }}
-        />
-        {formats.map(k => {
-          const active = value === k;
-          return (
-            <button
-              key={k}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => onChange(k)}
-              className={[
-                'relative z-10 min-w-0 rounded-full px-2 py-1.5 text-center font-mono text-xs tracking-tight whitespace-nowrap',
-                'transition-colors duration-150 motion-reduce:transition-none',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
-                active ? 'text-paper' : 'text-ink/70 hover:text-ink',
-              ].join(' ')}
-            >
-              {COPY_FORMAT_LABELS[k]}
-            </button>
-          );
-        })}
+          viewBox="0 0 16 16"
+          className="pointer-events-none absolute right-3 top-1/2 h-[1.2rem] w-[1.2rem] -translate-y-1/2 text-mute"
+        >
+          <path d="M4 6.5 8 10.5l4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
       </div>
-    </div>
+    </label>
   );
 }
 
@@ -1484,6 +1566,8 @@ function PaletteTray({
   signedIn,
   defaultName,
   onAddViaPicker,
+  onSelectColor,
+  onEditColor,
   onRemove,
   onClear,
   onSave,
@@ -1493,6 +1577,11 @@ function PaletteTray({
   defaultName: string;
   /** Opens the top color picker; the chosen color is appended on close. */
   onAddViaPicker: () => void;
+  /** Single click: makes the swatch at `index` the live page color (no picker). */
+  onSelectColor: (index: number) => void;
+  /** Double click: opens the top color picker seeded with the swatch at `index`;
+   *  the adjusted color is written back into that swatch on close. */
+  onEditColor: (index: number) => void;
   onRemove: (index: number) => void;
   onClear: () => void;
   onSave: (name: string) => void;
@@ -1550,10 +1639,14 @@ function PaletteTray({
       <ul className="flex flex-wrap gap-1.5">
         {tray.map((c, i) => (
           <li key={`${c.hex}-${i}`} className="group relative">
-            <span
-              className="block h-9 w-9 rounded-sm ring-1 ring-ink/15"
+            <button
+              type="button"
+              onClick={() => onSelectColor(i)}
+              onDoubleClick={() => onEditColor(i)}
+              aria-label={`Use ${c.hex} (double-click to adjust)`}
+              title={`${c.hex} — click to use, double-click to adjust`}
+              className="block h-9 w-9 ring-1 ring-ink/15 transition-shadow duration-150 ease-out hover:ring-2 hover:ring-ink/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
               style={{ backgroundColor: c.hex }}
-              title={c.hex}
             />
             <button
               type="button"
@@ -1579,7 +1672,7 @@ function PaletteTray({
               onClick={onAddViaPicker}
               aria-label="Add a color to the palette"
               title="Add a color to the palette"
-              className="group flex h-9 w-9 items-center justify-center rounded-sm border border-dashed border-ink/30 text-mute transition-colors duration-150 ease-out hover:border-ink/60 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
+              className="group flex h-9 w-9 items-center justify-center border border-dashed border-ink/30 text-mute transition-colors duration-150 ease-out hover:border-ink/60 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
             >
               <svg viewBox="0 0 16 16" aria-hidden="true" className="h-4 w-4">
                 <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
