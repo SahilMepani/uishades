@@ -34,7 +34,7 @@ test.describe('keyboard navigation', () => {
     // Step Tab until we've reached the color picker trigger button. We don't
     // pin an exact count because tab order depends on the viewport, but the
     // picker MUST be reachable within a small number of stops. Its aria-label
-    // is `Color #xxxxxx — open color picker`.
+    // is `Color #xxxxxx - open color picker`.
     let sawColorPicker = false;
     for (let i = 0; i < 12; i++) {
       await page.keyboard.press('Tab');

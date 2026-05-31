@@ -204,7 +204,7 @@ test.describe('shade tool — smoke', () => {
       .filter({ visible: true })
       .first();
     await expect(trigger).toHaveAccessibleName(
-      /Color #ff7f50 — open color picker/i,
+      /Color #ff7f50 - open color picker/i,
       { timeout: 2000 },
     );
   });
