@@ -38,8 +38,12 @@ export default function PalettesDashboard() {
 
 function DashboardInner() {
   const { pushToast } = useToast();
+  const [tab, setTab] = useState<'created' | 'liked'>('created');
   const [palettes, setPalettes] = useState<PaletteSummary[] | null>(null);
   const [error, setError] = useState(false);
+  const [likedPalettes, setLikedPalettes] = useState<PaletteSummary[] | null>(null);
+  const [likedError, setLikedError] = useState(false);
+  const likedRequested = useRef(false);
   const [handle, setHandle] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [handleOpen, setHandleOpen] = useState(false);
@@ -85,6 +89,32 @@ function DashboardInner() {
       cancelled = true;
     };
   }, []);
+
+  // Liked palettes are fetched lazily — only the first time the Liked tab is
+  // activated — and cached thereafter (re-clicking the tab won't refetch).
+  useEffect(() => {
+    if (tab !== 'liked' || likedRequested.current) return;
+    likedRequested.current = true;
+    let cancelled = false;
+    fetch('/api/palettes?filter=liked', { credentials: 'same-origin' })
+      .then((r) => {
+        if (r.status === 401) {
+          window.location.href = '/';
+          return null;
+        }
+        return r.ok ? (r.json() as Promise<PalettesResponse>) : Promise.reject();
+      })
+      .then((data) => {
+        if (cancelled || !data) return;
+        setLikedPalettes(data.palettes);
+      })
+      .catch(() => {
+        if (!cancelled) setLikedError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [tab]);
 
   const handleDelete = useCallback(
     async (id: string) => {
@@ -198,6 +228,31 @@ function DashboardInner() {
         </div>
       </header>
 
+      <div
+        role="tablist"
+        aria-label="Palette view"
+        className="inline-flex border border-ink/20"
+      >
+        {(['created', 'liked'] as const).map((t) => {
+          const active = t === tab;
+          return (
+            <button
+              key={t}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setTab(t)}
+              className={
+                'px-3.5 py-2 font-mono text-[12px] uppercase tracking-tight transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none ' +
+                (active ? 'bg-ink text-paper' : 'text-ink-2 hover:bg-paper-2 hover:text-ink')
+              }
+            >
+              {t === 'created' ? 'Created' : 'Liked'}
+            </button>
+          );
+        })}
+      </div>
+
       {handleOpen && (
         <HandlePrompt
           initialHandle={handle ?? ''}
@@ -212,41 +267,76 @@ function DashboardInner() {
         />
       )}
 
-      {error && (
-        <p role="status" className="font-mono text-[12px] text-accent">
-          Couldn't load your palettes. Please refresh.
-        </p>
-      )}
+      {tab === 'created' && (
+        <>
+          {error && (
+            <p role="status" className="font-mono text-[12px] text-accent">
+              Couldn't load your palettes. Please refresh.
+            </p>
+          )}
 
-      {palettes === null && !error && (
-        <p className="font-mono text-[12px] text-mute">Loading…</p>
-      )}
+          {palettes === null && !error && (
+            <p className="font-mono text-[12px] text-mute">Loading…</p>
+          )}
 
-      {palettes && palettes.length === 0 && <EmptyState />}
+          {palettes && palettes.length === 0 && <EmptyState />}
 
-      {palettes && palettes.length > 0 && (
-        <ul className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
-          {palettes.map((p) => (
-            <li key={p.id}>
-              <PaletteCard
-                palette={p}
-                href={`/me/palettes/${p.id}`}
-                showVote={false}
-                showCreator={false}
-                action={
-                  <OverflowMenu
-                    onOpen={() => {
-                      window.location.href = `/me/palettes/${p.id}`;
-                    }}
-                    onCopyLink={() => handleCopyLink(p.slug)}
-                    onDuplicate={() => handleDuplicate(p.id)}
-                    onDelete={() => handleDelete(p.id)}
+          {palettes && palettes.length > 0 && (
+            <ul className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
+              {palettes.map((p) => (
+                <li key={p.id}>
+                  <PaletteCard
+                    palette={p}
+                    href={`/me/palettes/${p.id}`}
+                    showVote={false}
+                    showCreator={false}
+                    action={
+                      <OverflowMenu
+                        onOpen={() => {
+                          window.location.href = `/me/palettes/${p.id}`;
+                        }}
+                        onCopyLink={() => handleCopyLink(p.slug)}
+                        onDuplicate={() => handleDuplicate(p.id)}
+                        onDelete={() => handleDelete(p.id)}
+                      />
+                    }
                   />
-                }
-              />
-            </li>
-          ))}
-        </ul>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+
+      {tab === 'liked' && (
+        <>
+          {likedError && (
+            <p role="status" className="font-mono text-[12px] text-accent">
+              Couldn't load your liked palettes. Please refresh.
+            </p>
+          )}
+
+          {likedPalettes === null && !likedError && (
+            <p className="font-mono text-[12px] text-mute">Loading…</p>
+          )}
+
+          {likedPalettes && likedPalettes.length === 0 && <LikedEmptyState />}
+
+          {likedPalettes && likedPalettes.length > 0 && (
+            <ul className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
+              {likedPalettes.map((p) => (
+                <li key={p.id}>
+                  <PaletteCard
+                    palette={p}
+                    href={`/p/${p.slug}`}
+                    showVote={true}
+                    showCreator={false}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </div>
   );
@@ -271,6 +361,23 @@ function EmptyState() {
         className="inline-flex items-center gap-1.5 font-mono text-sm uppercase tracking-tight text-accent transition-colors duration-150 ease-out hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
       >
         Start from a color →
+      </a>
+    </div>
+  );
+}
+
+function LikedEmptyState() {
+  return (
+    <div className="ed-card flex max-w-md flex-col items-start gap-4 pt-6">
+      <p className="font-display text-base text-ink-2">
+        No liked palettes yet. Browse the gallery and tap the heart to save
+        palettes here.
+      </p>
+      <a
+        href="/explore"
+        className="inline-flex items-center gap-1.5 font-mono text-sm uppercase tracking-tight text-accent transition-colors duration-150 ease-out hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
+      >
+        Explore palettes →
       </a>
     </div>
   );

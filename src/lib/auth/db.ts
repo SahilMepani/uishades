@@ -752,6 +752,14 @@ export async function setFeatured(db: D1Database, paletteId: string, on: boolean
 
 export type ExploreSort = 'top' | 'new' | 'trending' | 'featured';
 
+/**
+ * The `uishades` house account that owns every seeded/curated palette (see
+ * `scripts/seed-explore-demo.mjs` and `scripts/seed-featured.mjs`). The public
+ * `/explore` gallery shows ONLY palettes owned by this account — user-created
+ * palettes never surface there. Keep this in sync with the seeders' `OWNER_ID`.
+ */
+export const SEED_OWNER_ID = 'seed00000-0000-4000-8000-000000000001';
+
 export interface ListPublicOptions {
   sort?: ExploreSort;
   tag?: string;
@@ -847,8 +855,14 @@ export async function listPublicPalettes(
   // /api/explore "Load more" feed). 20 per page; ExploreGrid appends via cursor.
   const limit = Math.min(Math.max(opts.limit ?? 20, 1), 60);
   const sort: ExploreSort = opts.sort ?? 'top';
-  const where: string[] = ["p.visibility = 'public'", 'p.flagged = 0'];
-  const binds: unknown[] = [];
+  // Only seeded/curated palettes (owned by the house account) appear on
+  // /explore — user-created palettes are never listed in the public gallery.
+  const where: string[] = [
+    "p.visibility = 'public'",
+    'p.flagged = 0',
+    'p.user_id = ?',
+  ];
+  const binds: unknown[] = [SEED_OWNER_ID];
 
   // A cursor is only honored when it was minted for the *current* sort.
   const cursor = decodeCursor(opts.cursor);
@@ -1035,6 +1049,29 @@ export async function listPublicPalettesByUser(
     .bind(userId)
     .all<PaletteRow>();
   return summarize(db, results ?? [], viewerId ?? null);
+}
+
+/**
+ * Palettes this user has liked (upvoted), most-recently-liked first. Joins
+ * `palette_votes` to the palette and keeps only public, non-flagged ones (a
+ * palette could be hidden/flagged after it was liked). Passing `userId` as the
+ * viewer means every returned summary has `votedByMe = true`, so the heart
+ * renders filled and the user can un-like from their "Liked" tab.
+ */
+export async function listLikedPalettesByUser(
+  db: D1Database,
+  userId: string,
+): Promise<PaletteSummary[]> {
+  const { results } = await db
+    .prepare(
+      `${PALETTE_SELECT}
+       JOIN palette_votes pv ON pv.palette_id = p.id
+       WHERE pv.user_id = ? AND p.visibility = 'public' AND p.flagged = 0
+       ORDER BY pv.created_at DESC, p.id DESC`,
+    )
+    .bind(userId)
+    .all<PaletteRow>();
+  return summarize(db, results ?? [], userId);
 }
 
 /**

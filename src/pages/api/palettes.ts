@@ -11,7 +11,12 @@
 export const prerender = false;
 
 import { env } from 'cloudflare:workers';
-import { countPalettes, createPalette, listPalettesByUser } from '../../lib/auth/db';
+import {
+  countPalettes,
+  createPalette,
+  listLikedPalettesByUser,
+  listPalettesByUser,
+} from '../../lib/auth/db';
 import type { NewPaletteColor } from '../../lib/auth/db';
 import { jsonNoStore, withUser } from '../../lib/auth/http';
 import { parseColor } from '../../lib/color/parse';
@@ -23,8 +28,14 @@ const MAX_PALETTES = 100;
 const MIN_COLORS = 2;
 const MAX_COLORS = 8;
 
-export const GET = withUser(async (_context, userId) => {
-  return jsonNoStore({ palettes: await listPalettesByUser(env.DB, userId) });
+export const GET = withUser(async ({ url }, userId) => {
+  // ?filter=liked → palettes this user has upvoted (the dashboard's "Liked"
+  // tab); anything else → the user's own created palettes (the default tab).
+  const liked = url.searchParams.get('filter') === 'liked';
+  const palettes = liked
+    ? await listLikedPalettesByUser(env.DB, userId)
+    : await listPalettesByUser(env.DB, userId);
+  return jsonNoStore({ palettes });
 });
 
 export const POST = withUser(async ({ request }, userId) => {

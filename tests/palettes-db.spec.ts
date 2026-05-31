@@ -5,9 +5,11 @@ import {
   getPaletteWithColors,
   isPro,
   listPalettesByUser,
+  listLikedPalettesByUser,
   votePalette,
   unvotePalette,
   listPublicPalettes,
+  SEED_OWNER_ID,
 } from '../src/lib/auth/db';
 import type { User } from '../src/lib/auth/types';
 
@@ -58,7 +60,11 @@ class FakeD1 {
   palettes: PaletteRecord[] = [];
   colors: ColorRecord[] = [];
   votes: VoteRecord[] = [];
-  users: UserRecord[] = [{ id: 'owner', handle: 'sahil', display_name: 'Sahil' }];
+  users: UserRecord[] = [
+    { id: 'owner', handle: 'sahil', display_name: 'Sahil' },
+    // The house account that owns every seeded/curated palette shown on /explore.
+    { id: SEED_OWNER_ID, handle: 'uishades', display_name: 'UIshades' },
+  ];
 
   private exec(sql: string, args: unknown[]): { meta: { changes: number } } {
     if (sql.startsWith('INSERT INTO palettes')) {
@@ -164,32 +170,52 @@ class FakeD1 {
             .sort((a, b) => a.position - b.position);
           return { results: rows as unknown as T[] };
         }
+        // Explore listing: public, non-flagged, SEED-OWNER-ONLY, "new" sort
+        // (created_at DESC, id DESC) with optional keyset cursor. Distinguished
+        // from the per-user listings below by its trailing `LIMIT ?` over-fetch.
+        // Binds always lead with the seed-owner user_id; the last bind is LIMIT.
+        if (
+          sql.includes('FROM palettes p JOIN users u') &&
+          sql.includes("p.visibility = 'public'") &&
+          sql.includes('LIMIT ?')
+        ) {
+          const ownerId = args[0] as string;
+          const limit = args[args.length - 1] as number;
+          let rows = db.palettes
+            .filter(
+              (p) => p.visibility === 'public' && p.flagged === 0 && p.user_id === ownerId,
+            )
+            .sort((a, b) => b.created_at - a.created_at || (a.id < b.id ? 1 : a.id > b.id ? -1 : 0));
+          // Keyset predicate present → binds are [ownerId, ca, ca, id, limit].
+          if (sql.includes('p.created_at < ?')) {
+            const ca = args[1] as number;
+            const id = args[3] as string;
+            rows = rows.filter((p) => p.created_at < ca || (p.created_at === ca && p.id < id));
+          }
+          const page = rows.slice(0, limit).map((p) => db.joinCreator(p));
+          return { results: page as unknown as T[] };
+        }
+        // Liked listing: palettes this user upvoted, public + non-flagged,
+        // most-recently-liked first (joins palette_votes on pv.user_id = ?).
+        if (sql.includes('JOIN palette_votes pv') && sql.includes('pv.user_id = ?')) {
+          const uid = args[0] as string;
+          const liked = db.votes
+            .filter((v) => v.user_id === uid)
+            .sort((a, b) => b.created_at - a.created_at)
+            .map((v) => db.palettes.find((p) => p.id === v.palette_id))
+            .filter(
+              (p): p is PaletteRecord =>
+                !!p && p.visibility === 'public' && p.flagged === 0,
+            )
+            .map((p) => db.joinCreator(p));
+          return { results: liked as unknown as T[] };
+        }
         if (sql.includes('FROM palettes p JOIN users u') && sql.includes('p.user_id = ?')) {
           const rows = db.palettes
             .filter((p) => p.user_id === args[0])
             .sort((a, b) => b.created_at - a.created_at)
             .map((p) => db.joinCreator(p));
           return { results: rows as unknown as T[] };
-        }
-        // Explore listing: public, non-flagged, "new" sort (created_at DESC, id DESC)
-        // with optional keyset cursor. The last bind is always LIMIT (limit+1).
-        if (
-          sql.includes('FROM palettes p JOIN users u') &&
-          sql.includes("p.visibility = 'public'") &&
-          sql.includes('ORDER BY p.created_at DESC')
-        ) {
-          const limit = args[args.length - 1] as number;
-          let rows = db.palettes
-            .filter((p) => p.visibility === 'public' && p.flagged === 0)
-            .sort((a, b) => b.created_at - a.created_at || (a.id < b.id ? 1 : a.id > b.id ? -1 : 0));
-          // Keyset predicate present → args are [ca, ca, id, limit].
-          if (sql.includes('p.created_at < ?')) {
-            const ca = args[0] as number;
-            const id = args[2] as string;
-            rows = rows.filter((p) => p.created_at < ca || (p.created_at === ca && p.id < id));
-          }
-          const page = rows.slice(0, limit).map((p) => db.joinCreator(p));
-          return { results: page as unknown as T[] };
         }
         if (sql.includes('FROM palette_votes WHERE user_id = ?')) {
           const rows = db.votes
@@ -292,6 +318,49 @@ describe('listPalettesByUser', () => {
   });
 });
 
+describe('listLikedPalettesByUser', () => {
+  it('returns the viewer\'s liked public palettes, most-recently-liked first', async () => {
+    const db = new FakeD1();
+    const a = await createPalette(asD1(db), SEED_OWNER_ID, {
+      name: 'A',
+      slug: 'a',
+      visibility: 'public',
+      colors: [{ hex: '#111111' }],
+    });
+    const b = await createPalette(asD1(db), SEED_OWNER_ID, {
+      name: 'B',
+      slug: 'b',
+      visibility: 'public',
+      colors: [{ hex: '#222222' }],
+    });
+    await votePalette(asD1(db), 'viewer', a.id);
+    await votePalette(asD1(db), 'viewer', b.id);
+    // Pin both like timestamps so the most-recent-first order is deterministic
+    // (b liked after a).
+    db.votes.find((v) => v.palette_id === a.id)!.created_at = 1000;
+    db.votes.find((v) => v.palette_id === b.id)!.created_at = 2000;
+
+    const liked = await listLikedPalettesByUser(asD1(db), 'viewer');
+    expect(liked.map((x) => x.slug)).toEqual(['b', 'a']);
+    // The viewer owns these likes, so every summary's heart is filled.
+    expect(liked.every((x) => x.votedByMe)).toBe(true);
+  });
+
+  it('excludes a palette that was flagged after the viewer liked it', async () => {
+    const db = new FakeD1();
+    const a = await createPalette(asD1(db), SEED_OWNER_ID, {
+      name: 'A',
+      slug: 'a',
+      visibility: 'public',
+      colors: [{ hex: '#111111' }],
+    });
+    await votePalette(asD1(db), 'viewer', a.id);
+    db.palettes.find((p) => p.id === a.id)!.flagged = 1;
+
+    expect(await listLikedPalettesByUser(asD1(db), 'viewer')).toEqual([]);
+  });
+});
+
 describe('votePalette / unvotePalette idempotency', () => {
   it('counts one vote per user and is a no-op on a double-vote', async () => {
     const db = new FakeD1();
@@ -323,7 +392,7 @@ describe('listPublicPalettes cursor pagination', () => {
     // Five public palettes with strictly increasing created_at so the DESC order
     // is fully determined (newest first: e, d, c, b, a).
     for (let i = 0; i < 5; i++) {
-      await createPalette(asD1(db), 'owner', {
+      await createPalette(asD1(db), SEED_OWNER_ID, {
         name: `P${i}`,
         slug: `p-${i}`,
         visibility: 'public',
@@ -363,19 +432,19 @@ describe('listPublicPalettes cursor pagination', () => {
 
   it('excludes flagged and private palettes', async () => {
     const db = new FakeD1();
-    await createPalette(asD1(db), 'owner', {
+    await createPalette(asD1(db), SEED_OWNER_ID, {
       name: 'Pub',
       slug: 'keep-1',
       visibility: 'public',
       colors: [{ hex: '#112233' }],
     });
-    await createPalette(asD1(db), 'owner', {
+    await createPalette(asD1(db), SEED_OWNER_ID, {
       name: 'Priv',
       slug: 'priv-1',
       visibility: 'private',
       colors: [{ hex: '#112233' }],
     });
-    await createPalette(asD1(db), 'owner', {
+    await createPalette(asD1(db), SEED_OWNER_ID, {
       name: 'Flag',
       slug: 'flag-1',
       visibility: 'public',
