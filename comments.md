@@ -1,9 +1,9 @@
-# UIShades.com — Marketing Comment Templates
+# UIShades.com - Marketing Comment Templates
 
 Two sets below:
 
-1. **Anonymous / "fellow user"** comments — for casual forum replies
-2. **Transparent "I built this"** comments — for Show HN, r/SideProject, etc.
+1. **Anonymous / "fellow user"** comments - for casual forum replies
+2. **Transparent "I built this"** comments - for Show HN, r/SideProject, etc.
 
 ## Tips
 
@@ -16,11 +16,11 @@ Two sets below:
 
 ---
 
-## Set 1 — Anonymous / Fellow User
+## Set 1 - Anonymous / Fellow User
 
 ### Short reply (Reddit / forums, when someone complains about paywall)
 
-> Same boat. Been using UIshades.com instead — free, no ads, same `/[hex]` URL structure so old bookmarks mostly still work. Has the classic ramp plus an OKLCH one and a Tailwind 50–950 export.
+> Same boat. Been using UIshades.com instead - free, no ads, same `/[hex]` URL structure so old bookmarks mostly still work. Has the classic ramp plus an OKLCH one and a Tailwind 50–950 export.
 
 ### When someone asks "what's a free alternative?"
 
@@ -40,11 +40,11 @@ Two sets below:
 
 ---
 
-## Set 2 — Transparent "I Built This" (humanized versions)
+## Set 2 - Transparent "I Built This" (humanized versions)
 
 ### Show HN style (longer post)
 
-> UIshades.com — built it after 0to255 went paywall. That was the tool I'd open ten times a day, and one morning I just didn't feel like paying for it. So.
+> UIshades.com - built it after 0to255 went paywall. That was the tool I'd open ten times a day, and one morning I just didn't feel like paying for it. So.
 >
 > Same URL structure (`/[hex]`, `/colors/[name]`) so old bookmarks still work. The classic ramp is in there. I also added an OKLCH ramp because the regular RGB walk goes weirdly grey near white, and a Tailwind 50–950 export because I kept wanting one. WCAG contrast on each shade.
 >
@@ -54,11 +54,11 @@ Two sets below:
 
 ### Reddit reply (when someone complains about the paywall)
 
-> Same. That paywall is the reason I ended up building a free one — UIshades.com. Same `/[hex]` URL so old bookmarks mostly work. Has an OKLCH ramp option and a Tailwind 50–950 export. Tell me if anything's busted.
+> Same. That paywall is the reason I ended up building a free one - UIshades.com. Same `/[hex]` URL so old bookmarks mostly work. Has an OKLCH ramp option and a Tailwind 50–950 export. Tell me if anything's busted.
 
 ### /r/SideProject standalone post
 
-> **Free 0to255 alternative — UIshades.com**
+> **Free 0to255 alternative - UIshades.com**
 >
 > I used 0to255 constantly and got tired of bouncing off the paywall, so I built this. Same URL pattern. OKLCH ramp option for the lighter end (RGB ramps go grey near white). Tailwind 50–950 export. WCAG contrast on each shade.
 >
@@ -66,11 +66,11 @@ Two sets below:
 
 ### Discord / Slack drop
 
-> Built a free shade generator because the 0to255 paywall annoyed me — UIshades.com. Same URL pattern, has an OKLCH ramp and a Tailwind 50–950 export. Yell at me if it breaks.
+> Built a free shade generator because the 0to255 paywall annoyed me - UIshades.com. Same URL pattern, has an OKLCH ramp and a Tailwind 50–950 export. Yell at me if it breaks.
 
 ---
 
-## Set 3 — Twitter / X
+## Set 3 - Twitter / X
 
 Twitter conventions: lowercase-first is normal in dev twitter, keep it short, URL at the end, one idea per tweet. 280 char limit.
 
@@ -104,17 +104,17 @@ Twitter conventions: lowercase-first is normal in dev twitter, keep it short, UR
 
 ### Quote-tweet a 0to255 complaint
 
-> been there. built UIshades.com as a free version — same URL pattern, has OKLCH + Tailwind exports
+> been there. built UIshades.com as a free version - same URL pattern, has OKLCH + Tailwind exports
 
 ---
 
-## Set 4 — LinkedIn
+## Set 4 - LinkedIn
 
 LinkedIn conventions: first line is a hook (the feed truncates after ~3 lines on mobile), line breaks between thoughts, longer than Twitter, personal story angle works well.
 
 **Avoid:** broetry (every sentence on its own line), fake-humility hooks ("Got rejected 47 times..."), "Agree?" endings, hashtag stuffing.
 
-### Launch post (longer, story-led — transparent)
+### Launch post (longer, story-led - transparent)
 
 > 0to255 was my go-to color tool for years. Then it went paywall.
 >
@@ -136,7 +136,7 @@ LinkedIn conventions: first line is a hook (the feed truncates after ~3 lines on
 
 ### Comment in a thread (when someone shares a "designer tools" list or asks for color tool recs)
 
-> +1 for the 0to255 paywall frustration — I ended up building a free version, UIshades.com. Same `/[hex]` URL pattern, with an OKLCH ramp option and a Tailwind 50–950 export. Sharing in case it's useful.
+> +1 for the 0to255 paywall frustration - I ended up building a free version, UIshades.com. Same `/[hex]` URL pattern, with an OKLCH ramp option and a Tailwind 50–950 export. Sharing in case it's useful.
 
 ### Comment in a thread (anonymous / "fellow user" version)
 
@@ -148,26 +148,26 @@ LinkedIn conventions: first line is a hook (the feed truncates after ~3 lines on
 >
 > Two things surprised me building it:
 >
-> The OKLCH ramp is genuinely better than the classic RGB walk for lighter shades — RGB ramps go grey near white in a way that's hard to unsee once you compare them side by side.
+> The OKLCH ramp is genuinely better than the classic RGB walk for lighter shades - RGB ramps go grey near white in a way that's hard to unsee once you compare them side by side.
 >
 > Astro + Cloudflare Pages is a faster stack than I expected for this kind of tool. Pre-rendered pages for the 209 named colors, SSR for arbitrary hex inputs, edge-cached. The whole thing is on the free tier.
 >
-> Anyway — if you've been hitting that paywall, give it a try.
+> Anyway - if you've been hitting that paywall, give it a try.
 
 ---
 
-## Set 5 — Product Hunt
+## Set 5 - Product Hunt
 
-PH conventions: tagline is 60 chars max, description is 260 chars max, and your "maker's first comment" is the real pitch — it's where you tell the story. Launch on a Sunday night PT or Tuesday morning PT for best traction.
+PH conventions: tagline is 60 chars max, description is 260 chars max, and your "maker's first comment" is the real pitch - it's where you tell the story. Launch on a Sunday night PT or Tuesday morning PT for best traction.
 
 **Avoid:** emoji-heavy headlines, hype words ("revolutionary", "game-changing"), "the future of X" framing.
 
 ### Tagline options (60 char limit)
 
-- (a) Free shade generator — the 0to255 alternative
+- (a) Free shade generator - the 0to255 alternative
 - (b) Hex → 22-shade ramp, Tailwind scale export, free
 - (c) Color shades and Tailwind scales, free and ad-free
-- (d) Generate shades, ramps, and Tailwind scales — free
+- (d) Generate shades, ramps, and Tailwind scales - free
 
 ### Description (260 char limit)
 
@@ -177,11 +177,11 @@ PH conventions: tagline is 60 chars max, description is 260 chars max, and your 
 
 > Maker here.
 >
-> 0to255 was the color tool I'd open ten times a day — until it went paywall. One morning I just didn't feel like paying for it, so I started building a free version. UIshades.com is what came out of that.
+> 0to255 was the color tool I'd open ten times a day - until it went paywall. One morning I just didn't feel like paying for it, so I started building a free version. UIshades.com is what came out of that.
 >
 > It keeps the same `/[hex]` and `/colors/[name]` URL pattern, so old bookmarks still work. I reverse-engineered the original classic ramp and it's in there. A few things I added because I'd been wanting them:
 >
-> - OKLCH ramp mode for perceptually-even steps — the classic RGB walk goes washed-out near white in a way that's hard to unsee once you compare them
+> - OKLCH ramp mode for perceptually-even steps - the classic RGB walk goes washed-out near white in a way that's hard to unsee once you compare them
 > - Tailwind 50–950 scale export that snaps your hex to the nearest stop
 > - Copy-as for CSS variables, SCSS, and design tokens
 > - WCAG contrast on every shade, so you don't have to alt-tab to a checker
@@ -192,7 +192,7 @@ PH conventions: tagline is 60 chars max, description is 260 chars max, and your 
 
 ### Short follow-up if someone asks "what's the catch"
 
-> No catch — I built it because I was annoyed at the paywall on the tool I used daily. It's on Cloudflare's free tier and the ramp math is the bulk of the work, which is done. Hosting cost is near zero.
+> No catch - I built it because I was annoyed at the paywall on the tool I used daily. It's on Cloudflare's free tier and the ramp math is the bulk of the work, which is done. Hosting cost is near zero.
 
 ### Reply when someone suggests a feature
 
@@ -200,11 +200,11 @@ PH conventions: tagline is 60 chars max, description is 260 chars max, and your 
 
 ### Reply when someone compares to another tool
 
-> Yeah, [tool name] is solid for [thing it does well]. Main difference with uishades is [specific thing — OKLCH ramp / Tailwind export / free / etc.]. Different tools for different jobs.
+> Yeah, [tool name] is solid for [thing it does well]. Main difference with uishades is [specific thing - OKLCH ramp / Tailwind export / free / etc.]. Different tools for different jobs.
 
 ---
 
-## Set 6 — Indie Hackers
+## Set 6 - Indie Hackers
 
 IH conventions: builder-to-builder, transparent about stack and economics, explicit "ask" at the end. Milestone posts perform best.
 
@@ -212,11 +212,11 @@ IH conventions: builder-to-builder, transparent about stack and economics, expli
 
 ### Launch / milestone post
 
-> **Shipped a free 0to255 alternative — UIshades.com**
+> **Shipped a free 0to255 alternative - UIshades.com**
 >
 > 0to255 was the color tool I'd open ten times a day. When it went paywall I figured someone would clone it fast. Nobody did, so I built one.
 >
-> **What it does:** takes any hex or CSS named color and gives you a 22-shade ramp. Same URL pattern as 0to255 (`/[hex]`, `/colors/[name]`) so muscle memory transfers. Added two things I'd been wanting myself — an OKLCH ramp mode for perceptually-even steps, and a Tailwind 50–950 scale export.
+> **What it does:** takes any hex or CSS named color and gives you a 22-shade ramp. Same URL pattern as 0to255 (`/[hex]`, `/colors/[name]`) so muscle memory transfers. Added two things I'd been wanting myself - an OKLCH ramp mode for perceptually-even steps, and a Tailwind 50–950 scale export.
 >
 > **Stack:** Astro 6 with a single React island for the interactive bits, deployed to Cloudflare Pages. Pre-renders 209 named-color pages at build time, SSRs arbitrary hex inputs at the edge, caches them for 30 days. Running on the free tier.
 >
@@ -240,7 +240,7 @@ IH conventions: builder-to-builder, transparent about stack and economics, expli
 
 ### Comment in a thread where someone shares a side project or asks for tool recs
 
-> Built something adjacent last month — UIshades.com, free 0to255 alternative. Same hex-to-ramp idea, added an OKLCH ramp and a Tailwind 50–950 export. Cloudflare free tier, $0/month to run. No monetization plan beyond a tip jar if hosting ever requires it.
+> Built something adjacent last month - UIshades.com, free 0to255 alternative. Same hex-to-ramp idea, added an OKLCH ramp and a Tailwind 50–950 export. Cloudflare free tier, $0/month to run. No monetization plan beyond a tip jar if hosting ever requires it.
 
 ### Reply when someone asks about monetization (common IH topic)
 
@@ -252,11 +252,11 @@ IH conventions: builder-to-builder, transparent about stack and economics, expli
 
 ---
 
-## Set 7 — Hacker News (Show HN)
+## Set 7 - Hacker News (Show HN)
 
-HN conventions: factual title (no editorializing, no first-person, no hype), 80-char title limit, `Show HN:` prefix. The OP's first comment is the real pitch and should be substantive — HN rewards technical detail and punishes marketing. Post Tuesday–Thursday morning PT for best visibility.
+HN conventions: factual title (no editorializing, no first-person, no hype), 80-char title limit, `Show HN:` prefix. The OP's first comment is the real pitch and should be substantive - HN rewards technical detail and punishes marketing. Post Tuesday–Thursday morning PT for best visibility.
 
-**Don't** ask for upvotes. **Don't** reply with "thanks!" — engage with the actual point.
+**Don't** ask for upvotes. **Don't** reply with "thanks!" - engage with the actual point.
 
 ### Title options (80 char limit, factual)
 
@@ -282,11 +282,11 @@ HN conventions: factual title (no editorializing, no first-person, no hype), 80-
 
 **> "Why not use [Coolors / Tailwind Shades / Leonardo / etc.]?"**
 
-> [Tool name] is solid for [thing it does well]. The reason I built this is [specific thing — 0to255 URL pattern, OKLCH ramp, Tailwind export, no signup, etc.]. They're not really competing on the same axis.
+> [Tool name] is solid for [thing it does well]. The reason I built this is [specific thing - 0to255 URL pattern, OKLCH ramp, Tailwind export, no signup, etc.]. They're not really competing on the same axis.
 
 **> "Why OKLCH and not LAB / HSL / HSLuv?"**
 
-> OKLCH has better hue uniformity than LAB at the extremes — LAB's blue hue shifts toward purple as lightness changes, which produces visible artifacts in ramps. HSL's lightness isn't perceptual at all (pure yellow at L=50% is much brighter than pure blue at L=50%). HSLuv was the other contender; OKLCH won on tooling support and because CSS Color Level 4 standardized on it, so the math will compose with future CSS features.
+> OKLCH has better hue uniformity than LAB at the extremes - LAB's blue hue shifts toward purple as lightness changes, which produces visible artifacts in ramps. HSL's lightness isn't perceptual at all (pure yellow at L=50% is much brighter than pure blue at L=50%). HSLuv was the other contender; OKLCH won on tooling support and because CSS Color Level 4 standardized on it, so the math will compose with future CSS features.
 
 **> "Will you open-source it?"**
 
@@ -294,7 +294,7 @@ HN conventions: factual title (no editorializing, no first-person, no hype), 80-
 
 **> "Does it support P3 / wide-gamut output?"**
 
-> Output is sRGB right now. The OKLCH ramp computes in OKLCH space and clips to sRGB on conversion. P3 output is on the list — the math is already there, I just need to add the format toggle.
+> Output is sRGB right now. The OKLCH ramp computes in OKLCH space and clips to sRGB on conversion. P3 output is on the list - the math is already there, I just need to add the format toggle.
 
 **> "How is this not just [a small CSS function]?"**
 
@@ -316,13 +316,13 @@ HN conventions: factual title (no editorializing, no first-person, no hype), 80-
 
 - Hacker News (Show HN)
 - r/SideProject
-- r/webdev (in relevant threads only — they hate self-promo posts)
+- r/webdev (in relevant threads only - they hate self-promo posts)
 - r/web_design
 - Designer News
 - Indie Hackers
 - Product Hunt
 - Frontend / design Discords you're already active in
-- LinkedIn (story-led posts perform best — lead with the paywall friction)
+- LinkedIn (story-led posts perform best - lead with the paywall friction)
 
 **Anonymous set** is risky but works in:
 

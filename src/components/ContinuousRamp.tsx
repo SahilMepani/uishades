@@ -7,7 +7,7 @@ import ShadeRow from './ShadeRow';
 
 /**
  * Renders a `ContinuousRamp` as a stack of `<ShadeRow>` entries. Purely
- * presentational — the algorithm toggle (Tailwind scale vs this OKLCH ramp)
+ * presentational - the algorithm toggle (Tailwind scale vs this OKLCH ramp)
  * is owned by the parent. The ramp data carries its mode in `ramp.mode`
  * (always `oklch` now that the classic walk is no longer surfaced in the
  * UI); we keep it as a data attribute for tests.
@@ -15,7 +15,7 @@ import ShadeRow from './ShadeRow';
 
 export interface ContinuousRampProps {
   ramp: ContinuousRampData;
-  /** Pinned source hex — every non-source row renders this in a 20% band. */
+  /** Pinned source hex - every non-source row renders this in a 20% band. */
   sourceHex: Hex;
   copyFormat: CopyFormat;
   brandName?: string;

@@ -11,7 +11,7 @@ Short-form copy for the launch surface. Long-form is in
 
 **Body:**
 
-0to255.com — the free shade generator most of us bookmarked years ago — went
+0to255.com - the free shade generator most of us bookmarked years ago - went
 behind a paywall recently. UIshades.com is a free replacement with the same URL
 structure (`/4040ff` works), so old bookmarks and Google results can swap the
 hostname and land where they expected. The defaults are different in three
@@ -39,7 +39,7 @@ Tailwind-ready exports.
 
 **Description:**
 
-UIshades.com is a free shade generator for designers and developers — type any
+UIshades.com is a free shade generator for designers and developers - type any
 hex, RGB, HSL, OKLCH, or CSS colour name and get a full ramp of tints and
 shades, plus a Tailwind-style 11-stop scale with paste-ready exports. The
 defaults use OKLCH, which keeps mid-shades on-hue across muddy colours where
@@ -60,7 +60,7 @@ contrast badges. Permanent URLs for every hex make sharing painless.
 **Tweet 1 (hook):**
 
 ```
-0to255 — the free shade generator most of us had bookmarked for a decade — went paid recently.
+0to255 - the free shade generator most of us had bookmarked for a decade - went paid recently.
 
 Built a replacement: UIshades.com. Same URL structure (/4040ff works), free, with a better algorithm by default.
 
@@ -74,7 +74,7 @@ Default ramp uses OKLCH, not RGB walks.
 
 On olive #808000, the classic algorithm drifts the mid-shades toward khaki-grey by step 3.
 
-OKLCH holds the hue and chroma constant — every step still reads as olive. Most visible on yellows, browns, and muddied warms.
+OKLCH holds the hue and chroma constant - every step still reads as olive. Most visible on yellows, browns, and muddied warms.
 ```
 
 **Tweet 3 (Tailwind):**
@@ -106,7 +106,7 @@ If you used to bookmark a 0to255 URL, swap the host and yours still works.
 
 ## Reddit /r/webdev
 
-**Title:** `I built a free replacement for 0to255 since they went paid — same URL structure, better algorithm, Tailwind exports`
+**Title:** `I built a free replacement for 0to255 since they went paid - same URL structure, better algorithm, Tailwind exports`
 
 **Body:**
 
@@ -120,14 +120,14 @@ drifts grey. There's a Classic toggle if you need bit-for-bit parity. Every
 page also renders an 11-stop Tailwind-style scale with paste-ready exports
 for Tailwind v4, v3, CSS variables, W3C Design Tokens, and Figma Variables.
 Stack is Astro + Cloudflare Workers, MIT licensed, ~20KB HTML/CSS per page.
-Feedback welcome — especially on export formats you want that aren't there
+Feedback welcome - especially on export formats you want that aren't there
 yet.
 
 ---
 
 ## Reddit /r/web_design
 
-**Title:** `UIshades.com — free tints/shades tool with OKLCH ramps and WCAG contrast badges built in`
+**Title:** `UIshades.com - free tints/shades tool with OKLCH ramps and WCAG contrast badges built in`
 
 **Body:**
 
@@ -135,7 +135,7 @@ Posting here because the contrast-badge feature is the bit designers will
 care about most. [UIshades.com](https://UIshades.com) generates a tint-and-shade
 ramp from any hex (RGB, HSL, OKLCH, and CSS colour names all parse) and shows
 inline WCAG AA/AAA contrast ratios against pure white and pure black on every
-shade — no round trip to a separate contrast checker. The ramp itself is
+shade - no round trip to a separate contrast checker. The ramp itself is
 OKLCH-anchored by default, so mid-tones on muddy colours like olive or burnt
 sienna stay on-hue across the gradient instead of drifting grey the way older
 RGB-walk tools handle them. There's also an 11-stop Tailwind-style scale on

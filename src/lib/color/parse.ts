@@ -22,7 +22,7 @@ export class ParseError extends Error {
 /**
  * Parse any CSS-recognized color form into canonical lowercase `#rrggbb`.
  *
- * Accepts: hex (`#rrggbb`, `#rgb`, bare `rrggbb`, bare `rgb` — culori treats
+ * Accepts: hex (`#rrggbb`, `#rgb`, bare `rrggbb`, bare `rgb` - culori treats
  * a bare hex string the same as one with a `#`), `rgb()`, `hsl()`,
  * `oklch()`, `oklab()`, `lab()`, `lch()`, `color(...)`, CSS named colors.
  *

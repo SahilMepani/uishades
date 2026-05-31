@@ -2,7 +2,7 @@
 #
 # Why this file exists: under `output: 'static'`, the home page and every
 # `/colors/*` page are pre-rendered to `.html` and served by the Cloudflare
-# Workers asset layer WITHOUT invoking the worker — so `src/middleware.ts` never
+# Workers asset layer WITHOUT invoking the worker - so `src/middleware.ts` never
 # runs on them and its headers never reach them. This file carries the SAME set
 # for those static responses. It does NOT apply to on-demand SSR responses
 # (`/[hex]`, `/api/*`, `/og/*`), which are produced by the worker and get their

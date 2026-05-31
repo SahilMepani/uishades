@@ -1,20 +1,20 @@
 /**
- * POST /api/palettes/[id]/report — report a public palette for moderation.
+ * POST /api/palettes/[id]/report - report a public palette for moderation.
  *
- * Anonymous (no session required — a logged-out visitor browsing /explore must
+ * Anonymous (no session required - a logged-out visitor browsing /explore must
  * be able to report). Rate-limited per IP (5/hour) reusing the generic
- * `magic_link_requests` key/timestamp counter with a `report-ip:` namespace — no
- * new table — exactly like the feedback route's `fb-ip:` pattern.
+ * `magic_link_requests` key/timestamp counter with a `report-ip:` namespace - no
+ * new table - exactly like the feedback route's `fb-ip:` pattern.
  *
  * Tally + threshold: each accepted report records a `report:<id>` row in the
  * same counter table; once REPORT_THRESHOLD distinct reports accumulate the
  * palette is `flagged=1` and drops out of `/explore`, `/u/[handle]`, and the
- * sitemap (it stays reachable by direct slug but `noindex`'d — see the plan's
+ * sitemap (it stays reachable by direct slug but `noindex`'d - see the plan's
  * moderation section). A solo-founder manual review (`SELECT … WHERE flagged=1`)
  * is the human backstop.
  *
  * To avoid enumeration, the response is ALWAYS `{ ok: true }` (200) regardless of
- * whether the id exists, is already flagged, or just got flagged — a probe can't
+ * whether the id exists, is already flagged, or just got flagged - a probe can't
  * distinguish a real palette from a miss. CSRF is enforced upstream in
  * `middleware.ts`. Cache-Control is `private, no-store` (it's a mutation).
  */
@@ -38,7 +38,7 @@ const RATE_MAX = 5; // reports per IP per hour
 // actor's burst (capped at RATE_MAX/hour) still needs sustained or multi-IP
 // pressure to hide a palette. Manual review catches the rest.
 const REPORT_THRESHOLD = 3;
-// Reports never expire from the tally — count across all time for this palette.
+// Reports never expire from the tally - count across all time for this palette.
 const TALLY_SINCE = 0;
 
 export const POST: APIRoute = async ({ params, request }) => {
@@ -57,7 +57,7 @@ export const POST: APIRoute = async ({ params, request }) => {
     return jsonNoStore({ ok: true });
   }
 
-  // Only tally/flag a real, not-already-flagged palette — but the response shape
+  // Only tally/flag a real, not-already-flagged palette - but the response shape
   // is identical for a miss, so the caller learns nothing about existence.
   const palette = id ? await getPaletteWithColors(db, id) : null;
   if (palette && !palette.flagged) {

@@ -1,5 +1,5 @@
 /**
- * /api/[hex].json — programmatic ColorPageData for a hex input.
+ * /api/[hex].json - programmatic ColorPageData for a hex input.
  *
  * Same validation pipeline as the page route: bare hex param, parseColor for
  * canonicalization, 404 on garbage. Returns the shared `ColorPageData` shape
@@ -49,7 +49,7 @@ export const GET: APIRoute = async ({ params }) => {
   const scale = buildScale(canonical);
 
   // Neighbor hexes for the SEO/crawl graph. Same 3-up / 3-down policy used by
-  // the HTML page — keep them consistent so the JSON consumers see the same
+  // the HTML page - keep them consistent so the JSON consumers see the same
   // link graph the crawler does.
   const lighter: Hex[] = [];
   for (let i = ramp.inputIndex - 1; i >= Math.max(0, ramp.inputIndex - 3); i--) {

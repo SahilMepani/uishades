@@ -1,4 +1,4 @@
-# Image SEO and Performance Audit — UIshades.com
+# Image SEO and Performance Audit - UIshades.com
 
 **Scope:** `/`, `/colors/coral`, `/4040ff` against `http://localhost:4321`
 **Date:** 2026-05-23
@@ -8,7 +8,7 @@
 
 ## TL;DR
 
-UIshades.com is a near-zero raster-image site. The audited pages render **no `<img>` tags, no `<picture>`, no CSS `background-image`, and no `srcset`** — all icons are inline SVG marked `aria-hidden="true"`. The only image surface area is:
+UIshades.com is a near-zero raster-image site. The audited pages render **no `<img>` tags, no `<picture>`, no CSS `background-image`, and no `srcset`** - all icons are inline SVG marked `aria-hidden="true"`. The only image surface area is:
 
 1. The site favicon pair (`/favicon.svg`, `/favicon.ico`)
 2. The dynamic Open Graph endpoint `/og/[hex].png` (`workers-og`, Cloudflare-only)
@@ -36,11 +36,11 @@ Because there are no rendered raster images on any page, the usual image-SEO fai
 | OG (default home) | `/og/777777.png` | image/png | **0** (dev) | 200 | `workers-og` is a Cloudflare Workers API; under Astro dev/Node it can't render and emits an empty body with 200. Will render correctly at the edge. |
 | OG (coral) | `/og/ff7f50.png` | image/png | **0** (dev) | 200 | Same as above. |
 | OG (4040ff) | `/og/4040ff.png` | image/png | **0** (dev) | 200 | Same as above. |
-| OG (named `coral.png`) | `/og/coral.png` | text/plain | n/a | **404** | The OG route only accepts 3/6/8-char hex (`HEX_RE`), not CSS-named slugs. Correct — the named-color page already resolves the slug to a hex before stamping `og:image`. |
+| OG (named `coral.png`) | `/og/coral.png` | text/plain | n/a | **404** | The OG route only accepts 3/6/8-char hex (`HEX_RE`), not CSS-named slugs. Correct - the named-color page already resolves the slug to a hex before stamping `og:image`. |
 
 ### Inline SVG icons
 
-All inline `<svg>` elements use `viewBox="0 0 16 16"` and `aria-hidden="true"`, which is the correct treatment for decorative icons paired with adjacent text labels (no `alt` equivalent needed). `/colors/coral` and `/4040ff` carry 26 such SVGs each — one bullet/badge icon per shade row plus a logo mark. No SVG `<title>` blocks, which is fine because the parent buttons/links carry accessible names.
+All inline `<svg>` elements use `viewBox="0 0 16 16"` and `aria-hidden="true"`, which is the correct treatment for decorative icons paired with adjacent text labels (no `alt` equivalent needed). `/colors/coral` and `/4040ff` carry 26 such SVGs each - one bullet/badge icon per shade row plus a logo mark. No SVG `<title>` blocks, which is fine because the parent buttons/links carry accessible names.
 
 ---
 
@@ -76,10 +76,10 @@ Or upgrade to a `workers-og` version that respects user-supplied `headers` as ov
 **M-1. No fallback / static OG image when `/og/[hex].png` fails.**
 If the edge-side `workers-og` ever errors (Satori font fetch failure, deploy regression), Twitter and Facebook crawlers will fetch a broken/empty PNG and may strip the card. There is no `<meta property="og:image" content="…fallback.png">` runner-up, and no static `/og/default.png` in `public/`.
 
-**Fix:** ship a static 1200×630 PNG in `public/og/default.png` (~30–60KB, brand-only) and configure the route to fall back to a 302 to that file on any thrown error. Alternatively register the default as a *second* `og:image` meta — Open Graph accepts multiple, and crawlers walk the list.
+**Fix:** ship a static 1200×630 PNG in `public/og/default.png` (~30–60KB, brand-only) and configure the route to fall back to a 302 to that file on any thrown error. Alternatively register the default as a *second* `og:image` meta - Open Graph accepts multiple, and crawlers walk the list.
 
 **M-2. OG image is PNG, not WebP/AVIF.**
-**This is intentional and correct** — Facebook, LinkedIn, Slack, iMessage, and many embed crawlers still don't reliably render WebP/AVIF in link previews. The audit only flags it because the brief asked us to call out the nuance. **Keep as PNG.**
+**This is intentional and correct** - Facebook, LinkedIn, Slack, iMessage, and many embed crawlers still don't reliably render WebP/AVIF in link previews. The audit only flags it because the brief asked us to call out the nuance. **Keep as PNG.**
 
 **M-3. No `<meta property="og:image:width">` / `og:image:height` / `og:image:alt` / `og:image:type`.**
 These four meta tags are recommended by the Open Graph spec and reduce layout jank in some embeds (Slack, Discord) while also giving screen-reader users on shared links a description. Currently only `og:image` is set.
@@ -104,7 +104,7 @@ Expected impact: better card rendering on Discord/Slack, accessibility win for s
 iOS home-screen pinning will fall back to a default Safari screenshot. Low priority for a tool site, but a 180×180 PNG dropped at `public/apple-touch-icon.png` plus a `<link rel="apple-touch-icon" href="/apple-touch-icon.png">` would fix it. Expected payoff: small but real for users who "Add to Home Screen."
 
 **L-3. No IPTC/XMP metadata strategy on generated OG PNGs.**
-For an OG image whose entire purpose is being scraped by social crawlers, IPTC/XMP metadata is **not relevant** — link-preview pipelines read the `og:*` meta tags from the HTML, not embedded image metadata. Image-SERP indexing (Google Images) might value it, but the OG endpoint isn't linked from any `<img>` tag, so it's not in the Image SERP corpus. **No action.**
+For an OG image whose entire purpose is being scraped by social crawlers, IPTC/XMP metadata is **not relevant** - link-preview pipelines read the `og:*` meta tags from the HTML, not embedded image metadata. Image-SERP indexing (Google Images) might value it, but the OG endpoint isn't linked from any `<img>` tag, so it's not in the Image SERP corpus. **No action.**
 
 **L-4. `favicon.svg` served with `Cache-Control: no-cache` in dev.**
 This is the Astro dev server's default for static assets; Cloudflare Pages will apply its own headers in prod. Verify the prod response sets at minimum `public, max-age=86400` on `/favicon.svg`. If not, add a `_headers` file. Tiny impact (1.2KB).
@@ -127,10 +127,10 @@ This is the Astro dev server's default for static assets; Cloudflare Pages will 
 
 ### Items explicitly **not** recommended
 
-- **Do NOT convert the OG image to WebP/AVIF** — PNG is the right format for `og:image` because of crawler compatibility (M-2).
-- **Do NOT add IPTC/XMP metadata to the generated OG PNG** — irrelevant to the embed-and-share use case (L-3).
-- **Do NOT add `loading="lazy"`** — there are no `<img>` tags to lazy-load.
-- **Do NOT add `srcset`/`sizes`** — same reason.
+- **Do NOT convert the OG image to WebP/AVIF** - PNG is the right format for `og:image` because of crawler compatibility (M-2).
+- **Do NOT add IPTC/XMP metadata to the generated OG PNG** - irrelevant to the embed-and-share use case (L-3).
+- **Do NOT add `loading="lazy"`** - there are no `<img>` tags to lazy-load.
+- **Do NOT add `srcset`/`sizes`** - same reason.
 
 ---
 
@@ -142,7 +142,7 @@ The route handler itself (`src/pages/og/[hex].png.ts`) is well-formed: hex valid
 
 ---
 
-## 5. Pages audited — raw counts
+## 5. Pages audited - raw counts
 
 | Page | HTML bytes | `<img>` | `<picture>` | inline `<svg>` | `og:image` | `twitter:image` |
 |---|---|---|---|---|---|---|

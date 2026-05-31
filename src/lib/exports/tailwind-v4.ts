@@ -2,7 +2,7 @@
  * Tailwind v4 `@theme` block export.
  *
  * Produces a `@theme` directive containing CSS custom properties named
- * `--color-{name}-{stop}` — Tailwind v4's expected convention for palette
+ * `--color-{name}-{stop}` - Tailwind v4's expected convention for palette
  * registration.
  */
 

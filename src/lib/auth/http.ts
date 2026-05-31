@@ -24,7 +24,7 @@ export function unauthorized(): Response {
 
 /**
  * Escape a string for safe interpolation into HTML text or a double-quoted
- * attribute. Used by the magic-link confirm page and the email body — any
+ * attribute. Used by the magic-link confirm page and the email body - any
  * value derived (even indirectly) from user input that lands in markup MUST
  * go through this.
  */
@@ -40,7 +40,7 @@ export function escapeHtml(value: string): string {
 /**
  * Gate an API handler behind a logged-in session. Centralizes the
  * `currentUserId` + 401 check so a protected route is authenticated by
- * construction (and the userId is injected, not re-derived per route) — a new
+ * construction (and the userId is injected, not re-derived per route) - a new
  * endpoint can't forget the guard.
  */
 export function withUser(

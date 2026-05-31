@@ -1,6 +1,6 @@
 ---
 /**
- * /u/[handle] — the public user profile page.
+ * /u/[handle] - the public user profile page.
  *
  * SSR-only (`prerender = false`), INDEXABLE (these are public marketing assets,
  * NOT noindex). Validates the handle regex → loads the user via
@@ -44,7 +44,7 @@ if (!user || !user.handle) {
 // the ProfileView island re-syncs vote state per visitor after hydration.
 const palettes = await listPublicPalettesByUser(env.DB, user.id, null);
 
-// Hand-built PublicProfile — email deliberately absent (privacy).
+// Hand-built PublicProfile - email deliberately absent (privacy).
 const profile: PublicProfile = {
   handle: user.handle,
   displayName: user.displayName,
@@ -56,9 +56,9 @@ const displayLabel = profile.displayName ?? profile.handle;
 const canonicalUrl = `https://UIshades.com/u/${profile.handle}`;
 const ogImage = 'https://UIshades.com/og/4040ff.png';
 
-const TITLE = `${displayLabel} — Color Palettes | UIshades.com`;
+const TITLE = `${displayLabel} - Color Palettes | UIshades.com`;
 const DESCRIPTION = `${displayLabel}'s public color palettes on UIshades.com${
-  palettes.length ? ` — ${palettes.length} palette${palettes.length === 1 ? '' : 's'}` : ''
+  palettes.length ? ` - ${palettes.length} palette${palettes.length === 1 ? '' : 's'}` : ''
 }. Free, ad-free, with Tailwind & OKLCH-ready exports.`;
 
 const profileJsonLd = {

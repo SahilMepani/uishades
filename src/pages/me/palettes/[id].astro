@@ -1,11 +1,11 @@
 ---
 /**
- * /me/palettes/[id] — the owner-only palette editor.
+ * /me/palettes/[id] - the owner-only palette editor.
  *
  * SSR-only (`prerender = false`), `noindex`. 404s if the visitor isn't signed
  * in or doesn't own the palette (no existence leak: a non-owner gets the same
  * 404 as a missing id). The page is a shell hosting the `PaletteEditor` client
- * island, which re-fetches `/api/palettes/[id]` itself — so no per-user palette
+ * island, which re-fetches `/api/palettes/[id]` itself - so no per-user palette
  * data is server-rendered into a (never-cached) response.
  */
 export const prerender = false;
@@ -25,7 +25,7 @@ if (!userId) {
 }
 
 const id = Astro.params.id ?? '';
-// Owner-only gate via an owner-scoped existence check — a missing palette OR
+// Owner-only gate via an owner-scoped existence check - a missing palette OR
 // one owned by someone else both 404 (no existence leak). The island re-fetches
 // the full palette through `/api/palettes/[id]`, which is itself owner-scoped.
 const owned = await env.DB.prepare(

@@ -1,5 +1,5 @@
 /**
- * Dashboard mock — sidebar + KPI tiles + a bar chart whose series use the
+ * Dashboard mock - sidebar + KPI tiles + a bar chart whose series use the
  * palette as chart colours (`--mock-chart-0..4`).
  *
  * Pure markup styled only by the stage's scoped `--mock-*` vars.

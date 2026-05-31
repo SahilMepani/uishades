@@ -2,7 +2,7 @@
  * Plain CSS custom properties export.
  *
  * Same shape as the Tailwind v4 export but without the `@theme` directive
- * wrapper — usable in any project regardless of framework. Variable names
+ * wrapper - usable in any project regardless of framework. Variable names
  * follow `--{name}-{stop}` (no `color-` prefix; that prefix is a
  * Tailwind-v4-specific convention).
  */

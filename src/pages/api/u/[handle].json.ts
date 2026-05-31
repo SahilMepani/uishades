@@ -1,8 +1,8 @@
 /**
- * GET /api/u/[handle].json — public profile JSON for /u/[handle].
+ * GET /api/u/[handle].json - public profile JSON for /u/[handle].
  *
  * Mirrors `/api/p/[slug].json.ts`: SSR, validated param, 404 on miss, and a
- * **public** 30-day edge cache (public data, never per-user — no session is
+ * **public** 30-day edge cache (public data, never per-user - no session is
  * read, so the body is identical for every visitor). Returns a `PublicProfile`:
  * the user's `handle`/`displayName`/`avatarUrl` plus their PUBLIC, non-flagged
  * palettes only.
@@ -37,7 +37,7 @@ export const GET: APIRoute = async ({ params }) => {
   }
 
   const user = await getUserByHandle(env.DB, handle);
-  // Unknown handle, or a user row whose handle was never set — 404 either way.
+  // Unknown handle, or a user row whose handle was never set - 404 either way.
   if (!user || !user.handle) {
     return json({ error: 'not_found' }, 404);
   }
@@ -46,7 +46,7 @@ export const GET: APIRoute = async ({ params }) => {
   // the signed-in client can re-fetch vote state from /api/explore if needed.
   const palettes = await listPublicPalettesByUser(env.DB, user.id, null);
 
-  // Hand-built body — email is deliberately absent. Only public identity fields.
+  // Hand-built body - email is deliberately absent. Only public identity fields.
   const profile: PublicProfile = {
     handle: user.handle,
     displayName: user.displayName,

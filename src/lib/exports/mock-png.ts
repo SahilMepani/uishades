@@ -6,7 +6,7 @@
  * uses, then a palette strip and a "UIshades.com" wordmark footer.
  *
  * Imported **lazily** from `MockPreview` (a dynamic `import()` inside the
- * download click handler) so the canvas code never lands in the eager bundle —
+ * download click handler) so the canvas code never lands in the eager bundle -
  * the same pattern as `ramp-png.ts`. Keep it free of static imports from any
  * eager-path module beyond the pure colour helpers it needs.
  */
@@ -28,7 +28,7 @@ const PAPER = '#faf8f3';
 export interface MockPngOptions {
   /** The palette colours (hex + optional role) to colour the mock with. */
   colors: MockColorInput[];
-  /** Selected template id — tags the filename. */
+  /** Selected template id - tags the filename. */
   templateId: string;
   /** Source slug or hex, used for the download filename. */
   name: string;
@@ -53,7 +53,7 @@ function rr(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: n
 /**
  * Draw a generic "three-card" composition tinted by the mock vars. We render a
  * single representative layout (the Cards hero) for every template id so the
- * downloaded image always reads as "this palette, applied" — the on-screen
+ * downloaded image always reads as "this palette, applied" - the on-screen
  * preview remains the source of truth for per-template differences.
  */
 function drawStage(ctx: CanvasRenderingContext2D, vars: MockVars, x: number, y: number, w: number, h: number): void {

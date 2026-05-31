@@ -6,7 +6,7 @@
  * Each variable holds a `valuesByMode` map keyed by mode id, with the
  * value as a hex string the plugin parses to a COLOR variable.
  *
- * Single "Default" mode keeps the import simple — designers can split
+ * Single "Default" mode keeps the import simple - designers can split
  * into light/dark modes after import using Figma's UI.
  */
 

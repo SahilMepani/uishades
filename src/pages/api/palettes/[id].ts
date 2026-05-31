@@ -1,14 +1,14 @@
 /**
- * GET    /api/palettes/[id] — the owner's full palette (colors joined).
- * PATCH  /api/palettes/[id] — rename / re-describe / reorder colors / edit roles.
- * DELETE /api/palettes/[id] — owner-scoped delete.
+ * GET    /api/palettes/[id] - the owner's full palette (colors joined).
+ * PATCH  /api/palettes/[id] - rename / re-describe / reorder colors / edit roles.
+ * DELETE /api/palettes/[id] - owner-scoped delete.
  *
  * All session-gated via `withUser`; every query is owner-scoped, so a user can
  * never read, mutate, or delete another user's palette. Color validation mirrors
  * `src/pages/api/presets.ts` (parseColor + validated copy/view strings).
  *
  * `visibility='private'` is REJECTED in v1 (billing deferred): the request gets
- * a 400 `{ error: 'pro_required' }` placeholder — this is the exact seam where
+ * a 400 `{ error: 'pro_required' }` placeholder - this is the exact seam where
  * the future `isPro` 402 gate lands.
  */
 export const prerender = false;
@@ -36,7 +36,7 @@ export const GET = withUser(async ({ params }, userId) => {
   if (!id) return jsonNoStore({ error: 'bad_request' }, 400);
 
   const palette = await getPaletteWithColors(env.DB, id);
-  // 404 (not 403) when the palette is missing OR not the caller's — don't leak
+  // 404 (not 403) when the palette is missing OR not the caller's - don't leak
   // the existence of another user's palette.
   if (!palette || !(await isOwner(id, userId))) {
     return jsonNoStore({ error: 'not_found' }, 404);
@@ -56,7 +56,7 @@ export const PATCH = withUser(async ({ request, params }, userId) => {
     return jsonNoStore({ error: 'bad_request' }, 400);
   }
 
-  // Private visibility is the future-Pro seam — reject in v1 (billing deferred).
+  // Private visibility is the future-Pro seam - reject in v1 (billing deferred).
   if (data.visibility !== undefined && data.visibility !== 'public') {
     return jsonNoStore({ error: 'pro_required' }, 400);
   }
@@ -111,7 +111,7 @@ export const PATCH = withUser(async ({ request, params }, userId) => {
   }
 
   const updated = await updatePalette(env.DB, userId, id, patch);
-  // NULL when the caller doesn't own a palette with that id — 404, don't leak.
+  // NULL when the caller doesn't own a palette with that id - 404, don't leak.
   if (!updated) return jsonNoStore({ error: 'not_found' }, 404);
 
   return jsonNoStore({ palette: updated });

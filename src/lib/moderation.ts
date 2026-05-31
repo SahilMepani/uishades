@@ -1,12 +1,12 @@
 /**
- * Tiny, conservative server-side profanity guard for *public* strings —
+ * Tiny, conservative server-side profanity guard for *public* strings -
  * palette names and `/u/[handle]` handles/display names. This is intentionally
  * small and obvious, not a comprehensive filter: it catches the unambiguous
  * slurs/obscenities a public, indexable gallery must not surface, while keeping
  * false positives low (the Scunthorpe problem) by matching on a normalized form
  * plus a short list of word-boundary patterns.
  *
- * It is NOT a security control and NOT a substitute for the report/flag path —
+ * It is NOT a security control and NOT a substitute for the report/flag path -
  * it's the cheap front-line check at create/rename time.
  */
 
@@ -36,7 +36,7 @@ export function normalizeForCheck(text: string): string {
 }
 
 /**
- * Short, obvious wordlist. Kept deliberately small — these are the unambiguous
+ * Short, obvious wordlist. Kept deliberately small - these are the unambiguous
  * obscenities/slurs we never want under our domain. Entries are matched as
  * substrings of the normalized (letters-only, de-leeted) text, so a name like
  * "Sh1tStorm" → "shitstorm" still trips "shit". The Scunthorpe-style innocents

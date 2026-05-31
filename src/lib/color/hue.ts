@@ -3,7 +3,7 @@
  *
  * Snaps a color's OKLCH hue to one of 12 ~30° families (buckets 0..11), so a
  * picked filter color and a stored palette color match when they share a family
- * — an indexed integer compare in SQLite instead of per-row ΔE math. Achromatic
+ * - an indexed integer compare in SQLite instead of per-row ΔE math. Achromatic
  * colors (chroma below `ACHROMATIC_CHROMA`) have no meaningful hue and return
  * `null` so grays never match a hue filter (and store as NULL in `hue_bucket`).
  */

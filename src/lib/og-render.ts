@@ -11,7 +11,7 @@
  *
  * Both layouts are emitted as HTML strings (Satori under workers-og parses
  * them), and inherit the existing single-Cache-Control treatment from the
- * landscape endpoint — see the comment in [hex].png.ts for why we set the
+ * landscape endpoint - see the comment in [hex].png.ts for why we set the
  * header after construction rather than in the options.
  */
 import { ImageResponse } from 'workers-og';

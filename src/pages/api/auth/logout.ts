@@ -1,5 +1,5 @@
 /**
- * POST /api/auth/logout — destroy the session and clear its cookie. The island
+ * POST /api/auth/logout - destroy the session and clear its cookie. The island
  * clears its local auth state on success; no redirect needed for the fetch.
  */
 export const prerender = false;

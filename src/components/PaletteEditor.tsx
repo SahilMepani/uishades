@@ -12,7 +12,7 @@ import type {
 import type { CopyFormat, Hex } from '../lib/color/types';
 
 /**
- * PaletteEditor — the owner-only editor island hosted by `/me/palettes/[id]`.
+ * PaletteEditor - the owner-only editor island hosted by `/me/palettes/[id]`.
  *
  * Loads `GET /api/palettes/[id]` (returns `{ palette }`). Surfaces:
  *  - a prominent inline-editable palette NAME (PATCH on blur, ≤60 chars) +
@@ -20,13 +20,13 @@ import type { CopyFormat, Hex } from '../lib/color/types';
  *  - a reorderable list of 2–8 color slots, each opening the shared
  *    `ColorPicker`; add / remove / move-up / move-down; "shuffle roles";
  *  - a `MockPreview` panel fed `{ hex, role }[]`;
- *  - a `ShareRow` (suppressed on `/me/*` by ShareRow's own guard — see note);
+ *  - a `ShareRow` (suppressed on `/me/*` by ShareRow's own guard - see note);
  *  - a Public·Private segmented toggle styled like `AlgorithmToggle`, with
  *    Private INERT in v1 (a small "coming with Pro" caption, no paywall).
  *  - delete.
  *
  * Color edits (add/remove/reorder/recolor/role-shuffle) are persisted by
- * PATCHing the full `colors` array — the server deletes + reinserts and
+ * PATCHing the full `colors` array - the server deletes + reinserts and
  * recomputes hue buckets, per the DB contract.
  *
  * The palette id is read from the path (`/me/palettes/[id]`); the page shell
@@ -111,7 +111,7 @@ function EditorInner() {
         if (okMsg) pushToast(okMsg);
         return true;
       } catch {
-        pushToast("Couldn't save — please try again.");
+        pushToast("Couldn't save - please try again.");
         return false;
       }
     },
@@ -206,7 +206,7 @@ function EditorInner() {
       if (!res.ok) throw new Error();
       window.location.href = '/me/palettes';
     } catch {
-      pushToast("Couldn't delete — please try again.");
+      pushToast("Couldn't delete - please try again.");
     }
   }, [id, pushToast]);
 
@@ -387,7 +387,7 @@ function ColorSlot({
         hex={color.hex}
         onChange={onChange}
         copyFormat={color.copyFormat as CopyFormat}
-        triggerLabel={`Color ${color.hex} — open color picker`}
+        triggerLabel={`Color ${color.hex} - open color picker`}
         className="block h-10 w-10 shrink-0"
       >
         <span
@@ -500,7 +500,7 @@ function VisibilityToggle({ visibility }: { visibility: PaletteVisibility }) {
               type="button"
               aria-pressed={active}
               aria-disabled={inert}
-              // Private is inert in v1 — no onClick wiring, billing deferred.
+              // Private is inert in v1 - no onClick wiring, billing deferred.
               onClick={undefined}
               title={inert ? 'Private palettes come with Pro' : undefined}
               className={[

@@ -1,5 +1,5 @@
 /**
- * GET /api/auth/google — start the Google OAuth redirect flow (with PKCE).
+ * GET /api/auth/google - start the Google OAuth redirect flow (with PKCE).
  * Reached via an <a href> (GET), so the CSP `form-action 'self'` is untouched.
  */
 export const prerender = false;

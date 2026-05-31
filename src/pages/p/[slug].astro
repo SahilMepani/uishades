@@ -1,13 +1,13 @@
 ---
 /**
- * /p/[slug] — the public palette page. The SEO/OG asset for a saved palette.
+ * /p/[slug] - the public palette page. The SEO/OG asset for a saved palette.
  *
  * SSR-only (`prerender = false`). Validates the slug, loads the palette via
  * `getPaletteBySlug` (public & non-flagged only for visitors; the owner may
  * preview their own), and 404s otherwise. Server-renders the swatch strip and
  * the Cards mock as a hero (so logged-out visitors see the palette in context),
  * a ShareRow pointed at `/p/[slug]`, an "Open in tool" / "Save a copy" CTA, and
- * CreativeWork + BreadcrumbList JSON-LD via the `head` — all JSON-LD through
+ * CreativeWork + BreadcrumbList JSON-LD via the `head` - all JSON-LD through
  * `safeJsonForScript()`.
  *
  * Public palettes get the same 30-day edge cache as `/[hex]`; owner-previews of
@@ -43,10 +43,10 @@ if (!palette) {
 
 const isPublic = palette.visibility === 'public' && !palette.flagged;
 
-// Fire-and-forget view bump — never await it into the response path. Use the
+// Fire-and-forget view bump - never await it into the response path. Use the
 // Cloudflare ExecutionContext's `waitUntil` so the write survives the response.
 // In Astro v6 + @astrojs/cloudflare this is `Astro.locals.cfContext`
-// (`Astro.locals.runtime.ctx` was REMOVED — reading it THROWS, which 500'd this
+// (`Astro.locals.runtime.ctx` was REMOVED - reading it THROWS, which 500'd this
 // page for every real palette). Guarded so a missing context stays best-effort.
 if (isPublic) {
   const bump = incrementPaletteView(env.DB, palette.id).catch(() => {});
@@ -66,7 +66,7 @@ const ogImagePin = `https://UIshades.com/og/pin/p/${palette.slug}.png`;
 const creatorName =
   palette.creator.displayName ?? palette.creator.handle ?? 'Anonymous';
 
-const TITLE = `${palette.name} — Color Palette | UIshades.com`;
+const TITLE = `${palette.name} - Color Palette | UIshades.com`;
 const DESCRIPTION = palette.description
   ? palette.description.slice(0, 160)
   : `${palette.name}: a ${palette.colors.length}-color palette with Tailwind & OKLCH-ready exports. Free on UIshades.com.`;
@@ -90,7 +90,7 @@ const paletteJsonLd = {
   '@type': 'CreativeWork',
   '@id': `${canonicalUrl}#palette`,
   name: palette.name,
-  headline: `${palette.name} — Color Palette`,
+  headline: `${palette.name} - Color Palette`,
   description: DESCRIPTION,
   datePublished: new Date(palette.createdAt).toISOString(),
   dateModified: new Date(palette.updatedAt).toISOString(),
@@ -179,7 +179,7 @@ if (!isPublic) {
         )}
       </div>
 
-      {/* Swatch strip — inline-style fills (theme-toggle-safe). */}
+      {/* Swatch strip - inline-style fills (theme-toggle-safe). */}
       <ul class="mt-8 flex flex-wrap gap-3">
         {palette.colors.map((c) => (
           <li class="flex flex-col gap-1.5">
@@ -195,7 +195,7 @@ if (!isPublic) {
         ))}
       </ul>
 
-      {/* Cards mock hero — the palette applied to a real surface (SSR, no client JS). */}
+      {/* Cards mock hero - the palette applied to a real surface (SSR, no client JS). */}
       <section class="mt-12">
         <span class="eyebrow">In context</span>
         <div class="mt-3 overflow-hidden rounded-md border border-hairline" style={{ aspectRatio: '16 / 9' }}>
@@ -225,7 +225,7 @@ if (!isPublic) {
           client:load
           hex={firstHex}
           shareUrl={canonicalUrl}
-          title={`${palette.name} — a color palette on UIshades.com`}
+          title={`${palette.name} - a color palette on UIshades.com`}
           pinMedia={ogImagePin}
         />
       </section>

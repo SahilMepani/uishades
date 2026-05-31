@@ -1,5 +1,5 @@
 /**
- * DELETE /api/presets/[id] — delete one of the signed-in user's presets.
+ * DELETE /api/presets/[id] - delete one of the signed-in user's presets.
  * Session-gated via `withUser`; the delete is scoped `WHERE id = ? AND
  * user_id = ?`, so a user can never delete another user's preset.
  */

@@ -23,7 +23,7 @@ export function generateToken(): string {
   return toHex(bytes);
 }
 
-/** sha256 of the raw token, hex-encoded — what we store and look up by. */
+/** sha256 of the raw token, hex-encoded - what we store and look up by. */
 export async function hashToken(raw: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
   return toHex(new Uint8Array(digest));

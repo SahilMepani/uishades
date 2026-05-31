@@ -1,7 +1,7 @@
 /**
  * D1 data access for auth + presets. Every function takes the `DB` binding as
  * its first argument (dependency injection) so the logic is unit-testable with
- * a mocked D1 — this module never imports `cloudflare:workers`.
+ * a mocked D1 - this module never imports `cloudflare:workers`.
  *
  * `findOrCreateUserByEmail` is the account-linking rule: a *verified* email is
  * the single identity key across Google, GitHub, and magic link. Callers MUST
@@ -89,7 +89,7 @@ async function createUser(db: D1Database, input: NewUser): Promise<User> {
     displayName: null,
   };
   // `plan`/`plan_until`/`handle`/`display_name` fall to their migration defaults
-  // (free / NULL) — only the original five columns are written here.
+  // (free / NULL) - only the original five columns are written here.
   await db
     .prepare('INSERT INTO users (id, email, name, avatar_url, created_at) VALUES (?, ?, ?, ?, ?)')
     .bind(user.id, user.email, user.name, user.avatarUrl, user.createdAt)
@@ -111,7 +111,7 @@ export async function findOrCreateUserByEmail(db: D1Database, input: NewUser): P
     // If this was the UNIQUE(email) insert race, the winner is now selectable.
     const raced = await findUserByEmail(db, input.email);
     if (raced) return raced;
-    // Otherwise it was a genuine failure (transient write error, etc.) — surface
+    // Otherwise it was a genuine failure (transient write error, etc.) - surface
     // the real cause instead of masking it behind a generic message.
     throw err;
   }
@@ -155,7 +155,7 @@ export async function findUserIdByOAuthAccount(
  * the provider's stable account id first, so a later change to their provider
  * email keeps them on the same account (with its presets) instead of stranding
  * it. Only a brand-new provider account falls through to the verified-email
- * linking key — which is what lets a second provider attach to an existing
+ * linking key - which is what lets a second provider attach to an existing
  * same-email account (the documented cross-provider model).
  */
 export async function resolveOAuthUser(
@@ -191,7 +191,7 @@ export async function deleteMagicToken(db: D1Database, tokenHash: string): Promi
 }
 
 /**
- * Look up a token WITHOUT consuming it — for the GET confirm step, which must be
+ * Look up a token WITHOUT consuming it - for the GET confirm step, which must be
  * safe to hit repeatedly (email scanners/prefetchers issue a GET on delivery).
  * Returns the email only if the token exists and hasn't expired.
  */
@@ -208,7 +208,7 @@ export async function peekMagicToken(db: D1Database, tokenHash: string): Promise
 /**
  * Single-use consume: atomically delete the row and return what was deleted.
  * `DELETE ... RETURNING` is one statement, so two concurrent consumes of the
- * same token can't both observe it — enforcing single-use even under a race.
+ * same token can't both observe it - enforcing single-use even under a race.
  * Return the email only if the row existed and hadn't expired.
  */
 export async function consumeMagicToken(db: D1Database, tokenHash: string): Promise<string | null> {
@@ -318,7 +318,7 @@ export async function createPreset(
   return { id, ...input };
 }
 
-/** Scoped delete — a user can only delete their own presets. */
+/** Scoped delete - a user can only delete their own presets. */
 export async function deletePreset(db: D1Database, userId: string, id: string): Promise<boolean> {
   const res = await db
     .prepare('DELETE FROM presets WHERE id = ? AND user_id = ?')
@@ -360,7 +360,7 @@ export async function setUserHandle(
       .run();
     return (res.meta?.changes ?? 0) > 0;
   } catch {
-    // UNIQUE(handle) violation — the handle is taken by someone else.
+    // UNIQUE(handle) violation - the handle is taken by someone else.
     return false;
   }
 }
@@ -601,7 +601,7 @@ export async function getPaletteWithColors(db: D1Database, id: string): Promise<
 }
 
 /**
- * A full palette by its stable public slug — returned only if the palette is
+ * A full palette by its stable public slug - returned only if the palette is
  * `public` (and not flagged) OR the caller is its owner. Pass `viewerId` to
  * grant owner access; omit it for anonymous public reads. NULL otherwise.
  */
@@ -630,8 +630,8 @@ export interface PalettePatch {
 }
 
 /**
- * Owner-scoped update. Renames / re-describes / re-tags, and — when `colors` is
- * supplied — replaces the full color set (delete-then-insert, recomputing each
+ * Owner-scoped update. Renames / re-describes / re-tags, and - when `colors` is
+ * supplied - replaces the full color set (delete-then-insert, recomputing each
  * `hue_bucket` and re-defaulting roles by position). All writes run in one
  * `db.batch`. Returns the refreshed palette, or NULL if the caller doesn't own
  * a palette with that id. `updated_at` is bumped on every successful patch.
@@ -755,7 +755,7 @@ export type ExploreSort = 'top' | 'new' | 'trending' | 'featured';
 /**
  * The `uishades` house account that owns every seeded/curated palette (see
  * `scripts/seed-explore-demo.mjs` and `scripts/seed-featured.mjs`). The public
- * `/explore` gallery shows ONLY palettes owned by this account — user-created
+ * `/explore` gallery shows ONLY palettes owned by this account - user-created
  * palettes never surface there. Keep this in sync with the seeders' `OWNER_ID`.
  */
 export const SEED_OWNER_ID = 'seed00000-0000-4000-8000-000000000001';
@@ -771,8 +771,8 @@ export interface ListPublicOptions {
 
 /**
  * Opaque keyset cursor. It carries the tuple of the *last row of the previous
- * page* in the active sort's ordering, plus the `sort` it was minted for and —
- * for the time-sensitive `trending` sort — the reference `now` so every page of
+ * page* in the active sort's ordering, plus the `sort` it was minted for and -
+ * for the time-sensitive `trending` sort - the reference `now` so every page of
  * a paginated session ranks against the same clock (otherwise the decayed score
  * would drift between requests and rows could repeat or vanish).
  *
@@ -782,7 +782,7 @@ export interface ListPublicOptions {
  *   - featured: { s:'featured', fa, id }
  *   - trending: { s:'trending', score, ca, id, now }
  *
- * Encoded as base64url(JSON). It is NOT signed — it only encodes public sort
+ * Encoded as base64url(JSON). It is NOT signed - it only encodes public sort
  * positions, so tampering at worst returns a differently-positioned public page.
  */
 interface NewCursor {
@@ -856,7 +856,7 @@ export async function listPublicPalettes(
   const limit = Math.min(Math.max(opts.limit ?? 20, 1), 60);
   const sort: ExploreSort = opts.sort ?? 'top';
   // Only seeded/curated palettes (owned by the house account) appear on
-  // /explore — user-created palettes are never listed in the public gallery.
+  // /explore - user-created palettes are never listed in the public gallery.
   const where: string[] = [
     "p.visibility = 'public'",
     'p.flagged = 0',
@@ -991,7 +991,7 @@ function cursorForRow(sort: ExploreSort, row: PaletteRow, trendingNow: number): 
 /**
  * Build card summaries for a set of palette rows: attaches the swatch hexes and,
  * when `viewerId` is set, the per-palette `votedByMe` flag (one extra query for
- * the viewer's votes among these palettes — avoids an N+1).
+ * the viewer's votes among these palettes - avoids an N+1).
  */
 async function summarize(
   db: D1Database,
@@ -1077,7 +1077,7 @@ export async function listLikedPalettesByUser(
 /**
  * Cast one upvote. The `palette_votes` PK makes a double-vote a no-op, so the
  * `vote_count` bump is conditioned on the insert actually creating a row
- * (`changes()` from the just-run INSERT) — both statements run in one
+ * (`changes()` from the just-run INSERT) - both statements run in one
  * `db.batch` for atomicity. Returns the resulting `{ voteCount, votedByMe }`.
  */
 export async function votePalette(
@@ -1092,7 +1092,7 @@ export async function votePalette(
          ON CONFLICT (palette_id, user_id) DO NOTHING`,
       )
       .bind(paletteId, userId, Date.now()),
-    // Only bump when this user has no prior vote counted — derive the count from
+    // Only bump when this user has no prior vote counted - derive the count from
     // the authoritative votes table so a replayed call can't double-count.
     db
       .prepare(
@@ -1145,7 +1145,7 @@ async function readVoteState(
 /**
  * One-time, non-destructive migration: copy every legacy `presets` row into a
  * 1-color **private** palette (so no saved work leaks public), skipping presets
- * already backfilled. Callable from a script — it performs NO deletes; the
+ * already backfilled. Callable from a script - it performs NO deletes; the
  * `presets` table is left intact as read-only-legacy. Returns the number of
  * palettes created.
  *
@@ -1203,7 +1203,7 @@ export async function backfillPresetsToPalettes(db: D1Database): Promise<number>
   return created;
 }
 
-/** Lowercase, hyphenate, strip non-alphanumerics — the slug stem. */
+/** Lowercase, hyphenate, strip non-alphanumerics - the slug stem. */
 function kebab(name: string): string {
   const stem = name
     .toLowerCase()

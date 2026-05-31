@@ -25,8 +25,8 @@ export function contrastRatio(a: Hex, b: Hex): number {
  *
  * When `isLargeText` is true the thresholds drop one tier (large text needs
  * only 3:1 for AA, 4.5:1 for AAA). When false (default, normal-size text)
- * a ratio in [3, 4.5) is reported as `AA-Lg` — i.e., would pass AA only
- * if rendered as large text — to surface the limitation in the UI.
+ * a ratio in [3, 4.5) is reported as `AA-Lg` - i.e., would pass AA only
+ * if rendered as large text - to surface the limitation in the UI.
  */
 export function wcagLevel(ratio: number, isLargeText = false): WcagLevel {
   if (isLargeText) {

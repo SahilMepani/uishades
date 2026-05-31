@@ -1,6 +1,6 @@
 ---
 /**
- * ThemeToggle — header light/dark switch.
+ * ThemeToggle - header light/dark switch.
  *
  * A segmented pill (sun = light, moon = dark) mirroring the tool's
  * Algorithm/Copy toggles: both icons are always visible and a sliding
@@ -14,7 +14,7 @@
  *     affordance even before the wiring script below runs.
  *   - This component's script handles the click: set the chosen theme,
  *     persist to localStorage, and keep the aria state in sync. It's a
- *     processed (not inline) script, so Astro bundles + dedupes it — it runs
+ *     processed (not inline) script, so Astro bundles + dedupes it - it runs
  *     once for the page regardless of how many headers render it.
  */
 ---
@@ -24,7 +24,7 @@
   aria-label="Color theme"
   class="relative inline-grid grid-cols-2 rounded-full bg-paper-2 p-0.5 ring-1 ring-ink/10"
 >
-  {/* Sliding indicator — left for light (sun), right for dark (moon). */}
+  {/* Sliding indicator - left for light (sun), right for dark (moon). */}
   <span
     data-theme-indicator
     aria-hidden="true"

@@ -29,7 +29,7 @@ export interface ShadeRowProps {
    * The user-selected source color. Each non-source row renders this in a
    * 20%-wide band on its left edge so users can compare the row's
    * tint/shade against the source side-by-side. The source row itself
-   * (shade.isInput) skips the band — splitting source-against-source would
+   * (shade.isInput) skips the band - splitting source-against-source would
    * just look like a solid row.
    */
   sourceHex: Hex;
@@ -69,7 +69,7 @@ export default function ShadeRow({
 
   // What the row actually shows. Mirrors the user's "Copy as" preference so
   // the displayed value matches what the click puts on the clipboard.
-  // `cssVar` / `tailwindClass` need a stop to be meaningful — in the
+  // `cssVar` / `tailwindClass` need a stop to be meaningful - in the
   // continuous ramp (no stops) we fall back to hex so the column isn't a
   // wall of identical labels.
   const displayValue = useMemo(() => {
@@ -83,7 +83,7 @@ export default function ShadeRow({
 
   const { pushToast } = useToast();
 
-  // Feature-detect clipboard availability after hydration. SSR can't tell —
+  // Feature-detect clipboard availability after hydration. SSR can't tell -
   // `navigator` is undefined and the secure-context rule is browser-specific
   // anyway. Default to `true` so SSR + first paint match, then flip to
   // `false` once we know better. When unavailable we hide the copy icon and
@@ -122,13 +122,13 @@ export default function ShadeRow({
       !navigator.clipboard ||
       typeof navigator.clipboard.writeText !== 'function'
     ) {
-      pushToast("Couldn't copy — clipboard is unavailable in this browser.");
+      pushToast("Couldn't copy - clipboard is unavailable in this browser.");
       return;
     }
     navigator.clipboard.writeText(text).then(
       () => {
         // Only fire the success toast (and notify the parent) after the
-        // write actually resolved — otherwise the user sees "Copied" but
+        // write actually resolved - otherwise the user sees "Copied" but
         // nothing's on their clipboard. The parent's onCopy callback is
         // still useful as a "row was successfully copied" signal.
         pushToast('Copied');
@@ -138,7 +138,7 @@ export default function ShadeRow({
       () => {
         // Common rejection causes: insecure (HTTP) context, document not
         // focused, denied permission (Safari private, sandboxed iframes).
-        pushToast("Couldn't copy — check browser permissions.");
+        pushToast("Couldn't copy - check browser permissions.");
       },
     );
   }, [shade.hex, shade.stop, copyFormat, brandName, onCopy, pushToast]);
@@ -150,14 +150,14 @@ export default function ShadeRow({
       // guard we'd copy twice (and, for modifier-clicks, open two tabs) before
       // dblclick runs. Must come before the modifier branch below.
       if (e.detail > 1) return;
-      // Modifier-click opens the shade's own page in a new tab — parity with
+      // Modifier-click opens the shade's own page in a new tab - parity with
       // the old per-row anchor's cmd/ctrl-click behavior now that the visible
       // "use as source" icon is hidden in every view.
       if (e.metaKey || e.ctrlKey) {
         window.open(navHref, '_blank', 'noopener,noreferrer');
         return;
       }
-      // Without clipboard the row needs *some* affordance — fall the click
+      // Without clipboard the row needs *some* affordance - fall the click
       // back to navigation so it isn't a dead element.
       if (!canCopy) {
         onNavigate(shade.hex);
@@ -208,7 +208,7 @@ export default function ShadeRow({
   );
 
   // WCAG 2.5.3 (Label in Name) requires the accessible name to start with
-  // the visible label text — formatted value + (optional) stop + (optional) "source".
+  // the visible label text - formatted value + (optional) stop + (optional) "source".
   const visibleLabel = [
     displayValue,
     shade.stop !== undefined ? String(shade.stop) : '',
@@ -250,12 +250,12 @@ export default function ShadeRow({
         'cursor-pointer select-none',
         'motion-safe:transition-[box-shadow,transform] motion-safe:duration-150 motion-safe:ease-out',
         // A persistent transparent ring keeps `box-shadow` declared at rest so
-        // the hover/focus ring fades its color in and out instead of snapping —
+        // the hover/focus ring fades its color in and out instead of snapping -
         // box-shadow can't transition from `none`.
         'ring-2 ring-transparent',
         'focus-visible:outline-none focus-visible:ring-current focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
         // Hover ring follows the page theme, not the swatch: `ring-ink` is the
-        // `--color-ink` token — near-black in light mode, near-white in dark.
+        // `--color-ink` token - near-black in light mode, near-white in dark.
         'hover:z-20 hover:ring-ink',
         // Source row sits above its neighbors. The visual horizontal
         // overflow is drawn by two absolute spans inside the row (below)
@@ -324,7 +324,7 @@ export default function ShadeRow({
           icon so a slow cursor never crosses an unhovered region (which
           would otherwise trigger a brief fade-out / fade-in cycle on the
           icon and the "Click to copy" badge). Hidden in lockstep with the
-          icon below — the "use as source" icon is currently display:none in
+          icon below - the "use as source" icon is currently display:none in
           every view, so the bridge stays hidden too. */}
       <span
         aria-hidden="true"
@@ -337,7 +337,7 @@ export default function ShadeRow({
         onClick={(e) => {
           e.stopPropagation();
           // Let the browser handle modifier/middle-click so cmd/ctrl-click
-          // still opens the shade in a new tab — see the file's behavior
+          // still opens the shade in a new tab - see the file's behavior
           // contract above. Plain left-click stays on the page and lets
           // the parent swap the hex in place.
           if (
@@ -362,7 +362,7 @@ export default function ShadeRow({
           'text-ink/60 transition-colors duration-200 ease-out hover:border-ink/20 hover:text-ink hover:bg-paper-2',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
           // Fade in only when the row (or anything in the group wrapper) is
-          // hovered/focused — mirrors the "Click to copy" badge behavior.
+          // hovered/focused - mirrors the "Click to copy" badge behavior.
           'pointer-fine-hide',
         ].join(' ')}
       >

@@ -9,7 +9,7 @@ import ShadeRow from './ShadeRow';
 
 // The export-dropdown UI plus its five export-format serializers are the
 // heaviest leaf of the React island. Now that the Tailwind scale is the
-// default view, its grid is shipped eagerly and server-rendered — but the
+// default view, its grid is shipped eagerly and server-rendered - but the
 // export panel stays split into its own chunk and loads after hydration
 // behind the small, height-stable fallback below. Keeping the boundary here
 // (rather than around all of `TailwindScale`) means the SSR'd HTML carries
@@ -24,7 +24,7 @@ const ExportDropdown = lazy(() => import('./ExportDropdown'));
 
 export interface TailwindScaleProps {
   scale: TailwindScaleData;
-  /** Pinned source hex — every non-anchor row renders this in a 20% band. */
+  /** Pinned source hex - every non-anchor row renders this in a 20% band. */
   sourceHex: Hex;
   copyFormat: CopyFormat;
   exportFormat: ExportFormat;

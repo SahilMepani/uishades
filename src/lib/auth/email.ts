@@ -6,7 +6,7 @@
  * this module stays free of any `cloudflare:workers` import and is testable.
  *
  * Note: Cloudflare's `send_email` binding only delivers to verified Email
- * Routing destinations, so it can't send magic links to arbitrary users — an
+ * Routing destinations, so it can't send magic links to arbitrary users - an
  * external provider is required.
  */
 
@@ -15,7 +15,7 @@ import { escapeHtml } from './http';
 const BREVO_ENDPOINT = 'https://api.brevo.com/v3/smtp/email';
 // Must match the verified Brevo sender / authenticated domain EXACTLY. Brevo's
 // API does a case-sensitive match on this string, and the verified sender is
-// `login@uishades.com` (lowercase) — capitalizing the domain gets the send
+// `login@uishades.com` (lowercase) - capitalizing the domain gets the send
 // accepted (2xx) but asynchronously rejected ("sender is not valid").
 const DEFAULT_FROM_EMAIL = 'login@uishades.com';
 const DEFAULT_FROM_NAME = 'uiShades';
@@ -81,7 +81,7 @@ export interface SendFeedbackInput {
   to: string;
   /** Submitter-supplied display name. */
   name: string;
-  /** Submitter's email — used as Reply-To so the owner can just hit reply. */
+  /** Submitter's email - used as Reply-To so the owner can just hit reply. */
   fromUserEmail: string;
   /** Submitter's message body. */
   message: string;

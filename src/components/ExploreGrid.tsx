@@ -3,7 +3,7 @@ import PaletteCard from './PaletteCard';
 import type { ExploreResponse, PaletteSummary } from '../lib/auth/types';
 
 /**
- * ExploreGrid — the `/explore` gallery island, hosted by `explore/index.astro`.
+ * ExploreGrid - the `/explore` gallery island, hosted by `explore/index.astro`.
  *
  * A filter/sort bar (Top / New / Trending / Featured segmented control + tag
  * chips + a compact color input bound to `?color=`) above a responsive grid of
@@ -16,15 +16,15 @@ import type { ExploreResponse, PaletteSummary } from '../lib/auth/types';
  * user changes a filter or hits "Load more".
  *
  * URL-sync: sort/tag/color are mirrored into the query string via
- * `history.replaceState` (matching the app's existing URL-state style — same
+ * `history.replaceState` (matching the app's existing URL-state style - same
  * mechanism `ShadeTool` uses for `?view=`/`?copy=`), so the current view is
  * shareable/bookmarkable. The opaque `cursor` is intentionally NOT put in the
- * URL — it's a pagination detail, not view state.
+ * URL - it's a pagination detail, not view state.
  *
  * The cursor token is round-tripped verbatim: we pass `nextCursor` straight back
  * as `?cursor=` and stop when the API returns `null`. Per the Foundation
  * contract, a cursor minted for a different sort is ignored server-side, so a
- * sort switch resets pagination cleanly — we just drop our local cursor on any
+ * sort switch resets pagination cleanly - we just drop our local cursor on any
  * filter change.
  */
 
@@ -80,7 +80,7 @@ export default function ExploreGrid({
     [sort, tag, color],
   );
 
-  // Mirror filter state into the URL (no cursor — that's pagination, not view).
+  // Mirror filter state into the URL (no cursor - that's pagination, not view).
   useEffect(() => {
     const params = buildParams();
     const qs = params.toString();

@@ -1,6 +1,6 @@
 ---
 /**
- * /explore — the public palette gallery index.
+ * /explore - the public palette gallery index.
  *
  * SSR-only (`prerender = false`). Server-renders the DEFAULT sort (`top`) first
  * page via `listPublicPalettes` for SEO/first-paint, then hands that
@@ -26,14 +26,14 @@ import { listPublicPalettes } from '../../lib/auth/db';
 const canonicalUrl = 'https://UIshades.com/explore';
 const TITLE = 'Explore Color Palettes | UIshades.com';
 const DESCRIPTION =
-  'Browse public color palettes from the UIshades community. Sort by top, new, or trending, filter by color and tag, and open any palette with Tailwind & OKLCH-ready exports — free and ad-free.';
+  'Browse public color palettes from the UIshades community. Sort by top, new, or trending, filter by color and tag, and open any palette with Tailwind & OKLCH-ready exports - free and ad-free.';
 const ogImage = 'https://UIshades.com/og/4040ff.png';
 
 // SSR the default-sort first page for SEO. No viewerId here (anonymous,
 // cacheable body); the island re-fetches the signed-in view on hydration.
 const initialData = await listPublicPalettes(env.DB, { sort: 'top' });
 
-// Short edge TTL — the gallery changes as palettes are created/voted, but a
+// Short edge TTL - the gallery changes as palettes are created/voted, but a
 // minute of staleness at the edge is fine and keeps it fast under load.
 Astro.response.headers.set(
   'Cache-Control',

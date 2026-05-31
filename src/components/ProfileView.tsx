@@ -2,15 +2,15 @@ import PaletteCard from './PaletteCard';
 import type { PublicProfile } from '../lib/auth/types';
 
 /**
- * ProfileView — the public `/u/[handle]` profile, hosted by `u/[handle].astro`.
+ * ProfileView - the public `/u/[handle]` profile, hosted by `u/[handle].astro`.
  *
  * Presentational, fed entirely by a `PublicProfile` (avatar + display name +
  * handle + that user's PUBLIC, non-flagged palettes). It NEVER receives or
- * renders an email — `PublicProfile` carries no email field by construction.
+ * renders an email - `PublicProfile` carries no email field by construction.
  *
  * Each palette renders through the shared `PaletteCard`, linking to `/p/[slug]`.
- * The creator line is suppressed here (`showCreator={false}`) — every card on
- * this page is by the same person whose profile you're already viewing — while
+ * The creator line is suppressed here (`showCreator={false}`) - every card on
+ * this page is by the same person whose profile you're already viewing - while
  * the upvote control stays on so visitors can vote (signed-out clicks open the
  * sign-in modal, a signup nudge).
  */

@@ -1,11 +1,11 @@
 /**
- * POST /api/me/handle — set (or update) the signed-in user's public handle +
+ * POST /api/me/handle - set (or update) the signed-in user's public handle +
  * display name. Session-gated via `withUser`.
  *
  * The handle is the public URL key for `/u/[handle]` (Phase 2 surfaces it; the
  * endpoint ships now). Validated `^[a-z0-9_-]{3,30}$`; uniqueness is enforced by
  * the `idx_users_handle` UNIQUE index, which `setUserHandle` catches and surfaces
- * as `false` — the same race-safe pattern `findOrCreateUserByEmail` uses for the
+ * as `false` - the same race-safe pattern `findOrCreateUserByEmail` uses for the
  * UNIQUE(email) constraint. A taken handle returns 409.
  */
 export const prerender = false;
@@ -35,13 +35,13 @@ export const POST = withUser(async ({ request }, userId) => {
     data.displayName === undefined || data.displayName === null
       ? null
       : String(data.displayName).trim().slice(0, 60) || null;
-  // Both handle and display name appear publicly under our domain — guard both.
+  // Both handle and display name appear publicly under our domain - guard both.
   if (displayName && isProfane(displayName)) {
     return jsonNoStore({ error: 'invalid_name' }, 400);
   }
 
   // `setUserHandle` returns false on a UNIQUE(handle) collision (taken by
-  // someone else) — but also when the UPDATE matched the row yet changed nothing
+  // someone else) - but also when the UPDATE matched the row yet changed nothing
   // (re-submitting the exact same handle+displayName). Disambiguate by reading
   // back the user: if they now own this handle it's a no-op success, otherwise
   // the handle is genuinely taken → 409.

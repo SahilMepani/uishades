@@ -1,11 +1,11 @@
 /**
- * GET  /api/palettes → { palettes[] } — the signed-in user's palette summaries.
+ * GET  /api/palettes → { palettes[] } - the signed-in user's palette summaries.
  * POST /api/palettes → create a palette, returns { palette }.
  *
  * Both session-gated via `withUser` (401 if logged out); all queries scoped to
  * the user. Validation mirrors `src/pages/api/presets.ts` exactly: `parseColor`
  * is the single entry point for raw hex, and the validated copy/view STRINGS are
- * stored (never the raw value — a crafted array like ["hex"] stringifies to
+ * stored (never the raw value - a crafted array like ["hex"] stringifies to
  * "hex" and would otherwise reach D1's .bind() as an array and throw).
  */
 export const prerender = false;
@@ -95,7 +95,7 @@ export const POST = withUser(async ({ request }, userId) => {
   return jsonNoStore({ palette }, 201);
 });
 
-/** Lowercase, hyphenate, strip non-alphanumerics — the slug stem. */
+/** Lowercase, hyphenate, strip non-alphanumerics - the slug stem. */
 function kebab(name: string): string {
   const stem = name
     .toLowerCase()

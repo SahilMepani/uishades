@@ -12,7 +12,7 @@ compatibility_flags = ["nodejs_compat"]
 # dist/server/wrangler.json at build, and `platformProxy` (astro.config.mjs)
 # reads it for local `astro dev`. Create the DB with `wrangler d1 create
 # uishades` and paste the returned id below.
-# The SESSION KV binding is NOT declared here on purpose — the adapter wires it
+# The SESSION KV binding is NOT declared here on purpose - the adapter wires it
 # automatically and Wrangler auto-provisions it on deploy.
 [[d1_databases]]
 binding = "DB"

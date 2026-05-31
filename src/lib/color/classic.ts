@@ -12,14 +12,14 @@
  * the composed ramp drops those literal endpoints so the lightest/darkest
  * displayed stops are the next-to-extreme RGB values rather than pure white
  * and black. When the input itself is `#ffffff` or `#000000`, it is preserved
- * as an interior shade — only the dedicated endpoints are removed.
+ * as an interior shade - only the dedicated endpoints are removed.
  *
  * Concretely the rule we implement (and which matches the reference list
  * verbatim, minus endpoints) is:
  *
  *  Lighter walk:
  *    Each step, increment every channel whose value is currently below 255
- *    by 17. Cap at 255 (any overshoot is discarded — no carry). Stop when
+ *    by 17. Cap at 255 (any overshoot is discarded - no carry). Stop when
  *    all three channels are 255, then drop that final `#ffffff` step.
  *
  *  Darker walk:
@@ -163,7 +163,7 @@ export function classicRamp(input: Hex): ContinuousRamp {
 
   // Drop the pure-white tail of lighterWalk and the pure-black tail of
   // darkerWalk. Each walk produces steps strictly outside the input, so
-  // these tails are never the input itself — safe to pop unconditionally
+  // these tails are never the input itself - safe to pop unconditionally
   // when present.
   if (lighterStrict.length > 0) lighterStrict.pop();
   if (darkerStrict.length > 0) darkerStrict.pop();
@@ -174,7 +174,7 @@ export function classicRamp(input: Hex): ContinuousRamp {
 
   const rgbList: RGB[] = [...lighter, inputRgb, ...darkerStrict];
 
-  // Deduplicate adjacent equal entries — defensive against any pathological
+  // Deduplicate adjacent equal entries - defensive against any pathological
   // case where a walk step lands precisely on the input value.
   const deduped: RGB[] = [];
   for (const c of rgbList) {

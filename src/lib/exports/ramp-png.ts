@@ -1,15 +1,15 @@
 /**
  * Client-side PNG export of a shade ramp or Tailwind scale.
  *
- * Draws the palette as a stack of full-width colour bands — one per shade,
- * lightest → darkest, mirroring the on-screen order — each labelled with its
+ * Draws the palette as a stack of full-width colour bands - one per shade,
+ * lightest → darkest, mirroring the on-screen order - each labelled with its
  * hex value (and its Tailwind stop, when present) in a contrast-appropriate
  * ink, the source/anchor shade marked with a SOURCE badge, and a centred
  * "UIshades.com" footer wordmark.
  *
  * This module is deliberately imported *lazily* from the React island (via a
  * dynamic `import()` inside the download click handler) so the canvas-drawing
- * code never lands in the eager continuous-ramp chunk — only on-click, when
+ * code never lands in the eager continuous-ramp chunk - only on-click, when
  * a PNG is actually being produced. Keep it free of static imports from any
  * eager-path module.
  *
@@ -39,13 +39,13 @@ const SANS = "'Geist', system-ui, -apple-system, Segoe UI, sans-serif";
 export interface RampPngOptions {
   /** Shades to draw, in display order (lightest → darkest). */
   shades: Shade[];
-  /** The pinned source hex — used for the download filename. */
+  /** The pinned source hex - used for the download filename. */
   sourceHex: Hex;
   /** Filename suffix tagging the palette kind, e.g. 'oklch' | 'classic' | 'scale'. */
   variant: string;
 }
 
-/** Foreground ink that reads best over `hex` — matches ShadeRow's rule. */
+/** Foreground ink that reads best over `hex` - matches ShadeRow's rule. */
 function pickForeground(hex: Hex): string {
   return contrastRatio(hex, WHITE) >= contrastRatio(hex, BLACK) ? WHITE : BLACK;
 }

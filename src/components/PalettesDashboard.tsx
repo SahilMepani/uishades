@@ -5,13 +5,13 @@ import HandlePrompt from './HandlePrompt';
 import type { MeResponse, PaletteSummary } from '../lib/auth/types';
 
 /**
- * PalettesDashboard — the signed-in user's private workspace island, hosted by
+ * PalettesDashboard - the signed-in user's private workspace island, hosted by
  * `/me/palettes`.
  *
  * Fetches `GET /api/palettes` (a `PaletteSummary[]`) on mount and lays the
  * results out in a calm grid (max 3 columns, generous whitespace). Anti-
  * overwhelm rule: every per-item verb collapses into a single `…` overflow
- * menu — Open editor (`/me/palettes/[id]`), Copy share link (`/p/[slug]`),
+ * menu - Open editor (`/me/palettes/[id]`), Copy share link (`/p/[slug]`),
  * Duplicate, Delete (`DELETE /api/palettes/[id]`).
  *
  * A top "New palette" button routes to `/` (the free tool is the on-ramp;
@@ -72,7 +72,7 @@ function DashboardInner() {
     fetch('/api/palettes', { credentials: 'same-origin' })
       .then((r) => {
         if (r.status === 401) {
-          // Logged out — the page shell should have redirected, but bail safe.
+          // Logged out - the page shell should have redirected, but bail safe.
           window.location.href = '/';
           return null;
         }
@@ -90,8 +90,8 @@ function DashboardInner() {
     };
   }, []);
 
-  // Liked palettes are fetched lazily — only the first time the Liked tab is
-  // activated — and cached thereafter (re-clicking the tab won't refetch).
+  // Liked palettes are fetched lazily - only the first time the Liked tab is
+  // activated - and cached thereafter (re-clicking the tab won't refetch).
   useEffect(() => {
     if (tab !== 'liked' || likedRequested.current) return;
     likedRequested.current = true;
@@ -130,7 +130,7 @@ function DashboardInner() {
         pushToast('Palette deleted');
       } catch {
         setPalettes(prev);
-        pushToast("Couldn't delete — please try again.");
+        pushToast("Couldn't delete - please try again.");
       }
     },
     [palettes, pushToast],
@@ -170,7 +170,7 @@ function DashboardInner() {
         setPalettes((list) => (list ? [made, ...list] : [made]));
         pushToast('Palette duplicated');
       } catch {
-        pushToast("Couldn't duplicate — please try again.");
+        pushToast("Couldn't duplicate - please try again.");
       }
     },
     [pushToast],
@@ -180,12 +180,12 @@ function DashboardInner() {
     (slug: string) => {
       const url = `${window.location.origin}/p/${slug}`;
       if (!navigator.clipboard?.writeText) {
-        pushToast("Couldn't copy — clipboard is unavailable.");
+        pushToast("Couldn't copy - clipboard is unavailable.");
         return;
       }
       navigator.clipboard.writeText(url).then(
         () => pushToast('Share link copied'),
-        () => pushToast("Couldn't copy — check browser permissions."),
+        () => pushToast("Couldn't copy - check browser permissions."),
       );
     },
     [pushToast],

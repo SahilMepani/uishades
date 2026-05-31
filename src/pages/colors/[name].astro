@@ -1,6 +1,6 @@
 ---
 /**
- * /colors/[name] — named-color landing pages, pre-rendered.
+ * /colors/[name] - named-color landing pages, pre-rendered.
  *
  * Editorial layout: the blurb is the body copy of a magazine feature; the
  * embedded ShadeTool is the "data sheet"; the complementary/triadic
@@ -72,7 +72,7 @@ function buildDescription(blurb: string): string {
   }
   if (out) return out;
   // Edge case: the first sentence alone is already >160 chars. Fall back
-  // to word-boundary truncation with an ellipsis — ugly, but only reached
+  // to word-boundary truncation with an ellipsis - ugly, but only reached
   // by unusually long opening sentences in named-color blurbs.
   const trimmed = clean.slice(0, 157);
   const lastSpace = trimmed.lastIndexOf(' ');
@@ -109,7 +109,7 @@ const colorPageJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'CreativeWork',
   '@id': `${canonicalUrl}#article`,
-  headline: `${color.name} (${color.hex.toUpperCase()}) — Tints, Shades & Palette`,
+  headline: `${color.name} (${color.hex.toUpperCase()}) - Tints, Shades & Palette`,
   name: color.name,
   alternateName: color.aliases && color.aliases.length > 0 ? color.aliases : undefined,
   description: plainBlurb,
@@ -171,7 +171,7 @@ const faq = [
   },
   {
     q: `What are the tints and shades of ${color.name}?`,
-    a: `uishades builds a 20-step OKLCH ramp for ${color.name} (${HEXU}) — its lightest tints through its darkest shades — plus an 11-stop Tailwind scale (50–950). Lightness steps stay evenly spaced and the hue stays stable, so the mid-tones don't go muddy.`,
+    a: `uishades builds a 20-step OKLCH ramp for ${color.name} (${HEXU}) - its lightest tints through its darkest shades - plus an 11-stop Tailwind scale (50–950). Lightness steps stay evenly spaced and the hue stays stable, so the mid-tones don't go muddy.`,
   },
   {
     q: `What colors pair well with ${color.name}?`,
@@ -179,7 +179,7 @@ const faq = [
   },
   {
     q: `What are the OKLCH and RGB values of ${color.name}?`,
-    a: `${color.name} is ${HEXU} — OKLCH ${oklch.l.toFixed(3)} ${oklch.c.toFixed(3)} ${Number.isFinite(oklch.h) ? oklch.h.toFixed(0) + '°' : '0°'}, ${formatForCopy(color.hex, 'rgb')}, in the ${color.family} family.${color.aliases && color.aliases.length > 0 ? ` Also known as ${color.aliases.join(', ')}.` : ''}`,
+    a: `${color.name} is ${HEXU} - OKLCH ${oklch.l.toFixed(3)} ${oklch.c.toFixed(3)} ${Number.isFinite(oklch.h) ? oklch.h.toFixed(0) + '°' : '0°'}, ${formatForCopy(color.hex, 'rgb')}, in the ${color.family} family.${color.aliases && color.aliases.length > 0 ? ` Also known as ${color.aliases.join(', ')}.` : ''}`,
   },
 ];
 
@@ -211,13 +211,13 @@ const faqJsonLd = {
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:alt" content={`${color.name} (${color.hex.toUpperCase()}) — tints, shades, and palette`} />
+    <meta property="og:image:alt" content={`${color.name} (${color.hex.toUpperCase()}) - tints, shades, and palette`} />
     {/* Pinterest-optimized 2:3 portrait variant. See note in [hex].astro. */}
     <meta property="og:image" content={ogImagePin} />
     <meta property="og:image:width" content="1000" />
     <meta property="og:image:height" content="1500" />
     <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:alt" content={`${color.name} (${color.hex.toUpperCase()}) — tints, shades, and palette`} />
+    <meta property="og:image:alt" content={`${color.name} (${color.hex.toUpperCase()}) - tints, shades, and palette`} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={TITLE} />
     <meta name="twitter:description" content={DESCRIPTION} />
@@ -270,7 +270,7 @@ const faqJsonLd = {
             <div>
               <dt>H</dt>
               <dd class="mt-1 text-sm normal-case tracking-tight text-ink">
-                {Number.isFinite(oklch.h) ? `${oklch.h.toFixed(0)}°` : '—'}
+                {Number.isFinite(oklch.h) ? `${oklch.h.toFixed(0)}°` : '-'}
               </dd>
             </div>
           </dl>

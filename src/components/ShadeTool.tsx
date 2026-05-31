@@ -28,11 +28,11 @@ import ShareRow from './ShareRow';
 import type { MeResponse } from '../lib/auth/types';
 
 // The Tailwind scale is the default view, so its grid ships eagerly and is
-// server-rendered — real content on first paint, no skeleton flash. Only the
+// server-rendered - real content on first paint, no skeleton flash. Only the
 // heaviest leaf (the export-dropdown UI plus the five export-format
 // serializers) stays lazy, split out *inside* `TailwindScale` behind a small
-// height-stable fallback. The OKLCH continuous ramp is eager too — it just
-// reuses the shared `ShadeRow` — so toggling between the two views is instant.
+// height-stable fallback. The OKLCH continuous ramp is eager too - it just
+// reuses the shared `ShadeRow` - so toggling between the two views is instant.
 import TailwindScale from './TailwindScale';
 
 /**
@@ -40,10 +40,10 @@ import TailwindScale from './TailwindScale';
  *
  * Owns:
  *   - current hex (URL-synced)
- *   - view selection (Tailwind scale vs OKLCH ramp; default Tailwind) —
+ *   - view selection (Tailwind scale vs OKLCH ramp; default Tailwind) -
  *     persisted in localStorage and mirrored to `?view=scale|ramp`
- *   - copy-format preference — persisted in localStorage
- *   - export-format preference — persisted in localStorage
+ *   - copy-format preference - persisted in localStorage
+ *   - export-format preference - persisted in localStorage
  *
  * URL sync: each new hex calls `history.replaceState` to update the path.
  * On the development page (`/_dev/tool`) we update the `?c=` search param
@@ -96,7 +96,7 @@ function readStored<T extends string>(
  * Why this layered shape:
  *   1. The SSR-rendered HTML must match the first client render exactly to
  *      avoid hydration mismatches. We get this by always seeding state from
- *      the same value the server saw — `initial`, derived in the page from
+ *      the same value the server saw - `initial`, derived in the page from
  *      the URL where present and a fallback otherwise.
  *   2. After hydration, we read localStorage. If it disagrees with the URL,
  *      the URL wins (the user explicitly chose this URL by linking or
@@ -121,7 +121,7 @@ function usePersistedState<T extends string>(
   const urlHadValueAtBootRef = useRef<boolean>(false);
   // Becomes true only when the value changes through the wrapped setter
   // returned below (a real user interaction). The localStorage restore on
-  // mount uses the raw `setValue`, so it does NOT count as interaction — that
+  // mount uses the raw `setValue`, so it does NOT count as interaction - that
   // keeps an already-clean URL (e.g. `/`) clean for returning visitors instead
   // of dirtying it with a `?view=`/`?fmt=` derived from their stored pref.
   const hasInteractedRef = useRef<boolean>(false);
@@ -149,7 +149,7 @@ function usePersistedState<T extends string>(
       // here so the deep-link is honoured.
       if (urlValue !== initial) setValue(urlValue);
     } else {
-      // No URL hint — fall back to localStorage.
+      // No URL hint - fall back to localStorage.
       const stored = readStored(key, allowed, initial);
       if (stored !== initial) setValue(stored);
     }
@@ -167,7 +167,7 @@ function usePersistedState<T extends string>(
     if (!urlParam) return;
     // Only touch the URL once the user has deep-linked the param OR changed
     // the value through an interaction. A localStorage restore on mount must
-    // NOT dirty a clean URL — otherwise a returning visitor whose stored pref
+    // NOT dirty a clean URL - otherwise a returning visitor whose stored pref
     // differs from the default would land on `/?view=…` with no interaction.
     if (!urlHadValueAtBootRef.current && !hasInteractedRef.current) return;
     try {
@@ -185,7 +185,7 @@ function usePersistedState<T extends string>(
         window.history.replaceState(null, '', url.toString());
       }
     } catch {
-      /* ignore — URL update is best-effort */
+      /* ignore - URL update is best-effort */
     }
   }, [key, value, urlParam, initial]);
   return [value, setValueAndMark];
@@ -206,7 +206,7 @@ function isDevHostingRoute(): boolean {
   return window.location.pathname.startsWith('/dev/');
 }
 
-// Bare-hex URL: /4040ff, /ff7f50 — i.e. /[hex]. We keep the pathname in
+// Bare-hex URL: /4040ff, /ff7f50 - i.e. /[hex]. We keep the pathname in
 // sync with the input on these routes (clicking a shade row navigates,
 // changing the input updates the path). On /colors/[name] and other
 // routes we do NOT change the pathname, since /colors/coral is the
@@ -221,7 +221,7 @@ function isHexRoute(): boolean {
 // `userChose` gates ONLY the root-route branch: the home page paints the
 // seed/last-used color before any interaction, and we must NOT rewrite `/` to
 // `/[hex]` for that post-hydration swap (the URL should stay clean until the
-// user actually picks a color). It does NOT gate the `isHexRoute()` branch —
+// user actually picks a color). It does NOT gate the `isHexRoute()` branch -
 // a direct visit to `/ff7f50` must keep its path synced regardless.
 function syncUrl(hex: Hex, userChose: boolean) {
   if (typeof window === 'undefined') return;
@@ -248,7 +248,7 @@ function syncUrl(hex: Hex, userChose: boolean) {
     // Any other route (/colors/[name], or root before interaction) leaves the
     // path alone.
   } catch {
-    /* ignore — URL update is best-effort */
+    /* ignore - URL update is best-effort */
   }
 }
 
@@ -316,22 +316,22 @@ function ShadeToolInner({
   // link). It gates the root-route URL rewrite in `syncUrl`: the post-
   // hydration localStorage seed-swap on `/` leaves this false so the URL
   // stays clean, while the first real interaction flips it true so `/` is
-  // promoted to `/[hex]`. Refs are not reactive — read `.current` at fire
+  // promoted to `/[hex]`. Refs are not reactive - read `.current` at fire
   // time, never in a deps array.
   const userChoseRef = useRef(false);
 
   // Mount handler for the URL/last-used color hand-off. Runs ONCE on mount;
   // deps intentionally empty. Precedence (highest first):
-  //   1. `?hex=<raw>` — explicit deep link (replaces the old home form). On
+  //   1. `?hex=<raw>` - explicit deep link (replaces the old home form). On
   //      success this IS a user intent, so we flip userChoseRef and let the
   //      path rewrite to /[hex]. `?hex=` wins if both params appear.
-  //   2. `?seed=<raw>` — the legacy home-form hand-off for inputs it can't
+  //   2. `?seed=<raw>` - the legacy home-form hand-off for inputs it can't
   //      resolve locally (rgb/hsl/oklch/typo). Does NOT flip userChoseRef,
   //      so its URL behavior is unchanged from before.
-  //   3. localStorage['uishades:hex'] — last-used color, but ONLY on the root
+  //   3. localStorage['uishades:hex'] - last-used color, but ONLY on the root
   //      route and ONLY when neither param is present. No URL rewrite (the
   //      gate stays false), so SSR's clean `/` is preserved.
-  //   4. (implicit) the SSR `initialHex` already in state — nothing to do.
+  //   4. (implicit) the SSR `initialHex` already in state - nothing to do.
   // Both params are always stripped after consumption so a refresh doesn't
   // re-parse and shared URLs don't leak the raw input.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -366,7 +366,7 @@ function ShadeToolInner({
     };
 
     if (rawHex) {
-      // 1. Explicit `?hex=` deep link — user intent, so promote to /[hex].
+      // 1. Explicit `?hex=` deep link - user intent, so promote to /[hex].
       const decoded = decode(rawHex);
       // Strip both params before the hex-effect runs so the rewritten path
       // doesn't carry ?hex= along.
@@ -376,13 +376,13 @@ function ShadeToolInner({
         userChoseRef.current = true;
         if (parsed !== hex) setHex(parsed);
       } catch {
-        pushToast(`Couldn't parse "${decoded}" — showing ${hex} instead.`);
+        pushToast(`Couldn't parse "${decoded}" - showing ${hex} instead.`);
       }
       return;
     }
 
     if (rawSeed) {
-      // 2. Legacy `?seed=` hand-off. Behavior unchanged — does NOT flip the
+      // 2. Legacy `?seed=` hand-off. Behavior unchanged - does NOT flip the
       // user-choice gate.
       const decoded = decode(rawSeed);
       stripParams();
@@ -390,12 +390,12 @@ function ShadeToolInner({
         const parsed = parseColor(decoded);
         if (parsed !== hex) setHex(parsed);
       } catch {
-        pushToast(`Couldn't parse "${decoded}" — showing ${hex} instead.`);
+        pushToast(`Couldn't parse "${decoded}" - showing ${hex} instead.`);
       }
       return;
     }
 
-    // 3. No param — on the root route, seed the last-used color from
+    // 3. No param - on the root route, seed the last-used color from
     // localStorage. This swap happens post-hydration (SSR painted the
     // initialHex), and because the gate stays false the URL stays at `/`.
     if (window.location.pathname === '/') {
@@ -406,7 +406,7 @@ function ShadeToolInner({
           if (parsed !== hex) setHex(parsed);
         }
       } catch {
-        /* localStorage unavailable or stored value unparseable — keep seed */
+        /* localStorage unavailable or stored value unparseable - keep seed */
       }
     }
   }, []);
@@ -439,7 +439,7 @@ function ShadeToolInner({
     setHex(next);
   }, []);
 
-  // Copy-success toasts are fired by ShadeRow / ExportDropdown themselves —
+  // Copy-success toasts are fired by ShadeRow / ExportDropdown themselves -
   // they're the only places that know whether the underlying clipboard write
   // actually resolved.
   const handleCopyShade = useCallback((_h: Hex) => {}, []);
@@ -469,7 +469,7 @@ function ShadeToolInner({
 
   // Update in place instead of full navigation. The `hex` effect calls
   // syncUrl which rewrites the path on /[hex] routes, so the URL still
-  // updates — just without reloading the page. Mirrors the color-picker
+  // updates - just without reloading the page. Mirrors the color-picker
   // flow so the arrow link behaves the same as the top-left color box.
   const handleNavigate = useCallback((h: Hex) => {
     // User-initiated (shade-row "use as source"). Flip the gate so syncUrl
@@ -484,7 +484,7 @@ function ShadeToolInner({
 
   // --- Account -------------------------------------------------------------
   // Per-user state is fetched client-side from the credentialed `/api/me` on
-  // mount — never server-rendered, since `/[hex]` HTML is edge-cached for 30
+  // mount - never server-rendered, since `/[hex]` HTML is edge-cached for 30
   // days and SSR'd per-user state would leak across visitors.
   const [authUser, setAuthUser] = useState<MeResponse['user']>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -526,7 +526,7 @@ function ShadeToolInner({
     const messages: Record<string, string> = {
       expired: 'That sign-in link expired. Request a new one.',
       invalid: 'That sign-in link was invalid.',
-      unverified: "Couldn't sign in — your provider email isn't verified.",
+      unverified: "Couldn't sign in - your provider email isn't verified.",
       error: 'Sign-in failed. Please try again.',
     };
     if (status && messages[status]) pushToast(messages[status], { durationMs: 3500 });
@@ -875,7 +875,7 @@ function PreviewBlock({
     };
   }, [hex]);
   // Flipping a freshly-added layer from opacity:0 to opacity:1 must happen
-  // AFTER the browser has painted the opacity:0 state — otherwise React
+  // AFTER the browser has painted the opacity:0 state - otherwise React
   // batches both updates into one commit, the browser paints once at
   // opacity:1, and the CSS transition has no start→end delta to animate
   // (the cross-fade silently collapses). `useEffect` is documented to run
@@ -901,7 +901,7 @@ function PreviewBlock({
     try {
       derived = parseColor(inputText);
     } catch {
-      /* unparseable — fall through and sync */
+      /* unparseable - fall through and sync */
     }
     if (derived !== hex) setInputText(hex);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -914,7 +914,7 @@ function PreviewBlock({
       try {
         onChange(parseColor(raw));
       } catch {
-        /* partial / invalid — wait for more keystrokes */
+        /* partial / invalid - wait for more keystrokes */
       }
     },
     [onChange],
@@ -931,7 +931,7 @@ function PreviewBlock({
   // Select-all on click/focus so the user can immediately retype or paste a
   // new value. `onFocus` covers keyboard tab-in; for a mouse click the
   // browser places the caret on `mouseup` *after* focus, which clears the
-  // focus-time selection — so we flag the focusing click and `preventDefault`
+  // focus-time selection - so we flag the focusing click and `preventDefault`
   // its `mouseup` to keep the selection. The flag clears after that first
   // click, so subsequent drag-to-select inside the field still works.
   const focusingClickRef = useRef(false);
@@ -953,7 +953,7 @@ function PreviewBlock({
           hex={hex}
           onChange={onChange}
           copyFormat={copyFormat}
-          triggerLabel={`Color ${hex} — open color picker`}
+          triggerLabel={`Color ${hex} - open color picker`}
           className="block h-full w-1/4 shrink-0"
         >
           <span
@@ -1021,7 +1021,7 @@ function CopyableValueRow({ label, value }: { label: string; value: string }) {
       !navigator.clipboard ||
       typeof navigator.clipboard.writeText !== 'function'
     ) {
-      pushToast("Couldn't copy — clipboard is unavailable in this browser.");
+      pushToast("Couldn't copy - clipboard is unavailable in this browser.");
       return;
     }
     navigator.clipboard.writeText(value).then(
@@ -1031,7 +1031,7 @@ function CopyableValueRow({ label, value }: { label: string; value: string }) {
         copiedTimeoutRef.current = setTimeout(() => setCopied(false), 1500);
       },
       () => {
-        pushToast("Couldn't copy — check browser permissions.");
+        pushToast("Couldn't copy - check browser permissions.");
       },
     );
   }, [value, pushToast]);
@@ -1136,8 +1136,8 @@ function AlgorithmToggle({
 }) {
   // The single primary selector: a pill segmented control switching between
   // the Tailwind 11-stop scale (default, left) and the OKLCH continuous ramp
-  // (right). `view` remains the underlying state — 'scale' = Tailwind,
-  // 'ramp' = OKLCH — so the `?view=` URL contract and stored preference are
+  // (right). `view` remains the underlying state - 'scale' = Tailwind,
+  // 'ramp' = OKLCH - so the `?view=` URL contract and stored preference are
   // unchanged; only the labels are new.
   const OPTIONS = [
     { v: 'scale', label: 'Tailwind' },
@@ -1154,7 +1154,7 @@ function AlgorithmToggle({
         aria-label="Palette algorithm"
         className="relative inline-grid w-full grid-cols-2 rounded-full bg-paper-2 p-1 ring-1 ring-ink/10"
       >
-        {/* Sliding indicator — left for Tailwind (default), right for OKLCH. */}
+        {/* Sliding indicator - left for Tailwind (default), right for OKLCH. */}
         <span
           aria-hidden="true"
           className={[
@@ -1239,7 +1239,7 @@ function AlgorithmInfoButton() {
         >
           <p className="mb-2">
             <span className="font-mono font-semibold">Tailwind</span> builds an 11-stop
-            scale (50–950) snapped to your color's nearest stop — drop-in tokens for a
+            scale (50–950) snapped to your color's nearest stop - drop-in tokens for a
             Tailwind theme, with copy-ready exports. Pick this to wire a color into a
             design system.
           </p>
@@ -1277,7 +1277,7 @@ function CopyFormatPicker({
     const requiresStop = k === 'cssVar' || k === 'tailwindClass';
     return !(requiresStop && !hasStop);
   });
-  // Tailwind-scale view has 6 formats — too many to fit in a single pill
+  // Tailwind-scale view has 6 formats - too many to fit in a single pill
   // row at readable sizes, so render a dropdown there. The continuous-ramp
   // view only has 4 short formats and stays as a single-row segmented
   // control.
@@ -1288,7 +1288,7 @@ function CopyFormatPicker({
         {/* `appearance-none` strips the native control chrome so the box can
             match the Download button (hairline border, paper-2 hover, accent
             focus); the chevron below is our own, overlaid and non-interactive.
-            The option popup itself can't be styled without JS — that's fine. */}
+            The option popup itself can't be styled without JS - that's fine. */}
         <div className="relative">
           <select
             value={value}
@@ -1332,7 +1332,7 @@ function CopyFormatPicker({
         aria-label="Copy format"
         className="relative grid grid-cols-4 gap-1 rounded-full bg-paper-2 p-1 ring-1 ring-ink/10"
       >
-        {/* Sliding indicator — matches the Algorithm toggle pattern.
+        {/* Sliding indicator - matches the Algorithm toggle pattern.
             Pill width equals one column; translateX by (100% + gap) per step.
             p-1 = 0.25rem, gap-1 = 0.25rem → 4-col inner is (100% - 1.25rem)/4. */}
         <span
@@ -1369,7 +1369,7 @@ function CopyFormatPicker({
 }
 
 /**
- * "Add to palette" tray — the single new verb in the tool's left rail.
+ * "Add to palette" tray - the single new verb in the tool's left rail.
  *
  * Collects the current `{hex, view, copyFormat}` into a working strip of
  * swatches. "Save palette →" reveals an inline name field (pre-filled with the
@@ -1478,13 +1478,13 @@ function PaletteTray({
           disabled={!canSave}
           className="inline-flex items-center justify-center gap-1.5 bg-ink px-3 py-2 font-mono text-xs uppercase tracking-tight text-paper transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-default disabled:opacity-40 motion-reduce:transition-none"
         >
-          Save palette →
+          Save palette
         </button>
       )}
 
       {!signedIn && tray.length > 0 && (
-        <p className="font-sans text-[10px] leading-relaxed text-mute">
-          Sign in to save — your tray is kept while you do.
+        <p className="font-sans text-[14px] leading-relaxed text-mute">
+          Sign in to save your tray is kept while you do.
         </p>
       )}
 

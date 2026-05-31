@@ -1,5 +1,5 @@
 /**
- * /og/p/[slug].png — landscape OG image (1200x630) for a public palette.
+ * /og/p/[slug].png - landscape OG image (1200x630) for a public palette.
  *
  * Mirrors `/og/[hex].png`: rendered on demand via `workers-og`, cached at the
  * edge for 30 days. Only public, non-flagged palettes resolve (the slug is

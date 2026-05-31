@@ -1,12 +1,12 @@
 /**
- * GET /api/explore — the public palette gallery feed.
+ * GET /api/explore - the public palette gallery feed.
  *
  * Params (all optional):
  *   - sort=top|new|trending|featured (default 'top'; anything else clamps to it)
- *   - tag=<curated tag>             — JSON-substring match on a palette's tags
- *   - color=<hex>                   — parsed → `hueBucket()` server-side, filters
+ *   - tag=<curated tag>             - JSON-substring match on a palette's tags
+ *   - color=<hex>                   - parsed → `hueBucket()` server-side, filters
  *                                     to palettes containing that hue family
- *   - cursor=<opaque token>         — the `nextCursor` from a prior page; passed
+ *   - cursor=<opaque token>         - the `nextCursor` from a prior page; passed
  *                                     straight back to `listPublicPalettes`
  *
  * Caching is the subtle bit: the body depends on whether a session exists
@@ -33,17 +33,17 @@ const TAG_MAX = 40;
 export const GET: APIRoute = async ({ url, session }) => {
   const params = url.searchParams;
 
-  // sort — clamp anything unrecognized to the default 'top'.
+  // sort - clamp anything unrecognized to the default 'top'.
   const rawSort = params.get('sort') ?? 'top';
   const sort: ExploreSort = (SORTS as readonly string[]).includes(rawSort)
     ? (rawSort as ExploreSort)
     : 'top';
 
-  // tag — bounded, non-empty curated facet; empty/oversized is ignored.
+  // tag - bounded, non-empty curated facet; empty/oversized is ignored.
   const rawTag = (params.get('tag') ?? '').trim().slice(0, TAG_MAX);
   const tag = rawTag || undefined;
 
-  // color — parse a hex and snap to its hue bucket. Invalid input or an
+  // color - parse a hex and snap to its hue bucket. Invalid input or an
   // achromatic color (bucket null) means "no color filter".
   let hueBucketFilter: number | null | undefined;
   const rawColor = params.get('color');

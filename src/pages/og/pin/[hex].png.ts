@@ -1,5 +1,5 @@
 /**
- * /og/pin/[hex].png — Pinterest-optimized 2:3 portrait variant (1000x1500).
+ * /og/pin/[hex].png - Pinterest-optimized 2:3 portrait variant (1000x1500).
  *
  * Pinterest's pin grid is portrait-first; landscape OG cards crop or shrink
  * in the feed. This endpoint mirrors the standard /og/[hex].png composition
@@ -8,7 +8,7 @@
  * and as a secondary og:image hint in [hex].astro / colors/[name].astro.
  *
  * A subfolder (/og/pin/...) is used instead of a "-pin" suffix on the same
- * segment so the route is unambiguous relative to /og/[hex].png — Astro
+ * segment so the route is unambiguous relative to /og/[hex].png - Astro
  * route matching only resolves cleanly when literal-vs-param segments
  * don't overlap.
  */

@@ -1,9 +1,9 @@
 /**
- * POST /api/feedback { name, email, message } — relay a visitor's feedback to
+ * POST /api/feedback { name, email, message } - relay a visitor's feedback to
  * the site owner's inbox via Brevo.
  *
  * Anonymous (no session required). Rate-limited per-IP (5/hour) so nobody can
- * burn the Brevo quota or flood the owner's inbox — reuses the generic
+ * burn the Brevo quota or flood the owner's inbox - reuses the generic
  * `magic_link_requests` key/timestamp counter with a `fb-ip:` key namespace, so
  * no new table is needed. CSRF is enforced upstream in `middleware.ts` (this
  * path is listed in `CSRF_PROTECTED_PREFIXES`). Unlike the magic-link route we
@@ -59,7 +59,7 @@ export const POST: APIRoute = async ({ request }) => {
     return jsonNoStore({ error: 'invalid_message' }, 400);
   }
 
-  // Recipient comes only from the Worker secret — never hardcoded in source. If
+  // Recipient comes only from the Worker secret - never hardcoded in source. If
   // it's unset the form can't deliver, so fail loudly rather than silently drop.
   const recipient = env.FEEDBACK_RECIPIENT_EMAIL;
   if (!recipient) {
@@ -87,7 +87,7 @@ export const POST: APIRoute = async ({ request }) => {
       message,
     });
   } catch {
-    // Provider failure — tell the visitor so they can retry (no rate-limit slot
+    // Provider failure - tell the visitor so they can retry (no rate-limit slot
     // is consumed, so a transient Brevo hiccup doesn't lock them out).
     return jsonNoStore({ error: 'send_failed' }, 502);
   }

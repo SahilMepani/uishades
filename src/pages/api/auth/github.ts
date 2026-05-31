@@ -1,5 +1,5 @@
 /**
- * GET /api/auth/github — start the GitHub OAuth redirect flow. No PKCE (GitHub
+ * GET /api/auth/github - start the GitHub OAuth redirect flow. No PKCE (GitHub
  * doesn't support it for OAuth apps); state-only CSRF protection. Reached via an
  * <a href> (GET), so CSP `form-action 'self'` is untouched.
  */

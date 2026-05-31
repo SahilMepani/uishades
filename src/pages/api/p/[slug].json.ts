@@ -1,8 +1,8 @@
 /**
- * /api/p/[slug].json — public palette JSON for a stable slug.
+ * /api/p/[slug].json - public palette JSON for a stable slug.
  *
  * Mirrors the `/api/[hex].json.ts` contract: SSR (no prerender), validated slug
- * param, 404 on miss, and — unlike the user-specific `/api/palettes*` routes —
+ * param, 404 on miss, and - unlike the user-specific `/api/palettes*` routes -
  * a **public** 30-day edge cache (this is public data, never per-user). Returns
  * only `public`, non-flagged palettes; private/flagged → 404 (no `viewerId` is
  * passed, so `getPaletteBySlug` enforces public-only visibility).

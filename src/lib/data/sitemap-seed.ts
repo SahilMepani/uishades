@@ -1,5 +1,5 @@
 /**
- * sitemap-seed — build-time static seed for the SSR-only `/p/[slug]` palette
+ * sitemap-seed - build-time static seed for the SSR-only `/p/[slug]` palette
  * pages and `/u/[handle]` profile pages that `@astrojs/sitemap` can't otherwise
  * enumerate (they're rendered on-demand, so the integration never sees them).
  *
@@ -20,7 +20,7 @@
  *     "SELECT handle FROM users WHERE handle IS NOT NULL LIMIT 500"
  *
  * and write the results into the two arrays below before `npm run build`.
- * Until that automation lands these stay empty — that's safe: Googlebot still
+ * Until that automation lands these stay empty - that's safe: Googlebot still
  * discovers `/p/*` and `/u/*` via in-page links from `/explore` and the cards,
  * and the existing `POPULAR_HEXES` sitemap injection is unaffected.
  *

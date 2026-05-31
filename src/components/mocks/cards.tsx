@@ -1,8 +1,8 @@
 /**
- * Cards mock — three content cards on a surface.
+ * Cards mock - three content cards on a surface.
  *
  * The default/hero template: reused server-side as the `/p/[slug]` hero and as
- * the OG image base. Pure markup — every colour is a `var(--mock-*)` read from
+ * the OG image base. Pure markup - every colour is a `var(--mock-*)` read from
  * the stage element, so it recolours live and renders identically on the server.
  */
 import type { MockTemplate } from './types';

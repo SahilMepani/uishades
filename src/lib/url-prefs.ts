@@ -5,7 +5,7 @@
  * Keeping the parse here (instead of inline in each page) guarantees the
  * SSR-rendered HTML uses the same validated value the client will read on
  * hydration. If the parameter is missing or unrecognized, we return
- * undefined and the React component falls back to its own default — which
+ * undefined and the React component falls back to its own default - which
  * matches the localStorage-only behaviour from before this change.
  */
 import type { CopyFormat, ExportFormat } from './color/types';
@@ -14,7 +14,7 @@ type View = 'ramp' | 'scale';
 
 const VIEW_VALUES: readonly View[] = ['ramp', 'scale'] as const;
 // Exported as the single source of truth for the copy/export format
-// vocabularies — the presets API validates against these same lists so a new
+// vocabularies - the presets API validates against these same lists so a new
 // format can't be accepted by `?fmt=`/`?copy=` yet silently dropped on save.
 export const FMT_VALUES: readonly ExportFormat[] = [
   'tailwind-v4',

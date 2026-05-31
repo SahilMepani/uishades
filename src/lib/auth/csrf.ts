@@ -5,7 +5,7 @@
  * `output: 'static'` (the manifest only enables it when buildOutput === 'server'),
  * so the auth + preset endpoints have no framework-level origin check.
  * `src/middleware.ts` enforces one explicitly on the SSR `/api/*` routes. The
- * logic lives here — free of `astro:` virtual-module imports — so it's
+ * logic lives here - free of `astro:` virtual-module imports - so it's
  * unit-testable.
  */
 
@@ -25,7 +25,7 @@ const STATE_CHANGING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
  * as a belt-and-suspenders for the rare browser that omits `Origin` on a form
  * POST. Where the runtime doesn't expose `Sec-Fetch-Site` (e.g. it's stripped
  * before the request reaches us), this safely degrades to "require a matching
- * `Origin`" — still correct, since real browsers always send one.
+ * `Origin`" - still correct, since real browsers always send one.
  */
 export function isSameOrigin(request: Request, url: URL): boolean {
   // Truthy check, not `!== null`: some runtimes surface an absent Origin as an

@@ -30,7 +30,7 @@ export const POST = withUser(async ({ request }, userId) => {
   const name = String(data.name ?? '').trim().slice(0, 60);
   if (!name) return jsonNoStore({ error: 'name_required' }, 400);
 
-  // parseColor is the single entry point for raw color input — it canonicalizes
+  // parseColor is the single entry point for raw color input - it canonicalizes
   // (and gamut-maps) any CSS color to `#rrggbb`, so the stored value always
   // matches the Hex contract instead of a per-route regex that can drift.
   let hex: Hex;
@@ -41,7 +41,7 @@ export const POST = withUser(async ({ request }, userId) => {
   }
 
   const view = data.view === 'ramp' ? 'ramp' : 'scale';
-  // Validate against the shared vocabularies and store the validated STRING —
+  // Validate against the shared vocabularies and store the validated STRING -
   // never the raw value (a crafted array like ["hex"] stringifies to "hex" and
   // would otherwise reach D1's .bind() as an array and throw).
   const cf = String(data.copyFormat);

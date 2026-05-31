@@ -3,8 +3,8 @@
  * Shared <head> chrome: favicon, charset, viewport, generator, and the
  * self-hosted font loading sequence.
  *
- * Per-page meta — <title>, <meta name="description">, canonical URL,
- * OG/Twitter cards, and the JSON-LD <script> block — stays in each
+ * Per-page meta - <title>, <meta name="description">, canonical URL,
+ * OG/Twitter cards, and the JSON-LD <script> block - stays in each
  * page's own <head> because every page renders them with different
  * content. This component handles only the truly shared bits.
  *
@@ -13,7 +13,7 @@
  *     `astro.config.mjs`). The integration downloads the woff2 files at
  *     build time, ships them from our own origin, and auto-generates a
  *     metric-overridden fallback @font-face so the system-font fallback
- *     occupies the same box as Geist — zero CLS when the swap happens.
+ *     occupies the same box as Geist - zero CLS when the swap happens.
  *   - `font-display: 'optional'` keeps first paint instant: if the woff2
  *     hasn't arrived in the ~100 ms block period the browser keeps the
  *     fallback for the whole pageview and warms the cache for next time.
@@ -23,7 +23,7 @@
  *   - The `<Font preload />` on Geist emits `<link rel="preload">` for
  *     every Geist weight so the LCP element (a `.display`-class heading
  *     in Geist 700) has the best possible chance of painting in Geist on
- *     a cold visit. JetBrains Mono is not preloaded — the mono fallback
+ *     a cold visit. JetBrains Mono is not preloaded - the mono fallback
  *     is acceptable on first paint and the bytes are better spent on the
  *     sans family that drives perceived render.
  */
@@ -34,7 +34,7 @@ import { Font } from 'astro:assets';
     returning visitor's saved dark choice is applied with no flash of the
     light default. Theme is a manual choice persisted to localStorage by the
     header ThemeToggle; the OS preference is intentionally not consulted.
-    `is:inline` keeps it un-bundled and blocking — it MUST run before the
+    `is:inline` keeps it un-bundled and blocking - it MUST run before the
     body renders. Default (no stored value) stays light. */}
 <script is:inline>
   (function () {

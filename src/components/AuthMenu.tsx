@@ -3,7 +3,7 @@ import type { MeResponse } from '../lib/auth/types';
 
 /**
  * Account controls for the left rail. Logged out: one-click Google/GitHub
- * (plain <a> GET links — redirect-flow OAuth, so the CSP `form-action 'self'`
+ * (plain <a> GET links - redirect-flow OAuth, so the CSP `form-action 'self'`
  * is untouched) plus a passwordless magic-link email field. Logged in: identity
  * + sign out. All auth state is owned by ShadeTool; this is presentational.
  */
@@ -23,7 +23,7 @@ const OAUTH_BTN =
   'transition-colors duration-200 ease-out hover:border-ink/40 hover:bg-paper-2 ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60';
 
-/** Google "G" mark — official four-color logo. aria-hidden; the button text labels it. */
+/** Google "G" mark - official four-color logo. aria-hidden; the button text labels it. */
 function GoogleIcon() {
   return (
     <svg aria-hidden="true" viewBox="0 0 18 18" className="h-5 w-5 shrink-0">

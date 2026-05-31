@@ -12,16 +12,16 @@ import type { Hex } from '../lib/color/types';
  * Pinterest's feed is portrait-first.
  *
  * The "URL" we share is whatever `window.location` currently is, with any
- * one-shot params (e.g. `seed`) stripped — this preserves deep-linked
+ * one-shot params (e.g. `seed`) stripped - this preserves deep-linked
  * `?view=scale&mode=oklch` style state but doesn't leak raw user input.
  * On /dev/* and /me/* the whole row is hidden, since those URLs 404 in
  * production or are private editor routes that shouldn't be shared.
  *
  * Palette pages override the hex-derived defaults via the optional props:
- *   - `shareUrl` — the canonical URL to share (e.g. `/p/[slug]`); overrides
+ *   - `shareUrl` - the canonical URL to share (e.g. `/p/[slug]`); overrides
  *     the `window.location`-derived default.
- *   - `title` — the share title; overrides the "Tints and shades of …" default.
- *   - `pinMedia` — the Pinterest media image URL; overrides the per-hex
+ *   - `title` - the share title; overrides the "Tints and shades of …" default.
+ *   - `pinMedia` - the Pinterest media image URL; overrides the per-hex
  *     `/og/pin/<hex>.png` default.
  * Existing `/[hex]` callers pass none of these and behave exactly as before.
  */
@@ -36,7 +36,7 @@ interface ShareRowProps {
   named?: NamedColor | null;
   /** Override the shared URL (default: current location, `seed` stripped). */
   shareUrl?: string;
-  /** Override the share title (default: "Tints and shades of <label> — UIshades.com"). */
+  /** Override the share title (default: "Tints and shades of <label> - UIshades.com"). */
   title?: string;
   /** Override the Pinterest media image (default: `/og/pin/<hex>.png`). */
   pinMedia?: string;
@@ -102,7 +102,7 @@ export default function ShareRow({ hex, named, shareUrl, title, pinMedia }: Shar
       }
     }
     const label = named ? `${named.name} (${hex.toUpperCase()})` : hex.toUpperCase();
-    const resolvedTitle = title ?? `Tints and shades of ${label} — UIshades.com`;
+    const resolvedTitle = title ?? `Tints and shades of ${label} - UIshades.com`;
     return { url, title: resolvedTitle };
   }, [hex, named, shareUrl, title]);
 
@@ -131,12 +131,12 @@ export default function ShareRow({ hex, named, shareUrl, title, pinMedia }: Shar
       !navigator.clipboard ||
       typeof navigator.clipboard.writeText !== 'function'
     ) {
-      pushToast("Couldn't copy — clipboard is unavailable in this browser.");
+      pushToast("Couldn't copy - clipboard is unavailable in this browser.");
       return;
     }
     navigator.clipboard.writeText(url).then(
       () => pushToast('URL copied'),
-      () => pushToast("Couldn't copy — check browser permissions."),
+      () => pushToast("Couldn't copy - check browser permissions."),
     );
   }, [buildPayload, pushToast]);
 
@@ -161,7 +161,7 @@ export default function ShareRow({ hex, named, shareUrl, title, pinMedia }: Shar
     try {
       await navigator.share({ title, text: title, url });
     } catch {
-      // User cancelled or share unsupported for this payload — no toast.
+      // User cancelled or share unsupported for this payload - no toast.
     }
   }, [buildPayload]);
 
@@ -208,7 +208,7 @@ function ShareButton({
       className={
         // 44px hit target (Apple HIG / Material minimum), 24px icon inside.
         'inline-flex h-11 w-11 items-center justify-center text-ink-2 ' +
-        // Only the icon scales on hover/focus — the 44px button box stays put.
+        // Only the icon scales on hover/focus - the 44px button box stays put.
         '[&>svg]:h-6 [&>svg]:w-6 [&>svg]:transition-transform [&>svg]:duration-200 [&>svg]:ease-out ' +
         'hover:[&>svg]:scale-110 focus-visible:[&>svg]:scale-110 ' +
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60'
@@ -250,7 +250,7 @@ function XIcon({ className }: { className?: string }) {
 }
 
 function PinterestIcon({ className }: { className?: string }) {
-  // Simplified "P" badge — the full brand logo's swirl tail reads as noise
+  // Simplified "P" badge - the full brand logo's swirl tail reads as noise
   // at 24px, so this keeps the rounded mark and circle outline only.
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className={className ?? 'h-6 w-6'}>
@@ -263,7 +263,7 @@ function PinterestIcon({ className }: { className?: string }) {
 }
 
 function NativeShareIcon({ className }: { className?: string }) {
-  // Lucide "send" — an upward paper plane. Stroke style matches the
+  // Lucide "send" - an upward paper plane. Stroke style matches the
   // Copy-link icon so the row reads as a coherent set.
   return (
     <svg

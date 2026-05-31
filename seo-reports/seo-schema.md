@@ -1,4 +1,4 @@
-# Structured-Data Audit — UIshades.com
+# Structured-Data Audit - UIshades.com
 
 **Date:** 2026-05-23
 **Scope:** http://localhost:4321/ (home), /colors/coral (named-color page), /4040ff (hex page)
@@ -9,7 +9,7 @@
 
 ## 1. Per-URL findings
 
-### 1.1 `/` — Home page
+### 1.1 `/` - Home page
 
 **Type detected:** `WebApplication`
 
@@ -28,16 +28,16 @@
 
 **Validation (Schema.org `WebApplication` / `SoftwareApplication`):**
 - Required: `name`  PRESENT, `offers`  PRESENT
-- Google rich-result eligibility (`SoftwareApplication`) requires either `aggregateRating` OR `review` — **both missing** (this is why Search Console will not surface a rich result for the WebApplication entity).
+- Google rich-result eligibility (`SoftwareApplication`) requires either `aggregateRating` OR `review` - **both missing** (this is why Search Console will not surface a rich result for the WebApplication entity).
 - Recommended-but-missing: `image`, `screenshot`, `author`/`creator` (or `publisher`), `inLanguage`, `browserRequirements`, `featureList`, `softwareVersion`, `datePublished`, `dateModified`.
 
 **Missing opportunities on this URL:**
-- `WebSite` with `SearchAction` (the single biggest miss — gives Google the sitelinks search box for branded queries).
+- `WebSite` with `SearchAction` (the single biggest miss - gives Google the sitelinks search box for branded queries).
 - `Organization` (or `Person`) as the `publisher`, referenced via `@id`.
 
 ---
 
-### 1.2 `/colors/coral` — Named-color page
+### 1.2 `/colors/coral` - Named-color page
 
 **Type detected:** `Thing`
 
@@ -56,19 +56,19 @@
 
 **Validation:**
 - `Thing` is the abstract root. It is the weakest possible type and yields zero rich-result eligibility. `name`, `description`, `url` are present (all are recommended on Thing, none are strictly required).
-- `color` is not a property of `Thing` — it is valid on `Product`, `ImageObject`, etc., but unknown on `Thing`. Today this is silently ignored by Schema.org consumers.
-- `alternateName: []` — empty array adds no value; better omitted when empty.
+- `color` is not a property of `Thing` - it is valid on `Product`, `ImageObject`, etc., but unknown on `Thing`. Today this is silently ignored by Schema.org consumers.
+- `alternateName: []` - empty array adds no value; better omitted when empty.
 - `og:type` is `article` but the JSON-LD is `Thing`. Mismatched semantics; pick one direction (recommend treating these as `CreativeWork`/`Article` because they have substantial original editorial blurbs).
 
 **Missing opportunities on this URL:**
-- Upgrade `Thing`  `CreativeWork` (or `Article`) — the blurb is hand-authored long-form editorial content.
-- `BreadcrumbList` (Home  Named colors  Coral) — eligible for breadcrumb rich result.
+- Upgrade `Thing`  `CreativeWork` (or `Article`) - the blurb is hand-authored long-form editorial content.
+- `BreadcrumbList` (Home  Named colors  Coral) - eligible for breadcrumb rich result.
 - `ImageObject` for the OG endpoint `/og/ff7f50.png` referenced as `image`.
 - `mainEntity` of type `Product`/`DefinedTerm` pointing to the actual color value, so search engines understand the page is *about* the color, distinct from being the color.
 
 ---
 
-### 1.3 `/4040ff` — Arbitrary hex page (SSR)
+### 1.3 `/4040ff` - Arbitrary hex page (SSR)
 
 **Type detected:** `Thing`
 
@@ -85,7 +85,7 @@
 
 **Validation:**
 - Same `Thing`-is-the-weakest-type problem as `/colors/coral`.
-- No `image` despite the page having `og:image` set to a real, generated PNG at `/og/4040ff.png` — this is free schema data being thrown away.
+- No `image` despite the page having `og:image` set to a real, generated PNG at `/og/4040ff.png` - this is free schema data being thrown away.
 - For named hexes (`findByHex` returns a hit), this page knows the color name but the JSON-LD doesn't use it.
 
 **Missing opportunities on this URL:**
@@ -115,8 +115,8 @@ None present on any sampled URL. The only `property="..."` attributes are Open G
 | 7 | **`CollectionPage` index** | Future `/colors/` index page (does not yet exist) | If/when a named-colors index ships, mark it as `CollectionPage` with `mainEntity` = `ItemList` of `CreativeWork` entries. |
 
 **Explicitly excluded per hard constraints:**
-- `HowTo` — deprecated for rich results by Google (Aug 2023).
-- `FAQPage` — restricted to government/health sites (Aug 2023). Do not add even if the page has Q&A copy.
+- `HowTo` - deprecated for rich results by Google (Aug 2023).
+- `FAQPage` - restricted to government/health sites (Aug 2023). Do not add even if the page has Q&A copy.
 
 ---
 
@@ -126,7 +126,7 @@ All blocks below assume the project pattern: wrap the object literal in `safeJso
 
 ### 3.1 `WebSite` + `SearchAction` + `Organization` (add to `src/pages/index.astro`)
 
-These are two additional JSON-LD blocks for the home page (keep the existing `WebApplication` block — see 3.2 for an upgraded version).
+These are two additional JSON-LD blocks for the home page (keep the existing `WebApplication` block - see 3.2 for an upgraded version).
 
 ```astro
 ---
@@ -241,7 +241,7 @@ const colorPageJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'CreativeWork',
   '@id': `${canonicalUrl}#article`,
-  headline: `${color.name} (${color.hex.toUpperCase()}) — Tints, Shades & Palette`,
+  headline: `${color.name} (${color.hex.toUpperCase()}) - Tints, Shades & Palette`,
   name: color.name,
   alternateName: color.aliases && color.aliases.length > 0 ? color.aliases : undefined,
   description: plainBlurb,
@@ -317,8 +317,8 @@ const hexPageJsonLd = {
   '@type': 'CreativeWork',
   '@id': `${canonicalUrl}#page`,
   headline: named
-    ? `Hex Color ${hexLabel} (${named.name}) — Tints & Shades`
-    : `Hex Color ${hexLabel} — Tints & Shades`,
+    ? `Hex Color ${hexLabel} (${named.name}) - Tints & Shades`
+    : `Hex Color ${hexLabel} - Tints & Shades`,
   name: named?.name ?? `Hex color ${hexLabel}`,
   description: DESCRIPTION,
   url: canonicalUrl,
@@ -351,14 +351,14 @@ const hexPageJsonLd = {
 ## 4. Validation checklist after deploy
 
 1. Run https://validator.schema.org/ against each of `/`, `/colors/coral`, `/4040ff`.
-2. Run Google Rich Results Test (https://search.google.com/test/rich-results) on the same three URLs — confirm Breadcrumbs eligibility on color pages and Sitelinks Searchbox on the home page.
+2. Run Google Rich Results Test (https://search.google.com/test/rich-results) on the same three URLs - confirm Breadcrumbs eligibility on color pages and Sitelinks Searchbox on the home page.
 3. In Search Console, watch the *Enhancements* tab for the next 4–14 days; new Breadcrumb and Sitelinks Searchbox cards should appear.
-4. Once you have any public reviews or ratings, add `aggregateRating` to the `SoftwareApplication` block — that unlocks the software app rich result.
+4. Once you have any public reviews or ratings, add `aggregateRating` to the `SoftwareApplication` block - that unlocks the software app rich result.
 
 ---
 
 ## 5. Out-of-scope (not recommended)
 
-- **`HowTo`** — Google deprecated rich results for `HowTo` in August 2023. Do not add even for "How to find shades of a color" copy.
-- **`FAQPage`** — Restricted by Google to government and health sites (Aug 2023). Do not add even if FAQ-style copy exists on the page.
-- **`Product`** — uishades is free, not a product for sale. Even with `price: 0` this misrepresents the entity. `SoftwareApplication` with an `Offer` (already done) is the correct shape.
+- **`HowTo`** - Google deprecated rich results for `HowTo` in August 2023. Do not add even for "How to find shades of a color" copy.
+- **`FAQPage`** - Restricted by Google to government and health sites (Aug 2023). Do not add even if FAQ-style copy exists on the page.
+- **`Product`** - uishades is free, not a product for sale. Even with `price: 0` this misrepresents the entity. `SoftwareApplication` with an `Offer` (already done) is the correct shape.

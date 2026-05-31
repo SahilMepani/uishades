@@ -1,8 +1,8 @@
 /**
  * Mock-template registry contract.
  *
- * A "mock" is a self-contained preview template — a Cards layout, a Website
- * hero, a Dashboard, a Buttons sheet — that shows a palette applied to a real
+ * A "mock" is a self-contained preview template - a Cards layout, a Website
+ * hero, a Dashboard, a Buttons sheet - that shows a palette applied to a real
  * UI surface. Every mock is rendered purely by a small set of **scoped CSS
  * custom properties** set on its stage element (see {@link MockVars}); the
  * template markup itself reads only `var(--mock-*)`, never a hex, so a palette
@@ -54,7 +54,7 @@ export interface MockColorInput {
 
 /**
  * A registered mock template. `Component` renders pure markup styled *only* by
- * the scoped `--mock-*` vars on its ancestor stage — it takes no color props.
+ * the scoped `--mock-*` vars on its ancestor stage - it takes no color props.
  */
 export interface MockTemplate {
   /** Stable id, used as the selector value, PNG filename tag, and OG key. */

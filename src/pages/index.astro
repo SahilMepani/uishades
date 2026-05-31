@@ -3,7 +3,7 @@
  * Homepage.
  *
  * Renders the shared `ColorToolLayout` shell with a `client:load` ShadeTool
- * seeded with #4040ff — `/` now hosts the interactive tool directly instead of
+ * seeded with #4040ff - `/` now hosts the interactive tool directly instead of
  * the old editorial masthead. The page stays prerendered/static; the React
  * island rewrites `/` → `/[hex]` in place on the first user-initiated color
  * change. The site-level Organization / WebSite / SoftwareApplication JSON-LD
@@ -13,10 +13,10 @@ import ColorToolLayout from '../layouts/ColorToolLayout.astro';
 import { readInitialPrefs } from '../lib/url-prefs';
 import { safeJsonForScript } from '../lib/safe-json';
 
-const TITLE = 'UIshades.com — Free Tints and Shades of Any Hex Color';
+const TITLE = 'UIshades.com - Free Tints and Shades of Any Hex Color';
 const DESCRIPTION =
   'Find tints and shades of any hex color, free. OKLCH ramps, Tailwind 11-stop scales, exports you can paste straight into your code.';
-// Single source of truth for the home page's preview image — used for the
+// Single source of truth for the home page's preview image - used for the
 // og:image/twitter:image meta AND the SoftwareApplication JSON-LD image, so
 // they can't drift apart. #4040ff is the seeded hero color shown on `/`.
 const OG = 'https://UIshades.com/og/4040ff.png';
@@ -87,10 +87,10 @@ const appJsonLd = {
   canonical="https://UIshades.com/"
   ogType="website"
   ogImage={OG}
-  ogImageAlt="UIshades.com — free tints and shades of any hex color"
+  ogImageAlt="UIshades.com - free tints and shades of any hex color"
   initialHex="#4040ff"
   prefs={readInitialPrefs(Astro.url)}
-  h1="Tints & shades of any hex color — free OKLCH ramps and Tailwind scales"
+  h1="Tints & shades of any hex color - free OKLCH ramps and Tailwind scales"
   footerHex="4040ff"
 >
   <Fragment slot="head">

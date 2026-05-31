@@ -1,5 +1,5 @@
 /**
- * Magic-link callback — a two-step confirm to make the GET safe and the login
+ * Magic-link callback - a two-step confirm to make the GET safe and the login
  * intentional:
  *
  *   GET  /api/auth/magic/callback?token=RAW

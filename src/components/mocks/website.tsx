@@ -1,5 +1,5 @@
 /**
- * Website mock — a landing hero with nav, headline, and a CTA.
+ * Website mock - a landing hero with nav, headline, and a CTA.
  *
  * Pure markup styled only by the stage's scoped `--mock-*` vars.
  */

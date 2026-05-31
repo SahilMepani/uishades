@@ -1,5 +1,5 @@
 /**
- * /og/[hex].png — Open Graph preview image, 1200x630 landscape.
+ * /og/[hex].png - Open Graph preview image, 1200x630 landscape.
  *
  * Rendered on demand by Cloudflare Workers via `workers-og` (Satori under the
  * hood). Cached at the edge for 30 days. The actual rendering lives in

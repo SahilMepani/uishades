@@ -1,4 +1,4 @@
--- 0002_rate_limit — magic-link request throttling.
+-- 0002_rate_limit - magic-link request throttling.
 -- One row per magic-link request, keyed by `email:<addr>` and `ip:<addr>`.
 -- The endpoint counts rows in the trailing window and prunes old ones, so
 -- nobody can burn the Brevo quota or spam a victim's inbox.

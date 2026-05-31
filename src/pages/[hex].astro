@@ -1,6 +1,6 @@
 ---
 /**
- * /[hex] — the main shade page. SSR-only (no pre-rendering).
+ * /[hex] - the main shade page. SSR-only (no pre-rendering).
  *
  * Under `output: 'static'`, this route opts out via `prerender = false` so
  * arbitrary hexes are served on demand by the Cloudflare adapter. Each
@@ -73,8 +73,8 @@ const hexPageJsonLd = {
   '@type': 'CreativeWork',
   '@id': `${canonicalUrl}#page`,
   headline: named
-    ? `Hex Color ${hexLabel} (${named.name}) — Tints & Shades`
-    : `Hex Color ${hexLabel} — Tints & Shades`,
+    ? `Hex Color ${hexLabel} (${named.name}) - Tints & Shades`
+    : `Hex Color ${hexLabel} - Tints & Shades`,
   name: named?.name ?? `Hex color ${hexLabel}`,
   description: DESCRIPTION,
   datePublished: DATE_PUBLISHED,
@@ -105,7 +105,7 @@ const h1Text = `Tints & shades of ${hexLabel}${named ? ` · ${named.name}` : ''}
 
 // Tell the Cloudflare edge to cache the rendered HTML for 30 days,
 // serving stale for an extra day while it revalidates. Same shape as
-// the JSON API and OG endpoints — without this header the Workers
+// the JSON API and OG endpoints - without this header the Workers
 // cache won't store the response and every visit re-executes the SSR.
 // The hex is already validated above, so all branches that reach here
 // are cacheable.

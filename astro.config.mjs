@@ -11,7 +11,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { POPULAR_HEXES } from './src/lib/data/popular-hexes.ts';
 // Phase 2: `/p/[slug]` palette pages and `/u/[handle]` profiles are SSR-only,
 // so `@astrojs/sitemap` can't enumerate them. We inject best-effort static
-// seed lists (see the module header for the D1-regeneration hook — the build
+// seed lists (see the module header for the D1-regeneration hook - the build
 // process has no DB binding, so these can't be queried live here).
 import {
   SITEMAP_PALETTE_SLUGS,
@@ -37,7 +37,7 @@ export default defineConfig({
   // Canonical URLs carry no trailing slash (mirrors 0to255: /[hex],
   // /colors/[name]). `format: 'file'` emits `colors/coral.html` instead of
   // `colors/coral/index.html`, so Cloudflare Pages serves the bare URL at 200
-  // and redirects the slash variant to it — matching the no-slash <link
+  // and redirects the slash variant to it - matching the no-slash <link
   // rel="canonical"> on every page. Without this, prerendered pages 307'd
   // `/colors/coral` → `/colors/coral/` while pointing canonical at the bare
   // URL (a self-referencing redirect crawlers downweight).
@@ -48,15 +48,15 @@ export default defineConfig({
     sitemap({
       // No-slash URLs (to match page canonicals) are inherited from the
       // top-level `trailingSlash: 'never'`. The integration has no own
-      // `trailingSlash` option in this version — passing one aborts emission.
+      // `trailingSlash` option in this version - passing one aborts emission.
       // Inject the popular-hex URLs into the sitemap so Googlebot picks them
       // up on the first crawl. The static integration auto-includes the
       // pre-rendered pages on top of this list. We also inject:
       //   - `/explore` (SSR index, not auto-enumerated),
-      //   - public palette slugs (`/p/<slug>`) — featured + top-voted seed,
+      //   - public palette slugs (`/p/<slug>`) - featured + top-voted seed,
       //   - active profile handles (`/u/<handle>`),
       // from `sitemap-seed.ts` (empty until its D1-regeneration hook is wired;
-      // safe no-op when empty — in-page links still drive discovery).
+      // safe no-op when empty - in-page links still drive discovery).
       customPages: [
         'https://UIshades.com/explore',
         ...POPULAR_HEXES.map((h) => `https://UIshades.com/${h.slice(1)}`),
@@ -79,7 +79,7 @@ export default defineConfig({
   // downloads woff2 files at build time, emits an @font-face rule with the
   // chosen `display` value, and (because `optimizedFallbacks` defaults to
   // true) generates a metric-overridden fallback @font-face so the
-  // system-font fallback occupies the same box as the real webfont — no CLS
+  // system-font fallback occupies the same box as the real webfont - no CLS
   // when the swap happens, and `display: 'optional'` means the user's first
   // paint isn't held up at all.
   fonts: [

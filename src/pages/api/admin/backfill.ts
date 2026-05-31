@@ -1,8 +1,8 @@
 /**
  * One-time, idempotent migration of legacy `presets` rows into 1-color PRIVATE
  * `palettes` (see `backfillPresetsToPalettes`). Exposed as a Worker route rather
- * than a local script because it must run against the SAME D1 — local preview
- * AND remote production — and reuse the unit-tested db helper verbatim (no
+ * than a local script because it must run against the SAME D1 - local preview
+ * AND remote production - and reuse the unit-tested db helper verbatim (no
  * re-implemented slug/role logic that could drift).
  *
  * INERT BY DEFAULT: with no `ADMIN_BACKFILL_TOKEN` secret set, the route 404s,

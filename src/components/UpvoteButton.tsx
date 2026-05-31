@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import AuthMenu from './AuthMenu';
 
 /**
- * UpvoteButton — the heart "like" + count control on every PaletteCard.
+ * UpvoteButton - the heart "like" + count control on every PaletteCard.
  *
  * A like IS the vote (one per user, toggled); the heart is just the affordance.
  * Optimistic toggle: clicking flips `voted`/`count` immediately, then POSTs
@@ -12,8 +12,8 @@ import AuthMenu from './AuthMenu';
  * on network/other failure we roll back to the pre-click values.
  *
  * Liking REQUIRES sign-in. A signed-out click (or a 401 from the API) opens the
- * same sign-in modal HeaderAuth uses — `AuthMenu` rendered in a portal dialog
- * with the magic-link / OAuth controls — instead of erroring. This is itself a
+ * same sign-in modal HeaderAuth uses - `AuthMenu` rendered in a portal dialog
+ * with the magic-link / OAuth controls - instead of erroring. This is itself a
  * signup nudge (per the plan).
  *
  * Accessible: a real <button> with `aria-pressed` reflecting the voted state.
@@ -60,7 +60,7 @@ export default function UpvoteButton({ paletteId, voteCount, votedByMe }: Upvote
         credentials: 'same-origin',
       });
       if (res.status === 401) {
-        // Signed out — revert and open the sign-in modal.
+        // Signed out - revert and open the sign-in modal.
         setVoted(wasVoted);
         setCount(wasCount);
         setSignInOpen(true);
@@ -117,7 +117,7 @@ export default function UpvoteButton({ paletteId, voteCount, votedByMe }: Upvote
 }
 
 /**
- * SignInModal — the same modal HeaderAuth presents, rendered on demand when a
+ * SignInModal - the same modal HeaderAuth presents, rendered on demand when a
  * signed-out user tries to vote. Reuses `AuthMenu` verbatim (Google/GitHub +
  * magic-link), wired to the same `/api/auth/magic` request. Portal + backdrop +
  * Escape/click-out close + focus restore mirror HeaderAuth's primitives.
@@ -171,7 +171,7 @@ function SignInModal({
         credentials: 'same-origin',
         body: JSON.stringify({ email }),
       });
-      if (res.status === 429) throw new Error('Too many requests — try again later.');
+      if (res.status === 429) throw new Error('Too many requests - try again later.');
       if (!res.ok) throw new Error('Please enter a valid email.');
       setStatus({ kind: 'ok', text: 'Check your inbox for a sign-in link.' });
     } catch (err) {

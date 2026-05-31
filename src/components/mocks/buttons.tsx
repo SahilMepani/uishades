@@ -1,5 +1,5 @@
 /**
- * Buttons mock — primary / secondary / ghost / disabled button variants plus a
+ * Buttons mock - primary / secondary / ghost / disabled button variants plus a
  * form field, the canonical "is this palette usable in a UI?" check.
  *
  * Pure markup styled only by the stage's scoped `--mock-*` vars.

@@ -1,6 +1,6 @@
 ---
 /**
- * ColorToolLayout — the single shared document shell for the interactive tool.
+ * ColorToolLayout - the single shared document shell for the interactive tool.
  *
  * Both `/` and `/[hex]` render through this layout so the two URLs emit an
  * identical `<!doctype html>…</html>` structure from one source. Page-specific
@@ -8,7 +8,7 @@
  * else is parameterized through props.
  *
  * The rendered output for a given hex MUST stay byte-for-byte identical to the
- * markup `/[hex].astro` used to render inline — edits here hit both URLs.
+ * markup `/[hex].astro` used to render inline - edits here hit both URLs.
  */
 import '../styles/global.css';
 import BaseHead from '../components/BaseHead.astro';
@@ -69,7 +69,7 @@ const {
     <meta property="og:image:alt" content={ogImageAlt} />
     {ogImagePin && (
       <>
-        {/* Pinterest-optimized 2:3 portrait variant — Pinterest's feed is
+        {/* Pinterest-optimized 2:3 portrait variant - Pinterest's feed is
             portrait-first and re-crops landscape OG cards. Listed as a
             secondary og:image so Facebook/LinkedIn keep using the
             landscape primary while Pinterest can pick this one. */}

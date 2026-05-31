@@ -1,4 +1,4 @@
--- 0001_init — auth + presets schema for UIshades.com
+-- 0001_init - auth + presets schema for UIshades.com
 -- Users are keyed on a *verified* email; that email is the linking key across
 -- Google OAuth, GitHub OAuth, and magic-link login (find-or-create-by-email).
 

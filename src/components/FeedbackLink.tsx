@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import type { MeResponse } from '../lib/auth/types';
 
 /**
- * FeedbackLink — the footer's "Feedback" control.
+ * FeedbackLink - the footer's "Feedback" control.
  *
  * Self-contained `client:load` island rendered inside the footer nav (in both
  * `ColorToolLayout` and the named-color pages). The trigger is a <button>
@@ -85,7 +85,7 @@ function FeedbackModal({
     };
   }, []);
 
-  // Escape-to-close — kept separate from focus/scroll management so a status
+  // Escape-to-close - kept separate from focus/scroll management so a status
   // re-render never disturbs focus.
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
@@ -95,7 +95,7 @@ function FeedbackModal({
     return () => document.removeEventListener('keydown', onKey);
   }, [requestClose]);
 
-  // Body-scroll lock + focus management — strictly mount/unmount (triggerRef is
+  // Body-scroll lock + focus management - strictly mount/unmount (triggerRef is
   // stable). Must not depend on changing props/state or a re-render would eject
   // focus out of the open dialog.
   useEffect(() => {
@@ -131,7 +131,7 @@ function FeedbackModal({
           }),
         });
         if (res.status === 429) {
-          throw new Error('Too many messages — please try again later.');
+          throw new Error('Too many messages - please try again later.');
         }
         if (!res.ok) {
           throw new Error("Couldn't send your feedback. Please try again.");
@@ -193,7 +193,7 @@ function FeedbackModal({
           <div className="flex flex-col gap-3">
             <span className="eyebrow">Feedback</span>
             <p className="font-mono text-sm leading-relaxed text-ink">
-              Thanks for the feedback — we appreciate it!
+              Thanks for the feedback - we appreciate it!
             </p>
             <button
               type="button"
@@ -208,7 +208,7 @@ function FeedbackModal({
             <div className="mb-3 flex flex-col gap-1">
               <span className="eyebrow">Feedback</span>
               <p className="font-mono text-[13px] leading-relaxed text-mute">
-                Found a bug or have an idea? Tell us — it goes straight to the maker.
+                Found a bug or have an idea? Tell us - it goes straight to the maker.
               </p>
             </div>
 

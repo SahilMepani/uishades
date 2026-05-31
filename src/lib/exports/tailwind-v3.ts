@@ -2,7 +2,7 @@
  * Tailwind v3 config snippet export.
  *
  * Produces the full `module.exports = { ... }` snippet for a
- * tailwind.config.js — designers can paste it straight in (or copy just
+ * tailwind.config.js - designers can paste it straight in (or copy just
  * the inner `extend.colors.{slug}` block). The 50..950 keys are emitted
  * as quoted strings so they're valid JS object literals.
  */

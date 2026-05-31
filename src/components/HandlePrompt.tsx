@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 /**
- * HandlePrompt — modal to set/update the user's public handle + display name.
+ * HandlePrompt - modal to set/update the user's public handle + display name.
  *
  * Reuses HeaderAuth's modal primitives verbatim (portal to `document.body`,
  * backdrop blur, enter/exit fade, Escape + click-out close, body-scroll lock,
@@ -102,11 +102,11 @@ export default function HandlePrompt({
           }),
         });
         if (res.status === 409) {
-          setStatus({ kind: 'error', text: 'That handle is taken — try another.' });
+          setStatus({ kind: 'error', text: 'That handle is taken - try another.' });
           return;
         }
         if (res.status === 400) {
-          setStatus({ kind: 'error', text: "That handle isn't allowed — try another." });
+          setStatus({ kind: 'error', text: "That handle isn't allowed - try another." });
           return;
         }
         if (!res.ok) throw new Error();

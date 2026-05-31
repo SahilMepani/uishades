@@ -1,11 +1,11 @@
 ---
 /**
- * /me/palettes — the signed-in user's private workspace.
+ * /me/palettes - the signed-in user's private workspace.
  *
  * SSR-only (`prerender = false`): redirects to `/` when logged out, and is
  * `noindex` regardless (private per-user surface, never edge-cached). The page
  * is just a shell hosting the `PalettesDashboard` client island, which fetches
- * `/api/palettes` itself — no per-user data is server-rendered (so nothing can
+ * `/api/palettes` itself - no per-user data is server-rendered (so nothing can
  * leak into a shared cache).
  */
 export const prerender = false;
@@ -23,7 +23,7 @@ if (!userId) {
   return Astro.redirect('/');
 }
 
-// Private surface — never cached at the edge.
+// Private surface - never cached at the edge.
 Astro.response.headers.set('Cache-Control', 'private, no-store');
 ---
 

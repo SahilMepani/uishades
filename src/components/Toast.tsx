@@ -18,7 +18,7 @@ import {
  *   `<ToastProvider>` can fire a toast without prop drilling.
  *
  * Animations honor `prefers-reduced-motion` via Tailwind's `motion-safe:`
- * variant — the entrance animation is skipped for users with reduced motion.
+ * variant - the entrance animation is skipped for users with reduced motion.
  */
 
 interface ToastEntry {

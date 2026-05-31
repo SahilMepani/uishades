@@ -25,7 +25,7 @@ import {
  * (`tailwind-blue-500`, `coral`, …). On change the input value is
  * debounced 250ms, then `parseColor` is attempted. On success we call
  * `onChange(newHex)`. On parse failure we ring the input red but do not
- * fire a toast — failures during in-progress typing are very common.
+ * fire a toast - failures during in-progress typing are very common.
  *
  * Autocomplete: once ≥ 2 chars match a named-color slug prefix we render
  * a small dropdown. Arrow keys move focus; Enter / click accepts.
@@ -225,4 +225,3 @@ export default function ColorInput({ value, onChange }: ColorInputProps) {
     </div>
   );
 }
-

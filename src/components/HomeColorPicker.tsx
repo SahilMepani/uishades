@@ -13,7 +13,7 @@ import { NAMED_COLORS_SLIM } from '../lib/data/named-colors-slim';
  * form), we poke the DOM input by id when the user picks a color, and we
  * listen to the input's `input` event so typing a recognized color updates
  * the swatch live. The placeholder stays visible until first interaction
- * — by design.
+ * - by design.
  */
 
 // Used only to seed react-colorful's popover when the user opens it before

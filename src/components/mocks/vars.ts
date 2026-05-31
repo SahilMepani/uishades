@@ -2,7 +2,7 @@
  * Pure palette → scoped-CSS-vars mapping for the mock previews.
  *
  * This module is intentionally free of any DOM / React dependency so it can run
- * **server-side** — `/p/[slug]` renders the Cards mock in its hero and the OG
+ * **server-side** - `/p/[slug]` renders the Cards mock in its hero and the OG
  * image endpoint reuses the same `MockVars` to colour its strip. The browser
  * `MockPreview` island calls the very same helper, so client and server agree
  * byte-for-byte.
@@ -13,7 +13,7 @@
  *     [3]→text, rest→extra`;
  *   - any slot left unfilled gets a sensible default derived from the others;
  *   - if the chosen `text` fails WCAG AA on `bg`, it is auto-replaced with the
- *     readable end of the mono ramp via `contrast.ts` — so a mock is never
+ *     readable end of the mono ramp via `contrast.ts` - so a mock is never
  *     unreadable regardless of which colors the user picked.
  */
 import { contrastRatio } from '../../lib/color/contrast';
@@ -39,7 +39,7 @@ interface ResolvedRoles {
   extras: Hex[];
 }
 
-/** The black/white that reads best on `bg` — mirrors ShadeRow's foreground rule. */
+/** The black/white that reads best on `bg` - mirrors ShadeRow's foreground rule. */
 function readableOn(bg: Hex): Hex {
   return contrastRatio(bg, WHITE) >= contrastRatio(bg, BLACK) ? WHITE : BLACK;
 }
@@ -123,7 +123,7 @@ function rgbToHex(r: number, g: number, b: number): Hex {
 /**
  * Map a palette to the scoped `--mock-*` vars consumed by every template.
  *
- * Pure and SSR-safe — the canonical entry point reused by the `/p/[slug]` hero
+ * Pure and SSR-safe - the canonical entry point reused by the `/p/[slug]` hero
  * and the OG endpoint. Pass the palette's colors (with optional roles); get a
  * `style`-ready var object.
  */

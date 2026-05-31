@@ -1,5 +1,5 @@
 /**
- * POST /api/auth/magic { email } — request a passwordless sign-in link.
+ * POST /api/auth/magic { email } - request a passwordless sign-in link.
  *
  * Rate-limited per-email and per-IP (5/hour) so nobody can burn the Brevo quota
  * or spam a victim's inbox. We store only sha256(token); the raw token rides in
@@ -81,7 +81,7 @@ export const POST: APIRoute = async ({ request }) => {
     await sendMagicLinkEmail({ apiKey: env.BREVO_API_KEY, to: email, magicUrl });
   } catch {
     // Don't leave an unsendable token in D1. (Rate-limit slots are kept on
-    // purpose — cheap DoS resistance.) Respond identically to success so the
+    // purpose - cheap DoS resistance.) Respond identically to success so the
     // provider error isn't leaked.
     await deleteMagicToken(db, tokenHash);
     return jsonNoStore({ ok: true });

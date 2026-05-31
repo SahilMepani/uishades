@@ -4,8 +4,8 @@
  * Mirrors `src/lib/og-render.ts` (the per-hex OG card) but renders a saved
  * palette: an evenly split multi-color strip with the palette name and a
  * UIshades wordmark. Two variants share one composition:
- *   - `landscape` (1200x630) — the default og:image / twitter:image.
- *   - `pin` (1000x1500) — Pinterest-optimized 2:3 portrait.
+ *   - `landscape` (1200x630) - the default og:image / twitter:image.
+ *   - `pin` (1000x1500) - Pinterest-optimized 2:3 portrait.
  *
  * Emitted as an HTML string parsed by Satori under `workers-og`, with the same
  * 30-day immutable cache the hex OG endpoint uses.

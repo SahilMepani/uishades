@@ -12,15 +12,15 @@ import { useToast } from './Toast';
  * Export controls for the Tailwind scale view.
  *
  * The inline UI is now just the "Export as" dropdown plus two icon buttons:
- *   - Copy — writes the currently-selected format's code straight to the
+ *   - Copy - writes the currently-selected format's code straight to the
  *     clipboard (no popup).
- *   - View — opens a modal that shows every format as a tab, with the code
+ *   - View - opens a modal that shows every format as a tab, with the code
  *     for the active tab and its own Copy button.
  *
  * Moving the code preview into the modal keeps the inline layout short so the
  * scale rows sit directly under the controls instead of being pushed down by
  * a tall `<pre>`. The dropdown is the single source of truth for the selected
- * format — the modal's tabs drive the same `onFormatChange`, so browsing a
+ * format - the modal's tabs drive the same `onFormatChange`, so browsing a
  * tab updates the dropdown (and the persisted preference) too.
  */
 
@@ -86,7 +86,7 @@ export default function ExportDropdown({
   const copyText = useCallback(
     (value: string, label: ExportFormat) => {
       if (!clipboardAvailable()) {
-        pushToast("Couldn't copy — clipboard is unavailable in this browser.");
+        pushToast("Couldn't copy - clipboard is unavailable in this browser.");
         return;
       }
       navigator.clipboard.writeText(value).then(
@@ -95,7 +95,7 @@ export default function ExportDropdown({
           onCopy(value);
         },
         () => {
-          pushToast("Couldn't copy — check browser permissions.");
+          pushToast("Couldn't copy - check browser permissions.");
         },
       );
     },
@@ -105,7 +105,7 @@ export default function ExportDropdown({
   const [modalOpen, setModalOpen] = useState(false);
   const viewTriggerRef = useRef<HTMLButtonElement | null>(null);
   // Stable identity so ExportModal's effects don't re-run (and eject focus)
-  // every time the parent re-renders — e.g. when switching format tabs.
+  // every time the parent re-renders - e.g. when switching format tabs.
   const closeModal = useCallback(() => setModalOpen(false), []);
 
   return (
@@ -217,7 +217,7 @@ function ExportModal({
 
   // Escape-to-close. Kept separate from the focus/scroll management below so
   // that if `onClose`'s identity ever changes, only this cheap listener
-  // re-subscribes — focus is never disturbed.
+  // re-subscribes - focus is never disturbed.
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -226,7 +226,7 @@ function ExportModal({
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  // Body-scroll lock + focus management — strictly mount/unmount (triggerRef is
+  // Body-scroll lock + focus management - strictly mount/unmount (triggerRef is
   // stable). This must NOT depend on changing props (format, onClose, …): a
   // re-render such as switching format tabs would otherwise run the cleanup
   // and eject focus out of the open dialog onto the trigger button behind it.
@@ -259,7 +259,7 @@ function ExportModal({
         tabIndex={-1}
         className={
           // Fixed height (not max-h) so the centered dialog stays put when the
-          // active tab's code is shorter or longer — short formats get
+          // active tab's code is shorter or longer - short formats get
           // whitespace, tall ones (the JSON exports) scroll inside the <pre>.
           'relative z-10 flex h-[75vh] w-full max-w-2xl flex-col border border-hairline bg-paper ' +
           'shadow-[0_24px_64px_rgba(17,17,16,0.28)] focus:outline-none'

@@ -8,7 +8,7 @@
  * by SEED_OWNER_EMAIL so signing in with that email later owns these), then
  * inserts the palettes + colors. hue_bucket is computed with culori to match
  * src/lib/color/hue.ts (12 ~30° families, NULL below chroma 0.03) so the
- * /explore colour filter works. Re-running would duplicate the palettes —
+ * /explore colour filter works. Re-running would duplicate the palettes -
  * intended to run once against an empty gallery.
  */
 import { oklch } from 'culori';

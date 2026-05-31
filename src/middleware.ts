@@ -1,5 +1,5 @@
 /**
- * Astro middleware — applies HTTP security headers and enforces a same-origin
+ * Astro middleware - applies HTTP security headers and enforces a same-origin
  * CSRF check on state-changing API requests.
  *
  * Auto-discovered by Astro from `src/middleware.ts`. IMPORTANT: under
@@ -7,14 +7,14 @@
  * (`/[hex]`, `/api/*`, `/og/*`). Pre-rendered pages (the home page and every
  * `/colors/*` page) are emitted as static `.html` and served by the Cloudflare
  * Workers asset layer WITHOUT invoking the worker, so these headers never reach
- * them at runtime — their copy of the same header set is shipped via
+ * them at runtime - their copy of the same header set is shipped via
  * `public/_headers` (keep the two in sync). The `next()` response is mutated in
  * place, then returned.
  *
  * Header rationale (see audit Tier 1.4 + open decision 3):
  *
  * - `Strict-Transport-Security`: lock TLS for a year, include subdomains.
- *   `preload` is NOT set — the apex isn't in the preload list yet and we
+ *   `preload` is NOT set - the apex isn't in the preload list yet and we
  *   don't want to opt-in irrevocably from middleware.
  * - `X-Content-Type-Options: nosniff`: belt-and-braces against browsers
  *   guessing `Content-Type` on our static JSON / PNG endpoints.
@@ -54,7 +54,7 @@ const AVATARS = 'https://*.googleusercontent.com https://avatars.githubuserconte
 // endpoint under these prefixes can't leak one user's data by forgetting to.
 //
 // `/api/palettes` covers the owner CRUD plus `/api/palettes/[id]/vote` and
-// `/.../report` — all per-user / mutating, none public-cacheable (the PUBLIC
+// `/.../report` - all per-user / mutating, none public-cacheable (the PUBLIC
 // palette JSON lives at `/api/p/*.json`, NOT under this prefix). Belt-and-braces
 // backstop so the vote endpoint's `private, no-store` can't regress.
 //

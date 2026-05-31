@@ -1,5 +1,5 @@
 /**
- * GET /api/me — the island's auth probe. Returns `{ user|null, presets[] }`.
+ * GET /api/me - the island's auth probe. Returns `{ user|null, presets[] }`.
  * Logged-out is a 200 with `user: null` (this is the "am I signed in?" check,
  * not a gate). Always `private, no-store` so the edge never caches it.
  */
@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ session }) => {
     return jsonNoStore({ user: null, presets: [], plan: 'free', handle: null } satisfies MeResponse);
 
   // The user row and the preset list both key off the session userId, so the
-  // two D1 round-trips are independent — run them together.
+  // two D1 round-trips are independent - run them together.
   const [user, presets] = await Promise.all([
     getUserById(env.DB, userId),
     listPresets(env.DB, userId),

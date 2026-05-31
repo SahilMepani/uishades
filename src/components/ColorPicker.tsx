@@ -11,12 +11,12 @@ import { formatForCopy } from '../lib/color/format';
  * click toggles the popover. The popover hosts:
  *   - react-colorful's HexColorPicker (saturation square + hue strip)
  *   - a smart text input that accepts hex, rgb(), hsl(), oklch(), and CSS
- *     named colors — parsed through the shared `parseColor` (culori)
+ *     named colors - parsed through the shared `parseColor` (culori)
  *   - an EyeDropper button when the browser supports the API (Chromium)
  *
  * Styling: react-colorful's default rounded look is overridden via CSS in
  * `global.css` (`.react-colorful` selectors) to match the editorial hairline
- * language. We don't import react-colorful's CSS — it auto-injects.
+ * language. We don't import react-colorful's CSS - it auto-injects.
  *
  * Closes on outside click and Escape, matching the AlgorithmInfoButton
  * pattern in ShadeTool.tsx.
@@ -54,7 +54,7 @@ const PASTE_HINT_MAX = 3;
 
 // Map the page's "Copy as" format onto a channel format so the picker opens in
 // whatever the user copies as. `cssVar` / `tailwindClass` aren't color-value
-// formats, so they have no channel equivalent — the picker keeps its default.
+// formats, so they have no channel equivalent - the picker keeps its default.
 function copyToChannel(cf: CopyFormat | undefined): ChannelFormat | null {
   switch (cf) {
     case 'hex':
@@ -67,7 +67,7 @@ function copyToChannel(cf: CopyFormat | undefined): ChannelFormat | null {
   }
 }
 
-// Bare (wrapper-less) representation of `hex` in the given format — the form
+// Bare (wrapper-less) representation of `hex` in the given format - the form
 // shown at rest in the channel input. RGB/HSL reuse `formatForCopy` and drop
 // the `fn( … )` wrapper; HEX drops the leading `#`. OKLCH is rounded coarser
 // than the copy row (2dp L/C, integer hue) so the value fits the narrow input
@@ -93,7 +93,7 @@ function parseChannels(raw: string, fmt: ChannelFormat): Hex {
   try {
     return parseColor(`${fmt}(${v})`);
   } catch (err) {
-    // Not valid channel digits for this format — fall back to parsing it
+    // Not valid channel digits for this format - fall back to parsing it
     // verbatim ONLY if it contains a letter: a CSS named color ('coral') or a
     // bare hex like 'ff0000'. A pure-numeric value ('255') stays channel input
     // and must NOT be reinterpreted as the 3-digit hex '#225555'.
@@ -105,7 +105,7 @@ function parseChannels(raw: string, fmt: ChannelFormat): Hex {
 // Sniff the format of a pasted/typed value so the dropdown can switch to match
 // it. Only fires on an unambiguous lead: a `fn(` prefix or a `#`-prefixed hex.
 // Bare numbers (`240 100% 62.5%`, `64 64 255`) return `null` so they stay in
-// the currently-selected format — a bare `255` must not be mistaken for hex.
+// the currently-selected format - a bare `255` must not be mistaken for hex.
 function detectFormat(raw: string): ChannelFormat | null {
   const v = raw.trim().toLowerCase();
   if (/^hsla?\(/.test(v)) return 'hsl';
@@ -130,7 +130,7 @@ export interface ColorPickerProps {
   triggerLabel: string;
   /**
    * The page's current "Copy as" format. The picker's value field defaults to
-   * the matching channel format so the two stay in sync — until the user picks
+   * the matching channel format so the two stay in sync - until the user picks
    * a different format inside the picker, which then wins until they change the
    * "Copy as" preference again.
    */
@@ -159,7 +159,7 @@ export default function ColorPicker({
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  // Unique per instance — the tool renders two ColorPickers (the desktop left
+  // Unique per instance - the tool renders two ColorPickers (the desktop left
   // rail and the mobile panel), so a hardcoded id would collide.
   const popoverId = useId();
 
@@ -207,7 +207,7 @@ export default function ColorPicker({
     try {
       window.localStorage.setItem(PASTE_HINT_KEY, String(count + 1));
     } catch {
-      /* ignore — best-effort */
+      /* ignore - best-effort */
     }
     setShowHint(true);
     const t = window.setTimeout(() => setShowHint(false), 4000);
@@ -241,7 +241,7 @@ export default function ColorPicker({
 
   // The popover's single value input. The active format follows the page's
   // "Copy as" preference (`copyToChannel(copyFormat)`) unless the user picks a
-  // different one inside the picker — that override is held in `formatOverride`
+  // different one inside the picker - that override is held in `formatOverride`
   // and wins until the "Copy as" preference itself changes (the effect below
   // clears it). `channelText` mirrors the user's in-progress typing as a bare
   // value (no `fn( … )` wrapper, no leading `#`).
@@ -258,7 +258,7 @@ export default function ColorPicker({
   }, [copyFormat]);
 
   // Reformat the field whenever the hex changes from *outside* (saturation/hue
-  // drag, eyedropper) OR the active format changes — unless the user's current
+  // drag, eyedropper) OR the active format changes - unless the user's current
   // typing already resolves to this hex, which we preserve. The `derived !==
   // hex` guard also lets the in-handler updates below short-circuit this effect
   // so they don't clobber a freshly-typed value.
@@ -267,7 +267,7 @@ export default function ColorPicker({
     try {
       derived = parseChannels(channelText, channelFormat);
     } catch {
-      /* unparseable — fall through and reformat */
+      /* unparseable - fall through and reformat */
     }
     if (derived !== hex) setChannelText(formatChannels(hex, channelFormat));
     // intentionally only on hex / format change
@@ -290,7 +290,7 @@ export default function ColorPicker({
       try {
         onChange(parseChannels(raw, fmt));
       } catch {
-        /* partial or invalid input — wait for more keystrokes */
+        /* partial or invalid input - wait for more keystrokes */
       }
     },
     [onChange, channelFormat],
@@ -305,7 +305,7 @@ export default function ColorPicker({
   }, [channelText, channelFormat, hex]);
 
   // Manual dropdown change: record the override and reformat the *current*
-  // color into the chosen format — synchronously alongside the override flip so
+  // color into the chosen format - synchronously alongside the override flip so
   // the new label and value paint together (the [hex, channelFormat] effect's
   // guard then short-circuits).
   const handleChannelFormatSelect = useCallback(
@@ -327,7 +327,7 @@ export default function ColorPicker({
         onChange(sampled as Hex);
       }
     } catch {
-      /* user canceled — no-op */
+      /* user canceled - no-op */
     }
   }, [onChange]);
 
@@ -357,7 +357,7 @@ export default function ColorPicker({
           aria-hidden={!visible}
           // Width matches the full input row the picker was opened from.
           // `w-[400%]` works because the trigger wrapper is `w-1/4` of that row
-          // (set by PreviewBlock in ShadeTool) — 400% of a quarter = the whole
+          // (set by PreviewBlock in ShadeTool) - 400% of a quarter = the whole
           // row. If that wrapper width ever changes, this number must too.
           className={
             'popover-anim absolute left-0 top-full z-40 mt-2 flex w-[400%] flex-col gap-3 ' +
@@ -415,7 +415,7 @@ export default function ColorPicker({
               </svg>
             </div>
             {/* `h-9` on the wrapper (border-box) keeps this box exactly 36px
-                like the eyedropper + select — its border lives on the wrapper,
+                like the eyedropper + select - its border lives on the wrapper,
                 so the inner input fills the remaining height (`h-full`) instead
                 of forcing the box 2px taller and 1px out of alignment. */}
             <div className="relative flex h-9 flex-1 items-center border border-ink/20 bg-paper focus-within:border-ink">
@@ -436,7 +436,7 @@ export default function ColorPicker({
                 }
               />
               {/* One-time onboarding hint: the dropdown shows one format, but the
-                  field parses ANY — this dispels the "OKLCH-only" confusion.
+                  field parses ANY - this dispels the "OKLCH-only" confusion.
                   Auto-shown on open, capped at 3 appearances total (see effect). */}
               {showHint && (
                 <span
@@ -471,4 +471,3 @@ function EyeDropperIcon({ className }: { className?: string }) {
     </svg>
   );
 }
-

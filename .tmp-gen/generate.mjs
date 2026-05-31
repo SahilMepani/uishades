@@ -171,19 +171,19 @@ const CURATED = [
   { slug: 'seafoam',       name: 'Seafoam',       hex: '#93e9be' },
   { slug: 'terracotta',    name: 'Terracotta',    hex: '#e2725b' },
   { slug: 'dusty-rose',    name: 'Dusty Rose',    hex: '#dcae96' },
-  { slug: 'forest-green',  name: 'Forest Green',  hex: '#228b22' }, // matches CSS forestgreen — will be deduped
-  { slug: 'slate-gray',    name: 'Slate Gray',    hex: '#708090' }, // matches CSS slategray — will be deduped
+  { slug: 'forest-green',  name: 'Forest Green',  hex: '#228b22' }, // matches CSS forestgreen - will be deduped
+  { slug: 'slate-gray',    name: 'Slate Gray',    hex: '#708090' }, // matches CSS slategray - will be deduped
   { slug: 'champagne',     name: 'Champagne',     hex: '#f7e7ce' },
   { slug: 'burnt-orange',  name: 'Burnt Orange',  hex: '#cc5500' },
   { slug: 'mustard',       name: 'Mustard',       hex: '#ffdb58' },
-  { slug: 'lavender',      name: 'Lavender',      hex: '#e6e6fa' }, // matches CSS lavender — will be deduped
+  { slug: 'lavender',      name: 'Lavender',      hex: '#e6e6fa' }, // matches CSS lavender - will be deduped
 ];
 
 /* ------------------------------------------------------------------ */
 /*  Family classifier                                                  */
 /* ------------------------------------------------------------------ */
 
-// Family hue ranges in OKLCH (degrees). Approximate — works well at typical chroma.
+// Family hue ranges in OKLCH (degrees). Approximate - works well at typical chroma.
 // Achromatic (low chroma) routes to gray/neutral by lightness.
 function familyOf(hex) {
   const c = toOklch(hex);
@@ -195,10 +195,10 @@ function familyOf(hex) {
     return 'gray';
   }
   const h = c.h ?? 0;
-  // Brown band — warm hues (~15-80deg) at low-mid L with mid-low chroma.
+  // Brown band - warm hues (~15-80deg) at low-mid L with mid-low chroma.
   // Captures: brown (H=26,L=.48,C=.16), saddlebrown, sienna, peru, chocolate,
   // rosybrown, burnt-orange, terracotta. Tan/wheat/sandybrown are too light
-  // and land in yellow/orange — that's fine, they read that way in design.
+  // and land in yellow/orange - that's fine, they read that way in design.
   if (h >= 15 && h <= 80 && c.l <= 0.70 && c.c <= 0.17 && c.l < 0.78) {
     return 'brown';
   }
@@ -424,7 +424,7 @@ for (const s of staging) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  related[] — siblings by OKLCH proximity within the family          */
+/*  related[] - siblings by OKLCH proximity within the family          */
 /* ------------------------------------------------------------------ */
 
 const FAMILIES = [
@@ -526,7 +526,7 @@ function tsString(s) {
 }
 
 const tsLines = [];
-tsLines.push('// AUTO-GENERATED STRUCTURE — blurbs hand-authored. Do not edit by hand');
+tsLines.push('// AUTO-GENERATED STRUCTURE - blurbs hand-authored. Do not edit by hand');
 tsLines.push('// without re-running .tmp-gen/generate.mjs for the structural fields.');
 tsLines.push("import type { Hex } from '../color/types';");
 tsLines.push('');
@@ -604,7 +604,7 @@ const popular = new Set();
 // 1. All Tailwind v4 palette stops (all 26 hues × 11 stops = 286).
 for (const t of tailwindAll) popular.add(t.hex);
 
-// 2. Material — at the M2 standard, each hue has 14 tones (50,100,200,...,900 + A100..A700).
+// 2. Material - at the M2 standard, each hue has 14 tones (50,100,200,...,900 + A100..A700).
 // To keep this tractable, expand using OKLCH-based generation around each Material 500.
 // We have 10 hues × 13 tones = 130.
 for (const m of MATERIAL) {
@@ -647,7 +647,7 @@ for (const c of cssNamedRaw) popular.add(c.hex);
 // has a corresponding /[hex] pre-rendered page).
 for (const cu of CURATED) popular.add(cu.hex.toLowerCase());
 
-// 5. Round-number hexes — 6³ web-safe.
+// 5. Round-number hexes - 6³ web-safe.
 const WS_STEPS = [0x00, 0x33, 0x66, 0x99, 0xcc, 0xff];
 for (const r of WS_STEPS) {
   for (const g of WS_STEPS) {
@@ -666,7 +666,7 @@ for (let i = 0; i < 16; i++) {
   popular.add(`#${xy}${xy}${xy}`);
 }
 
-// 7. Tailwind v3 palette — older but still widely used. Hardcoded for stability.
+// 7. Tailwind v3 palette - older but still widely used. Hardcoded for stability.
 // Subset: 22 v3 hues × 10 stops (50..900). Hex values per Tailwind v3.4 final.
 const TW_V3 = {
   slate:   ['f8fafc','f1f5f9','e2e8f0','cbd5e1','94a3b8','64748b','475569','334155','1e293b','0f172a'],

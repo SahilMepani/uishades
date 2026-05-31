@@ -31,10 +31,10 @@ npm run test:e2e  # Playwright end-to-end tests (Chromium, Firefox, WebKit, mobi
 `npm run test:watch` runs Vitest in watch mode.
 
 End-to-end coverage includes:
-- `tool.spec.ts` — shade-tool smoke flows (ramp render, copy-to-clipboard, view switch, export dropdown, color input)
-- `a11y.spec.ts` — `@axe-core/playwright` scan on home, named-color page, and dev tool route. Zero serious/critical violations expected.
-- `keyboard.spec.ts` — Tab order, ArrowUp/Down shade-row cycling, Enter-to-copy, Escape on autocomplete, focus rings
-- `mobile.spec.ts` — sticky header pinning, tap-target sizes, no horizontal overflow (runs only under the `mobile-chrome` Pixel-5 viewport project)
+- `tool.spec.ts` - shade-tool smoke flows (ramp render, copy-to-clipboard, view switch, export dropdown, color input)
+- `a11y.spec.ts` - `@axe-core/playwright` scan on home, named-color page, and dev tool route. Zero serious/critical violations expected.
+- `keyboard.spec.ts` - Tab order, ArrowUp/Down shade-row cycling, Enter-to-copy, Escape on autocomplete, focus rings
+- `mobile.spec.ts` - sticky header pinning, tap-target sizes, no horizontal overflow (runs only under the `mobile-chrome` Pixel-5 viewport project)
 
 ## Lighthouse
 
@@ -53,7 +53,7 @@ npm run lhci      # Lighthouse CI against the three audited routes
 | `/colors/coral`     |         100 |           100 |            100 | 100 |
 
 `label-content-name-mismatch` shows as an Axe finding on the shade-tool
-pages — the contrast badges' visible text (`AA`, `AAA`, `–`) is
+pages - the contrast badges' visible text (`AA`, `AAA`, `–`) is
 intentionally aria-hidden so screen readers get a single, well-formed
 contrast summary instead of two repeated tokens per row. Lighthouse
 classifies the rule as informative; the category score is 100.
@@ -70,8 +70,8 @@ classifies the rule as informative; the category score is 100.
 
 The Tailwind scale is the default view, so its grid ships eagerly and is
 server-rendered. The lazy boundary now sits *inside* `TailwindScale`,
-wrapping only the heaviest leaf — the `ExportDropdown` UI plus its five
-export-format serializers — via `React.lazy` + `Suspense`. The OKLCH
+wrapping only the heaviest leaf - the `ExportDropdown` UI plus its five
+export-format serializers - via `React.lazy` + `Suspense`. The OKLCH
 continuous ramp is eager too (it reuses the shared `ShadeRow`). A short
 height-stable fallback over the export-controls row prevents CLS while that
 chunk loads after hydration.
@@ -80,7 +80,7 @@ chunk loads after hydration.
 
 The plan called for "React island ≤ 30 KB Brotli". That number was set
 before measuring React 19 + ReactDOM 19, which together compress to ~50 KB
-Brotli — alone. The honest budget for this codebase, accounting for
+Brotli - alone. The honest budget for this codebase, accounting for
 React + the lazy-loaded Tailwind path being separately chunked:
 
 - **Initial-load JS (React + ShadeTool main + page shell): ≤ 110 KB Brotli.**
@@ -92,7 +92,7 @@ React + the lazy-loaded Tailwind path being separately chunked:
 - **Lazy-load chunks: ≤ 10 KB Brotli per chunk.** Measured: 2.5 KB
   (`ExportDropdown.*.js`, loaded after hydration on the scale view).
 
-CI does not currently fail on bundle-size regressions — adding a
+CI does not currently fail on bundle-size regressions - adding a
 `size-limit` step on top of these numbers is a TODO for the next pass.
 
 ### Known limitations
@@ -127,13 +127,13 @@ serious or critical violation.
 Specific behaviours documented in the source comments:
 
 - Shade rows have a role=button, tabindex=0, and an accessible name that
-  matches WCAG 2.5.3 (Label in Name) — visible hex / stop / "input"
+  matches WCAG 2.5.3 (Label in Name) - visible hex / stop / "input"
   tokens come first, followed by a screen-reader summary of the
   contrast badges (so badges can be aria-hidden without dropping
   information).
 - Keyboard: ArrowUp/Down cycles between sibling shade rows, Enter
   copies, Shift+Enter navigates, Escape closes the autocomplete listbox.
-- `prefers-reduced-motion` honoured throughout — every transition class
+- `prefers-reduced-motion` honoured throughout - every transition class
   is `motion-safe:transition-*` or wrapped in `@media (prefers-reduced-motion: reduce) { ... }`.
 - A manual light/dark toggle (footer control, persisted to
   `localStorage['uishades:theme']`, default light) flips the page chrome
@@ -143,7 +143,7 @@ Specific behaviours documented in the source comments:
   theme before first paint so there's no flash. Implemented by overriding
   the `--color-*` tokens under `html.dark` in `global.css`, so every
   `bg-paper`/`text-ink` utility inverts with no per-component edits. The
-  shade swatches and ramps are never inverted — they're the colour
+  shade swatches and ramps are never inverted - they're the colour
   content (inline styles, untouched by the token overrides).
 - All shade-row tap targets are ≥ 44×44 CSS px (tested in
   `tests/e2e/mobile.spec.ts`).

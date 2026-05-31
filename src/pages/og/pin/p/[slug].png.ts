@@ -1,5 +1,5 @@
 /**
- * /og/pin/p/[slug].png — portrait (1000x1500) Pinterest OG image for a public
+ * /og/pin/p/[slug].png - portrait (1000x1500) Pinterest OG image for a public
  * palette. Same as the landscape variant but 2:3 portrait so it reads on a
  * Pinterest feed. Public, non-flagged palettes only (404 otherwise).
  */

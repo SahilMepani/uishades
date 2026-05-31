@@ -1,5 +1,5 @@
 /**
- * GET /api/auth/github/callback — verify state, exchange code, fetch the
+ * GET /api/auth/github/callback - verify state, exchange code, fetch the
  * profile + emails, require a GitHub-verified email, find-or-create by email,
  * upsert the oauth link, regenerate the session and set userId.
  */

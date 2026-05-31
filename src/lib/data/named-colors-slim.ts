@@ -3,7 +3,7 @@
  *
  * The full `NAMED_COLORS` array carries ~100-word editorial blurbs and
  * `related[]` cross-links for each of 209 entries. None of that is needed
- * for runtime autocomplete — the React island only matches against
+ * for runtime autocomplete - the React island only matches against
  * `slug` / `name` prefixes and renders `hex`.
  *
  * Importing this slim shape in `ColorInput.tsx` instead of the full
@@ -13,7 +13,7 @@
  *
  * Implementation note: the slim list is hand-derived as a static literal,
  * not a `NAMED_COLORS.map(...)` projection. esbuild/Vite tree-shake on
- * statements, not on object-literal property usage — a `.map()` over the
+ * statements, not on object-literal property usage - a `.map()` over the
  * full array would pull the entire array (blurbs included) into the
  * island bundle. The constants below are auto-generated from
  * `named-colors.ts`; re-run `.tmp-gen/generate.mjs` after editing the

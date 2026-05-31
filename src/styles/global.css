@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * UIshades.com — editorial design system.
+ * UIshades.com - editorial design system.
  *
  * Neutral high-contrast chrome: a pure-white page in light mode, a pure-black
  * page in dark mode, with a mirrored grayscale ramp for hover surfaces,
@@ -15,20 +15,20 @@
  * Theme is a manual choice, not an OS follow: the footer toggle flips the
  * `.dark` class on <html> and persists it to localStorage, and a pre-paint
  * script in BaseHead re-applies it before first paint (no flash). The color
- * content (swatches, ramps) is the visual hero and is NEVER inverted — those
+ * content (swatches, ramps) is the visual hero and is NEVER inverted - those
  * use inline styles, so the token overrides below can't touch them.
  */
 
 /* Fonts are self-hosted via Astro's `fonts` config (astro.config.mjs) and
  * registered through the <Font> component in BaseHead.astro. Astro emits the
  * `--font-geist` and `--font-jb-mono` CSS variables at :root with the full
- * font-family chain — primary face, metric-overridden fallback, then the
+ * font-family chain - primary face, metric-overridden fallback, then the
  * system stack we configured. We forward those into the @theme tokens
  * Tailwind v4 turns into `font-sans` / `font-mono` / `font-display`
  * utilities so nothing else in the codebase has to change. */
 
 @theme {
-  /* Light theme — pure white, mirrored by the dark block below. */
+  /* Light theme - pure white, mirrored by the dark block below. */
   --color-paper:        #ffffff;
   --color-paper-2:      #f5f5f5;
   --color-paper-3:      #ececec;
@@ -47,11 +47,11 @@
   --font-mono:    var(--font-jb-mono);
 }
 
-/* Dark theme — manual opt-in via the `.dark` class on <html> (toggled by the
+/* Dark theme - manual opt-in via the `.dark` class on <html> (toggled by the
  * footer control, re-applied pre-paint in BaseHead). Pure black, mirrored
  * neutral grayscale. `html.dark` (0,1,1) outranks the `:root` (0,1,0) that
- * @theme emits, so every `var(--color-*)` — and thus every `bg-paper` /
- * `text-ink` / `border-hairline` utility — resolves to these values with no
+ * @theme emits, so every `var(--color-*)` - and thus every `bg-paper` /
+ * `text-ink` / `border-hairline` utility - resolves to these values with no
  * per-component edits. The accent is brightened to clear contrast on black. */
 html.dark {
   --color-paper:        #000000;
@@ -121,7 +121,7 @@ a { color: inherit; }
   color: var(--color-mute);
 }
 
-/* "Index number" — small superscript number with a hair rule under it.
+/* "Index number" - small superscript number with a hair rule under it.
    Used for the numbered "Why UIshades.com" cards on the home and the
    complementary/triadic swatches on the named-color pages. */
 .idx {
@@ -168,7 +168,7 @@ a { color: inherit; }
   font-style: italic;
 }
 
-/* Editorial card — used for the "Why" blocks on the home. No box-shadow,
+/* Editorial card - used for the "Why" blocks on the home. No box-shadow,
    just hairlines, a numbered marker, and generous whitespace. */
 .ed-card {
   border-top: 1px solid var(--color-hairline);
@@ -190,7 +190,7 @@ select:not(:disabled),
   cursor: pointer;
 }
 
-/* react-colorful overrides — strip the default rounded corners and shrink
+/* react-colorful overrides - strip the default rounded corners and shrink
    the picker to match the popover width. We don't import react-colorful's
    stylesheet; it auto-injects, so these rules win by ordering. */
 .react-colorful {
@@ -240,7 +240,7 @@ select:not(:disabled),
    fade in when the parent `.group` is hovered or focus is inside it.
    Touch-only devices (`(hover: none)`) get the icons immediately so the
    affordance is discoverable. Pairs with `lg:hidden` patterns being
-   replaced — the right axis here is "does this device hover?" not
+   replaced - the right axis here is "does this device hover?" not
    "is the screen wide?". Honors prefers-reduced-motion via `motion-safe`
    on the consumer where appropriate. */
 @media (hover: hover) {

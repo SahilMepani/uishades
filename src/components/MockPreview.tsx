@@ -4,13 +4,13 @@ import { computeMockVars } from './mocks/vars';
 import type { MockColorInput, MockVarStyle } from './mocks/types';
 
 /**
- * MockPreview — shows the working palette applied to a real UI surface.
+ * MockPreview - shows the working palette applied to a real UI surface.
  *
  * A "stage" div carries the scoped `--mock-*` CSS custom properties derived from
  * the palette's roles (via the pure {@link computeMockVars}); the selected mock
  * template renders inside it and recolours live with zero per-color JS. The
  * selector is a segmented control while the registry is short and auto-switches
- * to a compact dropdown once it grows past five — preserving the anti-overwhelm
+ * to a compact dropdown once it grows past five - preserving the anti-overwhelm
  * cap. A "Download mockup PNG" button dynamically imports the canvas renderer
  * (so it stays out of the eager bundle, mirroring `ramp-png.ts`).
  *
@@ -54,7 +54,7 @@ export default function MockPreview({ colors, name = 'palette', initialTemplateI
       const { downloadMockPng } = await import('../lib/exports/mock-png');
       await downloadMockPng({ colors, templateId: template.id, name });
     } catch {
-      /* swallow — a failed canvas export is non-fatal */
+      /* swallow - a failed canvas export is non-fatal */
     } finally {
       setDownloading(false);
     }

@@ -18,7 +18,7 @@ import type { ContinuousRamp, Hex, OKLCH, Shade } from './types';
 
 const INNER_STEPS = 20;
 const L_TOP = 0.95; // L of the lightest inner step (achromatic → #eeeeee)
-const L_BOTTOM = 0.06; // L of the darkest inner step (achromatic → #010101 — keeps c=0 inputs off pure black)
+const L_BOTTOM = 0.06; // L of the darkest inner step (achromatic → #010101 - keeps c=0 inputs off pure black)
 
 function chromaBellMultiplier(l: number): number {
   // 1.0 at L=0.5, 0.3 at L=0 or L=1, smooth quadratic between.

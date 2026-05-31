@@ -4,11 +4,11 @@ import AuthMenu from './AuthMenu';
 import type { MeResponse } from '../lib/auth/types';
 
 /**
- * HeaderAuth — the header's account control.
+ * HeaderAuth - the header's account control.
  *
  * Self-contained `client:load` island that lives in the header bar (before the
  * theme toggle), outside the ShadeTool React tree. It owns its own view of the
- * session: it fetches the credentialed `/api/me` on mount — never server-
+ * session: it fetches the credentialed `/api/me` on mount - never server-
  * rendered, since `/[hex]` HTML is edge-cached for 30 days and per-user state
  * would leak across visitors (same reasoning as ShadeTool's account block).
  *
@@ -19,7 +19,7 @@ import type { MeResponse } from '../lib/auth/types';
  *
  * Magic-link / OAuth outcome toasts (the `?signin=` callback param) are handled
  * by ShadeTool, which is always present alongside this island, so they're not
- * duplicated here — feedback for the magic-link request is shown inline.
+ * duplicated here - feedback for the magic-link request is shown inline.
  */
 
 type AuthUser = MeResponse['user'];
@@ -56,7 +56,7 @@ export default function HeaderAuth() {
         credentials: 'same-origin',
         body: JSON.stringify({ email }),
       });
-      if (res.status === 429) throw new Error('Too many requests — try again later.');
+      if (res.status === 429) throw new Error('Too many requests - try again later.');
       if (!res.ok) throw new Error('Please enter a valid email.');
       return;
     } catch (err) {
@@ -183,7 +183,7 @@ function AuthModal({
     [onRequestMagicLink],
   );
 
-  // Escape-to-close — kept separate from focus/scroll management so a status
+  // Escape-to-close - kept separate from focus/scroll management so a status
   // re-render never disturbs focus.
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
@@ -193,7 +193,7 @@ function AuthModal({
     return () => document.removeEventListener('keydown', onKey);
   }, [requestClose]);
 
-  // Body-scroll lock + focus management — strictly mount/unmount (triggerRef is
+  // Body-scroll lock + focus management - strictly mount/unmount (triggerRef is
   // stable). Must not depend on changing props/state or a re-render would eject
   // focus out of the open dialog.
   useEffect(() => {

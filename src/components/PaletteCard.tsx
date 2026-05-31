@@ -3,7 +3,7 @@ import type { PaletteSummary } from '../lib/auth/types';
 import UpvoteButton from './UpvoteButton';
 
 /**
- * PaletteCard — presentational palette tile, fed entirely by a `PaletteSummary`.
+ * PaletteCard - presentational palette tile, fed entirely by a `PaletteSummary`.
  *
  * Shared by the private dashboard (`PalettesDashboard`), the public `/explore`
  * grid, and the `/u/[handle]` profile. It renders a horizontal band of swatches
@@ -36,11 +36,11 @@ interface PaletteCardProps {
    */
   showCreator?: boolean;
   /**
-   * Explicit upvote node — overrides the built-in `UpvoteButton`. Rarely needed;
+   * Explicit upvote node - overrides the built-in `UpvoteButton`. Rarely needed;
    * the card wires its own from the summary when `showVote` is true.
    */
   upvote?: ReactNode;
-  /** Optional trailing slot — used by the dashboard for the `…` overflow menu. */
+  /** Optional trailing slot - used by the dashboard for the `…` overflow menu. */
   action?: ReactNode;
   /** When set, the whole card name links here (e.g. the editor or `/p/[slug]`). */
   href?: string;
@@ -80,7 +80,7 @@ export default function PaletteCard({
 
   return (
     <article className="ed-card flex flex-col gap-3 pt-4">
-      {/* Swatch band — inline fills so the colors survive the theme toggle. */}
+      {/* Swatch band - inline fills so the colors survive the theme toggle. */}
       <div className="flex h-16 w-full overflow-hidden border border-hairline">
         {colors.map((hex, i) => (
           <span

@@ -1,5 +1,5 @@
 /**
- * GET /api/auth/google/callback — verify state, exchange code, require a
+ * GET /api/auth/google/callback - verify state, exchange code, require a
  * Google-verified email, find-or-create by email, upsert the oauth link, then
  * regenerate the session and set userId.
  */

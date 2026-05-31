@@ -1,4 +1,4 @@
--- 0004_palettes — multi-color palettes, sharing, voting, public profiles.
+-- 0004_palettes - multi-color palettes, sharing, voting, public profiles.
 -- The existing `presets` table is left UNTOUCHED for back-compat; a one-time
 -- backfill (backfillPresetsToPalettes in db.ts, run from a script) copies each
 -- legacy preset into a 1-color PRIVATE palette so no saved work leaks public.
