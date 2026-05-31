@@ -18,6 +18,8 @@ import {
 import { toTailwindV4 } from '../src/lib/exports/tailwind-v4';
 import { toTailwindV3 } from '../src/lib/exports/tailwind-v3';
 import { toCssVars } from '../src/lib/exports/css-vars';
+import { toW3CTokens } from '../src/lib/exports/w3c-tokens';
+import { toFigmaVars } from '../src/lib/exports/figma-vars';
 
 const hex = parseColor('#4040ff');
 
@@ -91,5 +93,26 @@ describe('CSS-family serializers (new tokens signature)', () => {
     const out = toTailwindV3(rampTokens, 'brand', 'hex');
     expect(out).toContain("'1': '#");
     expect(out).toContain("'20': '#");
+  });
+});
+
+describe('JSON serializers stay hex even in oklch mode', () => {
+  const rampTokens = rampToTokens(oklchRamp(hex));
+
+  it('w3c-tokens emits hex $value despite oklch mode', () => {
+    const out = toW3CTokens(rampTokens, 'brand', 'oklch');
+    const json = JSON.parse(out);
+    expect(json.brand['1'].$value).toMatch(/^#[0-9a-f]{6}$/);
+    expect(json.brand['1'].$type).toBe('color');
+    expect(out).not.toContain('oklch(');
+  });
+
+  it('figma-vars emits hex values despite oklch mode', () => {
+    const out = toFigmaVars(rampTokens, 'brand', 'oklch');
+    const json = JSON.parse(out);
+    const v = json.collections[0].variables[0];
+    expect(v.name).toBe('brand/1');
+    expect(Object.values(v.valuesByMode)[0]).toMatch(/^#[0-9a-f]{6}$/);
+    expect(out).not.toContain('oklch(');
   });
 });

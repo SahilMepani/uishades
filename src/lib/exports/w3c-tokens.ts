@@ -1,29 +1,25 @@
 /**
  * W3C Design Tokens (DTCG) JSON export.
  *
- * Conforms to the Design Tokens Community Group format draft. Each color
- * is wrapped in an object with `$value` and `$type: "color"`. The whole
- * palette nests under the `name` key.
- *
+ * Each color is `{ $value, $type: "color" }`, nested under the brand `name`.
  * Reference: https://tr.designtokens.org/format/
+ *
+ * NOTE: always emits hex. The DTCG `color` $type expects a hex/sRGB string;
+ * emitting `oklch(...)` would produce non-standard tokens, so this serializer
+ * ignores `valueMode` by design.
  */
 
-import type { TailwindScale } from '../color/types';
+import { sanitizeName, type ColorToken, type ValueMode } from './tokens';
 
-function sanitizeName(name: string): string {
-  const cleaned = (name || '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  return cleaned || 'brand';
-}
-
-export function toW3CTokens(scale: TailwindScale, name: string): string {
+export function toW3CTokens(
+  tokens: ColorToken[],
+  name: string,
+  _valueMode: ValueMode,
+): string {
   const slug = sanitizeName(name);
   const inner: Record<string, { $value: string; $type: 'color' }> = {};
-  for (const s of scale.shades) {
-    inner[String(s.stop)] = { $value: s.hex, $type: 'color' };
+  for (const t of tokens) {
+    inner[t.key] = { $value: t.hex, $type: 'color' };
   }
   return JSON.stringify({ [slug]: inner }, null, 2) + '\n';
 }

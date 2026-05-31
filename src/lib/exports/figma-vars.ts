@@ -1,34 +1,27 @@
 /**
- * Figma Variables JSON export.
+ * Figma Variables JSON export (for the "Variables Import" community plugin).
  *
- * Output is shaped for the popular "Variables Import" community plugin.
- * That format is a single collection containing modes and variables.
- * Each variable holds a `valuesByMode` map keyed by mode id, with the
- * value as a hex string the plugin parses to a COLOR variable.
+ * A single "Default" mode collection of COLOR variables named `{slug}/{key}`.
  *
- * Single "Default" mode keeps the import simple - designers can split
- * into light/dark modes after import using Figma's UI.
+ * NOTE: always emits hex. The plugin parses hex strings into COLOR variables;
+ * an `oklch(...)` string would fail the import, so this serializer ignores
+ * `valueMode` by design.
  */
 
-import type { TailwindScale } from '../color/types';
+import { sanitizeName, type ColorToken, type ValueMode } from './tokens';
 
-function sanitizeName(name: string): string {
-  const cleaned = (name || '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  return cleaned || 'brand';
-}
-
-export function toFigmaVars(scale: TailwindScale, name: string): string {
+export function toFigmaVars(
+  tokens: ColorToken[],
+  name: string,
+  _valueMode: ValueMode,
+): string {
   const slug = sanitizeName(name);
   const modeId = '1:0';
-  const variables = scale.shades.map((s) => ({
-    name: `${slug}/${s.stop}`,
+  const variables = tokens.map((t) => ({
+    name: `${slug}/${t.key}`,
     type: 'COLOR' as const,
     valuesByMode: {
-      [modeId]: s.hex,
+      [modeId]: t.hex,
     },
   }));
   const out = {
