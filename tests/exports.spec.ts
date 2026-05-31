@@ -12,8 +12,9 @@ import { describe, it, expect } from 'vitest';
 import { buildScale } from '../src/lib/color/scale';
 import { parseColor } from '../src/lib/color/parse';
 import { toTailwindV3 } from '../src/lib/exports/tailwind-v3';
+import { scaleToTokens } from '../src/lib/exports/tokens';
 
-const scale = buildScale(parseColor('#ff7f50'));
+const tokens = scaleToTokens(buildScale(parseColor('#ff7f50')));
 
 /** Execute a `module.exports = …` snippet and return the exported value. */
 function evalConfig(src: string): any {
@@ -25,7 +26,7 @@ function evalConfig(src: string): any {
 
 describe('toTailwindV3', () => {
   it('quotes a hyphenated brand key and parses as valid JavaScript', () => {
-    const out = toTailwindV3(scale, 'Burnt Orange'); // -> slug "burnt-orange"
+    const out = toTailwindV3(tokens, 'Burnt Orange', 'hex'); // -> slug "burnt-orange"
     expect(out).toContain("'burnt-orange': {");
     expect(() => evalConfig(out)).not.toThrow();
     const cfg = evalConfig(out);
@@ -34,13 +35,13 @@ describe('toTailwindV3', () => {
   });
 
   it('still parses for a single-word brand', () => {
-    const cfg = evalConfig(toTailwindV3(scale, 'coral'));
+    const cfg = evalConfig(toTailwindV3(tokens, 'coral', 'hex'));
     expect(cfg.theme.extend.colors.coral['950']).toMatch(/^#[0-9a-f]{6}$/);
   });
 
   it('falls back to a parseable default key for an empty/symbol-only name', () => {
     // sanitizeName returns "brand" when nothing survives sanitization.
-    const cfg = evalConfig(toTailwindV3(scale, '!!!'));
+    const cfg = evalConfig(toTailwindV3(tokens, '!!!', 'hex'));
     expect(cfg.theme.extend.colors.brand).toBeDefined();
   });
 });
