@@ -213,6 +213,54 @@ select:not(:disabled),
   border-width: 2px;
 }
 
+/* Color-picker per-channel sliders (RGB / HSL / OKLCH). The track background is
+   a per-channel gradient set inline on the element; here we strip the native
+   chrome and give it a pointer matching react-colorful's. */
+.channel-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 12px;
+  border-radius: 0;
+  background-color: transparent; /* inline gradient supplies the track */
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  cursor: pointer;
+}
+.channel-slider:focus-visible {
+  outline: 2px solid var(--color-accent, #4040ff);
+  outline-offset: 2px;
+}
+.channel-slider::-webkit-slider-runnable-track {
+  height: 12px;
+  border-radius: 0;
+  background: transparent;
+}
+.channel-slider::-moz-range-track {
+  height: 12px;
+  border-radius: 0;
+  background: transparent;
+}
+.channel-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -2px; /* center the 16px thumb on the 12px track */
+  border-radius: 9999px;
+  background: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+.channel-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
 /* ColorPicker popover scale+fade transition. We keep the node mounted during
    exit so the closing animation can play; `data-open` flips the end state.
    The wrapper component handles the mount/unmount + rAF flip. */

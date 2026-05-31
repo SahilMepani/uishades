@@ -208,4 +208,52 @@ test.describe('shade tool — smoke', () => {
       { timeout: 2000 },
     );
   });
+
+  test('per-channel sliders show for RGB/HSL/OKLCH and hide for HEX', async ({
+    page,
+    browserName,
+  }) => {
+    // webkit under Playwright is flaky delivering the click that opens the
+    // picker popover (same class as the trigger/focus quirks noted above);
+    // real Safari is unaffected. chromium + firefox cover this flow.
+    test.fixme(browserName === 'webkit', 'webkit click delivery on the picker trigger');
+    await page.goto('/4040ff');
+    await page
+      .getByRole('button', { name: /open color picker/i })
+      .filter({ visible: true })
+      .first()
+      .click();
+    const dialog = page.locator('[role="dialog"]').filter({ visible: true }).first();
+    await expect(dialog).toBeVisible();
+    const format = dialog.locator('select[aria-label="Color value format"]');
+
+    for (const fmt of ['rgb', 'hsl', 'oklch']) {
+      await format.selectOption(fmt);
+      await expect(dialog.locator('.channel-slider')).toHaveCount(3);
+    }
+
+    await format.selectOption('hex');
+    await expect(dialog.locator('.channel-slider')).toHaveCount(0);
+  });
+
+  test('moving a channel slider updates the picker value input', async ({
+    page,
+    browserName,
+  }) => {
+    test.fixme(browserName === 'webkit', 'webkit click delivery on the picker trigger');
+    await page.goto('/4040ff');
+    await page
+      .getByRole('button', { name: /open color picker/i })
+      .filter({ visible: true })
+      .first()
+      .click();
+    const dialog = page.locator('[role="dialog"]').filter({ visible: true }).first();
+    await dialog.locator('select[aria-label="Color value format"]').selectOption('rgb');
+    const value = dialog.locator('input[aria-label="RGB color value"]');
+    const before = await value.inputValue();
+    // Nudge the red channel one step; the value input must reflect the change.
+    await dialog.locator('.channel-slider').first().focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(value).not.toHaveValue(before);
+  });
 });

@@ -11,6 +11,14 @@ import { HexColorPicker } from 'react-colorful';
 import type { CopyFormat, Hex } from '../lib/color/types';
 import { parseColor, toOklch } from '../lib/color/parse';
 import { formatForCopy } from '../lib/color/format';
+import {
+  CHANNEL_DEFS,
+  isChannelFormat,
+  decompose,
+  recompose,
+  channelGradient,
+  type ChannelFormat as SliderFormat,
+} from '../lib/color/channels';
 
 /**
  * Custom popover color picker, replacing the native `<input type="color">`.
@@ -129,6 +137,19 @@ function stripWrapper(raw: string, fmt: ChannelFormat): string {
   const v = raw.trim();
   if (fmt === 'hex') return v.replace(/^#/, '');
   return v.replace(/^[a-z]+\(/i, '').replace(/\)$/, '');
+}
+
+// Recompose a slider channel tuple to hex, or null if it isn't a complete,
+// valid triple. Used to detect whether the remembered slider tuple still
+// describes the current `hex` (so a freshly-set tuple is preserved across
+// re-renders instead of being flattened back through decompose).
+function safeRecompose(values: number[], fmt: SliderFormat): Hex | null {
+  if (values.length !== 3) return null;
+  try {
+    return recompose(values, fmt);
+  } catch {
+    return null;
+  }
 }
 
 export interface ColorPickerProps {
@@ -296,6 +317,14 @@ const ColorPicker = forwardRef<ColorPickerHandle, ColorPickerProps>(function Col
     formatChannels(hex, channelFormat),
   );
 
+  // The last channel tuple the sliders set. It's only the source of truth while
+  // it still recomposes to the current `hex` (see `sliderValues` below); any
+  // external change (square/hue drag, text input, eyedropper) makes it stale and
+  // the sliders fall back to decomposing `hex`. Keeping it lets a slider-set
+  // value survive re-renders without float drift, and preserves a chosen OKLCH
+  // hue even while chroma is 0 (where the hex alone can't carry it).
+  const [channels, setChannels] = useState<number[]>([]);
+
   // When the "Copy as" preference changes, drop any in-picker override so the
   // picker re-syncs to the new copy format. (Runs on mount too, a no-op there.)
   useEffect(() => {
@@ -360,6 +389,37 @@ const ColorPicker = forwardRef<ColorPickerHandle, ColorPickerProps>(function Col
       setChannelText(formatChannels(hex, next));
     },
     [hex],
+  );
+
+  // Slider source of truth. Prefer the remembered tuple while it still describes
+  // the current hex; otherwise decompose the hex fresh (covers external changes
+  // and the initial render before any slider has moved).
+  const channelFmt: SliderFormat | null = isChannelFormat(channelFormat)
+    ? channelFormat
+    : null;
+  const sliderValues: number[] = channelFmt
+    ? safeRecompose(channels, channelFmt) === hex
+      ? channels
+      : decompose(hex, channelFmt)
+    : [];
+
+  const handleChannelSlider = useCallback(
+    (index: number, value: number) => {
+      if (!channelFmt) return;
+      const base =
+        safeRecompose(channels, channelFmt) === hex
+          ? channels
+          : decompose(hex, channelFmt);
+      const next = base.slice();
+      next[index] = value;
+      setChannels(next);
+      try {
+        onChange(recompose(next, channelFmt));
+      } catch {
+        /* out-of-range tuple - ignore */
+      }
+    },
+    [channelFmt, channels, hex, onChange],
   );
 
   const handleEyeDropper = useCallback(async () => {
@@ -501,6 +561,35 @@ const ColorPicker = forwardRef<ColorPickerHandle, ColorPickerProps>(function Col
               )}
             </div>
           </div>
+          {/* Per-channel sliders for RGB / HSL / OKLCH (hidden for HEX). Each
+              track is painted with the gradient of sweeping that one channel;
+              moving a slider updates the color, which flows back to the value
+              input above via the existing [hex, channelFormat] reformat effect. */}
+          {channelFmt && (
+            <div className="flex flex-col gap-2">
+              {CHANNEL_DEFS[channelFmt].map((def, i) => (
+                <div key={def.key} className="flex items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    className="w-4 shrink-0 text-center font-mono text-[11px] uppercase leading-none tracking-[0.06em] text-mute"
+                  >
+                    {def.label}
+                  </span>
+                  <input
+                    type="range"
+                    className="channel-slider flex-1"
+                    min={def.min}
+                    max={def.max}
+                    step={def.step}
+                    value={sliderValues[i] ?? def.min}
+                    aria-label={def.ariaLabel}
+                    style={{ background: channelGradient(sliderValues, channelFmt, i) }}
+                    onChange={(e) => handleChannelSlider(i, Number(e.target.value))}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
