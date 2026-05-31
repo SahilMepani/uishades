@@ -5,6 +5,7 @@ import type {
   Hex,
   TailwindScale as TailwindScaleData,
 } from '../lib/color/types';
+import { scaleToTokens } from '../lib/exports/tokens';
 import ShadeRow from './ShadeRow';
 
 // The export-dropdown UI plus its five export-format serializers are the
@@ -50,9 +51,12 @@ export default function TailwindScale({
     <div className="flex flex-col gap-4" data-anchor-stop={scale.anchorStop}>
       <Suspense fallback={<ExportDropdownFallback />}>
         <ExportDropdown
-          scale={scale}
+          tokens={scaleToTokens(scale)}
           format={exportFormat}
           brandName={brandName}
+          valueMode="hex"
+          onValueModeChange={() => {}}
+          showValueToggle={false}
           onFormatChange={onExportFormatChange}
           onCopy={onExportCopy}
         />
