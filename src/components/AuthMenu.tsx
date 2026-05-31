@@ -144,10 +144,7 @@ function SignedOut({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
-        <span className="eyebrow">Account</span>
-        <p className="font-mono text-[11px] leading-relaxed text-mute">
-          Sign in to save palettes across devices.
-        </p>
+        <p className="eyebrow leading-relaxed">Sign in to save palettes.</p>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -161,13 +158,13 @@ function SignedOut({
         </a>
       </div>
 
-      <div className="flex items-center gap-2" aria-hidden="true">
+      <div className="my-2 flex items-center gap-2" aria-hidden="true">
         <span className="h-px flex-1 bg-hairline" />
         <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-mute">or</span>
         <span className="h-px flex-1 bg-hairline" />
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-1.5">
         <input
           type="email"
           required

@@ -55,7 +55,6 @@ export default function PaletteCard({
   href,
 }: PaletteCardProps) {
   const colors = palette.colors.length > 0 ? palette.colors : ['#f5f5f5'];
-  const isPrivate = palette.visibility === 'private';
 
   const name = href ? (
     <a
@@ -79,7 +78,7 @@ export default function PaletteCard({
     ) : null);
 
   return (
-    <article className="ed-card flex flex-col gap-3 pt-4">
+    <article className="flex flex-col gap-3 pt-5">
       {/* Swatch band - inline fills so the colors survive the theme toggle. */}
       <div className="flex h-16 w-full overflow-hidden border border-hairline">
         {colors.map((hex, i) => (
@@ -93,14 +92,6 @@ export default function PaletteCard({
       </div>
 
       <div className="flex items-center gap-2">
-        <span
-          aria-hidden="true"
-          title={isPrivate ? 'Private' : 'Public'}
-          className={
-            'h-2 w-2 shrink-0 rounded-full ' +
-            (isPrivate ? 'bg-mute/60' : 'bg-accent')
-          }
-        />
         <div className="min-w-0 flex-1">{name}</div>
         {voteNode}
         {action ?? null}

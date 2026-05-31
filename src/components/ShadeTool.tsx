@@ -25,6 +25,7 @@ import ContinuousRamp from './ContinuousRamp';
 import { ToastProvider, useToast } from './Toast';
 import ColorPicker from './ColorPicker';
 import ShareRow from './ShareRow';
+import SignInModal from './SignInModal';
 import type { MeResponse } from '../lib/auth/types';
 
 // The Tailwind scale is the default view, so its grid ships eagerly and is
@@ -1401,7 +1402,9 @@ function PaletteTray({
 }) {
   const [naming, setNaming] = useState(false);
   const [name, setName] = useState('');
+  const [signInOpen, setSignInOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const saveButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const alreadyInTray = tray.some((c) => c.hex === currentHex);
   const canSave = tray.length >= 1;
@@ -1416,9 +1419,15 @@ function PaletteTray({
   }, [naming]);
 
   const submit = useCallback(() => {
+    // Saving requires an account: a signed-out submit opens the same sign-in
+    // modal the header uses (a signup nudge) rather than a dead-end toast.
+    if (!signedIn) {
+      setSignInOpen(true);
+      return;
+    }
     const trimmed = name.trim().slice(0, 60);
     onSave(trimmed.length > 0 ? trimmed : 'Untitled palette');
-  }, [name, onSave]);
+  }, [signedIn, name, onSave]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -1482,12 +1491,6 @@ function PaletteTray({
         </button>
       )}
 
-      {!signedIn && tray.length > 0 && (
-        <p className="font-sans text-[14px] leading-relaxed text-mute">
-          Sign in to save your tray is kept while you do.
-        </p>
-      )}
-
       {naming && (
         <div className="flex flex-col gap-2">
           <label className="flex flex-col gap-1">
@@ -1514,6 +1517,7 @@ function PaletteTray({
           </label>
           <div className="flex items-center gap-2">
             <button
+              ref={saveButtonRef}
               type="button"
               onClick={submit}
               className="inline-flex flex-1 items-center justify-center bg-ink px-3 py-2 font-mono text-xs uppercase tracking-tight text-paper transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
@@ -1529,6 +1533,14 @@ function PaletteTray({
             </button>
           </div>
         </div>
+      )}
+
+      {signInOpen && (
+        <SignInModal
+          onClose={() => setSignInOpen(false)}
+          triggerRef={saveButtonRef}
+          ariaLabel="Sign in to save palettes"
+        />
       )}
     </div>
   );
