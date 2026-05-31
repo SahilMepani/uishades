@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { ExportFormat, TailwindScale } from '../lib/color/types';
+import type { ExportFormat } from '../lib/color/types';
+import type { ColorToken, ValueMode } from '../lib/exports/tokens';
 import { toTailwindV4 } from '../lib/exports/tailwind-v4';
 import { toTailwindV3 } from '../lib/exports/tailwind-v3';
 import { toCssVars } from '../lib/exports/css-vars';
@@ -25,9 +26,15 @@ import { useToast } from './Toast';
  */
 
 export interface ExportDropdownProps {
-  scale: TailwindScale;
+  tokens: ColorToken[];
   format: ExportFormat;
   brandName?: string;
+  /** Current value mode (hex | oklch). */
+  valueMode: ValueMode;
+  /** Fired when the user flips the hex/oklch toggle. */
+  onValueModeChange: (m: ValueMode) => void;
+  /** Show the hex/oklch toggle. True only for the OKLCH ramp view. */
+  showValueToggle: boolean;
   onFormatChange: (next: ExportFormat) => void;
   onCopy: (text: string) => void;
 }
@@ -40,18 +47,23 @@ const FORMAT_OPTIONS: { value: ExportFormat; label: string }[] = [
   { value: 'figma-vars', label: 'Figma Variables' },
 ];
 
-function serialize(scale: TailwindScale, format: ExportFormat, name: string): string {
+function serialize(
+  tokens: ColorToken[],
+  format: ExportFormat,
+  name: string,
+  valueMode: ValueMode,
+): string {
   switch (format) {
     case 'tailwind-v4':
-      return toTailwindV4(scale, name);
+      return toTailwindV4(tokens, name, valueMode);
     case 'tailwind-v3':
-      return toTailwindV3(scale, name);
+      return toTailwindV3(tokens, name, valueMode);
     case 'css-vars':
-      return toCssVars(scale, name);
+      return toCssVars(tokens, name, valueMode);
     case 'w3c-tokens':
-      return toW3CTokens(scale, name);
+      return toW3CTokens(tokens, name, valueMode);
     case 'figma-vars':
-      return toFigmaVars(scale, name);
+      return toFigmaVars(tokens, name, valueMode);
   }
 }
 
@@ -64,14 +76,20 @@ function clipboardAvailable(): boolean {
 }
 
 export default function ExportDropdown({
-  scale,
+  tokens,
   format,
   brandName,
+  valueMode,
+  onValueModeChange,
+  showValueToggle,
   onFormatChange,
   onCopy,
 }: ExportDropdownProps) {
   const name = (brandName || 'brand').trim() || 'brand';
-  const text = useMemo(() => serialize(scale, format, name), [scale, format, name]);
+  const text = useMemo(
+    () => serialize(tokens, format, name, valueMode),
+    [tokens, format, name, valueMode],
+  );
 
   const { pushToast } = useToast();
 
@@ -144,6 +162,33 @@ export default function ExportDropdown({
           </span>
         </label>
 
+        {showValueToggle && (
+          <div
+            role="group"
+            aria-label="Export value format"
+            className="inline-flex overflow-hidden rounded-sm border border-ink/20 font-mono text-[11px]"
+          >
+            {(['hex', 'oklch'] as const).map((m) => {
+              const active = valueMode === m;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => onValueModeChange(m)}
+                  className={[
+                    'px-2.5 py-1 uppercase tracking-tight transition-colors duration-150 ease-out',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
+                    active ? 'bg-ink text-paper' : 'text-ink/70 hover:bg-paper-2 hover:text-ink',
+                  ].join(' ')}
+                >
+                  {m === 'hex' ? 'Hex' : 'OKLCH'}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <div className="flex items-center gap-2">
           {canCopy && (
             <button
@@ -173,9 +218,10 @@ export default function ExportDropdown({
 
       {modalOpen && (
         <ExportModal
-          scale={scale}
+          tokens={tokens}
           name={name}
           format={format}
+          valueMode={valueMode}
           canCopy={canCopy}
           onFormatChange={onFormatChange}
           onCopy={copyText}
@@ -193,25 +239,30 @@ const ICON_BUTTON_CLASS =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60';
 
 function ExportModal({
-  scale,
+  tokens,
   name,
   format,
+  valueMode,
   canCopy,
   onFormatChange,
   onCopy,
   onClose,
   triggerRef,
 }: {
-  scale: TailwindScale;
+  tokens: ColorToken[];
   name: string;
   format: ExportFormat;
+  valueMode: ValueMode;
   canCopy: boolean;
   onFormatChange: (next: ExportFormat) => void;
   onCopy: (value: string, label: ExportFormat) => void;
   onClose: () => void;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
 }) {
-  const text = useMemo(() => serialize(scale, format, name), [scale, format, name]);
+  const text = useMemo(
+    () => serialize(tokens, format, name, valueMode),
+    [tokens, format, name, valueMode],
+  );
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const titleId = 'export-modal-title';
 
