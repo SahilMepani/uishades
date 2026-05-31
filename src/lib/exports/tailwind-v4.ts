@@ -1,24 +1,21 @@
 /**
  * Tailwind v4 `@theme` block export.
  *
- * Produces a `@theme` directive containing CSS custom properties named
- * `--color-{name}-{stop}` - Tailwind v4's expected convention for palette
- * registration.
+ * Produces a `@theme` directive of `--color-{name}-{key}` custom properties.
+ * `key` is the Tailwind stop (50..950) or the OKLCH ramp index (1..20),
+ * supplied by the caller as a normalized ColorToken[].
  */
 
-import type { TailwindScale } from '../color/types';
+import { sanitizeName, tokenValue, type ColorToken, type ValueMode } from './tokens';
 
-function sanitizeName(name: string): string {
-  const cleaned = (name || '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  return cleaned || 'brand';
-}
-
-export function toTailwindV4(scale: TailwindScale, name: string): string {
+export function toTailwindV4(
+  tokens: ColorToken[],
+  name: string,
+  valueMode: ValueMode,
+): string {
   const slug = sanitizeName(name);
-  const lines = scale.shades.map((s) => `  --color-${slug}-${s.stop}: ${s.hex};`);
+  const lines = tokens.map(
+    (t) => `  --color-${slug}-${t.key}: ${tokenValue(t, valueMode)};`,
+  );
   return `@theme {\n${lines.join('\n')}\n}\n`;
 }

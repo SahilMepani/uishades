@@ -15,6 +15,12 @@ import {
   rampToTokens,
   tokenValue,
 } from '../src/lib/exports/tokens';
+import { toTailwindV4 } from '../src/lib/exports/tailwind-v4';
+import { toTailwindV3 } from '../src/lib/exports/tailwind-v3';
+import { toCssVars } from '../src/lib/exports/css-vars';
+import { toTailwindV4 } from '../src/lib/exports/tailwind-v4';
+import { toTailwindV3 } from '../src/lib/exports/tailwind-v3';
+import { toCssVars } from '../src/lib/exports/css-vars';
 
 const hex = parseColor('#4040ff');
 
