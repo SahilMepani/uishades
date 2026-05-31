@@ -53,7 +53,7 @@ const related = (color.related || [])
   .filter((c): c is NonNullable<typeof c> => !!c)
   .slice(0, 3);
 
-const TITLE = `${color.name} (${color.hex.toUpperCase()}) Color Shades, Tints & Palette | UIshades.com`;
+const TITLE = `${color.name} (${color.hex.toUpperCase()}) Color Shades, Tints & Palette | UI Shades`;
 
 function buildDescription(blurb: string): string {
   // Strip inline `code` ticks before any length math so character budgets
@@ -233,7 +233,7 @@ const faqJsonLd = {
     <!-- End Google Tag Manager (noscript) -->
     <header class="mx-auto max-w-5xl px-6">
       <div class="flex items-center justify-between gap-4 border-b border-hairline py-4">
-        <a href="/" class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink hover:text-accent">UIshades.com</a>
+        <a href="/" class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink hover:text-accent">UI Shades</a>
         <div class="flex items-center gap-4 font-mono text-[11px] uppercase tracking-[0.14em]">
           <a href="/explore" class="text-ink hover:text-accent">Explore</a>
           <HeaderAuth client:load />

@@ -65,7 +65,7 @@ const ogImage = `https://UIshades.com/og/p/${palette.slug}.png`;
 const ogImagePin = `https://UIshades.com/og/pin/p/${palette.slug}.png`;
 const creatorName = 'Anonymous';
 
-const TITLE = `${palette.name} - Color Palette | UIshades.com`;
+const TITLE = `${palette.name} - Color Palette | UI Shades`;
 const DESCRIPTION = palette.description
   ? palette.description.slice(0, 160)
   : `${palette.name}: a ${palette.colors.length}-color palette with Tailwind & OKLCH-ready exports. Free on UIshades.com.`;
@@ -157,7 +157,7 @@ if (!isPublic) {
   <body class="bg-paper text-ink">
     <header class="w-full px-10 lg:px-16">
       <div class="flex items-center justify-between gap-4 border-b border-hairline py-4">
-        <a href="/" class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink hover:text-accent">UIshades.com</a>
+        <a href="/" class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink hover:text-accent">UI Shades</a>
         <div class="flex items-center gap-4 font-mono text-[11px] uppercase tracking-[0.14em]">
           <a href="/me/palettes" class="text-ink hover:text-accent">My palettes</a>
           <HeaderAuth client:load />
