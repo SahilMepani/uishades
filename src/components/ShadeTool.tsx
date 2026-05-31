@@ -36,6 +36,7 @@ import type { MeResponse } from '../lib/auth/types';
 // height-stable fallback. The OKLCH continuous ramp is eager too - it just
 // reuses the shared `ShadeRow` - so toggling between the two views is instant.
 import TailwindScale from './TailwindScale';
+import type { ValueMode } from '../lib/exports/tokens';
 
 /**
  * Top-level React island for the shade tool.
@@ -57,6 +58,7 @@ const STORAGE_KEYS = {
   copyFormat: 'shades.copyFormat',
   exportFormat: 'shades.exportFormat',
   view: 'shades.view',
+  oklchValueMode: 'shades.oklchValueMode',
   dismissedHintBanner: 'shades.dismissedHintBanner',
   // Last-used color, written on every hex change and re-seeded on the root
   // route after hydration (see the mount handler + the `hex` effect below).
@@ -309,6 +311,15 @@ function ShadeToolInner({
     ['tailwind-v4', 'tailwind-v3', 'css-vars', 'w3c-tokens', 'figma-vars'] as const,
     initialExportFormat,
     'fmt',
+  );
+  // OKLCH-view export value mode (hex vs oklch()). localStorage-only (no URL
+  // param - keeps `/[hex]` URLs clean, same policy as copyFormat). Default
+  // 'oklch' so the ramp export leads with its distinctive wide-gamut payload.
+  const [oklchValueMode, setOklchValueMode] = usePersistedState<ValueMode>(
+    STORAGE_KEYS.oklchValueMode,
+    ['hex', 'oklch'] as const,
+    'oklch',
+    null,
   );
 
   const { pushToast } = useToast();
@@ -874,9 +885,14 @@ function ShadeToolInner({
                 ramp={ramp}
                 sourceHex={hex}
                 copyFormat={copyFormat}
+                exportFormat={exportFormat}
+                valueMode={oklchValueMode}
                 brandName={brandName}
                 onCopy={handleCopyShade}
                 onNavigate={handleNavigate}
+                onExportCopy={handleExportCopy}
+                onExportFormatChange={setExportFormat}
+                onValueModeChange={setOklchValueMode}
               />
             ) : (
               <TailwindScale
