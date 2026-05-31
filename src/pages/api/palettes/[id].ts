@@ -27,7 +27,7 @@ import type { PaletteRole } from '../../../lib/auth/types';
 import { isProfane } from '../../../lib/moderation';
 import { COPY_VALUES } from '../../../lib/url-prefs';
 
-const MIN_COLORS = 2;
+const MIN_COLORS = 1;
 const MAX_COLORS = 8;
 const ROLE_VALUES: readonly PaletteRole[] = ['bg', 'surface', 'accent', 'text', 'extra'] as const;
 

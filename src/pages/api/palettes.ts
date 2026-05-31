@@ -25,7 +25,7 @@ import { isProfane } from '../../lib/moderation';
 import { COPY_VALUES } from '../../lib/url-prefs';
 
 const MAX_PALETTES = 100;
-const MIN_COLORS = 2;
+const MIN_COLORS = 1;
 const MAX_COLORS = 8;
 
 export const GET = withUser(async ({ url }, userId) => {

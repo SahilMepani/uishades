@@ -25,8 +25,7 @@ import ContinuousRamp from './ContinuousRamp';
 import { ToastProvider, useToast } from './Toast';
 import ColorPicker from './ColorPicker';
 import ShareRow from './ShareRow';
-import PresetsPanel from './PresetsPanel';
-import type { MeResponse, Preset } from '../lib/auth/types';
+import type { MeResponse } from '../lib/auth/types';
 
 // The Tailwind scale is the default view, so its grid ships eagerly and is
 // server-rendered — real content on first paint, no skeleton flash. Only the
@@ -483,12 +482,11 @@ function ShadeToolInner({
     // intentionally no-op; ExportDropdown owns the toast
   }, []);
 
-  // --- Account + saved presets ---------------------------------------------
+  // --- Account -------------------------------------------------------------
   // Per-user state is fetched client-side from the credentialed `/api/me` on
   // mount — never server-rendered, since `/[hex]` HTML is edge-cached for 30
   // days and SSR'd per-user state would leak across visitors.
   const [authUser, setAuthUser] = useState<MeResponse['user']>(null);
-  const [presets, setPresets] = useState<Preset[]>([]);
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
@@ -500,7 +498,6 @@ function ShadeToolInner({
       .then((data) => {
         if (cancelled) return;
         setAuthUser(data.user);
-        setPresets(data.presets ?? []);
       })
       .catch(() => {})
       .finally(() => {
@@ -534,73 +531,6 @@ function ShadeToolInner({
     };
     if (status && messages[status]) pushToast(messages[status], { durationMs: 3500 });
   }, [pushToast]);
-
-  const handleSavePreset = useCallback(
-    async (name: string) => {
-      try {
-        const res = await fetch('/api/presets', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify({ name, hex, view, copyFormat, exportFormat }),
-        });
-        if (res.status === 401) {
-          pushToast('Sign in to save presets.', { durationMs: 3000 });
-          return;
-        }
-        if (!res.ok) {
-          pushToast("Couldn't save the preset.", { durationMs: 3000 });
-          return;
-        }
-        const { preset } = (await res.json()) as { preset: Preset };
-        setPresets((prev) => [preset, ...prev]);
-        pushToast(`Saved "${preset.name}".`);
-      } catch {
-        pushToast("Couldn't save the preset.", { durationMs: 3000 });
-      }
-    },
-    [hex, view, copyFormat, exportFormat, pushToast],
-  );
-
-  const handleLoadPreset = useCallback(
-    (preset: Preset) => {
-      // Use the gated setters so URL + localStorage stay in sync (not raw setHex).
-      handleChangeHex(preset.hex);
-      setView(preset.view);
-      setCopyFormat(preset.copyFormat);
-      if (preset.exportFormat) setExportFormat(preset.exportFormat);
-      pushToast(`Loaded "${preset.name}".`);
-    },
-    [handleChangeHex, setView, setCopyFormat, setExportFormat, pushToast],
-  );
-
-  const handleDeletePreset = useCallback(
-    async (id: string) => {
-      setPresets((p) => p.filter((x) => x.id !== id)); // optimistic
-      try {
-        const res = await fetch(`/api/presets/${id}`, {
-          method: 'DELETE',
-          credentials: 'same-origin',
-        });
-        if (!res.ok) throw new Error('delete failed');
-      } catch {
-        // Re-sync from the server instead of restoring a stale local snapshot:
-        // a snapshot captured at call time can resurrect a preset that an
-        // overlapping delete already removed.
-        try {
-          const r = await fetch('/api/presets', { credentials: 'same-origin' });
-          if (r.ok) {
-            const data = (await r.json()) as { presets: Preset[] };
-            setPresets(data.presets ?? []);
-          }
-        } catch {
-          /* leave optimistic state if the resync also fails */
-        }
-        pushToast("Couldn't delete the preset.", { durationMs: 3000 });
-      }
-    },
-    [pushToast],
-  );
 
   // --- Palette tray ---------------------------------------------------------
   // The ONLY behavioural addition to the core tool. "Add to palette" pushes the
@@ -638,8 +568,8 @@ function ShadeToolInner({
         pushToast('Sign in to save palettes.', { durationMs: 3000 });
         return;
       }
-      if (tray.length < 2) {
-        pushToast('Add at least 2 colors to save a palette.', { durationMs: 3000 });
+      if (tray.length < 1) {
+        pushToast('Add a color to save a palette.', { durationMs: 3000 });
         return;
       }
       try {
@@ -709,6 +639,18 @@ function ShadeToolInner({
           <PreviewBlock hex={hex} named={named} onChange={handleChangeHex} copyFormat={copyFormat} />
           <div className="mt-6 flex flex-col gap-5">
             <div className="border-t border-hairline pt-5">
+              <PaletteTray
+                tray={tray}
+                currentHex={hex}
+                signedIn={!!authUser}
+                defaultName={defaultPaletteName}
+                onAdd={handleAddToTray}
+                onRemove={handleRemoveFromTray}
+                onClear={handleClearTray}
+                onSave={handleSavePalette}
+              />
+            </div>
+            <div className="border-t border-hairline pt-5">
               <AlgorithmToggle view={view} onChange={setView} />
             </div>
 
@@ -718,24 +660,6 @@ function ShadeToolInner({
               hasStop={view === 'scale'}
             />
             <ShareRow hex={hex} named={named} />
-            <PaletteTray
-              tray={tray}
-              currentHex={hex}
-              signedIn={!!authUser}
-              defaultName={defaultPaletteName}
-              onAdd={handleAddToTray}
-              onRemove={handleRemoveFromTray}
-              onClear={handleClearTray}
-              onSave={handleSavePalette}
-            />
-            <PresetsPanel
-              user={authUser}
-              presets={presets}
-              currentHex={hex}
-              onSave={handleSavePreset}
-              onLoad={handleLoadPreset}
-              onDelete={handleDeletePreset}
-            />
           </div>
         </aside>
 
@@ -750,13 +674,6 @@ function ShadeToolInner({
           <div className="flex flex-col gap-5 md:hidden">
             <PreviewBlock hex={hex} named={named} onChange={handleChangeHex} copyFormat={copyFormat} />
             <div className="flex flex-col gap-3 border-t border-hairline pt-5">
-              <AlgorithmToggle view={view} onChange={setView} />
-              <CopyFormatPicker
-                value={copyFormat}
-                onChange={setCopyFormat}
-                hasStop={view === 'scale'}
-              />
-              <ShareRow hex={hex} named={named} />
               <PaletteTray
                 tray={tray}
                 currentHex={hex}
@@ -767,14 +684,13 @@ function ShadeToolInner({
                 onClear={handleClearTray}
                 onSave={handleSavePalette}
               />
-              <PresetsPanel
-                user={authUser}
-                presets={presets}
-                currentHex={hex}
-                onSave={handleSavePreset}
-                onLoad={handleLoadPreset}
-                onDelete={handleDeletePreset}
+              <AlgorithmToggle view={view} onChange={setView} />
+              <CopyFormatPicker
+                value={copyFormat}
+                onChange={setCopyFormat}
+                hasStop={view === 'scale'}
               />
+              <ShareRow hex={hex} named={named} />
             </div>
           </div>
 
@@ -1462,8 +1378,7 @@ function CopyFormatPicker({
  *
  * Anti-overwhelm: the tray is empty (just the "Add" button) until the user
  * opts in, so the calm single-color view is unchanged for casual visitors. The
- * tray needs ≥2 colors before saving (the palette model is multi-color); the
- * Save button stays disabled until then with an inline hint.
+ * tray needs ≥1 color before saving; the Save button stays disabled until then.
  */
 function PaletteTray({
   tray,
@@ -1489,7 +1404,7 @@ function PaletteTray({
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const alreadyInTray = tray.some((c) => c.hex === currentHex);
-  const canSave = tray.length >= 2;
+  const canSave = tray.length >= 1;
 
   const beginNaming = useCallback(() => {
     setName(defaultName);
@@ -1567,14 +1482,8 @@ function PaletteTray({
         </button>
       )}
 
-      {tray.length > 0 && !canSave && (
-        <p className="font-mono text-[10px] leading-relaxed text-mute">
-          Add at least 2 colors to save a palette.
-        </p>
-      )}
-
       {!signedIn && tray.length > 0 && (
-        <p className="font-mono text-[10px] leading-relaxed text-mute">
+        <p className="font-sans text-[10px] leading-relaxed text-mute">
           Sign in to save — your tray is kept while you do.
         </p>
       )}

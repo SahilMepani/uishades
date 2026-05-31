@@ -33,7 +33,7 @@ import type { CopyFormat, Hex } from '../lib/color/types';
  * already 404s non-owners, so the island assumes ownership.
  */
 
-const MIN_COLORS = 2;
+const MIN_COLORS = 1;
 const MAX_COLORS = 8;
 const ROLE_ORDER: PaletteRole[] = ['bg', 'surface', 'accent', 'text', 'extra'];
 
