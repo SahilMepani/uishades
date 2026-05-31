@@ -1,6 +1,6 @@
 /**
  * Tiny, conservative server-side profanity guard for *public* strings -
- * palette names and `/u/[handle]` handles/display names. This is intentionally
+ * palette names. This is intentionally
  * small and obvious, not a comprehensive filter: it catches the unambiguous
  * slurs/obscenities a public, indexable gallery must not surface, while keeping
  * false positives low (the Scunthorpe problem) by matching on a normalized form
@@ -91,7 +91,7 @@ const ALLOWLIST: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Conservative profanity check for public palette names and handles. Returns
+ * Conservative profanity check for public palette names. Returns
  * `true` when the text should be rejected. Empty/whitespace input is treated as
  * clean (length/required validation is the caller's job).
  */

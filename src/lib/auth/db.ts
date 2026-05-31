@@ -14,7 +14,6 @@ import type {
   OAuthProvider,
   Palette,
   PaletteColor,
-  PaletteCreator,
   PaletteRole,
   PaletteSummary,
   PaletteVisibility,
@@ -33,12 +32,10 @@ interface UserRow {
   // tolerates `undefined` and falls back to the migration defaults.
   plan?: string | null;
   plan_until?: number | null;
-  handle?: string | null;
-  display_name?: string | null;
 }
 
 /** Columns selected wherever a full `User` is materialized. */
-const USER_COLS = 'id, email, name, avatar_url, created_at, plan, plan_until, handle, display_name';
+const USER_COLS = 'id, email, name, avatar_url, created_at, plan, plan_until';
 
 function toUser(row: UserRow): User {
   return {
@@ -49,8 +46,6 @@ function toUser(row: UserRow): User {
     createdAt: row.created_at,
     plan: row.plan === 'pro' ? 'pro' : 'free',
     planUntil: row.plan_until ?? null,
-    handle: row.handle ?? null,
-    displayName: row.display_name ?? null,
   };
 }
 
@@ -85,11 +80,9 @@ async function createUser(db: D1Database, input: NewUser): Promise<User> {
     createdAt: Date.now(),
     plan: 'free',
     planUntil: null,
-    handle: null,
-    displayName: null,
   };
-  // `plan`/`plan_until`/`handle`/`display_name` fall to their migration defaults
-  // (free / NULL) - only the original five columns are written here.
+  // `plan`/`plan_until` fall to their migration defaults (free / NULL) - only the
+  // original five columns are written here.
   await db
     .prepare('INSERT INTO users (id, email, name, avatar_url, created_at) VALUES (?, ?, ?, ?, ?)')
     .bind(user.id, user.email, user.name, user.avatarUrl, user.createdAt)
@@ -339,41 +332,6 @@ export function isPro(user: Pick<User, 'plan' | 'planUntil'>): boolean {
   return user.plan === 'pro' && (user.planUntil ?? 0) > Date.now();
 }
 
-// --- Public handles ----------------------------------------------------------
-
-/**
- * Set (or update) a user's public handle + display name. Mirrors the
- * `findOrCreateUserByEmail` race handling: the `idx_users_handle` UNIQUE index
- * rejects a duplicate handle, which we surface as `false` so the caller can
- * return 409 (handle taken) instead of a 500.
- */
-export async function setUserHandle(
-  db: D1Database,
-  userId: string,
-  handle: string,
-  displayName: string | null,
-): Promise<boolean> {
-  try {
-    const res = await db
-      .prepare('UPDATE users SET handle = ?, display_name = ? WHERE id = ?')
-      .bind(handle, displayName, userId)
-      .run();
-    return (res.meta?.changes ?? 0) > 0;
-  } catch {
-    // UNIQUE(handle) violation - the handle is taken by someone else.
-    return false;
-  }
-}
-
-/** Look up a user by their public handle (for /u/[handle] + profile JSON). */
-export async function getUserByHandle(db: D1Database, handle: string): Promise<User | null> {
-  const row = await db
-    .prepare(`SELECT ${USER_COLS} FROM users WHERE handle = ?`)
-    .bind(handle)
-    .first<UserRow>();
-  return row ? toUser(row) : null;
-}
-
 // --- Palettes ----------------------------------------------------------------
 
 interface PaletteRow {
@@ -391,9 +349,6 @@ interface PaletteRow {
   featured_at: number | null;
   created_at: number;
   updated_at: number;
-  // Joined from `users` for the creator card; present on read queries only.
-  creator_handle?: string | null;
-  creator_display_name?: string | null;
 }
 
 interface PaletteColorRow {
@@ -414,13 +369,6 @@ function toVisibility(v: string): PaletteVisibility {
 
 function toRole(r: string | null): PaletteRole | null {
   return r && (ROLE_VALUES as readonly string[]).includes(r) ? (r as PaletteRole) : null;
-}
-
-function toCreator(row: PaletteRow): PaletteCreator {
-  return {
-    handle: row.creator_handle ?? null,
-    displayName: row.creator_display_name ?? null,
-  };
 }
 
 function parseTags(raw: string | null): string[] {
@@ -458,7 +406,6 @@ function toPalette(row: PaletteRow, colors: PaletteColor[]): Palette {
     featured: row.featured !== 0,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    creator: toCreator(row),
     colors: [...colors].sort((a, b) => a.position - b.position),
   };
 }
@@ -475,9 +422,8 @@ function roleForPosition(position: number): PaletteRole {
 const PALETTE_SELECT = `
   SELECT p.id, p.user_id, p.name, p.slug, p.visibility, p.description, p.tags,
          p.flagged, p.view_count, p.vote_count, p.featured, p.featured_at,
-         p.created_at, p.updated_at,
-         u.handle AS creator_handle, u.display_name AS creator_display_name
-  FROM palettes p JOIN users u ON u.id = p.user_id`;
+         p.created_at, p.updated_at
+  FROM palettes p`;
 
 export interface NewPaletteColor {
   hex: Hex;
@@ -564,7 +510,6 @@ export async function createPalette(
     featured: false,
     createdAt: now,
     updatedAt: now,
-    creator: { handle: null, displayName: null },
     colors,
   };
 }
@@ -730,7 +675,7 @@ export async function countPalettes(db: D1Database, userId: string): Promise<num
   return row?.n ?? 0;
 }
 
-/** Moderation: hide a palette from /explore + profiles (manual / report path). */
+/** Moderation: hide a palette from /explore (manual / report path). */
 export async function flagPalette(db: D1Database, id: string): Promise<void> {
   await db.prepare('UPDATE palettes SET flagged = 1 WHERE id = ?').bind(id).run();
 }
@@ -1027,28 +972,8 @@ async function summarize(
     votedByMe: votedSet.has(row.id),
     featured: row.featured !== 0,
     createdAt: row.created_at,
-    creator: toCreator(row),
     colors: colorsByPalette.get(row.id) ?? [],
   }));
-}
-
-/**
- * Public palettes for a user's profile page (public + non-flagged only),
- * newest first. `viewerId` populates `votedByMe` when the visitor is signed in.
- */
-export async function listPublicPalettesByUser(
-  db: D1Database,
-  userId: string,
-  viewerId?: string | null,
-): Promise<PaletteSummary[]> {
-  const { results } = await db
-    .prepare(
-      `${PALETTE_SELECT} WHERE p.user_id = ? AND p.visibility = 'public' AND p.flagged = 0
-       ORDER BY p.created_at DESC`,
-    )
-    .bind(userId)
-    .all<PaletteRow>();
-  return summarize(db, results ?? [], viewerId ?? null);
 }
 
 /**

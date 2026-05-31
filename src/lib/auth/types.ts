@@ -10,8 +10,6 @@ export interface User {
   createdAt: number;
   plan: 'free' | 'pro';
   planUntil: number | null;
-  handle: string | null;
-  displayName: string | null;
 }
 
 /**
@@ -50,12 +48,6 @@ export interface PaletteColor {
   hueBucket: number | null;
 }
 
-/** Public-facing creator identity shown on cards and profile pages. */
-export interface PaletteCreator {
-  handle: string | null;
-  displayName: string | null;
-}
-
 /**
  * A full palette with its ordered colors. Returned by the owner editor and the
  * public `/p/[slug]` page (visibility-gated upstream).
@@ -73,14 +65,13 @@ export interface Palette {
   featured: boolean;
   createdAt: number;
   updatedAt: number;
-  creator: PaletteCreator;
   colors: PaletteColor[];
 }
 
 /**
- * Lightweight palette shape for list/explore/profile cards: no full color
- * objects (just the hex strings for swatch bands), plus the creator, the
- * vote tally, and whether the current viewer has voted.
+ * Lightweight palette shape for list/explore cards: no full color objects (just
+ * the hex strings for swatch bands), plus the vote tally and whether the current
+ * viewer has voted.
  */
 export interface PaletteSummary {
   id: string;
@@ -91,7 +82,6 @@ export interface PaletteSummary {
   votedByMe: boolean;
   featured: boolean;
   createdAt: number;
-  creator: PaletteCreator;
   colors: Hex[];
 }
 
@@ -116,18 +106,9 @@ export interface ReportResult {
   flagged: boolean;
 }
 
-/** Public profile at /u/[handle]: identity + that user's public palettes only. */
-export interface PublicProfile {
-  handle: string;
-  displayName: string | null;
-  avatarUrl: string | null;
-  palettes: PaletteSummary[];
-}
-
 /** Shape returned by GET /api/me. */
 export interface MeResponse {
   user: Pick<User, 'email' | 'name' | 'avatarUrl'> | null;
   presets: Preset[];
   plan: Plan;
-  handle: string | null;
 }

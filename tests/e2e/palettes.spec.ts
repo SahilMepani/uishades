@@ -2,14 +2,14 @@ import { test, expect } from '@playwright/test';
 
 /**
  * Public-surface smoke tests for the palettes feature (Explore gallery, public
- * palette pages, public profiles), all signed-out.
+ * palette pages), all signed-out.
  *
  * Mirrors auth.spec.ts's philosophy: the signed-in round-trip (save a palette,
- * vote, set a handle) needs a real session and is impractical to automate, so
- * it stays unit-tested (tests/palettes-db.spec.ts, tests/moderation.spec.ts).
- * What we E2E here is that the new PUBLIC routes render from the production
- * build and that unknown slugs/handles 404 rather than 500 — i.e. the SSR
- * data-loading + cache wiring is sound against the real worker.
+ * vote) needs a real session and is impractical to automate, so it stays
+ * unit-tested (tests/palettes-db.spec.ts, tests/moderation.spec.ts). What we
+ * E2E here is that the PUBLIC routes render from the production build and that
+ * unknown slugs 404 rather than 500 — i.e. the SSR data-loading + cache wiring
+ * is sound against the real worker.
  *
  * The local D1 may have zero public palettes, so these assert on the page
  * chrome (gallery scaffolding, filter controls, 404 behaviour) — states that
@@ -36,33 +36,15 @@ test.describe('public palette page — signed out', () => {
   });
 });
 
-test.describe('public profile — signed out', () => {
-  test('unknown handle returns 404', async ({ page }) => {
-    const res = await page.goto('/u/nobody-here-xyz');
-    expect(res?.status()).toBe(404);
-  });
-
-  test('profile JSON for unknown handle returns 404', async ({ request }) => {
-    const res = await request.get('/api/u/nobody-here-xyz.json');
-    expect(res.status()).toBe(404);
-  });
-});
-
-// Happy paths against the deterministic fixture seeded in CI (tests/fixtures/
-// seed-e2e.sql): a real published palette + its owner's profile. These exercise
-// the SSR render path that the 404-only tests never reach — the gap that let an
-// Astro v6 `locals.runtime.ctx` crash ship undetected on /p/[slug].
-test.describe('published palette + profile — signed out', () => {
+// Happy path against the deterministic fixture seeded in CI (tests/fixtures/
+// seed-e2e.sql): a real published palette. This exercises the SSR render path
+// that the 404-only tests never reach — the gap that let an Astro v6
+// `locals.runtime.ctx` crash ship undetected on /p/[slug].
+test.describe('published palette — signed out', () => {
   test('a published palette page renders (not 404)', async ({ page }) => {
     const res = await page.goto('/p/e2e-fixture-palette');
     expect(res?.status()).toBe(200);
     await expect(page.getByRole('heading', { name: /E2E Fixture/i })).toBeVisible();
-  });
-
-  test('a public profile renders its owner', async ({ page }) => {
-    const res = await page.goto('/u/e2euser');
-    expect(res?.status()).toBe(200);
-    await expect(page.getByText('E2E User')).toBeVisible();
   });
 });
 

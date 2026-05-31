@@ -49,7 +49,7 @@ export const POST = withUser(async ({ request }, userId) => {
   const name = String(data.name ?? '').trim().slice(0, 60);
   if (!name) return jsonNoStore({ error: 'name_required' }, 400);
   // Palettes default to public + indexable, so the name is a public string and
-  // gets the same profanity guard as handles (see src/lib/moderation.ts).
+  // gets a profanity guard (see src/lib/moderation.ts).
   if (isProfane(name)) return jsonNoStore({ error: 'invalid_name' }, 400);
 
   // 2–8 colors, each validated through parseColor (canonical #rrggbb) with its
@@ -89,8 +89,8 @@ export const POST = withUser(async ({ request }, userId) => {
   // `slug UNIQUE` constraint is the final guard against a (rare) collision.
   const slug = `${kebab(name)}-${randomSuffix()}`;
 
-  // visibility defaults to 'public' (v1 ships public-only; private is the future
-  // Pro seam, rejected by PATCH in /api/palettes/[id].ts).
+  // visibility defaults to 'public' (every saved palette is reachable by its
+  // /p/[slug] share link; the private seam stays at the DB layer only).
   const palette = await createPalette(env.DB, userId, { name, slug, colors });
   return jsonNoStore({ palette }, 201);
 });

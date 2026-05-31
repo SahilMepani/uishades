@@ -34,7 +34,7 @@ export default function HeaderAuth() {
     let cancelled = false;
     fetch('/api/me', { credentials: 'same-origin' })
       .then((r): Promise<MeResponse> =>
-        r.ok ? r.json() : Promise.resolve({ user: null, presets: [], plan: 'free', handle: null }),
+        r.ok ? r.json() : Promise.resolve({ user: null, presets: [], plan: 'free' }),
       )
       .then((data) => {
         if (!cancelled) setUser(data.user);

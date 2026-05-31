@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ToastProvider, useToast } from './Toast';
 import PaletteCard from './PaletteCard';
-import HandlePrompt from './HandlePrompt';
-import type { MeResponse, PaletteSummary } from '../lib/auth/types';
+import type { PaletteSummary } from '../lib/auth/types';
 
 /**
  * PalettesDashboard - the signed-in user's private workspace island, hosted by
@@ -44,28 +43,6 @@ function DashboardInner() {
   const [likedPalettes, setLikedPalettes] = useState<PaletteSummary[] | null>(null);
   const [likedError, setLikedError] = useState(false);
   const likedRequested = useRef(false);
-  const [handle, setHandle] = useState<string | null>(null);
-  const [displayName, setDisplayName] = useState<string | null>(null);
-  const [handleOpen, setHandleOpen] = useState(false);
-  const handleBtnRef = useRef<HTMLButtonElement | null>(null);
-
-  // Pull the current public handle/display name from the same `/api/me` probe
-  // HeaderAuth uses, so the dashboard can surface "Set handle / edit public
-  // name" with the existing values prefilled.
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/me', { credentials: 'same-origin' })
-      .then((r) => (r.ok ? (r.json() as Promise<MeResponse>) : null))
-      .then((data) => {
-        if (cancelled || !data) return;
-        setHandle(data.handle);
-        setDisplayName(data.user?.name ?? null);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -204,21 +181,6 @@ function DashboardInner() {
           )}
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <button
-            ref={handleBtnRef}
-            type="button"
-            onClick={() => setHandleOpen(true)}
-            className="inline-flex items-center gap-1.5 border border-ink/20 px-4 py-2.5 font-mono text-sm tracking-tight text-ink transition-colors duration-150 ease-out hover:bg-paper-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
-          >
-            {handle ? (
-              <>
-                <span className="text-mute">/u/</span>
-                <span>{handle}</span>
-              </>
-            ) : (
-              'Set public handle'
-            )}
-          </button>
           <a
             href="/"
             className="inline-flex items-center gap-1.5 border border-ink/20 bg-paper-2 px-4 py-2.5 font-mono text-sm uppercase tracking-tight text-ink transition-colors duration-150 ease-out hover:bg-paper-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
@@ -253,20 +215,6 @@ function DashboardInner() {
         })}
       </div>
 
-      {handleOpen && (
-        <HandlePrompt
-          initialHandle={handle ?? ''}
-          initialDisplayName={displayName ?? ''}
-          onClose={() => setHandleOpen(false)}
-          onSaved={(h, dn) => {
-            setHandle(h);
-            setDisplayName(dn);
-            pushToast('Public handle saved');
-          }}
-          triggerRef={handleBtnRef}
-        />
-      )}
-
       {tab === 'created' && (
         <>
           {error && (
@@ -289,7 +237,6 @@ function DashboardInner() {
                     palette={p}
                     href={`/me/palettes/${p.id}`}
                     showVote={false}
-                    showCreator={false}
                     action={
                       <OverflowMenu
                         onOpen={() => {
@@ -330,7 +277,6 @@ function DashboardInner() {
                     palette={p}
                     href={`/p/${p.slug}`}
                     showVote={true}
-                    showCreator={false}
                   />
                 </li>
               ))}

@@ -3,12 +3,7 @@ import { ToastProvider, useToast } from './Toast';
 import ColorPicker from './ColorPicker';
 import ShareRow from './ShareRow';
 import MockPreview from './MockPreview';
-import type {
-  Palette,
-  PaletteColor,
-  PaletteRole,
-  PaletteVisibility,
-} from '../lib/auth/types';
+import type { Palette, PaletteColor, PaletteRole } from '../lib/auth/types';
 import type { CopyFormat, Hex } from '../lib/color/types';
 
 /**
@@ -21,8 +16,6 @@ import type { CopyFormat, Hex } from '../lib/color/types';
  *    `ColorPicker`; add / remove / move-up / move-down; "shuffle roles";
  *  - a `MockPreview` panel fed `{ hex, role }[]`;
  *  - a `ShareRow` (suppressed on `/me/*` by ShareRow's own guard - see note);
- *  - a Public·Private segmented toggle styled like `AlgorithmToggle`, with
- *    Private INERT in v1 (a small "coming with Pro" caption, no paywall).
  *  - delete.
  *
  * Color edits (add/remove/reorder/recolor/role-shuffle) are persisted by
@@ -288,8 +281,6 @@ function EditorInner() {
         <MockPreview colors={mockColors} />
       </section>
 
-      <VisibilityToggle visibility={palette.visibility} />
-
       <ShareRow hex={(palette.colors[0]?.hex ?? '#4040ff') as Hex} />
 
       <section className="ed-card flex items-center justify-between gap-3 pt-4">
@@ -464,60 +455,3 @@ function IconBtn({
   );
 }
 
-/**
- * Public·Private segmented toggle, styled like ShadeTool's `AlgorithmToggle`.
- * Private is INERT in v1 (billing deferred): clicking it does nothing and a
- * small caption explains it arrives with Pro. The control still renders so the
- * paywall seam is visible and the future wiring is a one-line change.
- */
-function VisibilityToggle({ visibility }: { visibility: PaletteVisibility }) {
-  const OPTIONS = [
-    { v: 'public' as const, label: 'Public' },
-    { v: 'private' as const, label: 'Private' },
-  ];
-  return (
-    <div className="flex flex-col gap-2">
-      <span className="eyebrow">Visibility</span>
-      <div
-        role="group"
-        aria-label="Palette visibility"
-        className="relative inline-grid w-full max-w-xs grid-cols-2 rounded-full bg-paper-2 p-1 ring-1 ring-ink/10"
-      >
-        <span
-          aria-hidden="true"
-          className={[
-            'absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-ink shadow-sm',
-            'transition-transform duration-200 ease-out motion-reduce:transition-none',
-            visibility === 'private' ? 'translate-x-full' : 'translate-x-0',
-          ].join(' ')}
-        />
-        {OPTIONS.map(({ v, label }) => {
-          const active = visibility === v;
-          const inert = v === 'private';
-          return (
-            <button
-              key={v}
-              type="button"
-              aria-pressed={active}
-              aria-disabled={inert}
-              // Private is inert in v1 - no onClick wiring, billing deferred.
-              onClick={undefined}
-              title={inert ? 'Private palettes come with Pro' : undefined}
-              className={[
-                'relative z-10 rounded-full px-4 py-2 font-mono text-sm font-medium uppercase tracking-tight',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
-                active ? 'text-paper' : 'text-ink/70',
-                inert ? 'cursor-not-allowed opacity-70' : 'hover:text-ink',
-              ].join(' ')}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
-      <p className="font-mono text-[11px] leading-relaxed text-mute">
-        Palettes are public in v1. Private palettes are coming with Pro.
-      </p>
-    </div>
-  );
-}

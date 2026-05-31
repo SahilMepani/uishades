@@ -15,10 +15,10 @@ import type { User } from '../src/lib/auth/types';
 
 /**
  * In-memory D1 fake mirroring tests/auth-db.spec.ts: dispatch on the stable SQL
- * substrings db.ts uses. Models the palettes / palette_colors / palette_votes /
- * users tables well enough to exercise visibility, vote idempotency, and the
- * join to the creator. Supports `prepare().bind().run()/.first()/.all()` and the
- * `db.batch([...])` used by createPalette / votePalette.
+ * substrings db.ts uses. Models the palettes / palette_colors / palette_votes
+ * tables well enough to exercise visibility and vote idempotency. Supports
+ * `prepare().bind().run()/.first()/.all()` and the `db.batch([...])` used by
+ * createPalette / votePalette.
  */
 interface PaletteRecord {
   id: string;
@@ -50,21 +50,11 @@ interface VoteRecord {
   user_id: string;
   created_at: number;
 }
-interface UserRecord {
-  id: string;
-  handle: string | null;
-  display_name: string | null;
-}
 
 class FakeD1 {
   palettes: PaletteRecord[] = [];
   colors: ColorRecord[] = [];
   votes: VoteRecord[] = [];
-  users: UserRecord[] = [
-    { id: 'owner', handle: 'sahil', display_name: 'Sahil' },
-    // The house account that owns every seeded/curated palette shown on /explore.
-    { id: SEED_OWNER_ID, handle: 'uishades', display_name: 'UIshades' },
-  ];
 
   private exec(sql: string, args: unknown[]): { meta: { changes: number } } {
     if (sql.startsWith('INSERT INTO palettes')) {
@@ -142,13 +132,13 @@ class FakeD1 {
         return stmt;
       },
       async first<T>(): Promise<T | null> {
-        if (sql.includes('FROM palettes p JOIN users u') && sql.includes('p.slug = ?')) {
+        if (sql.includes('FROM palettes p') && sql.includes('p.slug = ?')) {
           const p = db.palettes.find((x) => x.slug === args[0]);
-          return p ? (db.joinCreator(p) as T) : null;
+          return p ? (p as T) : null;
         }
-        if (sql.includes('FROM palettes p JOIN users u') && sql.includes('p.id = ?')) {
+        if (sql.includes('FROM palettes p') && sql.includes('p.id = ?')) {
           const p = db.palettes.find((x) => x.id === args[0]);
-          return p ? (db.joinCreator(p) as T) : null;
+          return p ? (p as T) : null;
         }
         if (sql.includes('SELECT vote_count AS n FROM palettes')) {
           const p = db.palettes.find((x) => x.id === args[0]);
@@ -175,7 +165,7 @@ class FakeD1 {
         // from the per-user listings below by its trailing `LIMIT ?` over-fetch.
         // Binds always lead with the seed-owner user_id; the last bind is LIMIT.
         if (
-          sql.includes('FROM palettes p JOIN users u') &&
+          sql.includes('FROM palettes p') &&
           sql.includes("p.visibility = 'public'") &&
           sql.includes('LIMIT ?')
         ) {
@@ -192,7 +182,7 @@ class FakeD1 {
             const id = args[3] as string;
             rows = rows.filter((p) => p.created_at < ca || (p.created_at === ca && p.id < id));
           }
-          const page = rows.slice(0, limit).map((p) => db.joinCreator(p));
+          const page = rows.slice(0, limit).map((p) => p);
           return { results: page as unknown as T[] };
         }
         // Liked listing: palettes this user upvoted, public + non-flagged,
@@ -207,14 +197,14 @@ class FakeD1 {
               (p): p is PaletteRecord =>
                 !!p && p.visibility === 'public' && p.flagged === 0,
             )
-            .map((p) => db.joinCreator(p));
+            .map((p) => p);
           return { results: liked as unknown as T[] };
         }
-        if (sql.includes('FROM palettes p JOIN users u') && sql.includes('p.user_id = ?')) {
+        if (sql.includes('FROM palettes p') && sql.includes('p.user_id = ?')) {
           const rows = db.palettes
             .filter((p) => p.user_id === args[0])
             .sort((a, b) => b.created_at - a.created_at)
-            .map((p) => db.joinCreator(p));
+            .map((p) => p);
           return { results: rows as unknown as T[] };
         }
         if (sql.includes('FROM palette_votes WHERE user_id = ?')) {
@@ -227,11 +217,6 @@ class FakeD1 {
       },
     };
     return stmt;
-  }
-
-  joinCreator(p: PaletteRecord) {
-    const u = this.users.find((x) => x.id === p.user_id);
-    return { ...p, creator_handle: u?.handle ?? null, creator_display_name: u?.display_name ?? null };
   }
 
   async batch(stmts: { run: () => Promise<unknown> }[]) {
@@ -258,7 +243,6 @@ describe('createPalette + getPaletteWithColors', () => {
 
     const read = await getPaletteWithColors(asD1(db), p.id);
     expect(read?.colors.map((c) => c.hex)).toEqual(['#ff0000', '#0000ff']);
-    expect(read?.creator.handle).toBe('sahil');
   });
 });
 
@@ -314,7 +298,6 @@ describe('listPalettesByUser', () => {
     const list = await listPalettesByUser(asD1(db), 'owner');
     expect(list).toHaveLength(1);
     expect(list[0].colors).toEqual(['#aa0000', '#00aa00']);
-    expect(list[0].creator.displayName).toBe('Sahil');
   });
 });
 

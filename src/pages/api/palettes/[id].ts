@@ -6,10 +6,6 @@
  * All session-gated via `withUser`; every query is owner-scoped, so a user can
  * never read, mutate, or delete another user's palette. Color validation mirrors
  * `src/pages/api/presets.ts` (parseColor + validated copy/view strings).
- *
- * `visibility='private'` is REJECTED in v1 (billing deferred): the request gets
- * a 400 `{ error: 'pro_required' }` placeholder - this is the exact seam where
- * the future `isPro` 402 gate lands.
  */
 export const prerender = false;
 
@@ -54,11 +50,6 @@ export const PATCH = withUser(async ({ request, params }, userId) => {
     data = (await request.json()) as Record<string, unknown>;
   } catch {
     return jsonNoStore({ error: 'bad_request' }, 400);
-  }
-
-  // Private visibility is the future-Pro seam - reject in v1 (billing deferred).
-  if (data.visibility !== undefined && data.visibility !== 'public') {
-    return jsonNoStore({ error: 'pro_required' }, 400);
   }
 
   const patch: PalettePatch = {};

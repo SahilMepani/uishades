@@ -8,7 +8,7 @@
  *
  * Tally + threshold: each accepted report records a `report:<id>` row in the
  * same counter table; once REPORT_THRESHOLD distinct reports accumulate the
- * palette is `flagged=1` and drops out of `/explore`, `/u/[handle]`, and the
+ * palette is `flagged=1` and drops out of `/explore` and the
  * sitemap (it stays reachable by direct slug but `noindex`'d - see the plan's
  * moderation section). A solo-founder manual review (`SELECT … WHERE flagged=1`)
  * is the human backstop.

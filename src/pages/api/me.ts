@@ -15,7 +15,7 @@ import type { MeResponse } from '../../lib/auth/types';
 export const GET: APIRoute = async ({ session }) => {
   const userId = await currentUserId(session);
   if (!userId)
-    return jsonNoStore({ user: null, presets: [], plan: 'free', handle: null } satisfies MeResponse);
+    return jsonNoStore({ user: null, presets: [], plan: 'free' } satisfies MeResponse);
 
   // The user row and the preset list both key off the session userId, so the
   // two D1 round-trips are independent - run them together.
@@ -29,8 +29,7 @@ export const GET: APIRoute = async ({ session }) => {
         user: { email: user.email, name: user.name, avatarUrl: user.avatarUrl },
         presets,
         plan: user.plan,
-        handle: user.handle,
       }
-    : { user: null, presets: [], plan: 'free', handle: null };
+    : { user: null, presets: [], plan: 'free' };
   return jsonNoStore(body);
 };

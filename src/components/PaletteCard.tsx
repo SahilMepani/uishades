@@ -5,21 +5,16 @@ import UpvoteButton from './UpvoteButton';
 /**
  * PaletteCard - presentational palette tile, fed entirely by a `PaletteSummary`.
  *
- * Shared by the private dashboard (`PalettesDashboard`), the public `/explore`
- * grid, and the `/u/[handle]` profile. It renders a horizontal band of swatches
- * (inline `backgroundColor`, theme-toggle-safe), the palette name as an
- * `.eyebrow`, and a small public/private dot.
+ * Shared by the private dashboard (`PalettesDashboard`) and the public `/explore`
+ * grid. It renders a horizontal band of swatches (inline `backgroundColor`,
+ * theme-toggle-safe) and the palette name as an `.eyebrow`.
  *
- * The vote control and the creator link are OPTIONAL, toggled by props so the
- * owner dashboard can hide them (`showVote={false}` `showCreator={false}`) while
- * the public surfaces show both:
+ * The vote control is OPTIONAL, toggled by a prop so the owner dashboard can
+ * hide it (`showVote={false}`) while the explore grid shows it:
  *
  * - `showVote` (default true) fills the upvote slot with `<UpvoteButton/>`,
  *   driven by the summary's `voteCount`/`votedByMe`/`id`. An explicit `upvote`
  *   node overrides it (escape hatch).
- * - `showCreator` (default true) renders the creator's display name (falling
- *   back to handle) as a link to `/u/<handle>` when a handle is set, or plain
- *   "Anonymous" text when it's null.
  *
  * `action` is a trailing slot used by the dashboard for the `…` overflow menu.
  */
@@ -30,11 +25,6 @@ interface PaletteCardProps {
    * Show the upvote control (default true). The dashboard passes false.
    */
   showVote?: boolean;
-  /**
-   * Show the creator's name/profile link (default true). The dashboard passes
-   * false (the owner already knows it's theirs).
-   */
-  showCreator?: boolean;
   /**
    * Explicit upvote node - overrides the built-in `UpvoteButton`. Rarely needed;
    * the card wires its own from the summary when `showVote` is true.
@@ -49,7 +39,6 @@ interface PaletteCardProps {
 export default function PaletteCard({
   palette,
   showVote = true,
-  showCreator = true,
   upvote,
   action,
   href,
@@ -96,25 +85,6 @@ export default function PaletteCard({
         {voteNode}
         {action ?? null}
       </div>
-
-      {showCreator && <CreatorLine creator={palette.creator} />}
     </article>
-  );
-}
-
-function CreatorLine({ creator }: { creator: PaletteSummary['creator'] }) {
-  const label = creator.displayName || creator.handle;
-  if (creator.handle && label) {
-    return (
-      <a
-        href={`/u/${creator.handle}`}
-        className="truncate font-mono text-[11px] tracking-tight text-mute transition-colors duration-150 ease-out hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
-      >
-        by {label}
-      </a>
-    );
-  }
-  return (
-    <span className="truncate font-mono text-[11px] tracking-tight text-mute">Anonymous</span>
   );
 }

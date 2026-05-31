@@ -40,8 +40,8 @@ function hueBucket(hx) {
 
 const lines = [];
 lines.push(
-  `INSERT OR IGNORE INTO users (id, email, name, avatar_url, created_at, plan, plan_until, handle, display_name) ` +
-    `VALUES (${q(OWNER_ID)}, ${q(OWNER_EMAIL.toLowerCase())}, 'UIshades', NULL, ${now}, 'free', NULL, 'uishades', 'UIshades');`,
+  `INSERT OR IGNORE INTO users (id, email, name, avatar_url, created_at, plan, plan_until) ` +
+    `VALUES (${q(OWNER_ID)}, ${q(OWNER_EMAIL.toLowerCase())}, 'UIshades', NULL, ${now}, 'free', NULL);`,
 );
 
 for (let i = 0; i < COUNT; i++) {

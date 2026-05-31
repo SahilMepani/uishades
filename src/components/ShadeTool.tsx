@@ -494,7 +494,7 @@ function ShadeToolInner({
     let cancelled = false;
     fetch('/api/me', { credentials: 'same-origin' })
       .then((r): Promise<MeResponse> =>
-        r.ok ? r.json() : Promise.resolve({ user: null, presets: [], plan: 'free', handle: null }),
+        r.ok ? r.json() : Promise.resolve({ user: null, presets: [], plan: 'free' }),
       )
       .then((data) => {
         if (cancelled) return;
@@ -985,8 +985,8 @@ function PreviewBlock({
           autoCapitalize="off"
           autoCorrect="off"
           aria-label="Color value (hex, rgb, hsl, oklch, or name)"
-          placeholder="#4040ff · coral · rgb(64 64 255)"
-          className="h-full flex-1 bg-transparent px-4 font-mono text-xl tracking-tight text-ink placeholder:text-mute focus:outline-none"
+          placeholder="hex, rgb, hsl, oklch"
+          className="h-full min-w-0 flex-1 bg-transparent px-4 font-mono text-xl tracking-tight text-ink placeholder:text-mute focus:outline-none"
         />
       </div>
       {named && (

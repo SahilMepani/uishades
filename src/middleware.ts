@@ -59,9 +59,8 @@ const AVATARS = 'https://*.googleusercontent.com https://avatars.githubuserconte
 // backstop so the vote endpoint's `private, no-store` can't regress.
 //
 // Public, cacheable endpoints are deliberately NOT in this list so their own
-// Cache-Control survives: `/api/[hex].json`, `/api/p/*.json`, `/api/explore`
-// (anonymous body is public-cacheable; signed-in sets its own no-store), and
-// `/api/u/*.json` (public profile data).
+// Cache-Control survives: `/api/[hex].json`, `/api/p/*.json`, and `/api/explore`
+// (anonymous body is public-cacheable; signed-in sets its own no-store).
 const PRIVATE_API_PREFIXES = ['/api/me', '/api/presets', '/api/auth/', '/api/palettes'];
 
 const SECURITY_HEADERS: Record<string, string> = {

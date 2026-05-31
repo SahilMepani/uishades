@@ -21,7 +21,6 @@ if (!OWNER_EMAIL) {
 
 // Fixed so re-runs reference a stable owner row.
 const OWNER_ID = 'seed00000-0000-4000-8000-000000000001';
-const OWNER_HANDLE = 'uishades';
 const OWNER_NAME = 'UIshades';
 const ACHROMATIC_CHROMA = 0.03;
 const now = Date.now();
@@ -50,8 +49,8 @@ const ROLES = ['bg', 'surface', 'accent', 'text', 'extra'];
 // statements together.
 const lines = [];
 lines.push(
-  `INSERT OR IGNORE INTO users (id, email, name, avatar_url, created_at, plan, plan_until, handle, display_name) ` +
-    `VALUES (${q(OWNER_ID)}, ${q(OWNER_EMAIL.toLowerCase())}, ${q(OWNER_NAME)}, NULL, ${now}, 'free', NULL, ${q(OWNER_HANDLE)}, ${q(OWNER_NAME)});`,
+  `INSERT OR IGNORE INTO users (id, email, name, avatar_url, created_at, plan, plan_until) ` +
+    `VALUES (${q(OWNER_ID)}, ${q(OWNER_EMAIL.toLowerCase())}, ${q(OWNER_NAME)}, NULL, ${now}, 'free', NULL);`,
 );
 
 let n = 0;
