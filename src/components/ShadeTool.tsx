@@ -17,6 +17,7 @@ import { parseColor } from '../lib/color/parse';
 import { formatForCopy } from '../lib/color/format';
 import { oklchRamp } from '../lib/color/ramp';
 import { buildScale } from '../lib/color/scale';
+import { suggestPaletteName } from '../lib/color/palette-name';
 // Use the slim hex-lookup so the React island doesn't drag the full
 // blurb-bearing NAMED_COLORS module into its bundle. The page chrome
 // only reads `named.name` and `named.slug` from the result.
@@ -366,6 +367,15 @@ function ShadeToolInner({
       }
     };
 
+    // Auto-seed the palette tray with whatever color the user lands on, once
+    // per load. Always uses the *resolved* hex (after the deep-link / last-used
+    // swap below) so the first palette swatch matches the color actually shown.
+    // Seeding is invisible to the `/` ⇄ `/[hex]` contract: it does NOT flip
+    // userChoseRef and does NOT touch the URL or localStorage. Seeding only
+    // happens here on mount - if the user later removes every color the tray
+    // stays empty (no re-seed).
+    const seedPalette = (h: Hex) => setTray([{ hex: h, view, copyFormat }]);
+
     if (rawHex) {
       // 1. Explicit `?hex=` deep link - user intent, so promote to /[hex].
       const decoded = decode(rawHex);
@@ -376,8 +386,10 @@ function ShadeToolInner({
         const parsed = parseColor(decoded);
         userChoseRef.current = true;
         if (parsed !== hex) setHex(parsed);
+        seedPalette(parsed);
       } catch {
         pushToast(`Couldn't parse "${decoded}" - showing ${hex} instead.`);
+        seedPalette(hex);
       }
       return;
     }
@@ -390,8 +402,10 @@ function ShadeToolInner({
       try {
         const parsed = parseColor(decoded);
         if (parsed !== hex) setHex(parsed);
+        seedPalette(parsed);
       } catch {
         pushToast(`Couldn't parse "${decoded}" - showing ${hex} instead.`);
+        seedPalette(hex);
       }
       return;
     }
@@ -405,11 +419,17 @@ function ShadeToolInner({
         if (stored) {
           const parsed = parseColor(stored);
           if (parsed !== hex) setHex(parsed);
+          seedPalette(parsed);
+          return;
         }
       } catch {
         /* localStorage unavailable or stored value unparseable - keep seed */
       }
     }
+
+    // 4. (implicit) SSR initialHex - /[hex], named-color pages, or `/` with no
+    // stored color. Seed the tray with the color already in state.
+    seedPalette(hex);
   }, []);
 
   // Derive ramp + scale lazily from inputs.
@@ -538,9 +558,13 @@ function ShadeToolInner({
   // current {hex, view, copyFormat} into a small working tray; "Save palette →"
   // names it and POSTs to /api/palettes, then routes to the owner editor. Gated
   // on signed-in (reuses the same /api/me probe + the AuthMenu sign-in modal
-  // surfaced by the header's HeaderAuth island). Nothing here touches the
-  // URL/localStorage of the free tool, so `/` and `/[hex]` stay identical until
-  // the user explicitly clicks Add.
+  // surfaced by the header's HeaderAuth island).
+  //
+  // The tray section is always visible and is auto-seeded with the landing
+  // color on mount (see the mount effect's `seedPalette`), so a fresh visitor
+  // always starts with the current color already in the palette. Seeding still
+  // touches neither the URL nor localStorage, so `/` and `/[hex]` stay
+  // identical and `/` is only promoted to `/[hex]` on a real color change.
   const [tray, setTray] = useState<TrayColor[]>([]);
   const handleAddToTray = useCallback(() => {
     setTray((prev) => {
@@ -635,12 +659,18 @@ function ShadeToolInner({
     [authUser, tray, pushToast],
   );
 
-  // A friendly default palette name: the current color's friendly name, else
-  // "Untitled palette". Matches the plan's pre-fill suggestion.
-  const defaultPaletteName = useMemo(
-    () => (named?.name ? named.name : 'Untitled palette'),
-    [named],
-  );
+  // Suggested name for the Save-palette dialog (shown as the input placeholder,
+  // so an empty submit saves with this). A single exactly-named color keeps its
+  // friendly name (e.g. "Royal Blue"); otherwise we derive an evocative
+  // "{Tone} {Theme}" name from all the tray colors (e.g. "Deep Ocean").
+  const defaultPaletteName = useMemo(() => {
+    if (tray.length === 0) return 'Untitled palette';
+    if (tray.length === 1) {
+      const only = findByHex(tray[0].hex);
+      if (only?.name) return only.name;
+    }
+    return suggestPaletteName(tray.map((c) => c.hex));
+  }, [tray]);
 
   return (
     <div className="text-ink">
@@ -676,19 +706,17 @@ function ShadeToolInner({
             onPickerOpenChange={handlePickerOpenChange}
           />
           <div className="mt-6 flex flex-col gap-5">
-            {tray.length > 0 && (
-              <div className="border-t border-hairline pt-5">
-                <PaletteTray
-                  tray={tray}
-                  signedIn={!!authUser}
-                  defaultName={defaultPaletteName}
-                  onAddViaPicker={() => openPickerForPalette(desktopPickerRef.current)}
-                  onRemove={handleRemoveFromTray}
-                  onClear={handleClearTray}
-                  onSave={handleSavePalette}
-                />
-              </div>
-            )}
+            <div className="border-t border-hairline pt-5">
+              <PaletteTray
+                tray={tray}
+                signedIn={!!authUser}
+                defaultName={defaultPaletteName}
+                onAddViaPicker={() => openPickerForPalette(desktopPickerRef.current)}
+                onRemove={handleRemoveFromTray}
+                onClear={handleClearTray}
+                onSave={handleSavePalette}
+              />
+            </div>
             <div className="border-t border-hairline pt-5">
               <AlgorithmToggle view={view} onChange={setView} />
             </div>
@@ -723,17 +751,15 @@ function ShadeToolInner({
               onPickerOpenChange={handlePickerOpenChange}
             />
             <div className="flex flex-col gap-3 border-t border-hairline pt-5">
-              {tray.length > 0 && (
-                <PaletteTray
-                  tray={tray}
-                  signedIn={!!authUser}
-                  defaultName={defaultPaletteName}
-                  onAddViaPicker={() => openPickerForPalette(mobilePickerRef.current)}
-                  onRemove={handleRemoveFromTray}
-                  onClear={handleClearTray}
-                  onSave={handleSavePalette}
-                />
-              )}
+              <PaletteTray
+                tray={tray}
+                signedIn={!!authUser}
+                defaultName={defaultPaletteName}
+                onAddViaPicker={() => openPickerForPalette(mobilePickerRef.current)}
+                onRemove={handleRemoveFromTray}
+                onClear={handleClearTray}
+                onSave={handleSavePalette}
+              />
               <AlgorithmToggle view={view} onChange={setView} />
               <CopyFormatPicker
                 value={copyFormat}
@@ -1480,12 +1506,14 @@ function PaletteTray({
   const canSave = tray.length >= 1;
 
   const beginNaming = useCallback(() => {
-    setName(defaultName);
+    // Leave the field empty so the suggested name shows as a placeholder; an
+    // empty submit saves with it (see `submit`).
+    setName('');
     setNaming(true);
-  }, [defaultName]);
+  }, []);
 
   useEffect(() => {
-    if (naming) inputRef.current?.select();
+    if (naming) inputRef.current?.focus();
   }, [naming]);
 
   const submit = useCallback(() => {
@@ -1496,8 +1524,9 @@ function PaletteTray({
       return;
     }
     const trimmed = name.trim().slice(0, 60);
-    onSave(trimmed.length > 0 ? trimmed : 'Untitled palette');
-  }, [signedIn, name, onSave]);
+    // An empty field saves with the suggested placeholder name.
+    onSave(trimmed.length > 0 ? trimmed : defaultName);
+  }, [signedIn, name, onSave, defaultName]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -1514,49 +1543,51 @@ function PaletteTray({
         )}
       </div>
 
-      {tray.length > 0 && (
-        <ul className="flex flex-wrap gap-1.5">
-          {tray.map((c, i) => (
-            <li key={`${c.hex}-${i}`} className="group relative">
-              <span
-                className="block h-9 w-9 rounded-sm ring-1 ring-ink/15"
-                style={{ backgroundColor: c.hex }}
-                title={c.hex}
-              />
-              <button
-                type="button"
-                aria-label={`Remove ${c.hex} from palette`}
-                onClick={() => onRemove(i)}
-                className="absolute -right-1.5 -top-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-ink text-paper opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
-              >
-                <svg viewBox="0 0 16 16" aria-hidden="true" className="h-2.5 w-2.5">
-                  <path d="M3 3l10 10M13 3L3 13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              </button>
-            </li>
-          ))}
+      {/* The tray section is always visible (the surrounding ShadeTool render
+          no longer gates it on a non-empty tray), and it's auto-seeded with the
+          landing color on mount. An empty tray (the user removed everything)
+          still shows the "+" box so a color can be added back. */}
+      <ul className="flex flex-wrap gap-1.5">
+        {tray.map((c, i) => (
+          <li key={`${c.hex}-${i}`} className="group relative">
+            <span
+              className="block h-9 w-9 rounded-sm ring-1 ring-ink/15"
+              style={{ backgroundColor: c.hex }}
+              title={c.hex}
+            />
+            <button
+              type="button"
+              aria-label={`Remove ${c.hex} from palette`}
+              onClick={() => onRemove(i)}
+              className="absolute -right-1.5 -top-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-ink text-paper opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
+            >
+              <svg viewBox="0 0 16 16" aria-hidden="true" className="h-2.5 w-2.5">
+                <path d="M3 3l10 10M13 3L3 13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </button>
+          </li>
+        ))}
 
-          {/* "+" box: opens the same top color picker (anchored at the top
-              swatch). It drives the live page color while open, and the chosen
-              color is appended to the palette when the picker closes. Hidden
-              once the tray hits the 8-color cap. */}
-          {tray.length < 8 && (
-            <li>
-              <button
-                type="button"
-                onClick={onAddViaPicker}
-                aria-label="Add a color to the palette"
-                title="Add a color to the palette"
-                className="group flex h-9 w-9 items-center justify-center rounded-sm border border-dashed border-ink/30 text-mute transition-colors duration-150 ease-out hover:border-ink/60 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
-              >
-                <svg viewBox="0 0 16 16" aria-hidden="true" className="h-4 w-4">
-                  <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                </svg>
-              </button>
-            </li>
-          )}
-        </ul>
-      )}
+        {/* "+" box: opens the same top color picker (anchored at the top
+            swatch). It drives the live page color while open, and the chosen
+            color is appended to the palette when the picker closes. Hidden
+            once the tray hits the 8-color cap. */}
+        {tray.length < 8 && (
+          <li>
+            <button
+              type="button"
+              onClick={onAddViaPicker}
+              aria-label="Add a color to the palette"
+              title="Add a color to the palette"
+              className="group flex h-9 w-9 items-center justify-center rounded-sm border border-dashed border-ink/30 text-mute transition-colors duration-150 ease-out hover:border-ink/60 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
+            >
+              <svg viewBox="0 0 16 16" aria-hidden="true" className="h-4 w-4">
+                <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+              </svg>
+            </button>
+          </li>
+        )}
+      </ul>
 
       {tray.length > 0 && !naming && (
         <button
@@ -1589,7 +1620,7 @@ function PaletteTray({
                   setNaming(false);
                 }
               }}
-              placeholder="Untitled palette"
+              placeholder={defaultName}
               className="border border-ink/20 bg-paper px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
             />
           </label>
