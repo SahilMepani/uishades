@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useId,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import { HexColorPicker } from 'react-colorful';
 import type { CopyFormat, Hex } from '../lib/color/types';
 import { parseColor, toOklch } from '../lib/color/parse';
@@ -136,18 +144,52 @@ export interface ColorPickerProps {
    */
   copyFormat?: CopyFormat;
   className?: string;
+  /**
+   * Fired on every open/close transition (internal trigger, outside-click,
+   * Escape, or an imperative `open()` via ref). On close, `canceled` is true
+   * when the user dismissed via Escape - the palette "+" box uses this to
+   * append the chosen color on a committing close but NOT on an Escape cancel.
+   */
+  onOpenChange?: (open: boolean, canceled: boolean) => void;
   children: React.ReactNode;
 }
 
-export default function ColorPicker({
+/** Imperative handle so a caller (the palette "+" box) can open this picker. */
+export interface ColorPickerHandle {
+  open: () => void;
+}
+
+const ColorPicker = forwardRef<ColorPickerHandle, ColorPickerProps>(function ColorPicker({
   hex,
   onChange,
   triggerLabel,
   copyFormat,
   className,
+  onOpenChange,
   children,
-}: ColorPickerProps) {
+}: ColorPickerProps, ref) {
   const [open, setOpen] = useState(false);
+
+  useImperativeHandle(ref, () => ({ open: () => setOpen(true) }), []);
+
+  // Records why the popover closed so `onOpenChange` can flag an Escape dismiss
+  // as a cancel. Defaults to 'other' (outside-click / trigger toggle); only the
+  // Escape handler sets 'escape', and it's reset after each close transition.
+  const closeReasonRef = useRef<'escape' | 'other'>('other');
+
+  // Report open/close transitions to the parent. Skip the initial mount so we
+  // don't fire a spurious `false` before the user has touched anything.
+  const didMountRef = useRef(false);
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+    onOpenChange?.(open, !open && closeReasonRef.current === 'escape');
+    if (!open) closeReasonRef.current = 'other';
+    // onOpenChange is a stable useCallback in the parent; tracking `open` is enough.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
   // Keep the popover node mounted during the closing animation so the
   // scale+fade-out transition can play. `mounted` controls DOM presence;
   // `visible` flips on the next frame after mount to drive the transition
@@ -221,7 +263,10 @@ export default function ColorPicker({
       if (!wrapRef.current.contains(e.target as Node)) setOpen(false);
     };
     const onKey = (e: globalThis.KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') {
+        closeReasonRef.current = 'escape';
+        setOpen(false);
+      }
     };
     document.addEventListener('mousedown', onDocClick);
     document.addEventListener('keydown', onKey);
@@ -460,7 +505,9 @@ export default function ColorPicker({
       )}
     </div>
   );
-}
+});
+
+export default ColorPicker;
 
 function EyeDropperIcon({ className }: { className?: string }) {
   return (

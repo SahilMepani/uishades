@@ -23,7 +23,7 @@ import { buildScale } from '../lib/color/scale';
 import { findByHexSlim as findByHex } from '../lib/data/named-colors-slim';
 import ContinuousRamp from './ContinuousRamp';
 import { ToastProvider, useToast } from './Toast';
-import ColorPicker from './ColorPicker';
+import ColorPicker, { type ColorPickerHandle } from './ColorPicker';
 import ShareRow from './ShareRow';
 import SignInModal from './SignInModal';
 import type { MeResponse } from '../lib/auth/types';
@@ -557,6 +557,33 @@ function ShadeToolInner({
     });
   }, [hex, view, copyFormat, pushToast]);
 
+  // The palette "+" box opens the SAME top color picker (anchored at the top
+  // swatch), driving the live page color while open. We arm this ref before
+  // opening so that when that picker closes, the chosen color is also appended
+  // to the tray. Separate refs per column (desktop rail / mobile panel) because
+  // both PreviewBlocks are always mounted; the "+" must open the visible one.
+  const desktopPickerRef = useRef<ColorPickerHandle>(null);
+  const mobilePickerRef = useRef<ColorPickerHandle>(null);
+  const addToTrayOnCloseRef = useRef(false);
+
+  const openPickerForPalette = useCallback((picker: ColorPickerHandle | null) => {
+    addToTrayOnCloseRef.current = true;
+    picker?.open();
+  }, []);
+
+  const handlePickerOpenChange = useCallback(
+    (open: boolean, canceled: boolean) => {
+      // Only a "+"-initiated open arms the add-on-close; a normal top-swatch
+      // open/close leaves the flag false and adds nothing. Any close consumes
+      // the flag, but an Escape dismiss (canceled) appends nothing.
+      if (!open && addToTrayOnCloseRef.current) {
+        addToTrayOnCloseRef.current = false;
+        if (!canceled) handleAddToTray();
+      }
+    },
+    [handleAddToTray],
+  );
+
   const handleRemoveFromTray = useCallback((index: number) => {
     setTray((prev) => prev.filter((_, i) => i !== index));
   }, []);
@@ -637,20 +664,31 @@ function ShadeToolInner({
       <div className="grid w-full gap-8 px-4 py-8 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:grid-cols-[22rem_minmax(0,1fr)] lg:gap-14 lg:px-8 lg:py-12">
         {/* Left rail: preview + input + controls (sticky on desktop) */}
         <aside className="hidden md:block md:sticky md:top-8 md:self-start">
-          <PreviewBlock hex={hex} named={named} onChange={handleChangeHex} copyFormat={copyFormat} />
+          <PreviewBlock
+            hex={hex}
+            named={named}
+            onChange={handleChangeHex}
+            copyFormat={copyFormat}
+            onAddToPalette={handleAddToTray}
+            inPalette={tray.some((c) => c.hex === hex)}
+            paletteFull={tray.length >= 8}
+            pickerRef={desktopPickerRef}
+            onPickerOpenChange={handlePickerOpenChange}
+          />
           <div className="mt-6 flex flex-col gap-5">
-            <div className="border-t border-hairline pt-5">
-              <PaletteTray
-                tray={tray}
-                currentHex={hex}
-                signedIn={!!authUser}
-                defaultName={defaultPaletteName}
-                onAdd={handleAddToTray}
-                onRemove={handleRemoveFromTray}
-                onClear={handleClearTray}
-                onSave={handleSavePalette}
-              />
-            </div>
+            {tray.length > 0 && (
+              <div className="border-t border-hairline pt-5">
+                <PaletteTray
+                  tray={tray}
+                  signedIn={!!authUser}
+                  defaultName={defaultPaletteName}
+                  onAddViaPicker={() => openPickerForPalette(desktopPickerRef.current)}
+                  onRemove={handleRemoveFromTray}
+                  onClear={handleClearTray}
+                  onSave={handleSavePalette}
+                />
+              </div>
+            )}
             <div className="border-t border-hairline pt-5">
               <AlgorithmToggle view={view} onChange={setView} />
             </div>
@@ -673,18 +711,29 @@ function ShadeToolInner({
               here. Without this, the home page `/` and every /[hex] page would
               have no way to enter or change a color on a phone. */}
           <div className="flex flex-col gap-5 md:hidden">
-            <PreviewBlock hex={hex} named={named} onChange={handleChangeHex} copyFormat={copyFormat} />
+            <PreviewBlock
+              hex={hex}
+              named={named}
+              onChange={handleChangeHex}
+              copyFormat={copyFormat}
+              onAddToPalette={handleAddToTray}
+              inPalette={tray.some((c) => c.hex === hex)}
+              paletteFull={tray.length >= 8}
+              pickerRef={mobilePickerRef}
+              onPickerOpenChange={handlePickerOpenChange}
+            />
             <div className="flex flex-col gap-3 border-t border-hairline pt-5">
-              <PaletteTray
-                tray={tray}
-                currentHex={hex}
-                signedIn={!!authUser}
-                defaultName={defaultPaletteName}
-                onAdd={handleAddToTray}
-                onRemove={handleRemoveFromTray}
-                onClear={handleClearTray}
-                onSave={handleSavePalette}
-              />
+              {tray.length > 0 && (
+                <PaletteTray
+                  tray={tray}
+                  signedIn={!!authUser}
+                  defaultName={defaultPaletteName}
+                  onAddViaPicker={() => openPickerForPalette(mobilePickerRef.current)}
+                  onRemove={handleRemoveFromTray}
+                  onClear={handleClearTray}
+                  onSave={handleSavePalette}
+                />
+              )}
               <AlgorithmToggle view={view} onChange={setView} />
               <CopyFormatPicker
                 value={copyFormat}
@@ -844,11 +893,24 @@ function PreviewBlock({
   named,
   onChange,
   copyFormat,
+  onAddToPalette,
+  inPalette,
+  paletteFull,
+  pickerRef,
+  onPickerOpenChange,
 }: {
   hex: Hex;
   named: ReturnType<typeof findByHex>;
   onChange: (next: Hex) => void;
   copyFormat: CopyFormat;
+  onAddToPalette: () => void;
+  inPalette: boolean;
+  paletteFull: boolean;
+  /** Lets the palette "+" box open this picker imperatively. */
+  pickerRef?: React.Ref<ColorPickerHandle>;
+  /** Fired when this picker opens/closes (used to append a "+"-added color);
+      `canceled` is true on an Escape dismiss so it appends nothing. */
+  onPickerOpenChange?: (open: boolean, canceled: boolean) => void;
 }) {
   const oklchString = useMemo(() => formatForCopy(hex, 'oklch'), [hex]);
   const rgbString = useMemo(() => formatForCopy(hex, 'rgb'), [hex]);
@@ -951,9 +1013,11 @@ function PreviewBlock({
     <div className="flex flex-col gap-4">
       <div className="flex h-[60px] w-full bg-paper-2">
         <ColorPicker
+          ref={pickerRef}
           hex={hex}
           onChange={onChange}
           copyFormat={copyFormat}
+          onOpenChange={onPickerOpenChange}
           triggerLabel={`Color ${hex} - open color picker`}
           className="block h-full w-1/4 shrink-0"
         >
@@ -989,6 +1053,14 @@ function PreviewBlock({
           className="h-full min-w-0 flex-1 bg-transparent px-4 font-mono text-xl tracking-tight text-ink placeholder:text-mute focus:outline-none"
         />
       </div>
+      <button
+        type="button"
+        onClick={onAddToPalette}
+        disabled={inPalette || paletteFull}
+        className="-mt-2 inline-flex items-center justify-center border border-ink/20 bg-paper-2 px-3 py-2 font-mono text-xs uppercase tracking-tight text-ink transition-colors duration-150 ease-out hover:bg-paper-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-default disabled:opacity-50 motion-reduce:transition-none"
+      >
+        {inPalette ? 'Added in Palette' : 'Add to palette'}
+      </button>
       {named && (
         <div className="border-b border-hairline pb-2">
           <span className="font-display text-base text-ink-2">{named.name}</span>
@@ -1383,19 +1455,18 @@ function CopyFormatPicker({
  */
 function PaletteTray({
   tray,
-  currentHex,
   signedIn,
   defaultName,
-  onAdd,
+  onAddViaPicker,
   onRemove,
   onClear,
   onSave,
 }: {
   tray: TrayColor[];
-  currentHex: Hex;
   signedIn: boolean;
   defaultName: string;
-  onAdd: () => void;
+  /** Opens the top color picker; the chosen color is appended on close. */
+  onAddViaPicker: () => void;
   onRemove: (index: number) => void;
   onClear: () => void;
   onSave: (name: string) => void;
@@ -1406,7 +1477,6 @@ function PaletteTray({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const saveButtonRef = useRef<HTMLButtonElement | null>(null);
 
-  const alreadyInTray = tray.some((c) => c.hex === currentHex);
   const canSave = tray.length >= 1;
 
   const beginNaming = useCallback(() => {
@@ -1465,20 +1535,28 @@ function PaletteTray({
               </button>
             </li>
           ))}
+
+          {/* "+" box: opens the same top color picker (anchored at the top
+              swatch). It drives the live page color while open, and the chosen
+              color is appended to the palette when the picker closes. Hidden
+              once the tray hits the 8-color cap. */}
+          {tray.length < 8 && (
+            <li>
+              <button
+                type="button"
+                onClick={onAddViaPicker}
+                aria-label="Add a color to the palette"
+                title="Add a color to the palette"
+                className="group flex h-9 w-9 items-center justify-center rounded-sm border border-dashed border-ink/30 text-mute transition-colors duration-150 ease-out hover:border-ink/60 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
+              >
+                <svg viewBox="0 0 16 16" aria-hidden="true" className="h-4 w-4">
+                  <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                </svg>
+              </button>
+            </li>
+          )}
         </ul>
       )}
-
-      <button
-        type="button"
-        onClick={onAdd}
-        disabled={alreadyInTray || tray.length >= 8}
-        className="inline-flex items-center justify-center gap-1.5 border border-ink/20 bg-paper-2 px-3 py-2 font-mono text-xs uppercase tracking-tight text-ink transition-colors duration-150 ease-out hover:bg-paper-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-default disabled:opacity-50 motion-reduce:transition-none"
-      >
-        <svg viewBox="0 0 16 16" aria-hidden="true" className="h-3.5 w-3.5">
-          <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-        {alreadyInTray ? 'In palette' : 'Add to palette'}
-      </button>
 
       {tray.length > 0 && !naming && (
         <button
