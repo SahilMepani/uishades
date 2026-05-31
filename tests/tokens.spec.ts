@@ -18,9 +18,6 @@ import {
 import { toTailwindV4 } from '../src/lib/exports/tailwind-v4';
 import { toTailwindV3 } from '../src/lib/exports/tailwind-v3';
 import { toCssVars } from '../src/lib/exports/css-vars';
-import { toTailwindV4 } from '../src/lib/exports/tailwind-v4';
-import { toTailwindV3 } from '../src/lib/exports/tailwind-v3';
-import { toCssVars } from '../src/lib/exports/css-vars';
 
 const hex = parseColor('#4040ff');
 
@@ -65,5 +62,34 @@ describe('tokenValue', () => {
     const t = rampToTokens(oklchRamp(hex))[0];
     const v = tokenValue(t, 'oklch');
     expect(v).toMatch(/^oklch\([\d.]+ [\d.]+ [\d.]+\)$/);
+  });
+});
+
+describe('CSS-family serializers (new tokens signature)', () => {
+  const scaleTokens = scaleToTokens(buildScale(hex));
+  const rampTokens = rampToTokens(oklchRamp(hex));
+
+  it('tailwind-v4 emits --color-{slug}-{key} in hex mode', () => {
+    const out = toTailwindV4(scaleTokens, 'brand', 'hex');
+    expect(out).toContain('@theme {');
+    expect(out).toContain('--color-brand-500:');
+    expect(out).toMatch(/--color-brand-500: #[0-9a-f]{6};/);
+  });
+
+  it('tailwind-v4 emits oklch() values in oklch mode', () => {
+    const out = toTailwindV4(rampTokens, 'brand', 'oklch');
+    expect(out).toContain('--color-brand-1: oklch(');
+    expect(out).toContain('--color-brand-20: oklch(');
+  });
+
+  it('css-vars emits --{slug}-{key} and follows the value mode', () => {
+    expect(toCssVars(scaleTokens, 'brand', 'hex')).toMatch(/--brand-500: #[0-9a-f]{6};/);
+    expect(toCssVars(rampTokens, 'brand', 'oklch')).toContain('--brand-1: oklch(');
+  });
+
+  it('tailwind-v3 ramp keys are valid quoted JS object keys', () => {
+    const out = toTailwindV3(rampTokens, 'brand', 'hex');
+    expect(out).toContain("'1': '#");
+    expect(out).toContain("'20': '#");
   });
 });
