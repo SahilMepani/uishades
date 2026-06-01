@@ -18,10 +18,14 @@ import { formatForCopy } from '../lib/color/format';
 import { oklchRamp } from '../lib/color/ramp';
 import { buildScale } from '../lib/color/scale';
 import { suggestPaletteName } from '../lib/color/palette-name';
+import { contrastRatio, wcagLevel, type WcagLevel } from '../lib/color/contrast';
 // Use the slim hex-lookup so the React island doesn't drag the full
 // blurb-bearing NAMED_COLORS module into its bundle. The page chrome
 // only reads `named.name` and `named.slug` from the result.
-import { findByHexSlim as findByHex } from '../lib/data/named-colors-slim';
+import {
+  findByHexSlim as findByHex,
+  NAMED_COLORS_SLIM,
+} from '../lib/data/named-colors-slim';
 import { nearestNamedSlug } from '../lib/data/nearest-named';
 import ContinuousRamp from './ContinuousRamp';
 import { ToastProvider, useToast } from './Toast';
@@ -837,8 +841,11 @@ function ShadeToolInner({
               controls row (see `ExportDropdown`), so it's no longer here. The
               sr-only <h1> still carries the heading. The algorithm toggle lives
               here (compact, inline) for both breakpoints rather than in the
-              left rail / mobile control stack. */}
-          <div className={`flex flex-wrap items-center gap-x-4 gap-y-3${view === 'scale' ? ' border-b border-hairline pb-2' : ''}`}>
+              left rail / mobile control stack. A bottom hairline always divides
+              this row from the export-controls row below. Extra top margin when
+              the full-width palette preview sits above it gives that big block
+              room to breathe. */}
+          <div className={`flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-hairline pb-2${tray.length >= 2 ? ' mt-3' : ''}`}>
             <div className="flex items-center gap-3">
               <AlgorithmToggle view={view} onChange={setView} compact />
               <span aria-hidden="true" className="font-mono text-[11px] text-mute">·</span>
@@ -1447,12 +1454,92 @@ function AlgorithmInfoButton() {
   );
 }
 
+/** Slug → display name, for naming the nearest match to an arbitrary hex. */
+const SLUG_TO_NAME = new Map(NAMED_COLORS_SLIM.map((c) => [c.slug, c.name]));
+
+/**
+ * Friendly name for a swatch: the exact named color when the hex matches one,
+ * otherwise the name of the nearest named color by OKLab distance (so every
+ * swatch gets a label, not just the ~209 exact hits).
+ */
+function nameForHex(hex: Hex): string {
+  const exact = findByHex(hex);
+  if (exact) return exact.name;
+  return SLUG_TO_NAME.get(nearestNamedSlug(hex)) ?? hex;
+}
+
+/**
+ * Black or white, whichever reads better on `bg`. Picks the higher WCAG
+ * contrast ratio so the hover labels stay legible on any swatch color.
+ */
+function readableTextOn(bg: Hex): '#000000' | '#ffffff' {
+  return contrastRatio(bg, '#ffffff') >= contrastRatio(bg, '#000000')
+    ? '#ffffff'
+    : '#000000';
+}
+
+/** Short label for a WCAG level, e.g. for a hover badge. `fail` reads "Fail". */
+function wcagBadgeLabel(level: WcagLevel): string {
+  return level === 'fail' ? 'Fail' : level;
+}
+
+/** Spoken form of a WCAG level for screen-reader aria-labels. */
+function wcagSpoken(level: WcagLevel): string {
+  switch (level) {
+    case 'AAA':
+      return 'passes AAA';
+    case 'AA':
+      return 'passes AA';
+    case 'AA-Lg':
+      return 'passes AA for large text only';
+    case 'fail':
+      return 'fails';
+  }
+}
+
+/**
+ * Two small WCAG-level badges revealed on a `PalettePreviewBar` swatch hover:
+ * the level black text and the level white text each reach against the swatch
+ * color. Each badge is rendered in the very color it describes (the black-text
+ * level in black, the white-text level in white) so its legibility on the
+ * swatch is itself the demonstration of that contrast. Decorative here -
+ * `aria-hidden` - because the swatch button's aria-label already spells both
+ * levels out for screen readers.
+ */
+function ContrastLevels({ bg }: { bg: Hex }) {
+  const swatches = [
+    { fg: '#000000' as const },
+    { fg: '#ffffff' as const },
+  ];
+  return (
+    <span
+      aria-hidden="true"
+      className="flex items-center gap-4 opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none"
+    >
+      {swatches.map(({ fg }) => {
+        const level = wcagLevel(contrastRatio(bg, fg));
+        return (
+          <span
+            key={fg}
+            style={{ color: fg }}
+            className="inline-flex items-baseline font-mono text-sm font-bold uppercase tracking-tight"
+          >
+            {wcagBadgeLabel(level)}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
 /**
  * Full-width palette preview band shown above the ramp once the tray holds a
  * second color (`tray.length >= 2`). Reuses the proportional swatch-band shape
  * from `PaletteCard` (equal-width `flex-1` fills, inline `backgroundColor` so the
  * colors survive the theme toggle), but each swatch is a real control: clicking
- * one makes it the live page color via the parent's `onSelectColor`.
+ * one makes it the live page color via the parent's `onSelectColor`. On hover
+ * (or keyboard focus) each swatch reveals its color name at the top and hex at
+ * the bottom, left-aligned, in black or white for contrast against the swatch.
  */
 function PalettePreviewBar({
   tray,
@@ -1466,18 +1553,32 @@ function PalettePreviewBar({
       aria-label="Palette preview"
       className="flex h-[150px] w-full overflow-hidden border border-hairline"
     >
-      {tray.map((c, i) => (
-        <li key={`${c.hex}-${i}`} className="min-w-0 flex-1">
-          <button
-            type="button"
-            onClick={() => onSelectColor(i)}
-            title={c.hex}
-            aria-label={`Use ${c.hex} as the current color`}
-            className="block h-full w-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60"
-            style={{ backgroundColor: c.hex }}
-          />
-        </li>
-      ))}
+      {tray.map((c, i) => {
+        const textColor = readableTextOn(c.hex);
+        const blackLevel = wcagLevel(contrastRatio(c.hex, '#000000'));
+        const whiteLevel = wcagLevel(contrastRatio(c.hex, '#ffffff'));
+        return (
+          <li key={`${c.hex}-${i}`} className="min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={() => onSelectColor(i)}
+              aria-label={`Use ${c.hex} as the current color. Black text ${wcagSpoken(blackLevel)}, white text ${wcagSpoken(whiteLevel)}.`}
+              className="group flex h-full w-full cursor-pointer flex-col justify-between p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60"
+              style={{ backgroundColor: c.hex, color: textColor }}
+            >
+              <span className="truncate font-display text-sm opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
+                {nameForHex(c.hex)}
+              </span>
+              <span className="flex flex-col gap-1.5">
+                <ContrastLevels bg={c.hex} />
+                <span className="truncate font-mono text-xs uppercase opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
+                  {c.hex}
+                </span>
+              </span>
+            </button>
+          </li>
+        );
+      })}
     </ul>
   );
 }
