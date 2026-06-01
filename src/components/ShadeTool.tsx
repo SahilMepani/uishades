@@ -825,11 +825,20 @@ function ShadeToolInner({
             </div>
           </div>
 
-          {/* Metadata row: the algorithm toggle + stops · PNG on the left, the
-              "Copy as" picker on the right. The sr-only <h1> still carries the
-              heading. The algorithm toggle lives here (compact, inline) for both
-              breakpoints rather than in the left rail / mobile control stack. */}
-          <div className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-3${view === 'scale' ? ' border-b border-hairline pb-2' : ''}`}>
+          {/* Full-width palette preview: appears only once the tray holds a
+              second color, sitting above the ramp's header row. Clicking a
+              swatch makes it the live page color (reusing `selectTrayColor`). */}
+          {tray.length >= 2 && (
+            <PalettePreviewBar tray={tray} onSelectColor={selectTrayColor} />
+          )}
+
+          {/* Metadata row: the algorithm toggle + stops · PNG. The "Copy as"
+              value-format picker now rides at the far right of the export-
+              controls row (see `ExportDropdown`), so it's no longer here. The
+              sr-only <h1> still carries the heading. The algorithm toggle lives
+              here (compact, inline) for both breakpoints rather than in the
+              left rail / mobile control stack. */}
+          <div className={`flex flex-wrap items-center gap-x-4 gap-y-3${view === 'scale' ? ' border-b border-hairline pb-2' : ''}`}>
             <div className="flex items-center gap-3">
               <AlgorithmToggle view={view} onChange={setView} compact />
               <span aria-hidden="true" className="font-mono text-[11px] text-mute">·</span>
@@ -853,28 +862,6 @@ function ShadeToolInner({
                 />
               )}
             </div>
-            {/* Inline in the header only at lg+: below that the header
-                already drops the eyebrow to avoid overflowing the narrower
-                md column, so the picker moves to its own full-width row above
-                the shade list instead. */}
-            <div className="hidden lg:flex">
-              <CopyFormatPicker
-                value={copyFormat}
-                onChange={setCopyFormat}
-                hasStop={view === 'scale'}
-                compact
-              />
-            </div>
-          </div>
-
-          {/* Below lg the header is too tight to hold the picker inline, so it
-              lives here as a full-width row directly above the shades. */}
-          <div className="lg:hidden">
-            <CopyFormatPicker
-              value={copyFormat}
-              onChange={setCopyFormat}
-              hasStop={view === 'scale'}
-            />
           </div>
 
           <div className="relative flex flex-col gap-2.5">
@@ -891,6 +878,7 @@ function ShadeToolInner({
                 onNavigate={handleNavigate}
                 onExportCopy={handleExportCopy}
                 onExportFormatChange={setExportFormat}
+                onCopyFormatChange={setCopyFormat}
               />
             ) : (
               <TailwindScale
@@ -903,6 +891,7 @@ function ShadeToolInner({
                 onNavigate={handleNavigate}
                 onExportCopy={handleExportCopy}
                 onExportFormatChange={setExportFormat}
+                onCopyFormatChange={setCopyFormat}
               />
             )}
           </div>
@@ -1458,108 +1447,38 @@ function AlgorithmInfoButton() {
   );
 }
 
-const COPY_FORMAT_LABELS: Record<CopyFormat, string> = {
-  hex: 'hex',
-  oklch: 'oklch()',
-  rgb: 'rgb()',
-  hsl: 'hsl()',
-  cssVar: 'var(--name)',
-  tailwindClass: 'bg-name-500',
-};
-
 /**
- * "Copy as" format picker. Always a native `<select>` (the option popup can't
- * be styled without JS - that's fine); `appearance-none` strips the native
- * chrome so the box matches the surrounding controls, with our own overlaid,
- * non-interactive chevron.
- *
- * `compact` renders the in-header desktop form: an inline "Copy as" label + a
- * small box sized to match the Download PNG button. The default (non-compact)
- * form is the full-width mobile row with a stacked eyebrow label.
- *
- * `cssVar`/`tailwindClass` require a stop number, so they only appear when
- * `hasStop` is true (the Tailwind-scale view).
+ * Full-width palette preview band shown above the ramp once the tray holds a
+ * second color (`tray.length >= 2`). Reuses the proportional swatch-band shape
+ * from `PaletteCard` (equal-width `flex-1` fills, inline `backgroundColor` so the
+ * colors survive the theme toggle), but each swatch is a real control: clicking
+ * one makes it the live page color via the parent's `onSelectColor`.
  */
-function CopyFormatPicker({
-  value,
-  onChange,
-  hasStop,
-  compact = false,
+function PalettePreviewBar({
+  tray,
+  onSelectColor,
 }: {
-  value: CopyFormat;
-  onChange: (f: CopyFormat) => void;
-  hasStop: boolean;
-  compact?: boolean;
+  tray: TrayColor[];
+  onSelectColor: (index: number) => void;
 }) {
-  const formats = (Object.keys(COPY_FORMAT_LABELS) as CopyFormat[]).filter(k => {
-    const requiresStop = k === 'cssVar' || k === 'tailwindClass';
-    return !(requiresStop && !hasStop);
-  });
-  const options = formats.map(k => (
-    <option key={k} value={k}>
-      {COPY_FORMAT_LABELS[k]}
-    </option>
-  ));
-
-  if (compact) {
-    return (
-      <label className="inline-flex items-center gap-2">
-        <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-          Copy as
-        </span>
-        <div className="relative">
-          <select
-            value={value}
-            onChange={(e) => onChange(e.target.value as CopyFormat)}
-            aria-label="Copy as"
-            className={
-              'appearance-none border border-ink/20 bg-transparent py-1 pl-2.5 pr-7 ' +
-              'font-mono text-xs text-ink transition-colors duration-150 ease-out ' +
-              'motion-reduce:transition-none hover:border-ink/40 hover:bg-paper-2 ' +
-              'focus-visible:outline-none focus-visible:border-accent ' +
-              'focus-visible:ring-2 focus-visible:ring-accent/30'
-            }
-          >
-            {options}
-          </select>
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 16 16"
-            className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-mute"
-          >
-            <path d="M4 6.5 8 10.5l4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
-          </svg>
-        </div>
-      </label>
-    );
-  }
-
   return (
-    <label className="flex flex-col gap-2 text-base">
-      <span className="eyebrow">Copy as</span>
-      <div className="relative">
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value as CopyFormat)}
-          className={
-            'w-full appearance-none border border-ink/20 bg-paper-2 py-2.5 pl-3 pr-9 ' +
-            'font-mono text-sm text-ink transition-colors duration-150 ease-out ' +
-            'motion-reduce:transition-none ' +
-            'focus-visible:outline-none focus-visible:border-accent ' +
-            'focus-visible:ring-2 focus-visible:ring-accent/30'
-          }
-        >
-          {options}
-        </select>
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 16 16"
-          className="pointer-events-none absolute right-3 top-1/2 h-[1.2rem] w-[1.2rem] -translate-y-1/2 text-mute"
-        >
-          <path d="M4 6.5 8 10.5l4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
-        </svg>
-      </div>
-    </label>
+    <ul
+      aria-label="Palette preview"
+      className="flex h-[150px] w-full overflow-hidden border border-hairline"
+    >
+      {tray.map((c, i) => (
+        <li key={`${c.hex}-${i}`} className="min-w-0 flex-1">
+          <button
+            type="button"
+            onClick={() => onSelectColor(i)}
+            title={c.hex}
+            aria-label={`Use ${c.hex} as the current color`}
+            className="block h-full w-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60"
+            style={{ backgroundColor: c.hex }}
+          />
+        </li>
+      ))}
+    </ul>
   );
 }
 

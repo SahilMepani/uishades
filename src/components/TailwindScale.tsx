@@ -34,6 +34,7 @@ export interface TailwindScaleProps {
   onNavigate: (hex: Hex) => void;
   onExportCopy: (text: string) => void;
   onExportFormatChange: (next: ExportFormat) => void;
+  onCopyFormatChange: (next: CopyFormat) => void;
 }
 
 export default function TailwindScale({
@@ -46,6 +47,7 @@ export default function TailwindScale({
   onNavigate,
   onExportCopy,
   onExportFormatChange,
+  onCopyFormatChange,
 }: TailwindScaleProps) {
   return (
     <div className="flex flex-col gap-4" data-anchor-stop={scale.anchorStop}>
@@ -55,6 +57,9 @@ export default function TailwindScale({
           format={exportFormat}
           brandName={brandName}
           valueMode="hex"
+          copyFormat={copyFormat}
+          hasStop={true}
+          onCopyFormatChange={onCopyFormatChange}
           onFormatChange={onExportFormatChange}
           onCopy={onExportCopy}
         />
@@ -90,10 +95,13 @@ export default function TailwindScale({
  */
 function ExportDropdownFallback() {
   return (
-    <div aria-hidden="true" className="flex items-center gap-3">
-      <div className="h-7 w-40 bg-paper-2 motion-safe:animate-pulse" />
-      <div className="h-7 w-7 bg-paper-2 motion-safe:animate-pulse" />
-      <div className="h-7 w-7 bg-paper-2 motion-safe:animate-pulse" />
+    <div aria-hidden="true" className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
+        <div className="h-7 w-40 bg-paper-2 motion-safe:animate-pulse" />
+        <div className="h-7 w-7 bg-paper-2 motion-safe:animate-pulse" />
+        <div className="h-7 w-7 bg-paper-2 motion-safe:animate-pulse" />
+      </div>
+      <div className="h-7 w-24 bg-paper-2 motion-safe:animate-pulse" />
     </div>
   );
 }

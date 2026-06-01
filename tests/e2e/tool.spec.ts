@@ -360,4 +360,39 @@ test.describe('shade tool — smoke', () => {
       page.getByRole('button', { name: /^Use #4140ff/ }).first(),
     ).toBeVisible();
   });
+
+  test('a second palette color reveals the full-width preview bar above the ramp', async ({
+    page,
+    browserName,
+  }) => {
+    // Depends on fill() propagating to React's onChange to change the live color
+    // before adding it — same webkit flakiness as the "coral" test above.
+    test.fixme(browserName === 'webkit', 'webkit fill() → React onChange flaky under Playwright');
+    await page.goto('/4040ff');
+
+    // The tray auto-seeds with the single landing color (#4040ff), so the
+    // preview bar (which only shows at >= 2 colors) is absent on load.
+    const bar = page.getByRole('list', { name: 'Palette preview' });
+    await expect(bar).toHaveCount(0);
+
+    // Change the live color to a distinct hex, then add it to the palette.
+    const input = page
+      .getByLabel('Color value (hex, rgb, hsl, oklch, or name)')
+      .filter({ visible: true })
+      .first();
+    await input.fill('#ff0000');
+    await page
+      .getByRole('button', { name: 'Add to palette' })
+      .filter({ visible: true })
+      .first()
+      .click();
+
+    // With two colors the bar appears, rendering one swatch button per color.
+    await expect(bar).toBeVisible();
+    await expect(bar.getByRole('button')).toHaveCount(2);
+
+    // Clicking a swatch makes that color the live page color (URL is hex-synced).
+    await bar.getByRole('button', { name: /^Use #4040ff/ }).click();
+    await expect(page).toHaveURL(/4040ff/i);
+  });
 });

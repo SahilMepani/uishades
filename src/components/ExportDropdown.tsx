@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { ExportFormat } from '../lib/color/types';
+import type { CopyFormat, ExportFormat } from '../lib/color/types';
 import type { ColorToken, ValueMode } from '../lib/exports/tokens';
+import CopyFormatPicker from './CopyFormatPicker';
+import { SELECT_CLASS, SelectChevron } from './control-styles';
 import { toTailwindV4 } from '../lib/exports/tailwind-v4';
 import { toTailwindV3 } from '../lib/exports/tailwind-v3';
 import { toCssVars } from '../lib/exports/css-vars';
@@ -12,7 +14,8 @@ import { useToast } from './Toast';
 /**
  * Export controls for the Tailwind scale view.
  *
- * The inline UI is now just the "Export as" dropdown plus two icon buttons:
+ * The inline UI is the "Export" format dropdown plus two icon buttons, with
+ * the shared "Copy as" value-format picker pushed to the far right of the row:
  *   - Copy - writes the currently-selected format's code straight to the
  *     clipboard (no popup).
  *   - View - opens a modal that shows every format as a tab, with the code
@@ -36,6 +39,14 @@ export interface ExportDropdownProps {
    * ignore it and always emit hex; see their serializers.)
    */
   valueMode: ValueMode;
+  /**
+   * Shared "Copy as" value-format state, rendered at the far right of the
+   * export-controls row. `hasStop` gates the stop-dependent copy formats
+   * (var(--name) / bg-name-500), so it's true only for the Tailwind scale.
+   */
+  copyFormat: CopyFormat;
+  hasStop: boolean;
+  onCopyFormatChange: (next: CopyFormat) => void;
   onFormatChange: (next: ExportFormat) => void;
   onCopy: (text: string) => void;
 }
@@ -81,6 +92,9 @@ export default function ExportDropdown({
   format,
   brandName,
   valueMode,
+  copyFormat,
+  hasStop,
+  onCopyFormatChange,
   onFormatChange,
   onCopy,
 }: ExportDropdownProps) {
@@ -127,65 +141,59 @@ export default function ExportDropdown({
 
   return (
     <div className="flex flex-col gap-3" data-export-format={format}>
-      <div className="flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-3 text-sm text-ink/80">
-          <span className="eyebrow">Export as</span>
-          {/* `appearance-none` + overlaid chevron, matching the "Copy as"
-              picker. Accent border/ring is focus-visible only; hover just
-              warms the background. */}
-          <span className="relative inline-flex">
-            <select
-              value={format}
-              onChange={(e) => onFormatChange(e.target.value as ExportFormat)}
-              aria-label="Export as"
-              className={
-                'appearance-none border border-ink/20 bg-paper-2 py-1 pl-2 pr-7 font-mono text-xs text-ink ' +
-                'transition-colors duration-150 ease-out motion-reduce:transition-none ' +
-                'focus-visible:outline-none focus-visible:border-accent ' +
-                'focus-visible:ring-2 focus-visible:ring-accent/30'
-              }
-            >
-              {FORMAT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 16 16"
-              className="pointer-events-none absolute right-2 top-1/2 h-[1.05rem] w-[1.05rem] -translate-y-1/2 text-mute"
-            >
-              <path d="M4 6.5 8 10.5l4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
-            </svg>
-          </span>
-        </label>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-3 text-sm text-ink/80">
+            <span className="eyebrow">Export</span>
+            {/* `appearance-none` + overlaid chevron; shares `SELECT_CLASS` with
+                the "Copy as" picker so the two boxes are identical. */}
+            <span className="relative inline-flex">
+              <select
+                value={format}
+                onChange={(e) => onFormatChange(e.target.value as ExportFormat)}
+                aria-label="Export as"
+                className={SELECT_CLASS}
+              >
+                {FORMAT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <SelectChevron />
+            </span>
+          </label>
 
-        <div className="flex items-center gap-2">
-          {canCopy && (
+          <div className="flex items-center gap-2">
+            {canCopy && (
+              <button
+                type="button"
+                onClick={() => copyText(text, format)}
+                aria-label={`Copy ${format} export to clipboard`}
+                title="Copy code"
+                className={ICON_BUTTON_CLASS}
+              >
+                <CopyIcon className="h-4 w-4" />
+              </button>
+            )}
             <button
+              ref={viewTriggerRef}
               type="button"
-              onClick={() => copyText(text, format)}
-              aria-label={`Copy ${format} export to clipboard`}
-              title="Copy code"
+              onClick={() => setModalOpen(true)}
+              aria-haspopup="dialog"
+              aria-expanded={modalOpen}
+              aria-label="View export code for all formats"
+              title="View code"
               className={ICON_BUTTON_CLASS}
             >
-              <CopyIcon className="h-4 w-4" />
+              <EyeIcon className="h-4 w-4" />
             </button>
-          )}
-          <button
-            ref={viewTriggerRef}
-            type="button"
-            onClick={() => setModalOpen(true)}
-            aria-haspopup="dialog"
-            aria-expanded={modalOpen}
-            aria-label="View export code for all formats"
-            title="View code"
-            className={ICON_BUTTON_CLASS}
-          >
-            <EyeIcon className="h-4 w-4" />
-          </button>
+          </div>
         </div>
+
+        {/* The shared "Copy as" value-format picker, pushed to the far right of
+            the same row (no visible label - the options are self-describing). */}
+        <CopyFormatPicker value={copyFormat} onChange={onCopyFormatChange} hasStop={hasStop} />
       </div>
 
       {modalOpen && (

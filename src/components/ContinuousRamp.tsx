@@ -37,6 +37,7 @@ export interface ContinuousRampProps {
   onNavigate: (hex: Hex) => void;
   onExportCopy: (text: string) => void;
   onExportFormatChange: (next: ExportFormat) => void;
+  onCopyFormatChange: (next: CopyFormat) => void;
 }
 
 export default function ContinuousRamp({
@@ -50,6 +51,7 @@ export default function ContinuousRamp({
   onNavigate,
   onExportCopy,
   onExportFormatChange,
+  onCopyFormatChange,
 }: ContinuousRampProps) {
   return (
     <div className="flex flex-col gap-4">
@@ -59,6 +61,9 @@ export default function ContinuousRamp({
           format={exportFormat}
           brandName={brandName}
           valueMode={valueMode}
+          copyFormat={copyFormat}
+          hasStop={false}
+          onCopyFormatChange={onCopyFormatChange}
           onFormatChange={onExportFormatChange}
           onCopy={onExportCopy}
         />
@@ -93,10 +98,13 @@ export default function ContinuousRamp({
  */
 function ExportDropdownFallback() {
   return (
-    <div aria-hidden="true" className="flex items-center gap-3">
-      <div className="h-7 w-40 bg-paper-2 motion-safe:animate-pulse" />
-      <div className="h-7 w-7 bg-paper-2 motion-safe:animate-pulse" />
-      <div className="h-7 w-7 bg-paper-2 motion-safe:animate-pulse" />
+    <div aria-hidden="true" className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
+        <div className="h-7 w-40 bg-paper-2 motion-safe:animate-pulse" />
+        <div className="h-7 w-7 bg-paper-2 motion-safe:animate-pulse" />
+        <div className="h-7 w-7 bg-paper-2 motion-safe:animate-pulse" />
+      </div>
+      <div className="h-7 w-24 bg-paper-2 motion-safe:animate-pulse" />
     </div>
   );
 }

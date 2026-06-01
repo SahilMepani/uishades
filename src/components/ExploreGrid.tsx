@@ -30,13 +30,6 @@ import type { ExploreResponse, PaletteSummary } from '../lib/auth/types';
 
 export type ExploreSort = 'top' | 'new' | 'trending' | 'featured';
 
-const SORTS: { id: ExploreSort; label: string }[] = [
-  { id: 'top', label: 'Top' },
-  { id: 'new', label: 'New' },
-  { id: 'trending', label: 'Trending' },
-  { id: 'featured', label: 'Featured' },
-];
-
 /** Founder-curated tag facets. */
 const TAGS = ['warm', 'cool', 'pastel', 'vibrant', 'muted', 'mono', 'dark', 'light'] as const;
 
@@ -54,9 +47,11 @@ export default function ExploreGrid({
   initialTag = null,
   initialColor = null,
 }: ExploreGridProps) {
-  const [sort, setSort] = useState<ExploreSort>(initialSort);
+  // Sort and color filters no longer have UI controls; they're fixed to the
+  // initial (SSR/deep-link) values and still feed the query + URL sync.
+  const sort = initialSort;
+  const color = initialColor;
   const [tag, setTag] = useState<string | null>(initialTag);
-  const [color, setColor] = useState<string | null>(initialColor);
 
   const [items, setItems] = useState<PaletteSummary[]>(initialData.items);
   const [cursor, setCursor] = useState<string | null>(initialData.nextCursor);
@@ -138,60 +133,8 @@ export default function ExploreGrid({
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Filter / sort bar */}
+      {/* Tag chips */}
       <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          {/* Sort segmented control */}
-          <div
-            role="tablist"
-            aria-label="Sort palettes"
-            className="inline-flex border border-ink/20"
-          >
-            {SORTS.map((s) => {
-              const active = s.id === sort;
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => setSort(s.id)}
-                  className={
-                    'px-3.5 py-2 font-mono text-[12px] uppercase tracking-tight transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none ' +
-                    (active ? 'bg-ink text-paper' : 'text-ink-2 hover:bg-paper-2 hover:text-ink')
-                  }
-                >
-                  {s.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Color filter */}
-          <label className="inline-flex items-center gap-2">
-            <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
-              Filter by color
-            </span>
-            <input
-              type="color"
-              value={color ?? '#4040ff'}
-              onChange={(e) => setColor(e.target.value)}
-              aria-label="Filter palettes by color"
-              className="h-8 w-10 cursor-pointer border border-ink/20 bg-paper p-0.5"
-            />
-            {color && (
-              <button
-                type="button"
-                onClick={() => setColor(null)}
-                className="font-mono text-[11px] uppercase tracking-tight text-mute transition-colors duration-150 ease-out hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
-              >
-                Clear
-              </button>
-            )}
-          </label>
-        </div>
-
-        {/* Tag chips */}
         <div className="flex flex-wrap gap-2">
           {TAGS.map((t) => {
             const active = tag === t;
