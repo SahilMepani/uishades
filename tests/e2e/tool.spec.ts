@@ -1,4 +1,4 @@
-﻿import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 /**
  * Tool UI smoke tests.
@@ -162,7 +162,7 @@ test.describe('shade tool — smoke', () => {
     expect(text).toContain('colors:');
   });
 
-  test('OKLCH view exports index tokens with a hex/oklch value toggle', async ({
+  test('OKLCH view export value format follows the Copy-as picker', async ({
     page,
     browserName,
   }) => {
@@ -172,24 +172,37 @@ test.describe('shade tool — smoke', () => {
 
     await page.goto('/4040ff?view=ramp');
 
-    // The export dropdown now exists in the OKLCH view too.
+    // The export dropdown now exists in the OKLCH view too. CSS variables shows
+    // the value format (hex vs oklch()) inline in each index-based token.
     await page.getByLabel(/^Export as/).selectOption('css-vars');
 
-    // Default value mode is OKLCH, so the copied/viewed code uses oklch() and
-    // index-based token names (--brand-1 ... --brand-20).
-    await page.getByRole('button', { name: /view export code/i }).click();
+    const viewBtn = page.getByRole('button', { name: /view export code/i });
     const preview = page.locator('pre[data-export-preview="true"]');
-    await expect(preview).toBeVisible();
-    let text = await preview.innerText();
-    expect(text).toContain('--brand-1:');
-    expect(text).toContain('--brand-20:');
-    expect(text).toContain('oklch(');
 
-    // Flip to Hex via the value toggle; the same format now emits hex values.
-    await page.getByRole('button', { name: 'Hex' }).click();
-    text = await preview.innerText();
-    expect(text).toContain('--brand-1: #');
-    expect(text).not.toContain('oklch(');
+    // There is no separate value toggle: the export follows the shared "Copy as"
+    // picker. Its default is hex, so the tokens (--brand-1 .. --brand-20) emit
+    // hex values - no oklch().
+    await viewBtn.click();
+    await expect(preview).toBeVisible();
+    // Slug prefix comes from the nearest named color, so match it generically.
+    await expect(preview).toContainText(/--[\w-]+-1: #[0-9a-f]{6};/);
+    await expect(preview).toContainText(/--[\w-]+-20: #[0-9a-f]{6};/);
+    await expect(preview).not.toContainText('oklch(');
+
+    // Close the modal so the "Copy as" picker (behind the overlay) is reachable.
+    await page.getByRole('button', { name: /close export dialog/i }).click();
+    await expect(preview).toBeHidden();
+
+    // Switch "Copy as" to oklch(); the same export now emits oklch() values.
+    await page
+      .getByLabel('Copy as', { exact: true })
+      .filter({ visible: true })
+      .first()
+      .selectOption('oklch');
+    await viewBtn.click();
+    await expect(preview).toBeVisible();
+    await expect(preview).toContainText(/--[\w-]+-1: oklch\(/);
+    await expect(preview).toContainText(/--[\w-]+-20: oklch\(/);
   });
 
   test('deep-link `?view=scale` starts on the Tailwind scale view', async ({

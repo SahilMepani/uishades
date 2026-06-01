@@ -22,6 +22,7 @@ import { suggestPaletteName } from '../lib/color/palette-name';
 // blurb-bearing NAMED_COLORS module into its bundle. The page chrome
 // only reads `named.name` and `named.slug` from the result.
 import { findByHexSlim as findByHex } from '../lib/data/named-colors-slim';
+import { nearestNamedSlug } from '../lib/data/nearest-named';
 import ContinuousRamp from './ContinuousRamp';
 import { ToastProvider, useToast } from './Toast';
 import ColorPicker, { type ColorPickerHandle } from './ColorPicker';
@@ -58,7 +59,6 @@ const STORAGE_KEYS = {
   copyFormat: 'shades.copyFormat',
   exportFormat: 'shades.exportFormat',
   view: 'shades.view',
-  oklchValueMode: 'shades.oklchValueMode',
   dismissedHintBanner: 'shades.dismissedHintBanner',
   // Last-used color, written on every hex change and re-seeded on the root
   // route after hydration (see the mount handler + the `hex` effect below).
@@ -312,15 +312,11 @@ function ShadeToolInner({
     initialExportFormat,
     'fmt',
   );
-  // OKLCH-view export value mode (hex vs oklch()). localStorage-only (no URL
-  // param - keeps `/[hex]` URLs clean, same policy as copyFormat). Default
-  // 'oklch' so the ramp export leads with its distinctive wide-gamut payload.
-  const [oklchValueMode, setOklchValueMode] = usePersistedState<ValueMode>(
-    STORAGE_KEYS.oklchValueMode,
-    ['hex', 'oklch'] as const,
-    'oklch',
-    null,
-  );
+  // OKLCH-ramp export value format follows the shared "Copy as" picker: when the
+  // user is copying oklch() the export emits oklch() too, otherwise it falls
+  // back to hex. (W3C/Figma JSON exports ignore this and stay hex.) No separate
+  // control or stored preference - it's purely derived.
+  const oklchValueMode: ValueMode = copyFormat === 'oklch' ? 'oklch' : 'hex';
 
   const { pushToast } = useToast();
 
@@ -448,9 +444,12 @@ function ShadeToolInner({
   const scale = useMemo(() => buildScale(hex), [hex]);
 
   const named = useMemo(() => findByHex(hex), [hex]);
-  // Default brand name: the named-color slug if we have one, else "brand".
-  // (Assumption documented in the implementation report.)
-  const brandName = named?.slug ?? 'brand';
+  // Export family-name prefix: the exact named-color slug when the input is a
+  // known color, else the nearest named color by OKLab distance. This way an
+  // arbitrary pick still exports as e.g. `--color-royalblue-50` rather than a
+  // generic `brand`. (`named` stays exact-only so the input label never
+  // mislabels an arbitrary color as a named one.)
+  const brandName = useMemo(() => named?.slug ?? nearestNamedSlug(hex), [named, hex]);
 
   // URL sync whenever the hex changes from any source, plus persist the
   // last-used color. The localStorage write is the store for the root-route
@@ -892,7 +891,6 @@ function ShadeToolInner({
                 onNavigate={handleNavigate}
                 onExportCopy={handleExportCopy}
                 onExportFormatChange={setExportFormat}
-                onValueModeChange={setOklchValueMode}
               />
             ) : (
               <TailwindScale

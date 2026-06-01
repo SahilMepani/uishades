@@ -16,8 +16,9 @@ import ShadeRow from './ShadeRow';
  * it loads behind the same `React.lazy` boundary `TailwindScale` uses - both
  * views resolve the same chunk, so it downloads once.
  *
- * Ramp tokens are keyed by 1-based step index (1..20), and the hex/oklch()
- * value toggle is shown here (it is hidden in the Tailwind view). The ramp
+ * Ramp tokens are keyed by 1-based step index (1..20). The export value format
+ * (hex vs oklch()) is derived upstream from the shared "Copy as" picker and
+ * passed down as `valueMode` - there is no separate value control. The ramp
  * data carries its mode in `ramp.mode` (always `oklch` now that the classic
  * walk is no longer surfaced); we keep it as a data attribute for tests.
  */
@@ -36,7 +37,6 @@ export interface ContinuousRampProps {
   onNavigate: (hex: Hex) => void;
   onExportCopy: (text: string) => void;
   onExportFormatChange: (next: ExportFormat) => void;
-  onValueModeChange: (m: ValueMode) => void;
 }
 
 export default function ContinuousRamp({
@@ -50,7 +50,6 @@ export default function ContinuousRamp({
   onNavigate,
   onExportCopy,
   onExportFormatChange,
-  onValueModeChange,
 }: ContinuousRampProps) {
   return (
     <div className="flex flex-col gap-4">
@@ -60,8 +59,6 @@ export default function ContinuousRamp({
           format={exportFormat}
           brandName={brandName}
           valueMode={valueMode}
-          onValueModeChange={onValueModeChange}
-          showValueToggle={true}
           onFormatChange={onExportFormatChange}
           onCopy={onExportCopy}
         />

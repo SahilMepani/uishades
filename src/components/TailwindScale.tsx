@@ -55,8 +55,6 @@ export default function TailwindScale({
           format={exportFormat}
           brandName={brandName}
           valueMode="hex"
-          onValueModeChange={() => {}}
-          showValueToggle={false}
           onFormatChange={onExportFormatChange}
           onCopy={onExportCopy}
         />

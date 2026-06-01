@@ -29,12 +29,13 @@ export interface ExportDropdownProps {
   tokens: ColorToken[];
   format: ExportFormat;
   brandName?: string;
-  /** Current value mode (hex | oklch). */
+  /**
+   * Value format for the emitted code (hex | oklch). Derived upstream from the
+   * shared "Copy as" picker - `oklch` when that's set to oklch(), else hex - so
+   * this panel has no separate value control. (The JSON exports - W3C/Figma -
+   * ignore it and always emit hex; see their serializers.)
+   */
   valueMode: ValueMode;
-  /** Fired when the user flips the hex/oklch toggle. */
-  onValueModeChange: (m: ValueMode) => void;
-  /** Show the hex/oklch toggle. True only for the OKLCH ramp view. */
-  showValueToggle: boolean;
   onFormatChange: (next: ExportFormat) => void;
   onCopy: (text: string) => void;
 }
@@ -80,8 +81,6 @@ export default function ExportDropdown({
   format,
   brandName,
   valueMode,
-  onValueModeChange,
-  showValueToggle,
   onFormatChange,
   onCopy,
 }: ExportDropdownProps) {
@@ -161,33 +160,6 @@ export default function ExportDropdown({
             </svg>
           </span>
         </label>
-
-        {showValueToggle && (
-          <div
-            role="group"
-            aria-label="Export value format"
-            className="inline-flex overflow-hidden rounded-sm border border-ink/20 font-mono text-[11px]"
-          >
-            {(['hex', 'oklch'] as const).map((m) => {
-              const active = valueMode === m;
-              return (
-                <button
-                  key={m}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => onValueModeChange(m)}
-                  className={[
-                    'px-2.5 py-1 uppercase tracking-tight transition-colors duration-150 ease-out',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
-                    active ? 'bg-ink text-paper' : 'text-ink/70 hover:bg-paper-2 hover:text-ink',
-                  ].join(' ')}
-                >
-                  {m === 'hex' ? 'Hex' : 'OKLCH'}
-                </button>
-              );
-            })}
-          </div>
-        )}
 
         <div className="flex items-center gap-2">
           {canCopy && (

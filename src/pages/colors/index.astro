@@ -1,0 +1,159 @@
+---
+/**
+ * /colors - the named-color index.
+ *
+ * Pre-rendered/static (no `prerender = false`): lists every NAMED_COLORS entry
+ * grouped by color family, each card linking to its /colors/[name] detail page.
+ * Astro auto-includes static pages in the sitemap. The full named-colors module
+ * is build-time only and safe to import here (same as /colors/[name].astro).
+ */
+import '../../styles/global.css';
+import BaseHead from '../../components/BaseHead.astro';
+import ThemeToggle from '../../components/ThemeToggle.astro';
+import HeaderAuth from '../../components/HeaderAuth';
+import FeedbackLink from '../../components/FeedbackLink';
+import { NAMED_COLORS } from '../../lib/data/named-colors';
+import type { ColorFamily, NamedColor } from '../../lib/data/named-colors';
+import { safeJsonForScript } from '../../lib/safe-json';
+
+const canonicalUrl = 'https://UIshades.com/colors';
+const TITLE = 'All Named Colors | UI Shades';
+const DESCRIPTION =
+  'Browse every named color - 200+ CSS, Tailwind, Material, and Bootstrap colors, grouped by family. Open any one for an OKLCH shade ramp and Tailwind / design-token exports. Free and ad-free.';
+const ogImage = 'https://UIshades.com/og/4040ff.png';
+
+// Spectrum order + display labels for the family sections.
+const FAMILY_ORDER: { key: ColorFamily; label: string }[] = [
+  { key: 'red', label: 'Red' },
+  { key: 'orange', label: 'Orange' },
+  { key: 'yellow', label: 'Yellow' },
+  { key: 'green', label: 'Green' },
+  { key: 'teal', label: 'Teal' },
+  { key: 'blue', label: 'Blue' },
+  { key: 'indigo', label: 'Indigo' },
+  { key: 'purple', label: 'Purple' },
+  { key: 'pink', label: 'Pink' },
+  { key: 'brown', label: 'Brown' },
+  { key: 'gray', label: 'Gray' },
+  { key: 'neutral', label: 'Neutral' },
+];
+
+// Group once at build time, sorting each family alphabetically by name.
+const byFamily = new Map<ColorFamily, NamedColor[]>();
+for (const color of NAMED_COLORS) {
+  const bucket = byFamily.get(color.family);
+  if (bucket) bucket.push(color);
+  else byFamily.set(color.family, [color]);
+}
+const sections = FAMILY_ORDER.map(({ key, label }) => ({
+  key,
+  label,
+  colors: (byFamily.get(key) ?? []).sort((a, b) => a.name.localeCompare(b.name)),
+})).filter((s) => s.colors.length > 0);
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://UIshades.com/' },
+    { '@type': 'ListItem', position: 2, name: 'Named colors', item: canonicalUrl },
+  ],
+};
+
+const collectionJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  '@id': `${canonicalUrl}#collection`,
+  name: 'All named colors',
+  description: DESCRIPTION,
+  url: canonicalUrl,
+  isPartOf: { '@id': 'https://UIshades.com/#website' },
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead />
+    <title>{TITLE}</title>
+    <meta name="description" content={DESCRIPTION} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={TITLE} />
+    <meta property="og:description" content={DESCRIPTION} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:alt" content="UIshades named-color index" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={TITLE} />
+    <meta name="twitter:description" content={DESCRIPTION} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <script type="application/ld+json" set:html={safeJsonForScript(breadcrumbJsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(collectionJsonLd)} />
+  </head>
+  <body class="bg-paper text-ink">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W6D48RVL" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <header class="w-full px-10 lg:px-16">
+      <div class="flex items-center justify-between gap-4 border-b border-hairline py-4">
+        <a href="/" class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink hover:text-accent">UI Shades</a>
+        <div class="flex items-center gap-4 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <a href="/explore" class="text-ink hover:text-accent">Explore</a>
+          <a href="/me/palettes" class="text-ink hover:text-accent">My palettes</a>
+          <HeaderAuth client:load />
+          <ThemeToggle />
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto w-full max-w-6xl px-6 py-12 pb-24 lg:px-8">
+      <div class="flex flex-col gap-2">
+        <span class="kicker">Named colors</span>
+        <h1 class="display text-3xl">All named colors</h1>
+        <p class="mt-1 max-w-2xl font-display text-base text-ink-2">
+          Every named color we know - {NAMED_COLORS.length} CSS, Tailwind, Material,
+          and Bootstrap shades, grouped by family. Open any one for an OKLCH
+          ramp and Tailwind / token exports.
+        </p>
+      </div>
+
+      {sections.map((section) => (
+        <section class="mt-12">
+          <h2 class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-2">{section.label}</h2>
+          <ul class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {section.colors.map((color) => (
+              <li>
+                <a
+                  href={`/colors/${color.slug}`}
+                  class="group flex flex-col gap-2 rounded border border-hairline p-2 hover:border-accent"
+                >
+                  <span
+                    class="block h-16 w-full rounded-sm border border-hairline"
+                    style={`background:${color.hex}`}
+                    aria-hidden="true"
+                  ></span>
+                  <span class="font-display text-sm text-ink group-hover:text-accent">{color.name}</span>
+                  <span class="font-mono text-[11px] text-mute">{color.hex}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+
+      <footer class="mt-20">
+        <nav aria-label="Footer" class="flex items-center gap-5 border-t border-hairline pt-6 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <a href="/explore" class="text-ink hover:text-accent">Explore</a>
+          <a href="/" class="text-ink hover:text-accent">Tool</a>
+          <FeedbackLink client:load />
+        </nav>
+      </footer>
+    </main>
+  </body>
+</html>
