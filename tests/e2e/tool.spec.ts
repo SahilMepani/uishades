@@ -351,7 +351,11 @@ test.describe('shade tool — smoke', () => {
     await page.keyboard.press('ArrowRight');
 
     // A normal close (click outside, not Escape) commits the edit in place.
-    await page.getByText(/stops ·/).first().click();
+    // Click the visible "N stops" metadata label, which sits outside the picker
+    // dialog. (The old `getByText(/stops ·/)` target broke once the metadata row
+    // split the count and the "·" separators into adjacent spans — the visible
+    // text is now "11 stops·" with no space, so that regex no longer matched.)
+    await page.getByText(/\d+ stops/).first().click();
     await expect(dialog).toBeHidden();
 
     // The swatch was updated in place: the old color is gone, the new one is present.
