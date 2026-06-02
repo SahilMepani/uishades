@@ -20,12 +20,11 @@
  *     Combined with the size-adjusted fallback this means visitors on
  *     slow connections read a metric-matched system font instead of a
  *     mid-load swap.
- *   - The `<Font preload />` on Geist emits `<link rel="preload">` for
- *     every Geist weight so the LCP element (a `.display`-class heading
- *     in Geist 700) has the best possible chance of painting in Geist on
- *     a cold visit. JetBrains Mono is not preloaded - the mono fallback
- *     is acceptable on first paint and the bytes are better spent on the
- *     sans family that drives perceived render.
+ *   - The `<Font preload />` on JetBrains Mono emits `<link rel="preload">`
+ *     for every mono weight so the hex/mono strings paint in the real
+ *     webfont on a cold visit instead of falling back. Geist is not
+ *     preloaded - its size-adjusted fallback is acceptable on first paint
+ *     and avoids spending cold-load bytes on two preloaded families.
  */
 import { Font } from 'astro:assets';
 ---
@@ -62,9 +61,9 @@ import { Font } from 'astro:assets';
 <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" />
 <link rel="icon" href="/favicon.ico?v=3" />
 
-{/* Self-hosted fonts via Astro's fonts API. Geist is preloaded because the
-    LCP element on most pages is a `.display`-class heading set in Geist 700;
-    JetBrains Mono is loaded without preload (used for secondary hex/mono
-    strings whose fallback is acceptable on first paint). */}
-<Font cssVariable="--font-geist" preload />
-<Font cssVariable="--font-jb-mono" />
+{/* Self-hosted fonts via Astro's fonts API. JetBrains Mono is preloaded so the
+    hex/mono strings paint in the real webfont on a cold visit instead of the
+    metric-matched fallback; Geist is loaded without preload (its size-adjusted
+    fallback is acceptable on first paint). */}
+<Font cssVariable="--font-geist" />
+<Font cssVariable="--font-jb-mono" preload />
