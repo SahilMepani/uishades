@@ -12,17 +12,21 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { getPaletteBySlug } from '../../../lib/auth/db';
 import { renderPaletteOg } from '../../../lib/og-palette';
+import { cachedResponse } from '../../../lib/edge-cache';
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,63}$/;
 
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async ({ params, request }) => {
   const slug = params.slug ?? '';
   if (!SLUG_RE.test(slug)) {
     return new Response('Invalid slug', { status: 404 });
   }
-  const palette = await getPaletteBySlug(env.DB, slug);
-  if (!palette) {
-    return new Response('Not found', { status: 404 });
-  }
-  return renderPaletteOg(palette.colors.map((c) => c.hex), palette.name, 'landscape');
+  // Producer runs only on a cache miss, so a repeat hit skips the D1 read too.
+  return cachedResponse(request, async () => {
+    const palette = await getPaletteBySlug(env.DB, slug);
+    if (!palette) {
+      return new Response('Not found', { status: 404 });
+    }
+    return renderPaletteOg(palette.colors.map((c) => c.hex), palette.name, 'landscape');
+  });
 };

@@ -1,4 +1,83 @@
+# UIshades crawler policy.
+#
+# Two aims, balanced:
+#   1. Keep crawlers off the on-demand Function endpoints (/og/, /api/). They
+#      have zero SEO / citation value and each hit runs a Cloudflare Pages
+#      Function against our daily request budget.
+#   2. STAY citable by AI assistants. The bots that answer user questions with
+#      live citations - ChatGPT search, Perplexity, Claude, Gemini, Copilot -
+#      are deliberately ALLOWED to read our content pages. Only pure training
+#      scrapers and no-value SEO crawlers (bandwidth cost, no citations back)
+#      are blocked.
+#
+# How the groups below work: a crawler obeys ONLY its most specific matching
+# User-agent group. The citation bots aren't listed, so they fall under `*` and
+# may crawl everything except /og/ and /api/. The blocked bots each get their
+# own `Disallow: /` group.
+
+# Default group. Reputable AI search/answer bots match here and are ALLOWED to
+# read content (so they can cite us); only the Function endpoints are off-limits.
 User-agent: *
 Allow: /
+Disallow: /og/
+Disallow: /api/
+
+# --- Throttled: Anthropic's Claude-SearchBot -------------------------------
+# This is BY FAR our heaviest visitor (~85k req/day - it was exhausting the
+# Cloudflare request budget on its own). We WANT it (it powers Claude
+# citations), so we don't block it - we slow it down. A re-crawl of our ~2,340
+# pages does not need tens of thousands of hits a day. Crawl-delay is
+# best-effort; the real cap is a Cloudflare WAF rate-limit on this user-agent.
+# NOTE: robots.txt groups don't merge, so the /og/ + /api/ blocks are repeated
+# here - without them this group would silently re-open those endpoints to it.
+User-agent: Claude-SearchBot
+Crawl-delay: 10
+Allow: /
+Disallow: /og/
+Disallow: /api/
+
+# --- Blocked: training-only / no-citation scrapers -------------------------
+# These crawl for model training or data resale, not to send cited traffic.
+# Blocking them does NOT remove us from AI answers - live citation uses the
+# search/user agents (OAI-SearchBot, ChatGPT-User, PerplexityBot, Claude-User,
+# Claude-SearchBot, Google-Extended, Bingbot), all allowed under `*` above.
+
+# OpenAI training crawler (NOT ChatGPT's live-citation bots, which stay allowed).
+User-agent: GPTBot
+Disallow: /
+
+# Common Crawl - feeds many third-party training datasets.
+User-agent: CCBot
+Disallow: /
+
+# ByteDance / TikTok - notoriously aggressive, no citation product.
+User-agent: Bytespider
+Disallow: /
+
+# Amazon (Alexa / training).
+User-agent: Amazonbot
+Disallow: /
+
+# Meta AI training crawler.
+User-agent: meta-externalagent
+Disallow: /
+
+# Apple AI-training opt-out (regular Applebot for Siri/Spotlight stays allowed).
+User-agent: Applebot-Extended
+Disallow: /
+
+# Anthropic legacy training UA (Claude-User / Claude-SearchBot stay allowed).
+User-agent: anthropic-ai
+Disallow: /
+
+# Commercial scraping / SEO-resale crawlers.
+User-agent: Diffbot
+Disallow: /
+
+User-agent: Omgilibot
+Disallow: /
+
+User-agent: DataForSeoBot
+Disallow: /
 
 Sitemap: https://UIshades.com/sitemap-index.xml
