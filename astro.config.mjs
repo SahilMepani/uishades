@@ -54,6 +54,9 @@ export default defineConfig({
       // from `sitemap-seed.ts` (empty until its D1-regeneration hook is wired;
       // safe no-op when empty - in-page links still drive discovery).
       customPages: [
+        // `/` is now SSR (markdown content-negotiation), so the static
+        // integration no longer auto-includes it - inject it explicitly.
+        'https://UIshades.com/',
         'https://UIshades.com/explore',
         ...POPULAR_HEXES.map((h) => `https://UIshades.com/${h.slice(1)}`),
         ...SITEMAP_PALETTE_SLUGS.map((s) => `https://UIshades.com/p/${s}`),

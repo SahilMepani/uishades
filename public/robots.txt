@@ -17,7 +17,11 @@
 
 # Default group. Reputable AI search/answer bots match here and are ALLOWED to
 # read content (so they can cite us); only the Function endpoints are off-limits.
+# Content-Signal mirrors that stance per Cloudflare's Content Signals spec: our
+# pages may be used for search indexing and as live AI input/citation, but NOT
+# for model training (the dedicated training crawlers below are blocked outright).
 User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=no
 Allow: /
 Disallow: /og/
 Disallow: /api/

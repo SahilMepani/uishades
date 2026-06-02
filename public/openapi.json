@@ -1,0 +1,226 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "UIshades Color API",
+    "version": "1.0.0",
+    "description": "Free, public, read-only JSON API for UIshades.com. Returns OKLCH perceptual ramps, 11-stop Tailwind scales, and neighboring colors for any hex. No authentication required.",
+    "license": {
+      "name": "Free to use",
+      "url": "https://uishades.com/.well-known/auth.md"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://uishades.com"
+    }
+  ],
+  "paths": {
+    "/api/{hex}.json": {
+      "get": {
+        "summary": "Get color shades for a hex",
+        "description": "Returns the full ColorPageData for a color: a 20-step OKLCH ramp, an 11-stop Tailwind scale, and lighter/darker neighbor hexes. The hex path segment is a bare 3-, 6-, or 8-digit hex value (no leading '#').",
+        "operationId": "getColorByHex",
+        "parameters": [
+          {
+            "name": "hex",
+            "in": "path",
+            "required": true,
+            "description": "Bare hex value, 3, 6, or 8 hex digits (e.g. 4040ff).",
+            "schema": {
+              "type": "string",
+              "pattern": "^([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$",
+              "examples": ["4040ff"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Color page data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ColorPageData"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invalid or unparseable hex."
+          }
+        }
+      }
+    },
+    "/api/p/{slug}.json": {
+      "get": {
+        "summary": "Get a public saved palette by slug",
+        "description": "Returns a public saved-palette document identified by its slug. The exact shape is treated as an opaque palette document and may include the palette's colors and metadata.",
+        "operationId": "getPaletteBySlug",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "description": "Palette slug.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Palette document.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaletteDocument"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No palette found for the given slug."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Hex": {
+        "type": "string",
+        "description": "Canonical lowercase #rrggbb hex color.",
+        "pattern": "^#[0-9a-f]{6}$",
+        "examples": ["#4040ff"]
+      },
+      "OKLCH": {
+        "type": "object",
+        "description": "OKLCH color coordinates.",
+        "properties": {
+          "l": {
+            "type": "number",
+            "description": "Lightness (0-1)."
+          },
+          "c": {
+            "type": "number",
+            "description": "Chroma (>= 0)."
+          },
+          "h": {
+            "type": "number",
+            "description": "Hue in degrees (0-360)."
+          }
+        },
+        "required": ["l", "c", "h"]
+      },
+      "Shade": {
+        "type": "object",
+        "description": "A single shade in a ramp or scale.",
+        "properties": {
+          "hex": {
+            "type": "string",
+            "description": "Lowercase #rrggbb hex.",
+            "examples": ["#4040ff"]
+          },
+          "oklch": {
+            "$ref": "#/components/schemas/OKLCH"
+          },
+          "stop": {
+            "type": "integer",
+            "description": "Tailwind stop (50-950); present only for scale shades.",
+            "examples": [500]
+          },
+          "isInput": {
+            "type": "boolean",
+            "description": "True for the shade pinned to the input color."
+          }
+        },
+        "required": ["hex", "oklch"]
+      },
+      "Ramp": {
+        "type": "object",
+        "description": "The OKLCH perceptual ramp.",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": ["oklch", "classic"],
+            "description": "Ramp algorithm used."
+          },
+          "shades": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Shade"
+            }
+          },
+          "inputIndex": {
+            "type": "integer",
+            "description": "Index into shades of the pinned input color."
+          }
+        },
+        "required": ["mode", "shades", "inputIndex"]
+      },
+      "Scale": {
+        "type": "object",
+        "description": "The 11-stop Tailwind scale (50-950).",
+        "properties": {
+          "shades": {
+            "type": "array",
+            "description": "Exactly 11 shades, one per Tailwind stop.",
+            "minItems": 11,
+            "maxItems": 11,
+            "items": {
+              "$ref": "#/components/schemas/Shade"
+            }
+          },
+          "anchorStop": {
+            "type": "integer",
+            "description": "The stop the input color snapped to.",
+            "examples": [500]
+          }
+        },
+        "required": ["shades", "anchorStop"]
+      },
+      "Neighbors": {
+        "type": "object",
+        "description": "Adjacent colors lighter and darker than the input.",
+        "properties": {
+          "lighter": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Hex"
+            }
+          },
+          "darker": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Hex"
+            }
+          }
+        },
+        "required": ["lighter", "darker"]
+      },
+      "ColorPageData": {
+        "type": "object",
+        "description": "Full color data: input, OKLCH ramp, Tailwind scale, and neighbors.",
+        "properties": {
+          "input": {
+            "$ref": "#/components/schemas/Hex"
+          },
+          "ramp": {
+            "$ref": "#/components/schemas/Ramp"
+          },
+          "scale": {
+            "$ref": "#/components/schemas/Scale"
+          },
+          "neighbors": {
+            "$ref": "#/components/schemas/Neighbors"
+          }
+        },
+        "required": ["input", "ramp", "scale", "neighbors"]
+      },
+      "PaletteDocument": {
+        "type": "object",
+        "description": "A public saved-palette document. Shape is opaque; typically includes the palette's colors and metadata.",
+        "additionalProperties": true
+      }
+    }
+  }
+}

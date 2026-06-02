@@ -1,0 +1,20 @@
+{
+  "serverInfo": {
+    "name": "UIshades",
+    "version": "1.0.0"
+  },
+  "description": "Generate OKLCH tints/shades ramps and 11-stop Tailwind scales for any color.",
+  "url": "https://uishades.com/mcp",
+  "transport": {
+    "type": "streamable-http"
+  },
+  "capabilities": {
+    "tools": true
+  },
+  "tools": [
+    {
+      "name": "generate_shades",
+      "description": "Generate an OKLCH ramp + Tailwind scale for a hex, rgb()/hsl()/oklch(), or CSS color name."
+    }
+  ]
+}

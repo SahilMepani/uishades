@@ -1,0 +1,103 @@
+# UIshades.com
+
+> Free, ad-free generator for tints and shades of any color. Convert any hex,
+> rgb(), hsl(), oklch(), or CSS color name into a 20-step OKLCH perceptual ramp
+> or an 11-stop Tailwind scale (50–950), with copy-ready exports. Mirrors
+> 0to255.com's URL structure: /[hex] and /colors/[name] permanent links.
+
+This is the expanded reference. For the short version, see https://uishades.com/llms.txt
+
+## What UIshades is
+
+UIshades.com turns a single color into a usable palette. Paste a hex, an
+`rgb()`, `hsl()`, or `oklch()` value, or a CSS color name (like `coral`), and
+it generates a perceptual ramp of tints and shades plus an 11-stop Tailwind
+scale you can drop straight into a design system. No ads, no signup, nothing to
+pay for. A WCAG contrast badge is shown on every shade.
+
+## The two palettes
+
+### Tailwind scale (default)
+An 11-stop scale at the familiar Tailwind stops: 50, 100, 200, 300, 400, 500,
+600, 700, 800, 900, 950. The input color snaps to its nearest stop (the
+"anchor stop"), and the remaining stops are derived around it. This is the
+default view and the server-rendered content on `/` and `/[hex]`.
+
+### OKLCH ramp
+A 20-shade perceptual ramp at evenly spaced lightness, from about L=0.95 down
+to L=0.06. There are no pure `#ffffff` / `#000000` endpoints — the L=0.06 lower
+bound keeps achromatic inputs off pure black after sRGB rounding. The input hex
+is pinned verbatim to the inner step whose target lightness is closest to the
+input's measured lightness. Chroma follows a bell-curve multiplier (1.0 at mid
+lightness, about 0.3 at the extremes) so the ramp stays inside the sRGB gamut
+and avoids washed-out clipping near white and black.
+
+## URL structure
+
+- `/` — home; the tool itself, seeded with a default color.
+- `/[hex]` — permanent page for any 3-, 6-, or 8-digit hex (e.g. `/4040ff`).
+- `/colors/[name]` — one page per CSS named color (~209 of them), each with a
+  ramp, aliases, a harmony palette, and WCAG contrast badges (e.g.
+  `/colors/coral`).
+- `/p/[slug]` — a public saved palette by slug (optional human feature).
+
+## Exports
+
+Every palette can be copied or downloaded as:
+
+- Tailwind v4 `@theme` block
+- Tailwind v3 config
+- CSS custom properties (CSS variables)
+- W3C Design Tokens (DTCG) JSON
+- Figma Variables
+- PNG image of the palette ("Download PNG")
+
+## JSON API
+
+Read-only, public, no authentication.
+
+`GET https://uishades.com/api/{hex}.json` — `{hex}` is a bare 3/6/8-digit hex
+(no `#`), e.g. `4040ff`. Returns the full color data: the OKLCH ramp, the
+Tailwind scale, and lighter/darker neighbors. Invalid hex returns 404.
+
+Tiny example:
+
+```
+GET https://uishades.com/api/4040ff.json
+
+{
+  "input": "#4040ff",
+  "ramp": { "mode": "oklch", "shades": [ /* 20 shades */ ], "inputIndex": 11 },
+  "scale": { "shades": [ /* 11 shades, stops 50–950 */ ], "anchorStop": 500 },
+  "neighbors": { "lighter": ["#5050ff"], "darker": ["#3030ef"] }
+}
+```
+
+Each shade is `{ "hex": "#rrggbb", "oklch": { "l": 0.5, "c": 0.2, "h": 264 } }`;
+scale shades also carry a `stop` (50–950), and the pinned input shade carries
+`"isInput": true`.
+
+There is also `GET https://uishades.com/api/p/{slug}.json` for a public saved
+palette by slug.
+
+OpenAPI description: https://uishades.com/openapi.json
+API catalog: https://uishades.com/.well-known/api-catalog
+
+## MCP server
+
+`POST https://uishades.com/mcp` — Model Context Protocol over streamable HTTP,
+JSON-RPC 2.0, no authentication.
+
+Tool: `generate_shades`
+- Input: `{ "color": string }` — a hex, `rgb()`/`hsl()`/`oklch()`, or CSS color
+  name.
+- Output: the same color data as the JSON API, returned as markdown text plus
+  `structuredContent` (the ColorPageData object).
+
+Server card: https://uishades.com/.well-known/mcp/server-card.json
+
+## Notes
+
+- Everything is free, ad-free, and requires no signup. See
+  https://uishades.com/.well-known/auth.md for the (lack of) auth details.
+- Hex values are canonical lowercase `#rrggbb` throughout the data model.

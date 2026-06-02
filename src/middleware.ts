@@ -64,6 +64,11 @@ const AVATARS = 'https://*.googleusercontent.com https://avatars.githubuserconte
 const PRIVATE_API_PREFIXES = ['/api/me', '/api/presets', '/api/auth/', '/api/palettes'];
 
 const SECURITY_HEADERS: Record<string, string> = {
+  // Agent-discovery Link headers (RFC 8288): point machine clients at the API
+  // catalog and the markdown site index. KEEP IN SYNC with the `Link:` line in
+  // `public/_headers` (which carries these for the statically-served pages the
+  // worker never runs on).
+  Link: '</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json", </llms.txt>; rel="alternate"; type="text/markdown"',
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',

@@ -20,4 +20,18 @@
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: clipboard-write=(self), accelerometer=(), camera=(), microphone=(), geolocation=(), payment=()
+  Link: </.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json", </llms.txt>; rel="alternate"; type="text/markdown"
   Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://www.googletagmanager.com https://www.google-analytics.com https://*.googleusercontent.com https://avatars.githubusercontent.com; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://analytics.google.com; frame-src https://www.googletagmanager.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+
+# Correct content types for the extensionless / markdown agent-discovery files
+# (Cloudflare's asset layer would otherwise guess octet-stream / text-plain).
+/.well-known/api-catalog
+  Content-Type: application/linkset+json; charset=utf-8
+/.well-known/auth.md
+  Content-Type: text/markdown; charset=utf-8
+/.well-known/agent-skills/*/SKILL.md
+  Content-Type: text/markdown; charset=utf-8
+/llms.txt
+  Content-Type: text/markdown; charset=utf-8
+/llms-full.txt
+  Content-Type: text/markdown; charset=utf-8

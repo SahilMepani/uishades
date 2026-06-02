@@ -17,6 +17,9 @@ import { parseColor } from '../lib/color/parse';
 import { formatForCopy } from '../lib/color/format';
 import { oklchRamp } from '../lib/color/ramp';
 import { buildScale } from '../lib/color/scale';
+import { buildColorPageData } from '../lib/color/page-data';
+import { colorPageMarkdown } from '../lib/markdown/color-page';
+import { registerWebMcpTools } from '../lib/mcp/webmcp';
 import { suggestPaletteName } from '../lib/color/palette-name';
 import { contrastRatio, wcagLevel, type WcagLevel } from '../lib/color/contrast';
 // Use the slim hex-lookup so the React island doesn't drag the full
@@ -516,6 +519,20 @@ function ShadeToolInner({
   const handleExportCopy = useCallback((_text: string) => {
     // intentionally no-op; ExportDropdown owns the toast
   }, []);
+
+  // WebMCP: expose `set_color` / `get_current_palette` to in-browser agents via
+  // `navigator.modelContext` (no-op + auto-cleanup on browsers without it).
+  // `hexRef` lets the registered tools read the latest hex without re-running.
+  const hexRef = useRef(hex);
+  hexRef.current = hex;
+  useEffect(
+    () =>
+      registerWebMcpTools({
+        getHex: () => hexRef.current,
+        setColor: (h) => handleNavigate(h),
+      }),
+    [handleNavigate],
+  );
 
   // --- Account -------------------------------------------------------------
   // Per-user state is fetched client-side from the credentialed `/api/me` on

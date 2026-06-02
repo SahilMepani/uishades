@@ -1,0 +1,39 @@
+{
+  "linkset": [
+    {
+      "anchor": "https://uishades.com/",
+      "service-desc": [
+        {
+          "href": "https://uishades.com/openapi.json",
+          "type": "application/vnd.oai.openapi+json"
+        }
+      ],
+      "service-doc": [
+        {
+          "href": "https://uishades.com/llms.txt",
+          "type": "text/markdown"
+        }
+      ],
+      "service-meta": [
+        {
+          "href": "https://uishades.com/.well-known/mcp/server-card.json",
+          "type": "application/json"
+        }
+      ],
+      "item": [
+        {
+          "href": "https://uishades.com/api/4040ff.json",
+          "title": "Color shades JSON (OKLCH ramp + Tailwind scale + neighbors) for a hex"
+        },
+        {
+          "href": "https://uishades.com/api/p/example.json",
+          "title": "Public saved-palette JSON by slug"
+        },
+        {
+          "href": "https://uishades.com/mcp",
+          "title": "MCP server (streamable HTTP) — generate_shades tool"
+        }
+      ]
+    }
+  ]
+}
