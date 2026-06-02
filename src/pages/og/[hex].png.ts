@@ -11,11 +11,12 @@ export const prerender = false;
 import type { APIRoute } from 'astro';
 import { parseColor, ParseError } from '../../lib/color/parse';
 import { renderOgImage } from '../../lib/og-render';
+import { cachedResponse } from '../../lib/edge-cache';
 import type { Hex } from '../../lib/color/types';
 
 const HEX_RE = /^[0-9a-f]{3}$|^[0-9a-f]{6}$|^[0-9a-f]{8}$/i;
 
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async ({ params, request }) => {
   const raw = params.hex ?? '';
   if (!HEX_RE.test(raw)) {
     return new Response('Invalid hex', { status: 404 });
@@ -31,5 +32,5 @@ export const GET: APIRoute = async ({ params }) => {
     throw e;
   }
 
-  return renderOgImage(canonical, 'landscape');
+  return cachedResponse(request, () => renderOgImage(canonical, 'landscape'));
 };
