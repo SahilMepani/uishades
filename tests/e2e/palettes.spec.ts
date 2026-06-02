@@ -17,15 +17,17 @@ import { test, expect } from '@playwright/test';
  */
 
 test.describe('explore gallery — signed out', () => {
-  test('renders the gallery with sort controls', async ({ page }) => {
+  test('renders the gallery with filter controls', async ({ page }) => {
     const res = await page.goto('/explore');
     expect(res?.status()).toBe(200);
 
-    // The sort segmented control is an ARIA tablist in the SSR'd / hydrated
-    // ExploreGrid (Top / New / Trending / Featured tabs).
+    // ExploreGrid renders the gallery heading plus the tag-filter chips
+    // (e.g. "#warm"). These are static page chrome (the `TAGS` list), so they
+    // hold regardless of how many public palettes the local D1 has seeded.
+    // The sort segmented control was intentionally removed in the seed-only
+    // gallery refactor, so we no longer assert on it.
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Featured' })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Top' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '#warm' })).toBeVisible();
   });
 });
 
