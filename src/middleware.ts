@@ -35,7 +35,9 @@
  *   (gtm.js loader), connect-src (collect-endpoint beacons including
  *   regional subdomains like region1.google-analytics.com), and
  *   img-src (legacy pixel beacons). Without these GTM is silently
- *   broken in production.
+ *   broken in production. Cloudflare Web Analytics' auto-injected RUM
+ *   beacon is likewise allow-listed on script-src (loader) and
+ *   connect-src (cdn-cgi/rum endpoint).
  */
 import { defineMiddleware } from 'astro:middleware';
 import { isCsrfBlocked } from './lib/auth/csrf';
@@ -44,6 +46,13 @@ const GTM = 'https://www.googletagmanager.com';
 const GA = 'https://www.google-analytics.com';
 const GA_REGIONS = 'https://*.google-analytics.com';
 const GA_ALT = 'https://analytics.google.com';
+// Cloudflare Web Analytics auto-injects its RUM beacon on Pages when Web
+// Analytics is enabled for the project: the loader is served from
+// static.cloudflareinsights.com (script-src) and posts measurements to
+// cloudflareinsights.com/cdn-cgi/rum (connect-src). Without both the beacon is
+// blocked by CSP in production.
+const CF_INSIGHTS_SCRIPT = 'https://static.cloudflareinsights.com';
+const CF_INSIGHTS_BEACON = 'https://cloudflareinsights.com';
 // OAuth profile avatars: Google serves from lh3/lh4/...googleusercontent.com,
 // GitHub from avatars.githubusercontent.com. AuthMenu renders <img> from these
 // for signed-in users, so img-src must allow them or they're blocked in prod.
@@ -80,8 +89,8 @@ const SECURITY_HEADERS: Record<string, string> = {
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self' data:",
     `img-src 'self' data: blob: ${GTM} ${GA} ${AVATARS}`,
-    `script-src 'self' 'unsafe-inline' ${GTM}`,
-    `connect-src 'self' ${GTM} ${GA} ${GA_REGIONS} ${GA_ALT}`,
+    `script-src 'self' 'unsafe-inline' ${GTM} ${CF_INSIGHTS_SCRIPT}`,
+    `connect-src 'self' ${GTM} ${GA} ${GA_REGIONS} ${GA_ALT} ${CF_INSIGHTS_BEACON}`,
     `frame-src ${GTM}`,
     "frame-ancestors 'none'",
     "base-uri 'self'",
