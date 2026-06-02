@@ -1,0 +1,26 @@
+---
+/**
+ * 404 - page not found.
+ *
+ * Prerendered (the default under `output: 'static'`) so the Cloudflare asset
+ * layer can serve it for any unmatched route without invoking SSR. `/[hex]`
+ * returns a bare `404` status for malformed hexes; the platform falls back to
+ * this page for the body.
+ */
+import ErrorLayout from '../layouts/ErrorLayout.astro';
+
+// A cool blue ramp - on-brand, echoes the #4040ff hero.
+const swatches = ['#dfe0ff', '#9c9dff', '#5a5cff', '#2628d6', '#101245'];
+---
+
+<ErrorLayout
+  code="404"
+  title="This shade doesn't exist"
+  description="The page you're after isn't here - it may have moved, or the URL has a typo. Try a hex color, browse the named colors, or head back to the tool."
+  swatches={swatches}
+>
+  <p class="mt-8 font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
+    Tip: any hex works as a URL - e.g.
+    <a href="/4040ff" class="text-ink hover:text-accent">uishades.com/4040ff</a>
+  </p>
+</ErrorLayout>

@@ -1,0 +1,91 @@
+---
+/**
+ * ErrorLayout - shared shell for the 404 / 500 error pages.
+ *
+ * Deliberately self-contained: it reuses the site's <head> chrome, header,
+ * and footer but does NOT mount the `ShadeTool` React island. Error pages
+ * must render with zero app JS so they work even when the failure that
+ * produced them (a 500) also breaks the island. `404.astro` is prerendered;
+ * `500.astro` is rendered by the adapter when SSR throws - both go through
+ * here so the two stay visually identical.
+ */
+import '../styles/global.css';
+import BaseHead from '../components/BaseHead.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
+
+interface Props {
+  code: string; // "404" | "500"
+  title: string; // <title> + visible headline
+  description: string; // meta description + visible blurb
+  /** A handful of hex strings rendered as a decorative shade strip. */
+  swatches: string[];
+}
+
+const { code, title, description, swatches } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content="noindex" />
+  </head>
+  <body class="bg-paper text-ink">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W6D48RVL" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    {/* No HeaderAuth / FeedbackLink islands here - error pages stay JS-free so
+        they survive a runtime failure that already broke the app bundle. */}
+    <header class="w-full px-10 lg:px-16">
+      <div class="flex items-center justify-between gap-4 border-b border-hairline py-4">
+        <a href="/" class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink hover:text-accent">UI Shades</a>
+        <div class="flex items-center gap-7 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <a href="/explore" class="text-ink hover:text-accent">Explore</a>
+          <a href="/colors" class="text-ink hover:text-accent">Named colors</a>
+          <ThemeToggle />
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto flex w-full max-w-3xl flex-col items-start px-6 py-20 pb-24 lg:px-8">
+      {/* Decorative shade strip - a nod to what the tool generates. aria-hidden
+          because it carries no information beyond the headline below it. */}
+      <div class="flex h-3 w-full overflow-hidden rounded-full" aria-hidden="true">
+        {swatches.map((hex) => (
+          <span class="flex-1" style={`background-color:${hex}`}></span>
+        ))}
+      </div>
+
+      <span class="kicker mt-12">Error {code}</span>
+      <h1 class="display mt-3 text-5xl sm:text-6xl">{title}</h1>
+      <p class="mt-5 max-w-xl font-display text-lg text-ink-2">{description}</p>
+
+      <div class="mt-10 flex flex-wrap items-center gap-3 font-mono text-[11px] uppercase tracking-[0.14em]">
+        <a
+          href="/"
+          class="border border-ink bg-ink px-5 py-3 text-paper transition-colors hover:bg-accent hover:border-accent"
+        >
+          Back to the tool
+        </a>
+        <a
+          href="/colors"
+          class="border border-hairline px-5 py-3 text-ink transition-colors hover:border-ink hover:text-accent"
+        >
+          Browse named colors
+        </a>
+      </div>
+
+      <slot />
+
+      <footer class="mt-24 w-full">
+        <nav aria-label="Footer" class="flex items-center gap-5 border-t border-hairline pt-6 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <a href="/colors" class="text-ink hover:text-accent">Named colors</a>
+          <a href="/explore" class="text-ink hover:text-accent">Explore</a>
+          <a href="/" class="text-ink hover:text-accent">Tool</a>
+        </nav>
+      </footer>
+    </main>
+  </body>
+</html>

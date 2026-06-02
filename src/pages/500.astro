@@ -1,0 +1,25 @@
+---
+/**
+ * 500 - internal server error.
+ *
+ * Rendered by the Cloudflare adapter when an SSR route throws. Kept JS-free
+ * (no React island) so it still renders when the failure that triggered it
+ * also broke the app bundle. Astro exposes the thrown error via `Astro.props`
+ * in dev; we never surface it to visitors.
+ */
+import ErrorLayout from '../layouts/ErrorLayout.astro';
+
+// A warm amber→red ramp to signal "something broke" without being alarmist.
+const swatches = ['#ffe7c2', '#ffb155', '#ff7a1a', '#d63b16', '#5c1408'];
+---
+
+<ErrorLayout
+  code="500"
+  title="Something went wrong"
+  description="A server-side error stopped this page from rendering. It's on our end, not yours. Try again in a moment, or head back to the tool - it should still be working."
+  swatches={swatches}
+>
+  <p class="mt-8 font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
+    If it keeps happening, let us know via the feedback link on any working page.
+  </p>
+</ErrorLayout>
