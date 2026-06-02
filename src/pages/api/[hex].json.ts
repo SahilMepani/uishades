@@ -13,9 +13,8 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { parseColor, ParseError } from '../../lib/color/parse';
-import { oklchRamp } from '../../lib/color/ramp';
-import { buildScale } from '../../lib/color/scale';
-import type { ColorPageData, Hex } from '../../lib/color/types';
+import { buildColorPageData } from '../../lib/color/page-data';
+import type { Hex } from '../../lib/color/types';
 
 const HEX_RE = /^[0-9a-f]{3}$|^[0-9a-f]{6}$|^[0-9a-f]{8}$/i;
 
@@ -45,27 +44,5 @@ export const GET: APIRoute = async ({ params }) => {
     throw e;
   }
 
-  const ramp = oklchRamp(canonical);
-  const scale = buildScale(canonical);
-
-  // Neighbor hexes for the SEO/crawl graph. Same 3-up / 3-down policy used by
-  // the HTML page - keep them consistent so the JSON consumers see the same
-  // link graph the crawler does.
-  const lighter: Hex[] = [];
-  for (let i = ramp.inputIndex - 1; i >= Math.max(0, ramp.inputIndex - 3); i--) {
-    lighter.push(ramp.shades[i].hex);
-  }
-  const darker: Hex[] = [];
-  for (let i = ramp.inputIndex + 1; i <= Math.min(ramp.shades.length - 1, ramp.inputIndex + 3); i++) {
-    darker.push(ramp.shades[i].hex);
-  }
-
-  const data: ColorPageData = {
-    input: canonical,
-    ramp,
-    scale,
-    neighbors: { lighter, darker },
-  };
-
-  return json(data, 200, true);
+  return json(buildColorPageData(canonical), 200, true);
 };

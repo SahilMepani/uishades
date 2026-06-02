@@ -3,15 +3,45 @@
  * Homepage.
  *
  * Renders the shared `ColorToolLayout` shell with a `client:load` ShadeTool
- * seeded with #4040ff - `/` now hosts the interactive tool directly instead of
- * the old editorial masthead. The page stays prerendered/static; the React
+ * seeded with #4040ff - `/` hosts the interactive tool directly. The React
  * island rewrites `/` → `/[hex]` in place on the first user-initiated color
  * change. The site-level Organization / WebSite / SoftwareApplication JSON-LD
  * (referenced by other pages via their `@id`s) lives here and stays on `/`.
+ *
+ * SSR (not prerendered): the route opts out of prerendering so it can answer
+ * `Accept: text/markdown` content negotiation for agents (the asset layer never
+ * runs middleware, so a static page couldn't). The HTML branch carries the same
+ * 30-day edge cache as `/[hex]`, keyed on `Accept` via `Vary`, so the steady-
+ * state cost matches the old static page on a cache hit.
  */
+export const prerender = false;
+
 import ColorToolLayout from '../layouts/ColorToolLayout.astro';
+import { buildColorPageData } from '../lib/color/page-data';
+import { colorPageMarkdown } from '../lib/markdown/color-page';
 import { readInitialPrefs } from '../lib/url-prefs';
 import { safeJsonForScript } from '../lib/safe-json';
+
+// The hero color `/` is seeded with; the markdown branch renders this color.
+const HOME_HEX = '#4040ff';
+
+if ((Astro.request.headers.get('Accept') ?? '').includes('text/markdown')) {
+  return new Response(colorPageMarkdown(buildColorPageData(HOME_HEX)), {
+    headers: {
+      'content-type': 'text/markdown; charset=utf-8',
+      'cache-control': 'public, s-maxage=2592000, stale-while-revalidate=86400',
+      vary: 'Accept',
+    },
+  });
+}
+
+// Edge-cache the HTML like `/[hex]`; `Vary: Accept` keeps the HTML and markdown
+// representations cached independently now that `/` is SSR.
+Astro.response.headers.set(
+  'Cache-Control',
+  'public, s-maxage=2592000, stale-while-revalidate=86400',
+);
+Astro.response.headers.set('Vary', 'Accept');
 
 const TITLE = 'UI Shades - Free Tints and Shades of Any Hex Color';
 const DESCRIPTION =
@@ -88,10 +118,10 @@ const appJsonLd = {
   ogType="website"
   ogImage={OG}
   ogImageAlt="UIshades.com - free tints and shades of any hex color"
-  initialHex="#4040ff"
+  initialHex={HOME_HEX}
   prefs={readInitialPrefs(Astro.url)}
   h1="Tints & shades of any hex color - free OKLCH ramps and Tailwind scales"
-  footerHex="4040ff"
+  footerHex={HOME_HEX.slice(1)}
 >
   <Fragment slot="head">
     <script type="application/ld+json" set:html={safeJsonForScript(orgJsonLd)} />

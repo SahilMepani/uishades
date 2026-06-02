@@ -11,6 +11,8 @@ export const prerender = false;
 import { DATE_PUBLISHED, DATE_MODIFIED } from '../lib/site-meta';
 import ColorToolLayout from '../layouts/ColorToolLayout.astro';
 import { parseColor, ParseError } from '../lib/color/parse';
+import { buildColorPageData } from '../lib/color/page-data';
+import { colorPageMarkdown } from '../lib/markdown/color-page';
 import { findByHex } from '../lib/data/named-colors';
 import { readInitialPrefs } from '../lib/url-prefs';
 import { safeJsonForScript } from '../lib/safe-json';
@@ -31,6 +33,21 @@ try {
     return new Response(null, { status: 404 });
   }
   throw e;
+}
+
+// --- markdown content negotiation ----------------------------------------
+// Agents that send `Accept: text/markdown` get the machine-readable palette
+// (the same ramp/scale/neighbors the HTML and JSON surfaces expose) instead of
+// the React island. Edge-cached like the HTML branch, keyed on `Accept` via
+// `Vary` so both representations cache independently.
+if ((Astro.request.headers.get('Accept') ?? '').includes('text/markdown')) {
+  return new Response(colorPageMarkdown(buildColorPageData(canonical)), {
+    headers: {
+      'content-type': 'text/markdown; charset=utf-8',
+      'cache-control': 'public, s-maxage=2592000, stale-while-revalidate=86400',
+      vary: 'Accept',
+    },
+  });
 }
 
 // --- derive everything we need for the page ------------------------------
@@ -113,6 +130,9 @@ Astro.response.headers.set(
   'Cache-Control',
   'public, s-maxage=2592000, stale-while-revalidate=86400',
 );
+// The same URL also serves `text/markdown` (see the negotiation branch above),
+// so vary the cache on Accept to keep the HTML and markdown copies distinct.
+Astro.response.headers.set('Vary', 'Accept');
 ---
 
 <ColorToolLayout

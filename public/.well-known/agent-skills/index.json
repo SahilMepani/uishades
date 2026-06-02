@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
+  "skills": [
+    {
+      "name": "generate-shades",
+      "type": "skill-md",
+      "description": "Generate a full perceptual OKLCH ramp plus an 11-stop Tailwind scale (50-950) for any color via the free no-auth UIshades JSON API or generate_shades MCP tool.",
+      "url": "/.well-known/agent-skills/generate-shades/SKILL.md",
+      "digest": "sha256:7c827ec31e9496a92c8dd4358ac11410d80b941eb1e9d3998d67380c383f2f11"
+    },
+    {
+      "name": "color-conversion",
+      "type": "skill-md",
+      "description": "Normalize any color to a canonical lowercase hex and read its exact OKLCH coordinates and WCAG contrast via the free no-auth UIshades JSON API or generate_shades MCP tool.",
+      "url": "/.well-known/agent-skills/color-conversion/SKILL.md",
+      "digest": "sha256:6387a80dafd109ca9da3ea6bf570a978cabab9f520c075f25a4d53ce3a386bad"
+    }
+  ]
+}

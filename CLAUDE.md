@@ -34,12 +34,13 @@ Playwright runs against the **production preview build**, not the dev server. Th
 
 Astro 5+ removed `output: 'hybrid'`. We use `output: 'static'` and individual routes opt out via `export const prerender = false`:
 
-- `src/pages/index.astro` - home. Renders the shared `ColorToolLayout` with a `client:load` `ShadeTool` island seeded with `#4040ff`, so `/` **is** the tool - the same view as any `/[hex]` page, with **no redirect**. Stays pre-rendered/static and keeps the site-level Organization / WebSite / SoftwareApplication JSON-LD (referenced by other pages via their `@id`s, so it must live here). The island rewrites `/` → `/[hex]` in place via `history.replaceState` on the first user-initiated color change (never on load), re-seeds the visitor's last-used color from `localStorage` after hydration, and still honors the `?hex=` SearchAction deep link.
+- `src/pages/index.astro` - home. Renders the shared `ColorToolLayout` with a `client:load` `ShadeTool` island seeded with `#4040ff`, so `/` **is** the tool - the same view as any `/[hex]` page, with **no redirect**. **SSR (`prerender = false`), not static**: it opts out of prerendering so it can answer `Accept: text/markdown` content negotiation for agents (the Cloudflare asset layer never runs middleware, so a prerendered page couldn't). The HTML branch carries the same 30-day edge cache as `/[hex]` plus `Vary: Accept`, so a cache hit costs the same as the old static page. Keeps the site-level Organization / WebSite / SoftwareApplication JSON-LD (referenced by other pages via their `@id`s, so it must live here); because `/` is no longer auto-enumerated, `astro.config.mjs` injects it into the sitemap `customPages`. The island rewrites `/` → `/[hex]` in place via `history.replaceState` on the first user-initiated color change (never on load), re-seeds the visitor's last-used color from `localStorage` after hydration, and still honors the `?hex=` SearchAction deep link.
 - `src/layouts/ColorToolLayout.astro` - the single shared document shell for `/` and `/[hex]`: `<head>` (BaseHead + meta/OG/twitter from props + a `head` slot for page-specific JSON-LD) plus the `<main>` / sr-only `<h1>` / `ShadeTool` island / footer. **Edit layout here and it hits both URLs** - don't re-inline a tool-page shell in a route.
 - `src/pages/colors/[name].astro` - pre-rendered, one page per entry in `NAMED_COLORS` (~209 pages). `getStaticPaths()` enumerates slugs. Keeps its own richer editorial shell (hero, blurb, palette, FAQ) and embeds the shared `ShadeTool` island directly rather than going through `ColorToolLayout`.
-- `src/pages/[hex].astro` - **SSR-only** (`prerender = false`). Validates the hex param with a strict regex, returns 404 on miss, sets a 30-day `Cache-Control` so the Cloudflare edge caches the rendered HTML. Renders through `ColorToolLayout`, injecting its BreadcrumbList + CreativeWork JSON-LD via the `head` slot.
+- `src/pages/[hex].astro` - **SSR-only** (`prerender = false`). Validates the hex param with a strict regex, returns 404 on miss, sets a 30-day `Cache-Control` (+ `Vary: Accept`) so the Cloudflare edge caches the rendered HTML. Renders through `ColorToolLayout`, injecting its BreadcrumbList + CreativeWork JSON-LD via the `head` slot. Like `/`, answers `Accept: text/markdown` with the markdown palette (see Agent-readiness below).
 - `src/pages/dev/tool.astro` - dev-only host for the React island. Returns 404 in `PROD` builds; `noindex` + excluded from the sitemap regardless.
-- `src/pages/api/[hex].json.ts` and `src/pages/og/[hex].png.ts` - JSON and OG endpoints (the OG endpoint uses `workers-og`).
+- `src/pages/api/[hex].json.ts` and `src/pages/og/[hex].png.ts` - JSON and OG endpoints (the OG endpoint uses `workers-og`). The JSON endpoint builds its payload via the shared `buildColorPageData` (see below).
+- `src/pages/mcp.ts` - **SSR-only** public MCP endpoint (`/mcp`, streamable HTTP / JSON-RPC 2.0). Thin transport wrapper over the pure `handleMcpRequest` dispatcher in `src/lib/mcp/handler.ts`; exposes one tool, `generate_shades`. Unauthenticated by design; not under `CSRF_PROTECTED_PREFIXES` so cross-origin agent POSTs pass the middleware gate.
 
 `astro.config.mjs` injects `POPULAR_HEXES` into the sitemap via `customPages` so Googlebot can find SSR-only hex URLs without manual warming, and filters `/dev/*` out as a belt-and-braces measure on top of the page-level `noindex`.
 
@@ -52,6 +53,7 @@ This is the codebase's core. The contract lives in `types.ts` - every other modu
 - `classic.ts` - `classicRamp(input)`: the reverse-engineered 0to255 RGB-walk. **Retained and unit-tested, but no longer surfaced in the UI** - the algorithm toggle now switches between the Tailwind scale and the OKLCH ramp, so nothing imports `classicRamp` outside its own test. Kept so it can be re-enabled cheaply; don't delete it without cause. Lighter walk increments every sub-255 channel by 17 each step; darker walk has a two-phase rule with residual-carry from "low" to "high" channels to match the pre-paywall reference output verbatim. The walks' pure `#ffffff` and `#000000` tails are stripped from the composed ramp; when the input itself is white or black it is preserved as an interior shade. Edge cases for `#ffffff`, `#000000`, and `#ff0000`-style inputs (no low channels) are documented in-file.
 - `scale.ts` - `buildScale(input)`: 11-stop Tailwind scale (50…950) snapping the input to its nearest stop.
 - `anchors.ts`, `contrast.ts`, `format.ts` - anchor stops, WCAG contrast badges, copy-format serialization.
+- `page-data.ts` - `buildColorPageData(canonical)`: assembles the shared `ColorPageData` (ramp + scale + 3-up/3-down neighbors). **Single source of truth** reused by the JSON API, the markdown content-negotiation branch, and the MCP `generate_shades` tool, so all three stay identical. `src/lib/markdown/color-page.ts` (`colorPageMarkdown`) renders it to agent-readable markdown.
 
 ### React island (`src/components/ShadeTool.tsx`)
 
@@ -76,6 +78,20 @@ Both views' "Download PNG" button renders the palette client-side to a canvas vi
 Auto-discovered Astro middleware. Sets HSTS, X-CTO, X-Frame-Options, Referrer-Policy, Permissions-Policy, and CSP on every response (both SSR routes and pre-rendered pages). CSP currently keeps `'unsafe-inline'` on `script-src` for JSON-LD blocks and the home-page inline form-handler; the audit tracks tightening via nonces.
 
 All inline JSON-LD blobs MUST go through `safeJsonForScript()` (`src/lib/safe-json.ts`) - it escapes `<`, `>`, `&`, U+2028, U+2029 so future user-derived fields can't break out of the inline `<script>` block. Already wired in `index.astro`, `[hex].astro`, `colors/[name].astro`.
+
+Two header sets must stay in sync (documented in both files): `SECURITY_HEADERS` in `src/middleware.ts` (SSR responses) and `public/_headers` (statically-served pages). This now includes the agent-discovery `Link:` header.
+
+### Agent-readiness
+
+Surfaces that make the site usable by AI agents (see `docs/agent-readiness.md` and Cloudflare's "Is Your Site Agent-Ready?" scan):
+
+- **`Link` headers** (RFC 8288) advertise `/.well-known/api-catalog` + `/llms.txt` - set in both `_headers` and middleware.
+- **Markdown negotiation**: `/` and `/[hex]` answer `Accept: text/markdown` with `colorPageMarkdown(buildColorPageData(...))`, edge-cached with `Vary: Accept`.
+- **`/.well-known/` discovery files** (static, in `public/`): `api-catalog` (RFC 9727 linkset → `openapi.json`), `agent-skills/index.json` (v0.2.0, **digests must match the SKILL.md bytes** - rehash if you edit them), `mcp/server-card.json`, `auth.md` (honest "no auth" - we are NOT an OAuth AS). `_headers` sets their content types.
+- **MCP**: `/mcp` endpoint + `server-card.json` (see routing above).
+- **WebMCP**: `registerWebMcpTools` (`src/lib/mcp/webmcp.ts`) registers `set_color` / `get_current_palette` on `navigator.modelContext` from the island; feature-detected, no-op where unsupported.
+- **robots.txt** carries a `Content-Signal:` directive mirroring the existing allow-citation / block-training policy.
+- **DNS-AID** is the one check not doable from the repo (needs DNS records) - records + steps are in `docs/agent-readiness.md`.
 
 ### Deploy
 
