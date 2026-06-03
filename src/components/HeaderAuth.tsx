@@ -79,6 +79,14 @@ export default function HeaderAuth() {
 
   return (
     <>
+      {user && (
+        <a
+          href="/me/palettes"
+          className="text-ink transition-colors duration-150 ease-out hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
+        >
+          My palettes
+        </a>
+      )}
       {user ? (
         <button
           ref={triggerRef}

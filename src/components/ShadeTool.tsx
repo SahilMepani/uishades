@@ -848,9 +848,19 @@ function ShadeToolInner({
 
           {/* Full-width palette preview: appears only once the tray holds a
               second color, sitting above the ramp's header row. Clicking a
-              swatch makes it the live page color (reusing `selectTrayColor`). */}
+              swatch makes it the live page color (reusing `selectTrayColor`).
+              A small header row labels the band and carries the WCAG explainer,
+              since these swatches are the only place contrast levels surface. */}
           {tray.length >= 2 && (
-            <PalettePreviewBar tray={tray} onSelectColor={selectTrayColor} />
+            <div>
+              <div className="mb-2 flex items-center gap-1.5">
+                <span className="font-mono text-xs uppercase tracking-tight text-mute">
+                  Contrast (WCAG)
+                </span>
+                <WcagInfoButton />
+              </div>
+              <PalettePreviewBar tray={tray} onSelectColor={selectTrayColor} />
+            </div>
           )}
 
           {/* Metadata row: the algorithm toggle + stops · PNG. The "Copy as"
@@ -1465,6 +1475,93 @@ function AlgorithmInfoButton() {
             chroma stays controlled, so mid-tones don't go muddy. Pick this for a full
             tint-to-shade range.
           </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * `?` info button + popover explaining WCAG contrast and how to read the
+ * AAA / AA / AA-Lg / Fail badges shown on the palette preview swatches.
+ * Same click-to-toggle / outside-click / Escape pattern as
+ * `AlgorithmInfoButton`; lives on the preview-bar header because those
+ * swatches are the only place contrast levels surface in the UI.
+ */
+function WcagInfoButton() {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const id = 'wcag-info-popover';
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: globalThis.MouseEvent) => {
+      if (!wrapRef.current) return;
+      if (!wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={wrapRef} className="relative inline-flex">
+      <button
+        type="button"
+        aria-label="About WCAG contrast levels"
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen(o => !o)}
+        className={
+          'inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] ' +
+          'font-semibold leading-none text-mute ring-1 ring-ink/20 ' +
+          'hover:text-ink hover:ring-ink/40 ' +
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60'
+        }
+      >
+        ?
+      </button>
+      {open && (
+        <div
+          id={id}
+          role="dialog"
+          aria-label="WCAG contrast info"
+          className={
+            'absolute left-0 top-full z-40 mt-2 w-72 max-w-[calc(100vw-2rem)] ' +
+            'border border-hairline bg-paper p-3 text-xs leading-relaxed text-ink ' +
+            'shadow-[0_10px_30px_rgba(17,17,16,0.12)]'
+          }
+        >
+          <p className="mb-2">
+            <span className="font-semibold">WCAG contrast</span> is the ratio
+            between text and its background (1:1 to 21:1) - the higher the ratio,
+            the more legible the text. Each badge shows the level black or white
+            text reaches against that swatch.
+          </p>
+          <dl className="space-y-1">
+            <div className="flex gap-2">
+              <dt className="w-12 shrink-0 font-mono font-bold uppercase">AAA</dt>
+              <dd>≥ 7:1 - enhanced contrast.</dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="w-12 shrink-0 font-mono font-bold uppercase">AA</dt>
+              <dd>≥ 4.5:1 - the standard minimum for body text.</dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="w-12 shrink-0 font-mono font-bold uppercase">AA-Lg</dt>
+              <dd>≥ 3:1 - passes only for large (≥ 24px) or bold text.</dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="w-12 shrink-0 font-mono font-bold uppercase">Fail</dt>
+              <dd>&lt; 3:1 - below the accessible threshold.</dd>
+            </div>
+          </dl>
         </div>
       )}
     </div>
