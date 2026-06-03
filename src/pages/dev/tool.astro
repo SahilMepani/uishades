@@ -11,10 +11,16 @@ import BaseHead from '../../components/BaseHead.astro';
 import ShadeTool from '../../components/ShadeTool';
 import { readInitialPrefs } from '../../lib/url-prefs';
 
+// Must render on-demand so the production 404 below actually runs. Without
+// this, the page is prerendered to a static `dev/tool.html`, the build-time
+// PROD branch is swallowed, and Cloudflare's asset layer serves the page on
+// the published site (200, not 404) — defeating the guard.
+export const prerender = false;
+
 // Hard-404 in production builds: this is a dev-only host for the React
 // island. It's already `noindex` and excluded from the sitemap, but
 // returning 404 on the published site removes the page from QA's surface
-// entirely. Only `astro dev` (not `astro preview`) keeps the page live.
+// entirely. Only `astro dev` keeps the page live.
 // The Playwright smoke tests were retargeted at the real /[hex] route
 // to compensate; see tests/e2e/tool.spec.ts.
 if (import.meta.env.PROD) {
