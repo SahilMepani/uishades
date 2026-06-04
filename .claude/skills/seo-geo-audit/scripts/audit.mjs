@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // SEO/GEO audit for UIshades. Two halves:
-//   STATIC  — read repo files, no server needed (digests, dev guards, sitemap, ld+json safety, host casing)
+//   STATIC  — read repo files, no server needed (digests, dev guards, sitemap, ld+json safety, host casing, robots policy)
 //   HTTP    — hit a running preview build (titles/canonicals, markdown negotiation, @id graph, dev 404, Link header)
 //
 // Usage:
@@ -125,6 +125,77 @@ function checkHostCasing() {
   }
   if (seen.size > 1) add('WARN', 'host-casing', `mixed host casing across files: ${[...seen].join(' vs ')} — hosts are case-insensitive, but standardize one for consistency`);
   else if (seen.size === 1) add('PASS', 'host-casing', `host casing consistent (${[...seen][0]})`);
+}
+
+// S6 — robots.txt policy invariants. robots.txt is a load-bearing GEO/agent
+// surface: it must keep citation/AI-search bots ALLOWED (the whole point of the
+// site's GEO work) while blocking no-citation training/SEO-resale scrapers, and
+// it must keep the `*` group + Content-Signal + Sitemap pointer intact. A silent
+// edit — dropping a citation bot into the blocklist, deleting the `*` Allow, or
+// fat-fingering the Sitemap line — would sail past every other check here.
+function checkRobotsPolicy() {
+  const txt = read('public/robots.txt');
+  if (!txt) return add('WARN', 'robots-policy', 'public/robots.txt not found — skipping');
+
+  // Parse into groups: consecutive User-agent lines share the rules that follow.
+  const groups = [];
+  let cur = null;
+  const sitemaps = [];
+  for (const raw of txt.split(/\r?\n/)) {
+    const line = raw.replace(/#.*$/, '').trim();
+    if (!line) continue;
+    const m = line.match(/^([A-Za-z-]+)\s*:\s*(.*)$/);
+    if (!m) continue;
+    const field = m[1].toLowerCase(), val = m[2].trim();
+    if (field === 'user-agent') {
+      if (cur && cur.rules.length) { groups.push(cur); cur = null; }
+      if (!cur) cur = { agents: [], rules: [] };
+      cur.agents.push(val);
+    } else if (field === 'sitemap') {
+      sitemaps.push(val);
+    } else {
+      if (!cur) cur = { agents: ['(none)'], rules: [] };
+      cur.rules.push([field, val]);
+    }
+  }
+  if (cur && cur.rules.length) groups.push(cur);
+
+  const byAgent = new Map(); // exact (case-insensitive) token → group; avoids the Applebot/Applebot-Extended substring trap
+  for (const g of groups) for (const a of g.agents) byAgent.set(a.toLowerCase(), g);
+  const isBlocked = (ua) => {
+    const g = byAgent.get(ua.toLowerCase());
+    if (!g) return false; // unlisted → falls under `*` (allowed)
+    return g.rules.some(([f, v]) => f === 'disallow' && v === '/') &&
+           !g.rules.some(([f, v]) => f === 'allow' && v === '/');
+  };
+
+  // (a) citation / AI-search bots MUST stay allowed — blocking one removes the site from AI/search citations
+  const CITATION = ['OAI-SearchBot', 'ChatGPT-User', 'PerplexityBot', 'Claude-User', 'Claude-SearchBot', 'Google-Extended', 'Bingbot', 'Googlebot', 'Applebot'];
+  const blocked = CITATION.filter(isBlocked);
+  add(blocked.length === 0 ? 'PASS' : 'FAIL', 'robots-citation-allowed', blocked.length === 0
+    ? `all ${CITATION.length} citation/AI-search bots remain allowed (Googlebot, Bingbot, OAI-SearchBot, PerplexityBot, Claude-*, …)`
+    : `citation bot(s) BLOCKED — removes the site from AI/search citations: ${blocked.join(', ')}. Delete their Disallow: / group.`);
+
+  // (b) the default `*` group must keep Allow + the Function-endpoint disallows + Content-Signal
+  const star = byAgent.get('*');
+  if (!star) {
+    add('FAIL', 'robots-star-group', 'no `User-agent: *` group — default crawlers (incl. Googlebot) have no policy');
+  } else {
+    const allows = star.rules.some(([f, v]) => f === 'allow' && v === '/');
+    const dOg = star.rules.some(([f, v]) => f === 'disallow' && v === '/og/');
+    const dApi = star.rules.some(([f, v]) => f === 'disallow' && v === '/api/');
+    const cs = star.rules.some(([f]) => f === 'content-signal');
+    add(allows ? 'PASS' : 'FAIL', 'robots-star-allow', allows ? '`*` group Allow: / present' : '`*` group missing Allow: / — default crawlers may be blocked sitewide');
+    add(dOg && dApi ? 'PASS' : 'WARN', 'robots-function-endpoints', dOg && dApi
+      ? '`*` group keeps /og/ + /api/ Functions off-limits to crawlers'
+      : `\`*\` group no longer disallows ${[!dOg && '/og/', !dApi && '/api/'].filter(Boolean).join(' + ')} — crawlers can burn the Pages Function budget`);
+    add(cs ? 'PASS' : 'WARN', 'robots-content-signal', cs ? 'Content-Signal directive present on `*`' : 'Content-Signal directive missing from `*` group');
+  }
+
+  // (c) the Sitemap pointer must survive (crawl discovery for ~2340 templated URLs leans on it)
+  add(sitemaps.length ? 'PASS' : 'FAIL', 'robots-sitemap', sitemaps.length
+    ? `Sitemap: ${sitemaps.join(', ')}`
+    : 'no Sitemap: directive — crawl discovery for ~2340 URLs relies on it');
 }
 
 // ───────────────────────── HTTP ─────────────────────────
@@ -256,6 +327,7 @@ checkDevBuildOutput();
 checkSitemap();
 checkJsonLdSafety();
 checkHostCasing();
+checkRobotsPolicy();
 if (BASE) await runHttp();
 else add('INFO', 'http', 'no --base-url given — HTTP checks skipped. Run `npm run build && npm run preview`, then re-run with --base-url http://127.0.0.1:4321');
 

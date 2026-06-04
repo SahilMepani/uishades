@@ -40,8 +40,9 @@ reporting it.
 | 6 | `/dev/*` 404s in prod (needs `prerender = false` + no emitted `dist/client/dev/tool.html`); `noindex`; sitemap-excluded | Dev tooling leaking into the index | script (static build-output is authoritative; the live HTTP probe is *inconclusive* against `astro preview` — see surfaces.md) |
 | 7 | Agent-discovery `Link` header advertises api-catalog + llms.txt | RFC 8288 discovery for agents | script (HTTP) |
 | 8 | Host-casing consistency across canonical / JSON-LD / headers / catalog | Cosmetic but a real drift (`UIshades.com` vs `uishades.com`) | script (static) |
+| 9 | `robots.txt` policy: citation/AI-search bots stay allowed, `*` group keeps `Allow` + `/og/`+`/api/` disallows + `Content-Signal`, `Sitemap:` survives | The crawl/citation policy is load-bearing for GEO; dropping a citation bot into the blocklist or fat-fingering the `Sitemap:` line is a silent regression | script (static) |
 
-Items 1–8 are mechanical and live in `scripts/audit.mjs`. The **judgment layer**
+Items 1–9 are mechanical and live in `scripts/audit.mjs`. The **judgment layer**
 below is yours — the script can't tell you a title is *bad*, only that one exists.
 
 ## How to run it
