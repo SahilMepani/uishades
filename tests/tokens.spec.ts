@@ -14,6 +14,7 @@ import {
   scaleToTokens,
   rampToTokens,
   tokenValue,
+  dedupeGroupNames,
 } from '../src/lib/exports/tokens';
 import { toTailwindV4 } from '../src/lib/exports/tailwind-v4';
 import { toTailwindV3 } from '../src/lib/exports/tailwind-v3';
@@ -67,40 +68,42 @@ describe('tokenValue', () => {
   });
 });
 
-describe('CSS-family serializers (new tokens signature)', () => {
+describe('CSS-family serializers (group signature)', () => {
   const scaleTokens = scaleToTokens(buildScale(hex));
   const rampTokens = rampToTokens(oklchRamp(hex));
+  const scaleGroup = [{ name: 'brand', tokens: scaleTokens }];
+  const rampGroup = [{ name: 'brand', tokens: rampTokens }];
 
   it('tailwind-v4 emits --color-{slug}-{key} in hex mode', () => {
-    const out = toTailwindV4(scaleTokens, 'brand', 'hex');
+    const out = toTailwindV4(scaleGroup, 'hex');
     expect(out).toContain('@theme {');
     expect(out).toContain('--color-brand-500:');
     expect(out).toMatch(/--color-brand-500: #[0-9a-f]{6};/);
   });
 
   it('tailwind-v4 emits oklch() values in oklch mode', () => {
-    const out = toTailwindV4(rampTokens, 'brand', 'oklch');
+    const out = toTailwindV4(rampGroup, 'oklch');
     expect(out).toContain('--color-brand-1: oklch(');
     expect(out).toContain('--color-brand-20: oklch(');
   });
 
   it('css-vars emits --{slug}-{key} and follows the value mode', () => {
-    expect(toCssVars(scaleTokens, 'brand', 'hex')).toMatch(/--brand-500: #[0-9a-f]{6};/);
-    expect(toCssVars(rampTokens, 'brand', 'oklch')).toContain('--brand-1: oklch(');
+    expect(toCssVars(scaleGroup, 'hex')).toMatch(/--brand-500: #[0-9a-f]{6};/);
+    expect(toCssVars(rampGroup, 'oklch')).toContain('--brand-1: oklch(');
   });
 
   it('tailwind-v3 ramp keys are valid quoted JS object keys', () => {
-    const out = toTailwindV3(rampTokens, 'brand', 'hex');
+    const out = toTailwindV3(rampGroup, 'hex');
     expect(out).toContain("'1': '#");
     expect(out).toContain("'20': '#");
   });
 });
 
 describe('JSON serializers stay hex even in oklch mode', () => {
-  const rampTokens = rampToTokens(oklchRamp(hex));
+  const rampGroup = [{ name: 'brand', tokens: rampToTokens(oklchRamp(hex)) }];
 
   it('w3c-tokens emits hex $value despite oklch mode', () => {
-    const out = toW3CTokens(rampTokens, 'brand', 'oklch');
+    const out = toW3CTokens(rampGroup, 'oklch');
     const json = JSON.parse(out);
     expect(json.brand['1'].$value).toMatch(/^#[0-9a-f]{6}$/);
     expect(json.brand['1'].$type).toBe('color');
@@ -108,11 +111,82 @@ describe('JSON serializers stay hex even in oklch mode', () => {
   });
 
   it('figma-vars emits hex values despite oklch mode', () => {
-    const out = toFigmaVars(rampTokens, 'brand', 'oklch');
+    const out = toFigmaVars(rampGroup, 'oklch');
     const json = JSON.parse(out);
     const v = json.collections[0].variables[0];
     expect(v.name).toBe('brand/1');
     expect(Object.values(v.valuesByMode)[0]).toMatch(/^#[0-9a-f]{6}$/);
     expect(out).not.toContain('oklch(');
+  });
+});
+
+describe('multi-color palette export (the reported bug)', () => {
+  // Two distinct palette colors, each its own group. Before the fix the export
+  // only ever emitted the active color; now every group surfaces.
+  const coral = scaleToTokens(buildScale(parseColor('#ff7f50')));
+  const indigo = scaleToTokens(buildScale(parseColor('#4040ff')));
+  const groups = [
+    { name: 'coral', tokens: coral },
+    { name: 'indigo', tokens: indigo },
+  ];
+
+  it('tailwind-v4 keeps every color in one @theme block', () => {
+    const out = toTailwindV4(groups, 'hex');
+    expect(out.match(/@theme \{/g)).toHaveLength(1); // one block, not two
+    expect(out).toMatch(/--color-coral-500: #[0-9a-f]{6};/);
+    expect(out).toMatch(/--color-indigo-500: #[0-9a-f]{6};/);
+  });
+
+  it('css-vars keeps every color in one :root block', () => {
+    const out = toCssVars(groups, 'hex');
+    expect(out.match(/:root \{/g)).toHaveLength(1);
+    expect(out).toMatch(/--coral-500: #[0-9a-f]{6};/);
+    expect(out).toMatch(/--indigo-500: #[0-9a-f]{6};/);
+  });
+
+  it('w3c-tokens nests every color under its own top-level key', () => {
+    const json = JSON.parse(toW3CTokens(groups, 'hex'));
+    expect(Object.keys(json)).toEqual(['coral', 'indigo']);
+    expect(json.coral['500'].$value).toMatch(/^#[0-9a-f]{6}$/);
+    expect(json.indigo['500'].$value).toMatch(/^#[0-9a-f]{6}$/);
+  });
+
+  it('figma-vars groups every color into one "palette" collection', () => {
+    const json = JSON.parse(toFigmaVars(groups, 'hex'));
+    expect(json.collections).toHaveLength(1);
+    expect(json.collections[0].name).toBe('palette');
+    const names = json.collections[0].variables.map((v: { name: string }) => v.name);
+    expect(names).toContain('coral/500');
+    expect(names).toContain('indigo/500');
+  });
+});
+
+describe('dedupeGroupNames', () => {
+  const tk = scaleToTokens(buildScale(hex));
+
+  it('leaves already-unique slugs untouched (sanitized)', () => {
+    const out = dedupeGroupNames([
+      { name: 'Coral', tokens: tk },
+      { name: 'Royal Blue', tokens: tk },
+    ]);
+    expect(out.map((g) => g.name)).toEqual(['coral', 'royal-blue']);
+  });
+
+  it('suffixes colliding slugs so JSON/Tailwind keys never overwrite', () => {
+    const out = dedupeGroupNames([
+      { name: 'indigo', tokens: tk },
+      { name: 'indigo', tokens: tk },
+      { name: 'indigo', tokens: tk },
+    ]);
+    expect(out.map((g) => g.name)).toEqual(['indigo', 'indigo-2', 'indigo-3']);
+  });
+
+  it('keeps W3C JSON keys distinct after a collision', () => {
+    const deduped = dedupeGroupNames([
+      { name: 'indigo', tokens: tk },
+      { name: 'indigo', tokens: tk },
+    ]);
+    const json = JSON.parse(toW3CTokens(deduped, 'hex'));
+    expect(Object.keys(json)).toEqual(['indigo', 'indigo-2']);
   });
 });

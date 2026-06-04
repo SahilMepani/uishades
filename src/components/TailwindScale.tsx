@@ -1,12 +1,14 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import type {
   CopyFormat,
   ExportFormat,
   Hex,
   TailwindScale as TailwindScaleData,
 } from '../lib/color/types';
-import { scaleToTokens } from '../lib/exports/tokens';
+import { scaleToTokens, dedupeGroupNames, type ColorGroup } from '../lib/exports/tokens';
+import { buildScale } from '../lib/color/scale';
 import ShadeRow from './ShadeRow';
+import PaletteShadeGrid from './PaletteShadeGrid';
 
 // The export-dropdown UI plus its five export-format serializers are the
 // heaviest leaf of the React island. Now that the Tailwind scale is the
@@ -27,6 +29,18 @@ export interface TailwindScaleProps {
   scale: TailwindScaleData;
   /** Pinned source hex - every non-anchor row renders this in a 20% band. */
   sourceHex: Hex;
+  /**
+   * Palette tray colors (in tray order). Two or more swaps the single scale
+   * for a column-per-color grid aligned with the `PalettePreviewBar` band; the
+   * export controls stay put but now emit every color, not just the active one.
+   */
+  paletteHexes?: Hex[];
+  /**
+   * Brand name per palette color, parallel to `paletteHexes` (nearest-named
+   * slug). Used to name each color's export group and its per-column copy
+   * labels. Falls back to `brandName` / `'brand'` when absent.
+   */
+  paletteNames?: string[];
   copyFormat: CopyFormat;
   exportFormat: ExportFormat;
   brandName?: string;
@@ -40,6 +54,8 @@ export interface TailwindScaleProps {
 export default function TailwindScale({
   scale,
   sourceHex,
+  paletteHexes,
+  paletteNames,
   copyFormat,
   exportFormat,
   brandName,
@@ -49,13 +65,26 @@ export default function TailwindScale({
   onExportFormatChange,
   onCopyFormatChange,
 }: TailwindScaleProps) {
+  const multiColumn = (paletteHexes?.length ?? 0) >= 2;
+  // One export group per color. Multi-column → a scale per palette swatch (with
+  // collision-safe names); single → just the active scale already in hand.
+  const exportGroups = useMemo<ColorGroup[]>(() => {
+    if (multiColumn) {
+      return dedupeGroupNames(
+        paletteHexes!.map((h, i) => ({
+          name: paletteNames?.[i] ?? brandName ?? 'brand',
+          tokens: scaleToTokens(buildScale(h)),
+        })),
+      );
+    }
+    return [{ name: brandName ?? 'brand', tokens: scaleToTokens(scale) }];
+  }, [multiColumn, paletteHexes, paletteNames, brandName, scale]);
   return (
     <div className="flex flex-col gap-4" data-anchor-stop={scale.anchorStop}>
       <Suspense fallback={<ExportDropdownFallback />}>
         <ExportDropdown
-          tokens={scaleToTokens(scale)}
+          groups={exportGroups}
           format={exportFormat}
-          brandName={brandName}
           valueMode="hex"
           copyFormat={copyFormat}
           hasStop={true}
@@ -64,24 +93,36 @@ export default function TailwindScale({
           onCopy={onExportCopy}
         />
       </Suspense>
-      <div
-        role="list"
-        aria-label="Tailwind 11-stop scale"
-        className="flex w-full flex-col gap-[2px] border-b border-ink/15"
-      >
-        {scale.shades.map((shade) => (
-          <div role="listitem" key={shade.stop}>
-            <ShadeRow
-              shade={shade}
-              sourceHex={sourceHex}
-              copyFormat={copyFormat}
-              brandName={brandName}
-              onCopy={onCopy}
-              onNavigate={onNavigate}
-            />
-          </div>
-        ))}
-      </div>
+      {multiColumn ? (
+        <PaletteShadeGrid
+          hexes={paletteHexes!}
+          names={paletteNames}
+          kind="scale"
+          copyFormat={copyFormat}
+          brandName={brandName}
+          onCopy={onCopy}
+          onNavigate={onNavigate}
+        />
+      ) : (
+        <div
+          role="list"
+          aria-label="Tailwind 11-stop scale"
+          className="flex w-full flex-col gap-[2px] border-b border-ink/15"
+        >
+          {scale.shades.map((shade) => (
+            <div role="listitem" key={shade.stop}>
+              <ShadeRow
+                shade={shade}
+                sourceHex={sourceHex}
+                copyFormat={copyFormat}
+                brandName={brandName}
+                onCopy={onCopy}
+                onNavigate={onNavigate}
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

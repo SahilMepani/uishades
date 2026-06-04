@@ -49,8 +49,11 @@ export function formatForCopy(
     case 'oklch': {
       const c = oklchConv(hex);
       if (!c) return hex;
-      const l = round(c.l ?? 0, 4);
-      const ch = round(c.c ?? 0, 4);
+      // 3 decimals on L/C matches Tailwind v4's own palette and is below the
+      // precision sRGB can represent, so output is byte-identical when rounded
+      // back to hex. A 4th digit is noise. Hue at 2 is plenty at these chromas.
+      const l = round(c.l ?? 0, 3);
+      const ch = round(c.c ?? 0, 3);
       const h = Number.isFinite(c.h) ? round(c.h ?? 0, 2) : 0;
       return `oklch(${l} ${ch} ${h})`;
     }

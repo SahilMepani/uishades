@@ -1,0 +1,228 @@
+---
+/**
+ * Image Color Picker - extract a color palette from an uploaded image.
+ *
+ * Renders the shared `ColorToolLayout` in `mode="image"`, which mounts the
+ * source-image panel above the normal shade tool and makes the image the only
+ * editor of palette colors (see ShadeTool's `mode` prop and CONTEXT.md →
+ * "Source image" / "Sample point").
+ *
+ * Unlike `/` and `/[hex]`, this page has no canonical color and nothing for
+ * agents to content-negotiate, so it stays a plain **prerendered, indexable**
+ * page: its own title/description/OG plus editorial copy + JSON-LD for SEO/GEO.
+ * The uploaded image never leaves the browser, so there is no shareable result
+ * and no per-image URL - the route is always `/image-color-picker`.
+ */
+import ColorToolLayout from '../layouts/ColorToolLayout.astro';
+import { readInitialPrefs } from '../lib/url-prefs';
+import { safeJsonForScript } from '../lib/safe-json';
+
+// A neutral seed for the underlying tool; never shown until the visitor uploads
+// an image (image mode starts with an empty palette).
+const SEED_HEX = '#4040ff';
+
+const TITLE = 'Image Color Picker - Extract a Color Palette from Any Image';
+const DESCRIPTION =
+  'Upload an image and pull out its colors. Get up to 8 dominant colors as an editable palette, drag the sample points to fine-tune, or click anywhere on the image to pick a color - then export OKLCH ramps and Tailwind scales.';
+const CANONICAL = 'https://UIshades.com/image-color-picker';
+const OG = 'https://UIshades.com/og/4040ff.png';
+
+// The site-level Organization / WebSite are canonically defined on `/`, but the
+// WebApplication below references them by `@id` (publisher / isPartOf). Since
+// this is a standalone indexable page a crawler may parse in isolation, define
+// them here too so those references resolve rather than dangle.
+const orgJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  '@id': 'https://UIshades.com/#org',
+  name: 'UIshades.com',
+  url: 'https://UIshades.com/',
+  logo: {
+    '@type': 'ImageObject',
+    url: 'https://UIshades.com/favicon.svg',
+    width: 512,
+    height: 512,
+  },
+};
+
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  '@id': 'https://UIshades.com/#website',
+  url: 'https://UIshades.com/',
+  name: 'UIshades.com',
+  inLanguage: 'en',
+  publisher: { '@id': 'https://UIshades.com/#org' },
+};
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'UIshades.com',
+      item: 'https://UIshades.com/',
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Image Color Picker',
+      item: CANONICAL,
+    },
+  ],
+};
+
+const appJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  '@id': `${CANONICAL}#app`,
+  name: 'Image Color Picker',
+  url: CANONICAL,
+  description: DESCRIPTION,
+  applicationCategory: 'DesignApplication',
+  applicationSubCategory: 'Color Tool',
+  operatingSystem: 'Any',
+  browserRequirements: 'Requires JavaScript. Modern evergreen browser.',
+  inLanguage: 'en',
+  isAccessibleForFree: true,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  publisher: { '@id': 'https://UIshades.com/#org' },
+  isPartOf: { '@id': 'https://UIshades.com/#website' },
+  image: OG,
+  featureList: [
+    'Extract up to 8 dominant colors from an uploaded image',
+    'Drag sample points on the image to fine-tune each color',
+    'Click anywhere on the image to add a color',
+    'Image stays in the browser - nothing is uploaded',
+    'OKLCH ramps and Tailwind scales for every extracted color',
+  ],
+};
+
+const howToJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: 'How to extract a color palette from an image',
+  description:
+    'Pull a color palette out of any image with UIshades, entirely in your browser.',
+  step: [
+    {
+      '@type': 'HowToStep',
+      position: 1,
+      name: 'Upload an image',
+      text: 'Drop an image onto the page, paste it from your clipboard, or click Upload image. PNG, JPEG, WebP and GIF are supported, and the image never leaves your browser.',
+    },
+    {
+      '@type': 'HowToStep',
+      position: 2,
+      name: 'Review the extracted palette',
+      text: 'Up to 8 of the image’s dominant colors appear as a palette, each marked by a circle on the image showing where it came from.',
+    },
+    {
+      '@type': 'HowToStep',
+      position: 3,
+      name: 'Fine-tune the colors',
+      text: 'Drag any circle to a different part of the image to change that color, or click an empty area to add a new color. Remove the ones you don’t want.',
+    },
+    {
+      '@type': 'HowToStep',
+      position: 4,
+      name: 'Export or save',
+      text: 'Pick any color to see its OKLCH ramp and Tailwind scale, copy the exports, download a PNG, or sign in to save the whole palette.',
+    },
+  ],
+};
+
+const faq = [
+  {
+    q: 'Is my image uploaded to a server?',
+    a: 'No. The image is read and analyzed entirely in your browser. Nothing is sent to or stored on a server, which also means a result is not shareable and is lost when you reload the page.',
+  },
+  {
+    q: 'How many colors can I extract?',
+    a: 'Up to 8. Simple images return fewer - a two-color logo yields about two colors - while photos fill all eight. You can remove colors and add your own by clicking the image.',
+  },
+  {
+    q: 'How are the colors chosen?',
+    a: 'A median-cut algorithm finds the most dominant color regions, ranked by how much of the image each covers. Every swatch is a real pixel from the image, marked by a circle you can drag to change the color.',
+  },
+  {
+    q: 'What image formats are supported?',
+    a: 'PNG, JPEG, WebP and GIF. Large images are scaled down for fast analysis; the colors you get are unaffected.',
+  },
+  {
+    q: 'Can I turn an extracted color into shades?',
+    a: 'Yes. Click any color in the palette to generate its full OKLCH tint-to-shade ramp or an 11-stop Tailwind scale, with copy-ready exports for Tailwind, CSS variables, W3C design tokens and Figma.',
+  },
+];
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faq.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
+---
+
+<ColorToolLayout
+  title={TITLE}
+  description={DESCRIPTION}
+  canonical={CANONICAL}
+  ogType="website"
+  ogImage={OG}
+  ogImageAlt="UIshades.com image color picker - extract a palette from any image"
+  initialHex={SEED_HEX}
+  prefs={readInitialPrefs(Astro.url)}
+  h1="Image color picker - extract a color palette from any image"
+  footerHex={SEED_HEX.slice(1)}
+  mode="image"
+>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={safeJsonForScript(orgJsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(websiteJsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(breadcrumbJsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(appJsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(howToJsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(faqJsonLd)} />
+  </Fragment>
+
+  <section class="mx-auto mt-16 flex max-w-3xl flex-col gap-10 px-4 lg:px-8">
+    <div class="flex flex-col gap-3">
+      <h2 class="font-display text-2xl text-ink">Extract a color palette from any image</h2>
+      <p class="font-display text-mute">
+        Upload a photo, screenshot, logo or piece of art and UIshades pulls out its
+        colors - up to eight dominant tones, ranked by how much of the image they
+        cover. Every color is a real pixel marked by a circle on the image, so you can
+        see exactly where it came from and drag it to fine-tune. Click anywhere on the
+        image to pick another color, then turn any of them into a full OKLCH ramp or
+        Tailwind scale. The image stays on your device - nothing is uploaded.
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-3">
+      <h2 class="font-display text-2xl text-ink">How it works</h2>
+      <ol class="flex flex-col gap-2 font-display text-mute">
+        <li><span class="text-ink">1. Upload.</span> Drop, paste, or choose an image (PNG, JPEG, WebP, GIF).</li>
+        <li><span class="text-ink">2. Review.</span> Up to 8 dominant colors appear, each with a circle on the image.</li>
+        <li><span class="text-ink">3. Fine-tune.</span> Drag a circle to change its color, or click the image to add one.</li>
+        <li><span class="text-ink">4. Export.</span> Pick a color for its ramp and exports, download a PNG, or save the palette.</li>
+      </ol>
+    </div>
+
+    <div class="flex flex-col gap-4">
+      <h2 class="font-display text-2xl text-ink">Frequently asked questions</h2>
+      <dl class="flex flex-col gap-5">
+        {faq.map((f) => (
+          <div class="flex flex-col gap-1.5">
+            <dt class="font-display text-base text-ink">{f.q}</dt>
+            <dd class="font-display text-mute">{f.a}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  </section>
+</ColorToolLayout>

@@ -23,6 +23,18 @@ export interface ColorToken {
   oklch: OKLCH;
 }
 
+/**
+ * One named color family in an export. A single-color export is just one group;
+ * a multi-color palette is one group per swatch, each with its own brand name
+ * and its own `ColorToken[]` (scale or ramp). The five serializers all code
+ * against `ColorGroup[]` so the same code path handles one color or eight.
+ */
+export interface ColorGroup {
+  /** Brand name for this family - sanitized to a slug by each serializer. */
+  name: string;
+  tokens: ColorToken[];
+}
+
 export type ValueMode = 'hex' | 'oklch';
 
 /**
@@ -60,4 +72,27 @@ export function rampToTokens(ramp: ContinuousRamp): ColorToken[] {
 /** Render a token's value in the requested mode. */
 export function tokenValue(t: ColorToken, mode: ValueMode): string {
   return mode === 'oklch' ? formatForCopy(t.hex, 'oklch') : t.hex;
+}
+
+/**
+ * Make every group's *sanitized* name unique so a multi-color export can never
+ * collide. Two palette swatches that resolve to the same nearest-named slug
+ * (e.g. two blues both → `royalblue`) would otherwise emit duplicate
+ * `--color-royalblue-50` lines and - worse - silently overwrite each other in
+ * the JSON exports (object keys). The first occurrence keeps its slug;
+ * subsequent ones get `-2`, `-3`, … The returned names are already sanitized,
+ * and `sanitizeName` is idempotent, so re-sanitizing in a serializer is a no-op.
+ */
+export function dedupeGroupNames(groups: ColorGroup[]): ColorGroup[] {
+  const used = new Set<string>();
+  return groups.map((g) => {
+    let slug = sanitizeName(g.name);
+    if (used.has(slug)) {
+      let i = 2;
+      while (used.has(`${slug}-${i}`)) i++;
+      slug = `${slug}-${i}`;
+    }
+    used.add(slug);
+    return { name: slug, tokens: g.tokens };
+  });
 }

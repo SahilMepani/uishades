@@ -1,4 +1,6 @@
 import {
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -13,6 +15,7 @@ import type {
   Hex,
   Shade,
 } from '../lib/color/types';
+import type { SamplePoint } from '../lib/color/extract-image';
 import { parseColor } from '../lib/color/parse';
 import { formatForCopy } from '../lib/color/format';
 import { oklchRamp } from '../lib/color/ramp';
@@ -79,7 +82,19 @@ interface TrayColor {
   hex: Hex;
   view: View;
   copyFormat: CopyFormat;
+  /**
+   * Normalized (0..1) location on the source image, present only in image mode
+   * (`/image-color-picker`). Every tray color there mirrors a draggable sample
+   * point on the uploaded image; ImagePalettePanel reads this to position the
+   * circle and writes it back on a drag. Absent for the default tool.
+   */
+  point?: { x: number; y: number };
 }
+
+// Lazy so the canvas/extraction code (and the `quantize` dependency it pulls in)
+// never ships in the `/` and `/[hex]` bundles - it loads only on the image route
+// when ShadeTool renders in `mode="image"`.
+const ImagePalettePanel = lazy(() => import('./ImagePalettePanel'));
 
 /**
  * Lazy initializer that reads a value from localStorage on the client,
@@ -274,6 +289,14 @@ export interface ShadeToolProps {
   initialView?: View;
   initialExportFormat?: ExportFormat;
   initialCopyFormat?: CopyFormat;
+  /**
+   * `'default'` is the homepage / [hex] tool. `'image'` powers
+   * `/image-color-picker`: it mounts the source-image panel above the tool,
+   * makes the image the only editor of palette colors (the hand-entry / picker
+   * add+edit affordances are hidden), starts with an empty palette, and never
+   * rewrites the URL or touches the last-used-color in localStorage.
+   */
+  mode?: 'default' | 'image';
 }
 
 export default function ShadeTool({
@@ -281,6 +304,7 @@ export default function ShadeTool({
   initialView,
   initialExportFormat,
   initialCopyFormat,
+  mode,
 }: ShadeToolProps) {
   return (
     <ToastProvider>
@@ -289,6 +313,7 @@ export default function ShadeTool({
         initialView={initialView}
         initialExportFormat={initialExportFormat}
         initialCopyFormat={initialCopyFormat}
+        mode={mode}
       />
     </ToastProvider>
   );
@@ -299,7 +324,9 @@ function ShadeToolInner({
   initialView = 'scale',
   initialExportFormat = 'tailwind-v4',
   initialCopyFormat = 'hex',
+  mode = 'default',
 }: ShadeToolProps) {
+  const isImage = mode === 'image';
   const [hex, setHex] = useState<Hex>(() => normalizeHexInput(initialHex));
   const [view, setView] = usePersistedState<View>(
     STORAGE_KEYS.view,
@@ -353,6 +380,9 @@ function ShadeToolInner({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    // Image mode starts with an empty palette (the uploaded image seeds it) and
+    // never participates in the `?hex=`/last-used hand-off, so skip all of it.
+    if (isImage) return;
     let rawHex: string | null = null;
     let rawSeed: string | null = null;
     try {
@@ -462,13 +492,17 @@ function ShadeToolInner({
   // last-used color. The localStorage write is the store for the root-route
   // re-seed in the mount handler above.
   useEffect(() => {
+    // Image mode keeps a stable `/image-color-picker` URL (the active color is
+    // an image sample point, not a destination) and must not clobber the home
+    // tool's remembered last-used color - so neither sync runs there.
+    if (isImage) return;
     syncUrl(hex, userChoseRef.current);
     try {
       window.localStorage.setItem(STORAGE_KEYS.hex, hex);
     } catch {
       /* localStorage may be unavailable in private mode */
     }
-  }, [hex]);
+  }, [hex, isImage]);
 
   const handleChangeHex = useCallback((next: Hex) => {
     // User-initiated (color picker + the hex text input via PreviewBlock).
@@ -597,6 +631,20 @@ function ShadeToolInner({
   // touches neither the URL nor localStorage, so `/` and `/[hex]` stay
   // identical and `/` is only promoted to `/[hex]` on a real color change.
   const [tray, setTray] = useState<TrayColor[]>([]);
+
+  // Per-palette-color brand names, parallel to the tray - mirrors `brandName`'s
+  // derivation for each swatch (exact named slug when known, else nearest by
+  // OKLab distance). Threaded into the ramp/scale so a multi-color export names
+  // every color and the grid's per-column copy labels match their column.
+  const paletteNames = useMemo(
+    () => tray.map((c) => findByHex(c.hex)?.slug ?? nearestNamedSlug(c.hex)),
+    [tray],
+  );
+  // Stable hex array for the ramp/scale views. Memoized so the per-color export
+  // groups (and the grid) don't rebuild every palette color's ramp on each
+  // render just because an inline `.map` produced a fresh array identity.
+  const paletteHexes = useMemo(() => tray.map((c) => c.hex), [tray]);
+
   const handleAddToTray = useCallback(() => {
     setTray((prev) => {
       if (prev.length >= 8) {
@@ -696,6 +744,64 @@ function ShadeToolInner({
 
   const handleClearTray = useCallback(() => setTray([]), []);
 
+  // --- Image mode (the /image-color-picker source-image panel) -------------
+  // In image mode the tray IS the set of sample points: each entry carries its
+  // normalized `point` so ImagePalettePanel can draw and drag its circle. The
+  // panel never owns the palette - every gesture flows through these handlers so
+  // the tray, the preview band, and the ramp below all stay in lockstep.
+
+  // Replace the whole palette from a fresh extraction; the dominant color (first)
+  // becomes the active color that drives the ramp/scale.
+  const handleImageExtract = useCallback(
+    (points: SamplePoint[]) => {
+      setTray(
+        points.map((p) => ({
+          hex: p.hex,
+          view,
+          copyFormat,
+          point: { x: p.x, y: p.y },
+        })),
+      );
+      if (points.length > 0) setHex(points[0].hex);
+    },
+    [view, copyFormat],
+  );
+
+  const handleImageAddPoint = useCallback(
+    (p: SamplePoint) => {
+      setTray((prev) => {
+        if (prev.length >= 8) {
+          pushToast('A palette can hold up to 8 colors.', { durationMs: 3000 });
+          return prev;
+        }
+        return [...prev, { hex: p.hex, view, copyFormat, point: { x: p.x, y: p.y } }];
+      });
+      setHex(p.hex);
+    },
+    [view, copyFormat, pushToast],
+  );
+
+  // Live during a drag: rewrite the dragged point's color + location and make it
+  // the active color (so the ramp tracks the circle under the cursor).
+  const handleImageMovePoint = useCallback((index: number, p: SamplePoint) => {
+    setTray((prev) =>
+      prev.map((c, i) => (i === index ? { ...c, hex: p.hex, point: { x: p.x, y: p.y } } : c)),
+    );
+    setHex(p.hex);
+  }, []);
+
+  const handleImageRemovePoint = useCallback((index: number) => {
+    setTray((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  // Keep the active color valid in image mode: after a removal (or any drift)
+  // that leaves `hex` pointing at a color no longer in the palette, fall back to
+  // the first remaining swatch so the ramp never shows a color that isn't shown.
+  useEffect(() => {
+    if (!isImage || tray.length === 0) return;
+    if (!tray.some((c) => c.hex === hex)) setHex(tray[0].hex);
+  }, [isImage, tray, hex]);
+
   const handleSavePalette = useCallback(
     async (name: string) => {
       if (!authUser) {
@@ -756,23 +862,63 @@ function ShadeToolInner({
 
   return (
     <div className="text-ink">
-      {/* Mobile sticky header: visible only < lg */}
-      <div className="sticky top-0 z-30 border-b border-hairline bg-paper/90 backdrop-blur md:hidden">
-        <div className="flex items-center gap-3 px-4 py-3">
-          <div
-            aria-hidden="true"
-            className="h-10 w-10 shrink-0 rounded-sm ring-1 ring-ink/10"
-            style={{ backgroundColor: hex }}
-          />
-          <div className="min-w-0 flex-1">
-            <div className="truncate font-mono text-sm tracking-tight">{hex}</div>
-            {named && (
-              <div className="truncate font-display text-sm text-mute">{named.name}</div>
-            )}
+      {/* Mobile sticky header: visible only < lg. Hidden in image mode until a
+          color exists, so the empty extractor doesn't pin a phantom hex. */}
+      {(!isImage || tray.length > 0) && (
+        <div className="sticky top-0 z-30 border-b border-hairline bg-paper/90 backdrop-blur md:hidden">
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div
+              aria-hidden="true"
+              className="h-10 w-10 shrink-0 rounded-sm ring-1 ring-ink/10"
+              style={{ backgroundColor: hex }}
+            />
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-mono text-sm tracking-tight">{hex}</div>
+              {named && (
+                <div className="truncate font-display text-sm text-mute">{named.name}</div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
+      {/* Image mode: the source-image panel + the palette band stack full-width
+          above the two-column tool. The upload button sits on the image's top
+          edge, directly over the band that renders beneath it. */}
+      {isImage && (
+        <div className="flex flex-col gap-4 px-4 py-6 lg:px-8 lg:py-8">
+          <Suspense fallback={<div className="h-72 w-full animate-pulse bg-paper-2" />}>
+            <ImagePalettePanel
+              points={tray.map((c) => ({
+                hex: c.hex,
+                x: c.point?.x ?? 0.5,
+                y: c.point?.y ?? 0.5,
+              }))}
+              activeHex={tray.length > 0 ? hex : null}
+              cap={8}
+              onExtract={handleImageExtract}
+              onAddPoint={handleImageAddPoint}
+              onMovePoint={handleImageMovePoint}
+              onRemovePoint={handleImageRemovePoint}
+              onSelectPoint={selectTrayColor}
+              onNotify={(m) => pushToast(m)}
+            />
+          </Suspense>
+          {tray.length >= 1 && (
+            <div>
+              <div className="mb-2 flex items-center gap-1.5">
+                <span className="font-mono text-xs uppercase tracking-tight text-mute">
+                  Palette · contrast (WCAG)
+                </span>
+                <WcagInfoButton />
+              </div>
+              <PalettePreviewBar tray={tray} onSelectColor={selectTrayColor} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {(!isImage || tray.length > 0) && (
       <div className="grid w-full gap-8 px-4 py-8 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:grid-cols-[22rem_minmax(0,1fr)] lg:gap-14 lg:px-8 lg:py-12">
         {/* Left rail: preview + input + controls (sticky on desktop) */}
         <aside className="hidden md:flex md:flex-col md:self-stretch">
@@ -790,6 +936,7 @@ function ShadeToolInner({
               paletteFull={tray.length >= 8}
               pickerRef={desktopPickerRef}
               onPickerOpenChange={handlePickerOpenChange}
+              readOnly={isImage}
             />
             <div className="mt-6 border-t border-hairline pt-5">
               <PaletteTray
@@ -802,6 +949,7 @@ function ShadeToolInner({
                 onRemove={handleRemoveFromTray}
                 onClear={handleClearTray}
                 onSave={handleSavePalette}
+                readOnly={isImage}
               />
             </div>
           </div>
@@ -829,6 +977,7 @@ function ShadeToolInner({
               paletteFull={tray.length >= 8}
               pickerRef={mobilePickerRef}
               onPickerOpenChange={handlePickerOpenChange}
+              readOnly={isImage}
             />
             <div className="flex flex-col gap-3 border-t border-hairline pt-5">
               <PaletteTray
@@ -841,6 +990,7 @@ function ShadeToolInner({
                 onRemove={handleRemoveFromTray}
                 onClear={handleClearTray}
                 onSave={handleSavePalette}
+                readOnly={isImage}
               />
               <ShareRow hex={hex} named={named} />
             </div>
@@ -850,8 +1000,10 @@ function ShadeToolInner({
               second color, sitting above the ramp's header row. Clicking a
               swatch makes it the live page color (reusing `selectTrayColor`).
               A small header row labels the band and carries the WCAG explainer,
-              since these swatches are the only place contrast levels surface. */}
-          {tray.length >= 2 && (
+              since these swatches are the only place contrast levels surface.
+              Suppressed in image mode - the band renders full-width above the
+              tool there instead. */}
+          {!isImage && tray.length >= 2 && (
             <div>
               <div className="mb-2 flex items-center gap-1.5">
                 <span className="font-mono text-xs uppercase tracking-tight text-mute">
@@ -904,6 +1056,8 @@ function ShadeToolInner({
               <ContinuousRamp
                 ramp={ramp}
                 sourceHex={hex}
+                paletteHexes={paletteHexes}
+                paletteNames={paletteNames}
                 copyFormat={copyFormat}
                 exportFormat={exportFormat}
                 valueMode={oklchValueMode}
@@ -918,6 +1072,8 @@ function ShadeToolInner({
               <TailwindScale
                 scale={scale}
                 sourceHex={hex}
+                paletteHexes={paletteHexes}
+                paletteNames={paletteNames}
                 copyFormat={copyFormat}
                 exportFormat={exportFormat}
                 brandName={brandName}
@@ -931,6 +1087,7 @@ function ShadeToolInner({
           </div>
         </section>
       </div>
+      )}
     </div>
   );
 }
@@ -1023,6 +1180,7 @@ function PreviewBlock({
   paletteFull,
   pickerRef,
   onPickerOpenChange,
+  readOnly = false,
 }: {
   hex: Hex;
   named: ReturnType<typeof findByHex>;
@@ -1036,6 +1194,13 @@ function PreviewBlock({
   /** Fired when this picker opens/closes (used to append a "+"-added color);
       `canceled` is true on an Escape dismiss so it appends nothing. */
   onPickerOpenChange?: (open: boolean, canceled: boolean) => void;
+  /**
+   * Image-authoritative mode (`/image-color-picker`): the active color is set
+   * by the image, never hand-entered. Replaces the picker-swatch + hex input
+   * with a static read-out and drops the "Add to palette" button; the copyable
+   * value rows and named-color label stay.
+   */
+  readOnly?: boolean;
 }) {
   const oklchString = useMemo(() => formatForCopy(hex, 'oklch'), [hex]);
   const rgbString = useMemo(() => formatForCopy(hex, 'rgb'), [hex]);
@@ -1133,6 +1298,34 @@ function PreviewBlock({
       focusingClickRef.current = false;
     }
   }, []);
+
+  if (readOnly) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="flex h-[60px] w-full items-stretch bg-paper-2">
+          <span
+            aria-hidden="true"
+            className="block h-full w-1/4 shrink-0 ring-1 ring-inset ring-ink/10"
+            style={{ backgroundColor: hex }}
+          />
+          <span className="flex min-w-0 flex-1 items-center px-4 font-mono text-xl tracking-tight text-ink">
+            {hex}
+          </span>
+        </div>
+        {named && (
+          <div className="border-b border-hairline pb-2">
+            <span className="font-display text-base text-ink-2">{named.name}</span>
+          </div>
+        )}
+        <div className="flex flex-col">
+          <CopyableValueRow label="HEX" value={hex} />
+          <CopyableValueRow label="OKLCH" value={oklchString} />
+          <CopyableValueRow label="RGB" value={rgbString} />
+          <CopyableValueRow label="HSL" value={hslString} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -1719,6 +1912,7 @@ function PaletteTray({
   onRemove,
   onClear,
   onSave,
+  readOnly = false,
 }: {
   tray: TrayColor[];
   signedIn: boolean;
@@ -1733,6 +1927,13 @@ function PaletteTray({
   onRemove: (index: number) => void;
   onClear: () => void;
   onSave: (name: string) => void;
+  /**
+   * Image-authoritative mode (`/image-color-picker`): colors are edited by
+   * dragging circles on the image, not here - so the "+" add box and the
+   * double-click-to-edit affordance are suppressed. Click-to-select, remove,
+   * clear and save stay.
+   */
+  readOnly?: boolean;
 }) {
   const [naming, setNaming] = useState(false);
   const [name, setName] = useState('');
@@ -1790,9 +1991,9 @@ function PaletteTray({
             <button
               type="button"
               onClick={() => onSelectColor(i)}
-              onDoubleClick={() => onEditColor(i)}
-              aria-label={`Use ${c.hex} (double-click to adjust)`}
-              title={`${c.hex} — click to use, double-click to adjust`}
+              onDoubleClick={readOnly ? undefined : () => onEditColor(i)}
+              aria-label={readOnly ? `Use ${c.hex}` : `Use ${c.hex} (double-click to adjust)`}
+              title={readOnly ? `${c.hex} — click to use` : `${c.hex} — click to use, double-click to adjust`}
               className="block h-9 w-9 ring-1 ring-ink/15 transition-shadow duration-150 ease-out hover:ring-2 hover:ring-ink/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
               style={{ backgroundColor: c.hex }}
             />
@@ -1812,8 +2013,9 @@ function PaletteTray({
         {/* "+" box: opens the same top color picker (anchored at the top
             swatch). It drives the live page color while open, and the chosen
             color is appended to the palette when the picker closes. Hidden
-            once the tray hits the 8-color cap. */}
-        {tray.length < 8 && (
+            once the tray hits the 8-color cap, and in image mode (colors are
+            added by clicking the image instead). */}
+        {!readOnly && tray.length < 8 && (
           <li>
             <button
               type="button"

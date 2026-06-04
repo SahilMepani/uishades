@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { CopyFormat, ExportFormat } from '../lib/color/types';
-import type { ColorToken, ValueMode } from '../lib/exports/tokens';
+import type { ColorGroup, ValueMode } from '../lib/exports/tokens';
 import CopyFormatPicker from './CopyFormatPicker';
 import { SELECT_CLASS, SelectChevron } from './control-styles';
 import { toTailwindV4 } from '../lib/exports/tailwind-v4';
@@ -29,9 +29,13 @@ import { useToast } from './Toast';
  */
 
 export interface ExportDropdownProps {
-  tokens: ColorToken[];
+  /**
+   * One group per color family. A single-color view passes one group; once the
+   * palette tray holds two or more colors every swatch is its own group, so the
+   * export emits the whole palette - not just the active color.
+   */
+  groups: ColorGroup[];
   format: ExportFormat;
-  brandName?: string;
   /**
    * Value format for the emitted code (hex | oklch). Derived upstream from the
    * shared "Copy as" picker - `oklch` when that's set to oklch(), else hex - so
@@ -60,22 +64,21 @@ const FORMAT_OPTIONS: { value: ExportFormat; label: string }[] = [
 ];
 
 function serialize(
-  tokens: ColorToken[],
+  groups: ColorGroup[],
   format: ExportFormat,
-  name: string,
   valueMode: ValueMode,
 ): string {
   switch (format) {
     case 'tailwind-v4':
-      return toTailwindV4(tokens, name, valueMode);
+      return toTailwindV4(groups, valueMode);
     case 'tailwind-v3':
-      return toTailwindV3(tokens, name, valueMode);
+      return toTailwindV3(groups, valueMode);
     case 'css-vars':
-      return toCssVars(tokens, name, valueMode);
+      return toCssVars(groups, valueMode);
     case 'w3c-tokens':
-      return toW3CTokens(tokens, name, valueMode);
+      return toW3CTokens(groups, valueMode);
     case 'figma-vars':
-      return toFigmaVars(tokens, name, valueMode);
+      return toFigmaVars(groups, valueMode);
   }
 }
 
@@ -88,9 +91,8 @@ function clipboardAvailable(): boolean {
 }
 
 export default function ExportDropdown({
-  tokens,
+  groups,
   format,
-  brandName,
   valueMode,
   copyFormat,
   hasStop,
@@ -98,10 +100,9 @@ export default function ExportDropdown({
   onFormatChange,
   onCopy,
 }: ExportDropdownProps) {
-  const name = (brandName || 'brand').trim() || 'brand';
   const text = useMemo(
-    () => serialize(tokens, format, name, valueMode),
-    [tokens, format, name, valueMode],
+    () => serialize(groups, format, valueMode),
+    [groups, format, valueMode],
   );
 
   const { pushToast } = useToast();
@@ -198,8 +199,7 @@ export default function ExportDropdown({
 
       {modalOpen && (
         <ExportModal
-          tokens={tokens}
-          name={name}
+          groups={groups}
           format={format}
           valueMode={valueMode}
           canCopy={canCopy}
@@ -219,8 +219,7 @@ const ICON_BUTTON_CLASS =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60';
 
 function ExportModal({
-  tokens,
-  name,
+  groups,
   format,
   valueMode,
   canCopy,
@@ -229,8 +228,7 @@ function ExportModal({
   onClose,
   triggerRef,
 }: {
-  tokens: ColorToken[];
-  name: string;
+  groups: ColorGroup[];
   format: ExportFormat;
   valueMode: ValueMode;
   canCopy: boolean;
@@ -240,8 +238,8 @@ function ExportModal({
   triggerRef: React.RefObject<HTMLButtonElement | null>;
 }) {
   const text = useMemo(
-    () => serialize(tokens, format, name, valueMode),
-    [tokens, format, name, valueMode],
+    () => serialize(groups, format, valueMode),
+    [groups, format, valueMode],
   );
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const titleId = 'export-modal-title';
@@ -298,7 +296,16 @@ function ExportModal({
       >
         <div className="flex items-center justify-between gap-3 border-b border-hairline px-5 py-3.5">
           <h2 id={titleId} className="font-display text-base text-ink">
-            Export <span className="font-mono text-mute">{name}</span> scale
+            {groups.length === 1 ? (
+              <>
+                Export <span className="font-mono text-mute">{groups[0].name}</span> scale
+              </>
+            ) : (
+              <>
+                Export palette{' '}
+                <span className="font-mono text-mute">({groups.length} colors)</span>
+              </>
+            )}
           </h2>
           <button
             type="button"

@@ -16,6 +16,9 @@ import { scaleToTokens } from '../src/lib/exports/tokens';
 
 const tokens = scaleToTokens(buildScale(parseColor('#ff7f50')));
 
+/** Wrap a flat token list as a single-color group for the serializers. */
+const group = (name: string) => [{ name, tokens }];
+
 /** Execute a `module.exports = …` snippet and return the exported value. */
 function evalConfig(src: string): any {
   const mod = { exports: {} as any };
@@ -26,7 +29,7 @@ function evalConfig(src: string): any {
 
 describe('toTailwindV3', () => {
   it('quotes a hyphenated brand key and parses as valid JavaScript', () => {
-    const out = toTailwindV3(tokens, 'Burnt Orange', 'hex'); // -> slug "burnt-orange"
+    const out = toTailwindV3(group('Burnt Orange'), 'hex'); // -> slug "burnt-orange"
     expect(out).toContain("'burnt-orange': {");
     expect(() => evalConfig(out)).not.toThrow();
     const cfg = evalConfig(out);
@@ -35,13 +38,29 @@ describe('toTailwindV3', () => {
   });
 
   it('still parses for a single-word brand', () => {
-    const cfg = evalConfig(toTailwindV3(tokens, 'coral', 'hex'));
+    const cfg = evalConfig(toTailwindV3(group('coral'), 'hex'));
     expect(cfg.theme.extend.colors.coral['950']).toMatch(/^#[0-9a-f]{6}$/);
   });
 
   it('falls back to a parseable default key for an empty/symbol-only name', () => {
     // sanitizeName returns "brand" when nothing survives sanitization.
-    const cfg = evalConfig(toTailwindV3(tokens, '!!!', 'hex'));
+    const cfg = evalConfig(toTailwindV3(group('!!!'), 'hex'));
     expect(cfg.theme.extend.colors.brand).toBeDefined();
+  });
+
+  it('emits one quoted color key per group for a multi-color palette', () => {
+    const coral = scaleToTokens(buildScale(parseColor('#ff7f50')));
+    const indigo = scaleToTokens(buildScale(parseColor('#4040ff')));
+    const out = toTailwindV3(
+      [
+        { name: 'coral', tokens: coral },
+        { name: 'indigo', tokens: indigo },
+      ],
+      'hex',
+    );
+    expect(() => evalConfig(out)).not.toThrow();
+    const cfg = evalConfig(out);
+    expect(cfg.theme.extend.colors.coral['500']).toMatch(/^#[0-9a-f]{6}$/);
+    expect(cfg.theme.extend.colors.indigo['500']).toMatch(/^#[0-9a-f]{6}$/);
   });
 });

@@ -32,6 +32,10 @@ interface Props {
   prefs: InitialPrefs;
   h1: string; // sr-only heading text
   footerHex: string; // e.g. "4040ff" (for the /api/<hex>.json link)
+  // 'image' powers `/image-color-picker`: the tool mounts a source-image panel
+  // and becomes image-authoritative (see ShadeTool's `mode` prop). Defaults to
+  // the normal `/` and `/[hex]` tool, whose output stays byte-identical.
+  mode?: 'default' | 'image';
 }
 
 const {
@@ -47,6 +51,7 @@ const {
   prefs,
   h1,
   footerHex,
+  mode = 'default',
 } = Astro.props;
 ---
 
@@ -98,6 +103,7 @@ const {
       <div class="flex items-center justify-between gap-4 border-b border-hairline py-4">
         <a href="/" class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink hover:text-accent">UI Shades</a>
         <div class="flex items-center gap-7 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <a href="/image-color-picker" class="hidden text-ink hover:text-accent sm:inline">Image picker</a>
           <a href="/explore" class="text-ink hover:text-accent">Explore</a>
           <HeaderAuth client:load />
           <ThemeToggle />
@@ -113,6 +119,7 @@ const {
         initialView={prefs.view}
         initialExportFormat={prefs.fmt}
         initialCopyFormat={prefs.copy}
+        mode={mode}
       />
 
       <noscript>
@@ -120,6 +127,10 @@ const {
           This tool needs JavaScript to run.
         </p>
       </noscript>
+
+      {/* Optional editorial content (intro, how-it-works, FAQ). `/` and
+          `/[hex]` pass nothing here, so their output is unchanged. */}
+      <slot />
 
       <!-- Footer -->
       {/* px-4/lg:px-8 is additive to main's padding so the footer's rule and
