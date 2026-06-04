@@ -84,4 +84,15 @@ Disallow: /
 User-agent: DataForSeoBot
 Disallow: /
 
+# Ahrefs + Majestic backlink crawlers - measured as our two heaviest bot
+# visitors (AhrefsBot ~10k/day, MJ12bot ~1.5k/day in Cloudflare analytics).
+# They build resold SEO/backlink databases and send no citation traffic back,
+# so they match this group's "bandwidth cost, no citations" policy. Both honor
+# robots.txt; bots that don't are rate-limited at the Cloudflare WAF.
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
 Sitemap: https://UIshades.com/sitemap-index.xml

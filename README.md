@@ -154,6 +154,8 @@ Middleware (`src/middleware.ts`) decorates every response with HSTS, X-Content-T
 
 All inline JSON-LD payloads pass through `safeJsonForScript()` (`src/lib/safe-json.ts`), which escapes `<`, `>`, `&`, U+2028, and U+2029 so future user-derived fields can't break out of the inline `<script>` block. Wired in `src/pages/index.astro`, `src/pages/[hex].astro`, and `src/pages/colors/[name].astro`.
 
+State-changing requests are CSRF-defended in two layers: Astro's built-in origin check (active in production because the Cloudflare adapter sets `buildOutput:'server'`) plus an explicit, stricter same-origin gate in `src/middleware.ts` that also rejects cross-origin JSON POSTs. Session cookies are `HttpOnly` + `SameSite=Lax` and the session id is regenerated on login; account identity keys on *verified* email across Google / GitHub / magic-link sign-in. A periodic codebase audit (security, performance, dead code) lives at `docs/audit-2026-06-04.md`.
+
 ## Deploy
 
 Deployment is automatic: pushes to `main` trigger the
