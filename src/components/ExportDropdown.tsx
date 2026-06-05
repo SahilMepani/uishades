@@ -142,59 +142,62 @@ export default function ExportDropdown({
 
   return (
     <div className="flex flex-col gap-3" data-export-format={format}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-3 text-sm text-ink/80">
-            <span className="eyebrow">Export</span>
-            {/* `appearance-none` + overlaid chevron; shares `SELECT_CLASS` with
-                the "Copy as" picker so the two boxes are identical. */}
-            <span className="relative inline-flex">
-              <select
-                value={format}
-                onChange={(e) => onFormatChange(e.target.value as ExportFormat)}
-                aria-label="Export as"
-                className={SELECT_CLASS}
-              >
-                {FORMAT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <SelectChevron />
-            </span>
-          </label>
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="flex items-center gap-3 text-sm text-ink/80">
+          <span className="eyebrow">Export</span>
+          {/* `appearance-none` + overlaid chevron; shares `SELECT_CLASS` with
+              the "Copy as" picker so the two boxes are identical. */}
+          <span className="relative inline-flex">
+            <select
+              value={format}
+              onChange={(e) => onFormatChange(e.target.value as ExportFormat)}
+              aria-label="Export as"
+              className={SELECT_CLASS}
+            >
+              {FORMAT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <SelectChevron />
+          </span>
+        </label>
 
-          <div className="flex items-center gap-2">
-            {canCopy && (
-              <button
-                type="button"
-                onClick={() => copyText(text, format)}
-                aria-label={`Copy ${format} export to clipboard`}
-                title="Copy code"
-                className={ICON_BUTTON_CLASS}
-              >
-                <CopyIcon className="h-4 w-4" />
-              </button>
-            )}
+        {/* The shared "Copy as" value-format picker, sitting inline right after the
+            export-format dropdown (no visible label - the options are self-describing). */}
+        <CopyFormatPicker
+          value={copyFormat}
+          onChange={onCopyFormatChange}
+          hasStop={hasStop}
+          exportFormat={format}
+        />
+
+        <div className="flex items-center gap-2">
+          {canCopy && (
             <button
-              ref={viewTriggerRef}
               type="button"
-              onClick={() => setModalOpen(true)}
-              aria-haspopup="dialog"
-              aria-expanded={modalOpen}
-              aria-label="View export code for all formats"
-              title="View code"
+              onClick={() => copyText(text, format)}
+              aria-label={`Copy ${format} export to clipboard`}
+              title="Copy code"
               className={ICON_BUTTON_CLASS}
             >
-              <EyeIcon className="h-4 w-4" />
+              <CopyIcon className="h-4 w-4" />
             </button>
-          </div>
+          )}
+          <button
+            ref={viewTriggerRef}
+            type="button"
+            onClick={() => setModalOpen(true)}
+            aria-haspopup="dialog"
+            aria-expanded={modalOpen}
+            aria-label="View export code for all formats"
+            title="View code"
+            className={ICON_BUTTON_CLASS}
+          >
+            <EyeIcon className="h-4 w-4" />
+          </button>
         </div>
-
-        {/* The shared "Copy as" value-format picker, pushed to the far right of
-            the same row (no visible label - the options are self-describing). */}
-        <CopyFormatPicker value={copyFormat} onChange={onCopyFormatChange} hasStop={hasStop} />
       </div>
 
       {modalOpen && (

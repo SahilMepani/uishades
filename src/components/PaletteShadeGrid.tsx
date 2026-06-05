@@ -26,6 +26,15 @@ import { useToast } from './Toast';
  * copy, double-click / Shift+Enter to use as source, modifier / middle click
  * to open the shade's page).
  *
+ * In `kind="scale"` (Tailwind) mode each row additionally gets its stop value
+ * (50…950) printed once at the row's right end, in an absolutely-positioned
+ * column that floats into the page's right gutter (`left-full`) - OUTSIDE the
+ * `overflow-hidden` swatch lattice. It's positioned rather than added as a flex
+ * sibling on purpose: a trailing in-flow column would shrink every `flex-1`
+ * swatch column and progressively knock them out of alignment with the
+ * equal-width `PalettePreviewBar` name headers above. The OKLCH ramp has no
+ * stops, so no label column renders there.
+ *
  * Each swatch is a fixed `ROW_H` tall - the same height as a single-column
  * `ShadeRow` (its `py-3.5` + text line ≈ 48px) - and the container sizes to its
  * content rather than dividing a fixed height across the rows. So a column here
@@ -95,35 +104,63 @@ export default function PaletteShadeGrid({
     return cols;
   }, [hexes, kind]);
 
+  // Tailwind scale only: the per-row stop values (50…950), read straight off
+  // the rendered rows so the labels can't drift from the swatches. Every column
+  // shares the same stop order, so column 0 is representative.
+  const stopLabels =
+    kind === 'scale' ? (columns[0] ?? []).map((s) => s.stop) : [];
+
   return (
-    <div
-      role="list"
-      data-palette-grid="true"
-      data-grid-columns={hexes.length}
-      aria-label={kind === 'ramp' ? 'Palette OKLCH ramps' : 'Palette Tailwind scales'}
-      className="flex w-full gap-[2px] overflow-hidden border-b border-ink/15"
-    >
-      {columns.map((shades, col) => (
+    <div className="relative">
+      <div
+        role="list"
+        data-palette-grid="true"
+        data-grid-columns={hexes.length}
+        aria-label={kind === 'ramp' ? 'Palette OKLCH ramps' : 'Palette Tailwind scales'}
+        className="flex w-full gap-[2px] overflow-hidden border-b border-ink/15"
+      >
+        {columns.map((shades, col) => (
+          <div
+            role="listitem"
+            key={`${hexes[col]}-${col}`}
+            aria-label={`Shades of ${hexes[col]}`}
+            className="flex min-w-0 flex-1 flex-col gap-[2px]"
+          >
+            {shades.map((shade, row) => (
+              <MemoGridSwatch
+                key={`${shade.hex}-${row}`}
+                shade={shade}
+                col={col}
+                row={row}
+                copyFormat={copyFormat}
+                brandName={names?.[col] ?? brandName}
+                onCopy={onCopy}
+                onNavigate={onNavigate}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+      {/* Stop-value gutter (Tailwind only). Absolutely positioned just past the
+          grid's right edge so it lives in the page padding and never disturbs
+          the flex-1 swatch columns. Each cell mirrors a swatch's `ROW_H` +
+          `gap-[2px]` rhythm, top-anchored, so the labels line up row-for-row.
+          Decorative: the stop is already part of each swatch's copy value. */}
+      {stopLabels.length > 0 && (
         <div
-          role="listitem"
-          key={`${hexes[col]}-${col}`}
-          aria-label={`Shades of ${hexes[col]}`}
-          className="flex min-w-0 flex-1 flex-col gap-[2px]"
+          aria-hidden="true"
+          className="pointer-events-none absolute left-full top-0 flex flex-col gap-[2px] pl-2 sm:pl-3"
         >
-          {shades.map((shade, row) => (
-            <MemoGridSwatch
-              key={`${shade.hex}-${row}`}
-              shade={shade}
-              col={col}
-              row={row}
-              copyFormat={copyFormat}
-              brandName={names?.[col] ?? brandName}
-              onCopy={onCopy}
-              onNavigate={onNavigate}
-            />
+          {stopLabels.map((stop, row) => (
+            <div
+              key={`stop-${stop}-${row}`}
+              className={`flex ${ROW_H} items-center whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.14em] tabular-nums text-mute`}
+            >
+              {stop}
+            </div>
           ))}
         </div>
-      ))}
+      )}
     </div>
   );
 }

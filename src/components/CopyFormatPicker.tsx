@@ -1,4 +1,5 @@
-import type { CopyFormat } from '../lib/color/types';
+import type { CopyFormat, ExportFormat } from '../lib/color/types';
+import { EXPORT_SUPPORTS_OKLCH } from '../lib/exports/tokens';
 import { SELECT_CLASS, SelectChevron } from './control-styles';
 
 const COPY_FORMAT_LABELS: Record<CopyFormat, string> = {
@@ -20,20 +21,28 @@ const COPY_FORMAT_LABELS: Record<CopyFormat, string> = {
  *
  * `cssVar`/`tailwindClass` require a stop number, so they only appear when
  * `hasStop` is true (the Tailwind-scale view).
+ *
+ * `oklch()` is greyed-out (rendered `disabled`) when the selected `exportFormat`
+ * always emits hex - W3C Design Tokens / Figma Variables (see
+ * `EXPORT_SUPPORTS_OKLCH`) - so the option signals it has no effect on that
+ * export rather than misleadingly looking selectable.
  */
 export default function CopyFormatPicker({
   value,
   onChange,
   hasStop,
+  exportFormat,
 }: {
   value: CopyFormat;
   onChange: (f: CopyFormat) => void;
   hasStop: boolean;
+  exportFormat: ExportFormat;
 }) {
   const formats = (Object.keys(COPY_FORMAT_LABELS) as CopyFormat[]).filter((k) => {
     const requiresStop = k === 'cssVar' || k === 'tailwindClass';
     return !(requiresStop && !hasStop);
   });
+  const oklchDisabled = !EXPORT_SUPPORTS_OKLCH[exportFormat];
 
   return (
     <span className="relative inline-flex">
@@ -44,7 +53,7 @@ export default function CopyFormatPicker({
         className={SELECT_CLASS}
       >
         {formats.map((k) => (
-          <option key={k} value={k}>
+          <option key={k} value={k} disabled={k === 'oklch' && oklchDisabled}>
             {COPY_FORMAT_LABELS[k]}
           </option>
         ))}

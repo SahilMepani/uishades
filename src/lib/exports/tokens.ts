@@ -13,7 +13,7 @@
  * consistent with what the UI shows.
  */
 
-import type { ContinuousRamp, Hex, OKLCH, TailwindScale } from '../color/types';
+import type { ContinuousRamp, ExportFormat, Hex, OKLCH, TailwindScale } from '../color/types';
 import { formatForCopy } from '../color/format';
 import { ACHROMATIC_CHROMA } from '../color/hue';
 
@@ -44,6 +44,21 @@ export interface ColorGroup {
 }
 
 export type ValueMode = 'hex' | 'oklch';
+
+/**
+ * Which export formats honor the `oklch` value mode. The W3C and Figma JSON
+ * serializers always emit hex by design (see `w3c-tokens.ts` / `figma-vars.ts`),
+ * so `oklch()` is inert for them - the "Copy as" picker disables that option when
+ * one of these formats is selected. Single source of truth for that capability;
+ * keep it in lockstep with which serializers actually consume `valueMode`.
+ */
+export const EXPORT_SUPPORTS_OKLCH: Record<ExportFormat, boolean> = {
+  'tailwind-v4': true,
+  'tailwind-v3': true,
+  'css-vars': true,
+  'w3c-tokens': false,
+  'figma-vars': false,
+};
 
 /**
  * Brand-name → CSS-safe slug. Lowercase, non-alphanumerics collapsed to
