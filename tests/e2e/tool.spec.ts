@@ -149,11 +149,21 @@ test.describe('shade tool — smoke', () => {
     test.fixme(browserName === 'webkit', 'webkit click delivery on the lazy export panel');
     await page.goto(DEV_URL);
 
-    // Change the export-format dropdown.
-    await page.getByLabel(/^Export as/).selectOption('tailwind-v3');
+    // Change the export-format dropdown. The export row now appears twice (atop
+    // the shade grid and in the sidebar); both share state, so target whichever
+    // copy is visible.
+    await page
+      .getByLabel(/^Export as/)
+      .filter({ visible: true })
+      .first()
+      .selectOption('tailwind-v3');
 
     // The code preview now lives in the "View code" modal, not inline.
-    await page.getByRole('button', { name: /view export code/i }).click();
+    await page
+      .getByRole('button', { name: /view export code/i })
+      .filter({ visible: true })
+      .first()
+      .click();
 
     const preview = page.locator('pre[data-export-preview="true"]');
     await expect(preview).toBeVisible();
@@ -173,10 +183,19 @@ test.describe('shade tool — smoke', () => {
     await page.goto('/4040ff?view=ramp');
 
     // The export dropdown now exists in the OKLCH view too. CSS variables shows
-    // the value format (hex vs oklch()) inline in each index-based token.
-    await page.getByLabel(/^Export as/).selectOption('css-vars');
+    // the value format (hex vs oklch()) inline in each index-based token. The
+    // export row appears twice (grid + sidebar) and shares state, so drive
+    // whichever copy is visible.
+    await page
+      .getByLabel(/^Export as/)
+      .filter({ visible: true })
+      .first()
+      .selectOption('css-vars');
 
-    const viewBtn = page.getByRole('button', { name: /view export code/i });
+    const viewBtn = page
+      .getByRole('button', { name: /view export code/i })
+      .filter({ visible: true })
+      .first();
     const preview = page.locator('pre[data-export-preview="true"]');
 
     // There is no separate value toggle: the export follows the shared "Copy as"
@@ -215,8 +234,11 @@ test.describe('shade tool — smoke', () => {
     // 11-stop scale should be rendered, not the 20-step ramp.
     const rows = page.locator('[data-shade-row="true"]');
     await expect(rows).toHaveCount(11);
-    // And the export dropdown (only in scale view) should be reachable.
-    await expect(page.getByLabel(/^Export as/)).toBeVisible();
+    // And the export dropdown should be reachable (it renders in both views now;
+    // two copies exist - grid + sidebar - so assert the first visible one).
+    await expect(
+      page.getByLabel(/^Export as/).filter({ visible: true }).first(),
+    ).toBeVisible();
   });
 
   test('typing "coral" in the color value input updates the preview hex', async ({
@@ -393,12 +415,139 @@ test.describe('shade tool — smoke', () => {
       .first()
       .click();
 
-    // With two colors the bar appears, rendering one swatch button per color.
+    // With two colors the bar appears. Each swatch now mirrors the left-rail
+    // tray: one select button plus one hover-revealed remove (×) button.
     await expect(bar).toBeVisible();
-    await expect(bar.getByRole('button')).toHaveCount(2);
+    await expect(bar.getByRole('button', { name: /^Use #/ })).toHaveCount(2);
+    await expect(bar.getByRole('button', { name: /^Remove #/ })).toHaveCount(2);
 
     // Clicking a swatch makes that color the live page color (URL is hex-synced).
     await bar.getByRole('button', { name: /^Use #4040ff/ }).click();
     await expect(page).toHaveURL(/4040ff/i);
+  });
+
+  test('hovering a preview-bar swatch reveals an × that removes it from the palette', async ({
+    page,
+    browserName,
+  }) => {
+    // Same fill() → React onChange flakiness as the bar-reveal test above.
+    test.fixme(browserName === 'webkit', 'webkit fill() → React onChange flaky under Playwright');
+    await page.goto('/4040ff');
+
+    // Add a second, distinct color so the preview bar (>= 2 colors) appears.
+    const input = page
+      .getByLabel('Color value (hex, rgb, hsl, oklch, or name)')
+      .filter({ visible: true })
+      .first();
+    await input.fill('#ff0000');
+    await page
+      .getByRole('button', { name: 'Add to palette' })
+      .filter({ visible: true })
+      .first()
+      .click();
+
+    const bar = page.getByRole('list', { name: 'Palette preview' });
+    await expect(bar).toBeVisible();
+    await expect(bar.getByRole('button', { name: /^Use #/ })).toHaveCount(2);
+
+    // Hover the swatch to surface its × (it's pointer-events-none until shown),
+    // then remove #ff0000.
+    await bar.getByRole('button', { name: /^Use #ff0000/ }).hover();
+    await bar.getByRole('button', { name: 'Remove #ff0000 from palette' }).click();
+
+    // Back to a single color: the bar (>= 2 only) disappears and #ff0000 is gone
+    // from the palette everywhere (the tray drives both the bar and the rail).
+    await expect(bar).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^Use #ff0000/ })).toHaveCount(0);
+  });
+
+  test('double-clicking a preview-bar swatch opens the picker and edits it in place', async ({
+    page,
+    browserName,
+  }) => {
+    test.fixme(browserName === 'webkit', 'webkit click delivery on the picker trigger');
+    await page.goto('/4040ff');
+
+    // Reveal the preview bar with a second color.
+    const input = page
+      .getByLabel('Color value (hex, rgb, hsl, oklch, or name)')
+      .filter({ visible: true })
+      .first();
+    await input.fill('#ff0000');
+    await page
+      .getByRole('button', { name: 'Add to palette' })
+      .filter({ visible: true })
+      .first()
+      .click();
+
+    const bar = page.getByRole('list', { name: 'Palette preview' });
+    await expect(bar).toBeVisible();
+
+    // Double-clicking the #4040ff band swatch opens the shared top picker seeded
+    // with that color — the same edit flow as the left-rail tray's double-click.
+    await bar.getByRole('button', { name: /^Use #4040ff/ }).dblclick();
+    const dialog = page.locator('[role="dialog"]').filter({ visible: true }).first();
+    await expect(dialog).toBeVisible();
+
+    // Nudge the red channel one step (0x40 -> 0x41) and commit with an outside
+    // click (clicking the visible "N stops" metadata, outside the picker).
+    await dialog.locator('select[aria-label="Color value format"]').selectOption('rgb');
+    await dialog.locator('.channel-slider').first().focus();
+    await page.keyboard.press('ArrowRight');
+    await page.getByText(/\d+ stops/).first().click();
+    await expect(dialog).toBeHidden();
+
+    // The band swatch was updated in place.
+    await expect(bar.getByRole('button', { name: /^Use #4040ff/ })).toHaveCount(0);
+    await expect(bar.getByRole('button', { name: /^Use #4140ff/ })).toBeVisible();
+  });
+
+  test('image-mode preview bar matches the read-only tray: select + remove, but no double-click edit', async ({
+    page,
+    browserName,
+  }) => {
+    // WebKit under Playwright can't extract from the sample image: the panel's
+    // `createImageBitmap(file, { imageOrientation: 'from-image' })` options form
+    // is unsupported there, so the band never populates (confirmed hard-failing
+    // even at a 20s timeout with no parallel load — not mere slowness). This is a
+    // pre-existing extractor limitation, orthogonal to the band parity under test
+    // here (covered on chromium + firefox), and consistent with the webkit
+    // fixmes on the sibling palette tests above.
+    test.fixme(browserName === 'webkit', 'webkit createImageBitmap options unsupported → no extraction');
+    // The /image-color-picker band is image-authoritative (readOnly): it keeps
+    // click-to-select and the hover-× remove, but suppresses double-click-to-edit
+    // (the image owns the colors, and there is no top picker to open).
+    await page.goto('/image-color-picker');
+
+    // Populate the palette via a bundled sample image (one click runs the
+    // extractor → fills the tray → renders the band). Match the sample button by
+    // pattern, not a specific name, so renaming the bundled samples can't break
+    // this. The panel is React.lazy + Suspense, so wait for it to hydrate.
+    const sample = page.getByRole('button', { name: /Use the .+ sample image/ }).first();
+    await expect(sample).toBeVisible({ timeout: 20000 });
+    await sample.click();
+
+    const bar = page.getByRole('list', { name: 'Palette preview' });
+    // Extraction (fetch → createImageBitmap → quantize) can run well past the 5s
+    // default expect timeout under parallel project load, so wait generously.
+    await expect(bar).toBeVisible({ timeout: 20000 });
+    const selects = bar.getByRole('button', { name: /^Use #/ });
+    const before = await selects.count();
+    expect(before).toBeGreaterThanOrEqual(2);
+
+    // readOnly ⇒ the accessible name must NOT promise a double-click edit, and
+    // each swatch still exposes a remove (×) control.
+    await expect(bar.getByRole('button', { name: /double-click/i })).toHaveCount(0);
+    await expect(bar.getByRole('button', { name: /^Remove #/ })).toHaveCount(before);
+
+    // Double-clicking a band swatch must NOT open the picker dialog (edit is
+    // suppressed in image mode).
+    await selects.first().dblclick();
+    await expect(page.locator('[role="dialog"]').filter({ visible: true })).toHaveCount(0);
+
+    // The hover-revealed × still removes a swatch from the palette.
+    await selects.first().hover();
+    await bar.getByRole('button', { name: /^Remove #/ }).first().click();
+    await expect(bar.getByRole('button', { name: /^Use #/ })).toHaveCount(before - 1);
   });
 });

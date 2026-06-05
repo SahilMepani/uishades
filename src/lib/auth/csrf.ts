@@ -1,18 +1,24 @@
 /**
  * Same-origin CSRF gate for state-changing API requests.
  *
- * Astro's built-in `security.checkOrigin` is silently a no-op under
- * `output: 'static'` (the manifest only enables it when buildOutput === 'server'),
- * so the auth + preset endpoints have no framework-level origin check.
- * `src/middleware.ts` enforces one explicitly on the SSR `/api/*` routes. The
- * logic lives here - free of `astro:` virtual-module imports - so it's
- * unit-testable.
+ * This is a *stricter superset* of Astro's built-in `security.checkOrigin`, not
+ * a stand-in for an absent check. The `@astrojs/cloudflare` adapter declares
+ * `adapterFeatures.buildOutput: 'server'`, which makes Astro compute
+ * `checkOrigin = true` and register its origin-check middleware, so the
+ * framework-level check IS active in production (despite `output: 'static'` -
+ * the adapter overrides the build output after the static default is set).
+ *
+ * `src/middleware.ts` runs this gate explicitly on the SSR `/api/*` routes
+ * before `next()` because it covers cases the built-in check does not: it also
+ * blocks cross-origin `application/json` POSTs (Astro's check only 403s
+ * form-like/bodyless requests) and it honors `Sec-Fetch-Site`. The logic lives
+ * here - free of `astro:` virtual-module imports - so it's unit-testable.
  */
 
 // State-changing requests under these prefixes must be same-origin. OAuth
 // callbacks are GET (idempotent, protected by the OAuth state/PKCE check) and
 // so are never gated here.
-export const CSRF_PROTECTED_PREFIXES = ['/api/auth/', '/api/presets', '/api/feedback'];
+export const CSRF_PROTECTED_PREFIXES = ['/api/auth/', '/api/presets', '/api/feedback', '/api/palettes'];
 const STATE_CHANGING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 /**

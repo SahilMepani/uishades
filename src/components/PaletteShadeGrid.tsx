@@ -1,6 +1,8 @@
 import {
+  memo,
   useCallback,
   useMemo,
+  useRef,
   type KeyboardEvent,
   type MouseEvent,
 } from 'react';
@@ -67,13 +69,31 @@ export default function PaletteShadeGrid({
   onCopy,
   onNavigate,
 }: PaletteShadeGridProps) {
-  const columns = useMemo(
-    () =>
-      hexes.map((hex) =>
-        kind === 'ramp' ? oklchRamp(hex).shades : buildScale(hex).shades,
-      ),
-    [hexes, kind],
-  );
+  // Build each column's shades keyed by that column's OWN hex (+ kind), reusing
+  // the prior computation for any hex that didn't change. During an image-mode
+  // point drag only ONE column's hex changes per frame, but the tray's array
+  // identity changes every frame - so a plain `hexes.map(...)` rebuilt EVERY
+  // column's ramp/scale (~30 culori toGamut calls each) on every move. This
+  // per-hex cache rebuilds only the dragged column; the others are returned
+  // from the cache untouched. The cache is pruned to the current hex set each
+  // pass so it can't grow unbounded.
+  const shadeCacheRef = useRef<Map<string, Shade[]>>(new Map());
+  const columns = useMemo(() => {
+    const cache = shadeCacheRef.current;
+    const next = new Map<string, Shade[]>();
+    const cols = hexes.map((hex) => {
+      const key = `${kind}:${hex}`;
+      let shades = cache.get(key);
+      if (!shades) {
+        shades = kind === 'ramp' ? oklchRamp(hex).shades : buildScale(hex).shades;
+      }
+      // Preserve a single cache entry per key even if a color repeats.
+      next.set(key, shades);
+      return shades;
+    });
+    shadeCacheRef.current = next;
+    return cols;
+  }, [hexes, kind]);
 
   return (
     <div
@@ -91,7 +111,7 @@ export default function PaletteShadeGrid({
           className="flex min-w-0 flex-1 flex-col gap-[2px]"
         >
           {shades.map((shade, row) => (
-            <GridSwatch
+            <MemoGridSwatch
               key={`${shade.hex}-${row}`}
               shade={shade}
               col={col}
@@ -108,15 +128,7 @@ export default function PaletteShadeGrid({
   );
 }
 
-function GridSwatch({
-  shade,
-  col,
-  row,
-  copyFormat,
-  brandName,
-  onCopy,
-  onNavigate,
-}: {
+interface GridSwatchProps {
   shade: Shade;
   /** Column (palette-color) and row (stop) index, for arrow-key navigation. */
   col: number;
@@ -125,7 +137,17 @@ function GridSwatch({
   brandName?: string;
   onCopy: (hex: Hex) => void;
   onNavigate: (hex: Hex) => void;
-}) {
+}
+
+function GridSwatch({
+  shade,
+  col,
+  row,
+  copyFormat,
+  brandName,
+  onCopy,
+  onNavigate,
+}: GridSwatchProps) {
   const fg = useMemo(() => pickForeground(shade.hex), [shade.hex]);
   const navHref = `/${shade.hex.slice(1)}`;
   const { pushToast } = useToast();
@@ -210,11 +232,17 @@ function GridSwatch({
     [shade.hex, handleCopy, onNavigate, col, row],
   );
 
-  const valueLabel = formatForCopy(shade.hex, copyFormat, {
-    name: brandName,
-    stop: shade.stop,
-  });
-  const ariaLabel = `${valueLabel}${shade.isInput ? ' source' : ''}. Click to copy, double-click or Shift+Enter to use as source`;
+  // Memoized so the per-frame parent re-render during a drag doesn't re-run
+  // `formatForCopy` (and rebuild the aria string) for every unchanged swatch.
+  const valueLabel = useMemo(
+    () => formatForCopy(shade.hex, copyFormat, { name: brandName, stop: shade.stop }),
+    [shade.hex, shade.stop, copyFormat, brandName],
+  );
+  const ariaLabel = useMemo(
+    () =>
+      `${valueLabel}${shade.isInput ? ' source' : ''}. Click to copy, double-click or Shift+Enter to use as source`,
+    [valueLabel, shade.isInput],
+  );
 
   return (
     <div
@@ -253,3 +281,21 @@ function GridSwatch({
     </div>
   );
 }
+
+/**
+ * Memoized so an image-drag re-render of the grid (every frame the active hex /
+ * tray changes) only re-renders the swatches whose own data changed - i.e. the
+ * dragged column's. The callbacks are stable in the orchestrator; we compare
+ * the value-bearing fields plus the grid coordinates the keyboard handler reads.
+ */
+const MemoGridSwatch = memo(GridSwatch, (a, b) =>
+  a.shade.hex === b.shade.hex &&
+  a.shade.stop === b.shade.stop &&
+  a.shade.isInput === b.shade.isInput &&
+  a.col === b.col &&
+  a.row === b.row &&
+  a.copyFormat === b.copyFormat &&
+  a.brandName === b.brandName &&
+  a.onCopy === b.onCopy &&
+  a.onNavigate === b.onNavigate,
+);

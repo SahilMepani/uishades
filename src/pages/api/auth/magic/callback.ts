@@ -13,8 +13,10 @@
  *     Consumes the token (single-use), find-or-creates the user by this
  *     inherently-verified email, regenerates the session, sets userId → home.
  *     This is a state-changing POST, so the same-origin CSRF check in
- *     `src/middleware.ts` gates it (Astro's built-in `security.checkOrigin` is a
- *     no-op under `output: 'static'`, so we enforce origin there ourselves).
+ *     `src/middleware.ts` gates it. The @astrojs/cloudflare adapter sets
+ *     `buildOutput: 'server'`, so Astro's built-in `security.checkOrigin` IS
+ *     active in production; our middleware gate is a stricter SUPERSET of it
+ *     (it also blocks cross-origin JSON POSTs and honors `Sec-Fetch-Site`).
  */
 export const prerender = false;
 

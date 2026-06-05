@@ -38,7 +38,12 @@ test.describe('multi-color palette export', () => {
     await expect(grid).toHaveAttribute('data-grid-columns', '2');
 
     // Open the export "View code" modal. Default format is Tailwind v4 (@theme).
-    await page.getByRole('button', { name: /view export code/i }).click();
+    // The export row lives atop the shade grid; open whichever copy is visible.
+    await page
+      .getByRole('button', { name: /view export code/i })
+      .filter({ visible: true })
+      .first()
+      .click();
     const preview = page.locator('pre[data-export-preview="true"]');
     await expect(preview).toBeVisible();
 

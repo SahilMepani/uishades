@@ -96,16 +96,6 @@ export interface ExploreResponse {
   nextCursor: string | null;
 }
 
-/**
- * Result of `POST /api/palettes/[id]/report`. `flagged` is `true` once the
- * palette has crossed the report threshold and been hidden from public
- * listings; otherwise the report was recorded for manual review.
- */
-export interface ReportResult {
-  ok: boolean;
-  flagged: boolean;
-}
-
 /** Shape returned by GET /api/me. */
 export interface MeResponse {
   user: Pick<User, 'email' | 'name' | 'avatarUrl'> | null;

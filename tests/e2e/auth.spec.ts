@@ -6,9 +6,8 @@ import { test, expect } from '@playwright/test';
  * Runs against `npm run preview` (the production build). With no session, the
  * `/api/me` probe resolves to `{ user: null }`, so HeaderAuth renders a "Sign
  * in" button. Clicking it opens a modal whose AuthMenu exposes the OAuth
- * redirect entry points + the magic-link email field. (Sign-in is modal-only —
- * the left-rail PresetsPanel no longer duplicates it when signed out — so the
- * controls live behind the trigger, not inline on the page.)
+ * redirect entry points + the magic-link email field. (Sign-in is modal-only,
+ * so the controls live behind the trigger, not inline on the page.)
  *
  * The signed-in round-trip (real OAuth + email) is impractical to automate in
  * CI, so it is NOT covered here. The session-independent server logic — token

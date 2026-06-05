@@ -233,15 +233,32 @@ export async function countRecentMagicRequests(
   return row?.n ?? 0;
 }
 
-export async function recordMagicRequest(db: D1Database, key: string, at: number): Promise<void> {
-  await db
+// Returns the inserted rowid so a record-then-check limiter can roll back a
+// just-recorded attempt (see api/auth/magic.ts). Callers that ignore the return
+// stay correct.
+export async function recordMagicRequest(db: D1Database, key: string, at: number): Promise<number> {
+  const res = await db
     .prepare('INSERT INTO magic_link_requests (key, created_at) VALUES (?, ?)')
     .bind(key, at)
     .run();
+  return res.meta.last_row_id as number;
+}
+
+export async function deleteMagicRequestById(db: D1Database, id: number): Promise<void> {
+  await db.prepare('DELETE FROM magic_link_requests WHERE rowid = ?').bind(id).run();
 }
 
 export async function pruneMagicRequests(db: D1Database, beforeMs: number): Promise<void> {
-  await db.prepare('DELETE FROM magic_link_requests WHERE created_at < ?').bind(beforeMs).run();
+  // Scope the prune away from the `report:<id>` tally rows: the report endpoint
+  // keeps those forever (count-across-all-time threshold), so wiping them by
+  // `created_at` would let slow legitimate reports never reach the flag count.
+  // `report-ip:` rows start "report-" (not "report:"), so they DON'T match
+  // 'report:%' and are still pruned here, along with `email:`/`ip:`/`fb-ip:`/
+  // `magic:` rows. Only the `report:<id>` tally is preserved.
+  await db
+    .prepare("DELETE FROM magic_link_requests WHERE created_at < ? AND key NOT LIKE 'report:%'")
+    .bind(beforeMs)
+    .run();
 }
 
 // --- Presets -----------------------------------------------------------------
@@ -680,21 +697,6 @@ export async function flagPalette(db: D1Database, id: string): Promise<void> {
   await db.prepare('UPDATE palettes SET flagged = 1 WHERE id = ?').bind(id).run();
 }
 
-/** Founder-only curation toggle for the Featured collection (no public route). */
-export async function setFeatured(db: D1Database, paletteId: string, on: boolean): Promise<void> {
-  if (on) {
-    await db
-      .prepare('UPDATE palettes SET featured = 1, featured_at = ? WHERE id = ?')
-      .bind(Date.now(), paletteId)
-      .run();
-  } else {
-    await db
-      .prepare('UPDATE palettes SET featured = 0, featured_at = NULL WHERE id = ?')
-      .bind(paletteId)
-      .run();
-  }
-}
-
 export type ExploreSort = 'top' | 'new' | 'trending' | 'featured';
 
 /**
@@ -945,13 +947,33 @@ async function summarize(
 ): Promise<PaletteSummary[]> {
   if (rows.length === 0) return [];
 
+  // One query per chunk of ids for all their swatch hexes (collapses the old
+  // N+1 of one readPaletteColors round-trip per row). Only '?' placeholders are
+  // interpolated into the SQL; every id is parameter-bound. Chunk to <=90
+  // ids/query: D1 caps bound parameters at 100 per query, and the id sets here
+  // are effectively unbounded (listLikedPalettesByUser has no LIMIT, and the
+  // per-user palette cap isn't atomic), so a single IN(...) over every id could
+  // exceed the cap and throw - the old per-row N+1 used one param per query and
+  // had no such ceiling. Rows arrive ordered by position within each palette, so
+  // grouping preserves swatch order.
   const colorsByPalette = new Map<string, Hex[]>();
-  for (const row of rows) {
-    const cs = await readPaletteColors(db, row.id);
-    colorsByPalette.set(
-      row.id,
-      cs.sort((a, b) => a.position - b.position).map((c) => c.hex),
-    );
+  const ids = rows.map((r) => r.id);
+  const ID_CHUNK = 90;
+  for (let start = 0; start < ids.length; start += ID_CHUNK) {
+    const chunk = ids.slice(start, start + ID_CHUNK);
+    const placeholders = chunk.map(() => '?').join(',');
+    const { results: colorRows } = await db
+      .prepare(
+        `SELECT palette_id, position, hex FROM palette_colors
+         WHERE palette_id IN (${placeholders}) ORDER BY palette_id, position ASC`,
+      )
+      .bind(...chunk)
+      .all<{ palette_id: string; position: number; hex: Hex }>();
+    for (const c of colorRows ?? []) {
+      const list = colorsByPalette.get(c.palette_id);
+      if (list) list.push(c.hex);
+      else colorsByPalette.set(c.palette_id, [c.hex]);
+    }
   }
 
   const votedSet = new Set<string>();

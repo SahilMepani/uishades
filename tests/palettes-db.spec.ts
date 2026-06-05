@@ -128,6 +128,12 @@ class FakeD1 {
     let args: unknown[] = [];
     const stmt = {
       bind(...a: unknown[]) {
+        // Cloudflare D1 rejects any query with more than 100 bound parameters;
+        // simulate that hard cap so summarize()'s IN(...) batching is forced to
+        // stay under it (a single un-chunked IN over every id would throw here).
+        if (a.length > 100) {
+          throw new Error('D1_ERROR: too many SQL variables (max 100 bound parameters per query)');
+        }
         args = a;
         return stmt;
       },
@@ -158,6 +164,21 @@ class FakeD1 {
           const rows = db.colors
             .filter((c) => c.palette_id === args[0])
             .sort((a, b) => a.position - b.position);
+          return { results: rows as unknown as T[] };
+        }
+        // Batched swatch read for summarize(): `... WHERE palette_id IN (?,?,…)`
+        // ORDER BY palette_id, position. All ids are bound as args.
+        if (sql.includes('FROM palette_colors') && sql.includes('palette_id IN (')) {
+          const ids = args as string[];
+          const rows = db.colors
+            .filter((c) => ids.includes(c.palette_id))
+            .sort((a, b) =>
+              a.palette_id < b.palette_id
+                ? -1
+                : a.palette_id > b.palette_id
+                  ? 1
+                  : a.position - b.position,
+            );
           return { results: rows as unknown as T[] };
         }
         // Explore listing: public, non-flagged, SEED-OWNER-ONLY, "new" sort
@@ -298,6 +319,58 @@ describe('listPalettesByUser', () => {
     const list = await listPalettesByUser(asD1(db), 'owner');
     expect(list).toHaveLength(1);
     expect(list[0].colors).toEqual(['#aa0000', '#00aa00']);
+  });
+});
+
+describe('summarize() swatch batching under D1 100-bound-parameter cap', () => {
+  it('groups colors per palette in ascending position order across >100 palettes', async () => {
+    const db = new FakeD1();
+    const N = 120; // > the 90-id chunk size AND > D1's 100-bound-param cap
+    const hex = (i: number, pos: number) =>
+      `#${i.toString(16).padStart(4, '0')}${pos.toString(16).padStart(2, '0')}`;
+    for (let i = 0; i < N; i++) {
+      const id = `p${i}`;
+      db.palettes.push({
+        id,
+        user_id: 'owner',
+        name: `P${i}`,
+        slug: `p-${i}`,
+        visibility: 'private',
+        description: null,
+        tags: null,
+        flagged: 0,
+        view_count: 0,
+        vote_count: 0,
+        featured: 0,
+        featured_at: null,
+        created_at: i,
+        updated_at: i,
+      });
+      // Insert 3 colors out of position order to prove ORDER BY position applies.
+      for (const pos of [2, 0, 1]) {
+        db.colors.push({
+          palette_id: id,
+          position: pos,
+          hex: hex(i, pos),
+          view: 'scale',
+          copy_format: null,
+          role: null,
+          hue_bucket: null,
+        });
+      }
+    }
+
+    // Un-chunked this builds a 120-parameter IN(...) and the FakeD1 bind cap
+    // throws; the chunked summarize() splits it into 90 + 30 and succeeds.
+    const list = await listPalettesByUser(asD1(db), 'owner');
+
+    expect(list).toHaveLength(N);
+    // Every palette carries exactly its own 3 colors, ascending by position,
+    // with no cross-contamination between palettes.
+    for (const summary of list) {
+      const i = Number(summary.slug.slice(2));
+      expect(summary.colors).toEqual([hex(i, 0), hex(i, 1), hex(i, 2)]);
+    }
   });
 });
 

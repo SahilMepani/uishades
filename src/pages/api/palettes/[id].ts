@@ -63,8 +63,16 @@ export const PATCH = withUser(async ({ request, params }, userId) => {
   }
 
   if (data.description !== undefined) {
-    patch.description =
-      data.description === null ? null : String(data.description).slice(0, 280) || null;
+    if (data.description === null) {
+      patch.description = null;
+    } else {
+      // Trim first so leading/trailing whitespace can't smuggle content past the
+      // guard, then cap. Descriptions render publicly on /p/[slug], so they get
+      // the same profanity guard as the name.
+      const description = String(data.description).trim().slice(0, 280);
+      if (isProfane(description)) return jsonNoStore({ error: 'invalid_description' }, 400);
+      patch.description = description || null;
+    }
   }
 
   if (data.colors !== undefined) {

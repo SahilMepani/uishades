@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import type { Shade, CopyFormat, Hex } from '../lib/color/types';
 import { contrastRatio } from '../lib/color/contrast';
 import { formatForCopy } from '../lib/color/format';
@@ -48,7 +48,7 @@ function pickForeground(hex: Hex): 'white' | 'black' {
   return cw >= cb ? 'white' : 'black';
 }
 
-export default function ShadeRow({
+function ShadeRow({
   shade,
   sourceHex,
   copyFormat,
@@ -373,6 +373,30 @@ export default function ShadeRow({
     </div>
   );
 }
+
+/**
+ * Memoized so a hex change (which recomputes the whole ramp/scale array and
+ * hands every row a fresh `shade` object identity) only re-renders the rows
+ * whose rendered output actually differs. The callbacks are stable
+ * `useCallback`s in the parent, so we compare just the value-bearing fields:
+ * the shade's hex/stop/isInput, the source band color, and the copy/name
+ * inputs that feed the visible label. `sourceHex` is included because every
+ * non-source row paints it in its 20% band, so it changes every row's output.
+ */
+function shadeRowPropsEqual(a: ShadeRowProps, b: ShadeRowProps): boolean {
+  return (
+    a.shade.hex === b.shade.hex &&
+    a.shade.stop === b.shade.stop &&
+    a.shade.isInput === b.shade.isInput &&
+    a.sourceHex === b.sourceHex &&
+    a.copyFormat === b.copyFormat &&
+    a.brandName === b.brandName &&
+    a.onCopy === b.onCopy &&
+    a.onNavigate === b.onNavigate
+  );
+}
+
+export default memo(ShadeRow, shadeRowPropsEqual);
 
 function OpenIcon() {
   return (

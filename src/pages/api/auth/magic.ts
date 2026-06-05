@@ -12,6 +12,7 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import {
   countRecentMagicRequests,
+  deleteMagicRequestById,
   deleteMagicToken,
   pruneExpiredMagicTokens,
   pruneMagicRequests,
@@ -63,18 +64,31 @@ export const POST: APIRoute = async ({ request }) => {
   const ip = request.headers.get('CF-Connecting-IP') ?? 'local';
   const emailKey = `email:${email}`;
   const ipKey = `ip:${ip}`;
+
+  // Record-then-check (vs the old check-then-record): insert BOTH attempt rows
+  // first, then count the in-window total, which now includes the just-inserted
+  // attempt. This closes a TOCTOU where N parallel POSTs could all read a count
+  // below the cap and pass the gate; a concurrent burst now fails CLOSED. We
+  // gate with `>` (strictly greater) since the count includes this attempt, and
+  // roll back BOTH rows on an over-cap so a denied attempt holds no slot. Net
+  // invariant: the window reflects only SUCCESSFUL sends, so 5 sequential
+  // succeed and the 6th 429s.
+  const [emailId, ipId] = await Promise.all([
+    recordMagicRequest(db, emailKey, now),
+    recordMagicRequest(db, ipKey, now),
+  ]);
   const [emailCount, ipCount] = await Promise.all([
     countRecentMagicRequests(db, emailKey, windowStart),
     countRecentMagicRequests(db, ipKey, windowStart),
   ]);
-  if (emailCount >= RATE_MAX || ipCount >= RATE_MAX) {
+  if (emailCount > RATE_MAX || ipCount > RATE_MAX) {
+    await Promise.all([deleteMagicRequestById(db, emailId), deleteMagicRequestById(db, ipId)]);
     return jsonNoStore({ error: 'rate_limited' }, 429);
   }
 
   const raw = generateToken();
   const tokenHash = await hashToken(raw);
   await storeMagicToken(db, { tokenHash, email, expiresAt: now + MAGIC_TTL_MS });
-  await Promise.all([recordMagicRequest(db, emailKey, now), recordMagicRequest(db, ipKey, now)]);
 
   const magicUrl = `${magicLinkOrigin(request)}/api/auth/magic/callback?token=${raw}`;
   try {

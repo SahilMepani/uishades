@@ -297,13 +297,60 @@ const ColorPicker = forwardRef<ColorPickerHandle, ColorPickerProps>(function Col
     };
   }, [open]);
 
-  const handlePickerChange = useCallback(
-    (next: string) => {
-      // react-colorful gives us a fully-formed #rrggbb in lowercase.
-      onChange(next as Hex);
-    },
-    [onChange],
-  );
+  // react-colorful's saturation square / hue strip fire `onChange` on every
+  // pointermove (~60/s). Each call propagates up to `setHex`, which recomputes
+  // the whole ramp + scale (~30 culori toGamut calls) and re-renders the grid -
+  // so the unthrottled stream made the drag stutter. Coalesce to one rAF:
+  // record the latest hex and schedule a single flush per frame, cancelling any
+  // pending one. The trailing value is always delivered (the last move schedules
+  // the final flush) and an unmount flushes synchronously so the picked color is
+  // never dropped. The popover's own swatch/input still track `hex`, so the
+  // visible value stays in step with the parent at frame cadence.
+  const pickerRafRef = useRef<number | null>(null);
+  const pendingPickRef = useRef<Hex | null>(null);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  // Deliver any rAF-deferred pick synchronously now, cancelling the pending
+  // frame. No-op when nothing is pending.
+  const flushPendingPick = useCallback(() => {
+    if (pickerRafRef.current === null) return;
+    cancelAnimationFrame(pickerRafRef.current);
+    pickerRafRef.current = null;
+    const h = pendingPickRef.current;
+    if (h !== null) onChangeRef.current(h);
+  }, []);
+  const handlePickerChange = useCallback((next: string) => {
+    // react-colorful gives us a fully-formed #rrggbb in lowercase.
+    const hexNext = next as Hex;
+    pendingPickRef.current = hexNext;
+    if (typeof requestAnimationFrame !== 'function') {
+      onChangeRef.current(hexNext);
+      return;
+    }
+    if (pickerRafRef.current !== null) return;
+    pickerRafRef.current = requestAnimationFrame(() => {
+      pickerRafRef.current = null;
+      const h = pendingPickRef.current;
+      if (h !== null) onChangeRef.current(h);
+    });
+  }, []);
+  // Flush at the end of every drag (pointerup/cancel) while the popover is open,
+  // not just on unmount: a normal close is a state toggle (the picker stays
+  // mounted), so without the pointer-end flush a close landing in the SAME frame
+  // as the last move would let a consumer's close-time write-back (e.g. saving
+  // the edited swatch back to the tray) read a one-frame-stale parent hex.
+  // Releasing the drag commits the final value before any outside-click close.
+  useEffect(() => {
+    if (!open) return;
+    const onPointerEnd = () => flushPendingPick();
+    window.addEventListener('pointerup', onPointerEnd);
+    window.addEventListener('pointercancel', onPointerEnd);
+    return () => {
+      window.removeEventListener('pointerup', onPointerEnd);
+      window.removeEventListener('pointercancel', onPointerEnd);
+    };
+  }, [open, flushPendingPick]);
+  useEffect(() => () => flushPendingPick(), [flushPendingPick]);
 
   // The popover's single value input. The active format follows the page's
   // "Copy as" preference (`copyToChannel(copyFormat)`) unless the user picks a

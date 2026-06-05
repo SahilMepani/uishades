@@ -47,7 +47,13 @@ import type { MeResponse } from '../lib/auth/types';
 // height-stable fallback. The OKLCH continuous ramp is eager too - it just
 // reuses the shared `ShadeRow` - so toggling between the two views is instant.
 import TailwindScale from './TailwindScale';
-import type { ValueMode } from '../lib/exports/tokens';
+import {
+  rampToTokens,
+  scaleToTokens,
+  dedupeGroupNames,
+  type ColorGroup,
+  type ValueMode,
+} from '../lib/exports/tokens';
 
 /**
  * Top-level React island for the shade tool.
@@ -230,6 +236,23 @@ function normalizeHexInput(input: string): Hex {
 function isDevHostingRoute(): boolean {
   if (typeof window === 'undefined') return false;
   return window.location.pathname.startsWith('/dev/');
+}
+
+// Brand-name slug for a hex: the exact named slug when known, else the nearest
+// by OKLab distance. `nearestNamedSlug` scans all ~209 named colors, so during
+// an image-mode drag the per-frame `paletteNames` recompute would re-run that
+// scan for EVERY tray color even though only the dragged one changed. The
+// result for a given hex is deterministic, so we cache it module-wide: a drag
+// then scans only each newly-seen color once. Bounded so it can't grow without
+// limit across a long session of arbitrary picks.
+const brandNameCache = new Map<Hex, string>();
+function brandNameForHex(hex: Hex): string {
+  const cached = brandNameCache.get(hex);
+  if (cached !== undefined) return cached;
+  const slug = findByHex(hex)?.slug ?? nearestNamedSlug(hex);
+  if (brandNameCache.size > 512) brandNameCache.clear();
+  brandNameCache.set(hex, slug);
+  return slug;
 }
 
 // Bare-hex URL: /4040ff, /ff7f50 - i.e. /[hex]. We keep the pathname in
@@ -486,23 +509,69 @@ function ShadeToolInner({
   // arbitrary pick still exports as e.g. `--color-royalblue-50` rather than a
   // generic `brand`. (`named` stays exact-only so the input label never
   // mislabels an arbitrary color as a named one.)
-  const brandName = useMemo(() => named?.slug ?? nearestNamedSlug(hex), [named, hex]);
+  const brandName = useMemo(() => named?.slug ?? brandNameForHex(hex), [named, hex]);
 
   // URL sync whenever the hex changes from any source, plus persist the
   // last-used color. The localStorage write is the store for the root-route
   // re-seed in the mount handler above.
+  //
+  // Perf: a color-picker drag fires `setHex` per pointermove (~60/s). The
+  // `history.replaceState` + synchronous `localStorage.setItem` here were
+  // running on every one of those frames, throttling the whole gesture. We
+  // coalesce them to one rAF: each hex change records the latest value and
+  // schedules a single flush, cancelling any pending one. The settled value
+  // is ALWAYS persisted - the last change schedules a flush that runs on the
+  // next frame, and an unmount/route-change flushes synchronously so nothing
+  // is lost (the `?view=` e2e + last-used-color contract both depend on the
+  // final value landing in the URL/localStorage). `userChoseRef` is read at
+  // flush time so the `/` → `/[hex]` promotion still fires after the gesture.
+  const pendingHexRef = useRef<Hex>(hex);
+  const syncRafRef = useRef<number | null>(null);
+  const flushHexSync = useCallback(() => {
+    if (syncRafRef.current !== null) {
+      cancelAnimationFrame(syncRafRef.current);
+      syncRafRef.current = null;
+    }
+    const h = pendingHexRef.current;
+    syncUrl(h, userChoseRef.current);
+    try {
+      window.localStorage.setItem(STORAGE_KEYS.hex, h);
+    } catch {
+      /* localStorage may be unavailable in private mode */
+    }
+  }, []);
   useEffect(() => {
     // Image mode keeps a stable `/image-color-picker` URL (the active color is
     // an image sample point, not a destination) and must not clobber the home
     // tool's remembered last-used color - so neither sync runs there.
     if (isImage) return;
-    syncUrl(hex, userChoseRef.current);
-    try {
-      window.localStorage.setItem(STORAGE_KEYS.hex, hex);
-    } catch {
-      /* localStorage may be unavailable in private mode */
+    pendingHexRef.current = hex;
+    if (typeof window === 'undefined' || typeof requestAnimationFrame !== 'function') {
+      // SSR / no rAF: run synchronously (also keeps non-browser test envs happy).
+      flushHexSync();
+      return;
     }
+    // Coalesce: a pending rAF already covers this update - just let it pick up
+    // the latest `pendingHexRef` value on the next frame. Otherwise schedule
+    // one. We intentionally do NOT flush in the effect cleanup on a normal
+    // re-run (that would make a drag synchronous again); the pending rAF always
+    // flushes the latest value within one frame of the last change.
+    if (syncRafRef.current === null) {
+      syncRafRef.current = requestAnimationFrame(() => {
+        syncRafRef.current = null;
+        flushHexSync();
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hex, isImage]);
+  // Unmount: flush the last pending value synchronously so a gesture that ends
+  // with an immediate navigation/unmount still persists its settled hex.
+  useEffect(
+    () => () => {
+      if (!isImage && syncRafRef.current !== null) flushHexSync();
+    },
+    [isImage, flushHexSync],
+  );
 
   const handleChangeHex = useCallback((next: Hex) => {
     // User-initiated (color picker + the hex text input via PreviewBlock).
@@ -637,13 +706,41 @@ function ShadeToolInner({
   // OKLab distance). Threaded into the ramp/scale so a multi-color export names
   // every color and the grid's per-column copy labels match their column.
   const paletteNames = useMemo(
-    () => tray.map((c) => findByHex(c.hex)?.slug ?? nearestNamedSlug(c.hex)),
+    () => tray.map((c) => brandNameForHex(c.hex)),
     [tray],
   );
   // Stable hex array for the ramp/scale views. Memoized so the per-color export
   // groups (and the grid) don't rebuild every palette color's ramp on each
   // render just because an inline `.map` produced a fresh array identity.
   const paletteHexes = useMemo(() => tray.map((c) => c.hex), [tray]);
+
+  // Export groups for the current view + palette, consumed by the shade-grid
+  // export row inside the view component. Multi-column (2+ palette colors) →
+  // one collision-safe group per swatch; else just the active scale or ramp.
+  const exportGroups = useMemo<ColorGroup[]>(() => {
+    const multiColumn = paletteHexes.length >= 2;
+    const groupName = (i: number) => paletteNames[i] ?? brandName ?? 'brand';
+    if (view === 'ramp') {
+      if (multiColumn) {
+        return dedupeGroupNames(
+          paletteHexes.map((h, i) => ({
+            name: groupName(i),
+            tokens: rampToTokens(oklchRamp(h)),
+          })),
+        );
+      }
+      return [{ name: brandName ?? 'brand', tokens: rampToTokens(ramp) }];
+    }
+    if (multiColumn) {
+      return dedupeGroupNames(
+        paletteHexes.map((h, i) => ({
+          name: groupName(i),
+          tokens: scaleToTokens(buildScale(h)),
+        })),
+      );
+    }
+    return [{ name: brandName ?? 'brand', tokens: scaleToTokens(scale) }];
+  }, [view, paletteHexes, paletteNames, brandName, ramp, scale]);
 
   const handleAddToTray = useCallback(() => {
     setTray((prev) => {
@@ -704,6 +801,32 @@ function ShadeToolInner({
       picker?.open();
     },
     [tray, handleChangeHex],
+  );
+
+  // The full-width palette band spans both breakpoints (it lives in the right
+  // column, visible on phone and desktop alike), so unlike the rail/mobile
+  // PaletteTrays it can't bind to a single picker ref up front. Resolve the
+  // viewport-visible picker at click time so the edit popover anchors to the
+  // swatch the user can actually see (desktop rail ≥ md, mobile block below).
+  // The query MUST use the same UNIT as the CSS that toggles the aside
+  // (`hidden md:flex`) / mobile block (`md:hidden`): Tailwind v4's `md` is
+  // `48rem`, not `768px`. They only coincide at a 16px root font-size - at a
+  // larger root size (a common a11y setting) a px query would pick the picker
+  // that lives in the currently-hidden container, opening the popover inside a
+  // `display:none` rail (invisible) and silently killing double-click-to-edit.
+  // `matchMedia` resolves `rem` against the live root font-size, so this stays
+  // in lockstep with the breakpoint.
+  const editBandColor = useCallback(
+    (index: number) => {
+      const desktopVisible =
+        typeof window !== 'undefined' &&
+        window.matchMedia('(min-width: 48rem)').matches;
+      const picker = desktopVisible
+        ? desktopPickerRef.current
+        : mobilePickerRef.current;
+      openPickerForEdit(index, picker);
+    },
+    [openPickerForEdit],
   );
 
   const handlePickerOpenChange = useCallback(
@@ -912,7 +1035,12 @@ function ShadeToolInner({
                 </span>
                 <WcagInfoButton />
               </div>
-              <PalettePreviewBar tray={tray} onSelectColor={selectTrayColor} />
+              <PalettePreviewBar
+                tray={tray}
+                onSelectColor={selectTrayColor}
+                onRemove={handleRemoveFromTray}
+                readOnly
+              />
             </div>
           )}
         </div>
@@ -928,7 +1056,6 @@ function ShadeToolInner({
           <div className="md:sticky md:top-8">
             <PreviewBlock
               hex={hex}
-              named={named}
               onChange={handleChangeHex}
               copyFormat={copyFormat}
               onAddToPalette={handleAddToTray}
@@ -969,7 +1096,6 @@ function ShadeToolInner({
           <div className="flex flex-col gap-5 md:hidden">
             <PreviewBlock
               hex={hex}
-              named={named}
               onChange={handleChangeHex}
               copyFormat={copyFormat}
               onAddToPalette={handleAddToTray}
@@ -997,12 +1123,14 @@ function ShadeToolInner({
           </div>
 
           {/* Full-width palette preview: appears only once the tray holds a
-              second color, sitting above the ramp's header row. Clicking a
-              swatch makes it the live page color (reusing `selectTrayColor`).
-              A small header row labels the band and carries the WCAG explainer,
-              since these swatches are the only place contrast levels surface.
-              Suppressed in image mode - the band renders full-width above the
-              tool there instead. */}
+              second color, sitting above the ramp's header row. Its swatches
+              mirror the left-rail tray's verbs: click sets the live page color
+              (`selectTrayColor`), double-click opens the picker to adjust it
+              (`editBandColor` → `openPickerForEdit`), and a hover-revealed ×
+              removes it (`handleRemoveFromTray`). A small header row labels the
+              band and carries the WCAG explainer, since these swatches are the
+              only place contrast levels surface. Suppressed in image mode - the
+              band renders full-width above the tool there instead. */}
           {!isImage && tray.length >= 2 && (
             <div>
               <div className="mb-2 flex items-center gap-1.5">
@@ -1011,7 +1139,12 @@ function ShadeToolInner({
                 </span>
                 <WcagInfoButton />
               </div>
-              <PalettePreviewBar tray={tray} onSelectColor={selectTrayColor} />
+              <PalettePreviewBar
+                tray={tray}
+                onSelectColor={selectTrayColor}
+                onEditColor={editBandColor}
+                onRemove={handleRemoveFromTray}
+              />
             </div>
           )}
 
@@ -1035,6 +1168,8 @@ function ShadeToolInner({
               {view === 'ramp' ? (
                 <DownloadPngButton
                   shades={ramp.shades}
+                  paletteHexes={paletteHexes}
+                  kind="ramp"
                   sourceHex={hex}
                   variant={ramp.mode}
                   subject="ramp"
@@ -1042,6 +1177,8 @@ function ShadeToolInner({
               ) : (
                 <DownloadPngButton
                   shades={scale.shades}
+                  paletteHexes={paletteHexes}
+                  kind="scale"
                   sourceHex={hex}
                   variant="scale"
                   subject="scale"
@@ -1060,6 +1197,7 @@ function ShadeToolInner({
                 paletteNames={paletteNames}
                 copyFormat={copyFormat}
                 exportFormat={exportFormat}
+                exportGroups={exportGroups}
                 valueMode={oklchValueMode}
                 brandName={brandName}
                 onCopy={handleCopyShade}
@@ -1076,6 +1214,7 @@ function ShadeToolInner({
                 paletteNames={paletteNames}
                 copyFormat={copyFormat}
                 exportFormat={exportFormat}
+                exportGroups={exportGroups}
                 brandName={brandName}
                 onCopy={handleCopyShade}
                 onNavigate={handleNavigate}
@@ -1097,14 +1236,22 @@ function ShadeToolInner({
  * module is dynamically imported on click so the canvas code stays out of the
  * eager ramp chunk (see `src/lib/exports/ramp-png.ts`). `subject` names the
  * palette for the accessible label; `variant` tags the download filename.
+ *
+ * When the palette tray holds two or more colors the export switches to a
+ * column-per-color grid (built here from `paletteHexes` + `kind`, mirroring
+ * `PaletteShadeGrid`) so the PNG covers every color, not just the active one.
  */
 function DownloadPngButton({
   shades,
+  paletteHexes,
+  kind,
   sourceHex,
   variant,
   subject,
 }: {
   shades: Shade[];
+  paletteHexes: Hex[];
+  kind: 'ramp' | 'scale';
   sourceHex: Hex;
   variant: string;
   subject: string;
@@ -1119,14 +1266,25 @@ function DownloadPngButton({
     // "Copied" feedback) rather than mutating the button label.
     pushToast('Preparing…');
     try {
+      // 2+ palette colors → one ramp/scale column per color; else the single
+      // active stack. `columns` undefined keeps the single-column code path.
+      const multi = paletteHexes.length >= 2;
+      const columns = multi
+        ? paletteHexes.map((h) => (kind === 'ramp' ? oklchRamp(h).shades : buildScale(h).shades))
+        : undefined;
       const { downloadRampPng } = await import('../lib/exports/ramp-png');
-      await downloadRampPng({ shades, sourceHex, variant });
+      await downloadRampPng({
+        shades,
+        columns,
+        sourceHex,
+        variant: multi ? `palette-${variant}` : variant,
+      });
     } catch {
       pushToast("Couldn't generate the PNG in this browser.");
     } finally {
       setBusy(false);
     }
-  }, [busy, shades, sourceHex, variant, pushToast]);
+  }, [busy, shades, paletteHexes, kind, sourceHex, variant, pushToast]);
 
   return (
     <button
@@ -1172,7 +1330,6 @@ function DownloadIcon({ className }: { className?: string }) {
 
 function PreviewBlock({
   hex,
-  named,
   onChange,
   copyFormat,
   onAddToPalette,
@@ -1183,7 +1340,6 @@ function PreviewBlock({
   readOnly = false,
 }: {
   hex: Hex;
-  named: ReturnType<typeof findByHex>;
   onChange: (next: Hex) => void;
   copyFormat: CopyFormat;
   onAddToPalette: () => void;
@@ -1205,6 +1361,8 @@ function PreviewBlock({
   const oklchString = useMemo(() => formatForCopy(hex, 'oklch'), [hex]);
   const rgbString = useMemo(() => formatForCopy(hex, 'rgb'), [hex]);
   const hslString = useMemo(() => formatForCopy(hex, 'hsl'), [hex]);
+  // Header label: exact named color, else the nearest one marked approximate.
+  const displayName = useMemo(() => colorDisplayName(hex), [hex]);
 
   // Stacked layers for the swatch cross-fade. Each color change pushes a new
   // layer that starts at opacity 0 and animates to 1; older layers stay
@@ -1299,9 +1457,25 @@ function PreviewBlock({
     }
   }, []);
 
+  // Color name shown at the top of the preview. A non-exact pick is announced
+  // to screen readers via the "Closest named color" lead (no visible prefix).
+  const nameHeader = (
+    <div className="flex items-baseline gap-1.5">
+      {displayName.exact ? (
+        <span className="font-display text-base text-ink-2">{displayName.name}</span>
+      ) : (
+        <span className="font-display text-base text-ink-2">
+          <span className="sr-only">Closest named color: </span>
+          {displayName.name}
+        </span>
+      )}
+    </div>
+  );
+
   if (readOnly) {
     return (
       <div className="flex flex-col gap-4">
+        {nameHeader}
         <div className="flex h-[60px] w-full items-stretch bg-paper-2">
           <span
             aria-hidden="true"
@@ -1312,11 +1486,6 @@ function PreviewBlock({
             {hex}
           </span>
         </div>
-        {named && (
-          <div className="border-b border-hairline pb-2">
-            <span className="font-display text-base text-ink-2">{named.name}</span>
-          </div>
-        )}
         <div className="flex flex-col">
           <CopyableValueRow label="HEX" value={hex} />
           <CopyableValueRow label="OKLCH" value={oklchString} />
@@ -1329,6 +1498,7 @@ function PreviewBlock({
 
   return (
     <div className="flex flex-col gap-4">
+      {nameHeader}
       <div className="flex h-[60px] w-full bg-paper-2">
         <ColorPicker
           ref={pickerRef}
@@ -1379,11 +1549,6 @@ function PreviewBlock({
       >
         {inPalette ? 'Added in Palette' : 'Add to palette'}
       </button>
-      {named && (
-        <div className="border-b border-hairline pb-2">
-          <span className="font-display text-base text-ink-2">{named.name}</span>
-        </div>
-      )}
       <div className="flex flex-col">
         <CopyableValueRow label="HEX" value={hex} />
         <CopyableValueRow label="OKLCH" value={oklchString} />
@@ -1776,6 +1941,18 @@ function nameForHex(hex: Hex): string {
 }
 
 /**
+ * Like `nameForHex`, but also reports whether the match was exact - the preview
+ * header marks a non-exact match approximate ("≈ Tan") so an arbitrary pick
+ * still shows a recognizable label without claiming to BE that named color.
+ */
+function colorDisplayName(hex: Hex): { name: string; exact: boolean } {
+  const exact = findByHex(hex);
+  if (exact) return { name: exact.name, exact: true };
+  const slug = nearestNamedSlug(hex);
+  return { name: SLUG_TO_NAME.get(slug) ?? slug, exact: false };
+}
+
+/**
  * Black or white, whichever reads better on `bg`. Picks the higher WCAG
  * contrast ratio so the hover labels stay legible on any swatch color.
  */
@@ -1843,18 +2020,35 @@ function ContrastLevels({ bg }: { bg: Hex }) {
  * Full-width palette preview band shown above the ramp once the tray holds a
  * second color (`tray.length >= 2`). Reuses the proportional swatch-band shape
  * from `PaletteCard` (equal-width `flex-1` fills, inline `backgroundColor` so the
- * colors survive the theme toggle), but each swatch is a real control: clicking
- * one makes it the live page color via the parent's `onSelectColor`. On hover
- * (or keyboard focus) each swatch reveals its color name at the top and hex at
- * the bottom, left-aligned, in black or white for contrast against the swatch.
+ * colors survive the theme toggle), but each swatch is a real control that
+ * mirrors the smaller PaletteTray swatches: single-click makes it the live page
+ * color (`onSelectColor`); double-click opens the color picker seeded with that
+ * swatch and writes the adjustment back (`onEditColor`); and a small X revealed
+ * on hover/focus removes it (`onRemove`). On hover (or keyboard focus) each
+ * swatch also reveals its color name at the top and hex at the bottom,
+ * left-aligned, in black or white for contrast against the swatch.
+ *
+ * `onEditColor`/`onRemove` are optional so the band degrades gracefully: image
+ * mode passes `readOnly` (colors are edited by dragging on the image, so no
+ * double-click edit) but still allows removal.
  */
 function PalettePreviewBar({
   tray,
   onSelectColor,
+  onEditColor,
+  onRemove,
+  readOnly = false,
 }: {
   tray: TrayColor[];
   onSelectColor: (index: number) => void;
+  /** Double-click: open the picker seeded with the swatch; omitted ⇒ no edit. */
+  onEditColor?: (index: number) => void;
+  /** Reveal an X on hover/focus that removes the swatch; omitted ⇒ no remove. */
+  onRemove?: (index: number) => void;
+  /** Image-authoritative mode: suppress double-click edit (remove still works). */
+  readOnly?: boolean;
 }) {
+  const canEdit = !readOnly && !!onEditColor;
   return (
     <ul
       aria-label="Palette preview"
@@ -1865,15 +2059,16 @@ function PalettePreviewBar({
         const blackLevel = wcagLevel(contrastRatio(c.hex, '#000000'));
         const whiteLevel = wcagLevel(contrastRatio(c.hex, '#ffffff'));
         return (
-          <li key={`${c.hex}-${i}`} className="min-w-0 flex-1">
+          <li key={`${c.hex}-${i}`} className="group relative min-w-0 flex-1">
             <button
               type="button"
               onClick={() => onSelectColor(i)}
-              aria-label={`Use ${c.hex} as the current color. Black text ${wcagSpoken(blackLevel)}, white text ${wcagSpoken(whiteLevel)}.`}
+              onDoubleClick={canEdit ? () => onEditColor!(i) : undefined}
+              aria-label={`Use ${c.hex} (${nameForHex(c.hex)}) as the current color${canEdit ? ' (double-click to adjust)' : ''}. Black text ${wcagSpoken(blackLevel)}, white text ${wcagSpoken(whiteLevel)}.`}
               className="group flex h-full w-full cursor-pointer flex-col justify-between p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60"
               style={{ backgroundColor: c.hex, color: textColor }}
             >
-              <span className="truncate font-display text-sm opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
+              <span className="truncate pr-7 font-display text-sm opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
                 {nameForHex(c.hex)}
               </span>
               <span className="flex flex-col gap-1.5">
@@ -1883,6 +2078,22 @@ function PalettePreviewBar({
                 </span>
               </span>
             </button>
+            {onRemove && (
+              <button
+                type="button"
+                aria-label={`Remove ${c.hex} from palette`}
+                onClick={() => onRemove(i)}
+                // `pointer-events-none` at rest so the invisible × never
+                // intercepts a select-click in the corner (the whole swatch sets
+                // the live color); it becomes clickable only once revealed on
+                // hover/focus, matching the "× on hover" intent.
+                className="pointer-events-none absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-ink/80 text-paper opacity-0 backdrop-blur-sm transition-opacity duration-150 ease-out hover:bg-ink group-hover:pointer-events-auto group-hover:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
+              >
+                <svg viewBox="0 0 16 16" aria-hidden="true" className="h-3 w-3">
+                  <path d="M3 3l10 10M13 3L3 13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+            )}
           </li>
         );
       })}

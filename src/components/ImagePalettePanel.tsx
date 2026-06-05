@@ -43,6 +43,17 @@ const CLICK_SLOP = 4;
 const LOUPE_PX = 224; // on-screen size of the magnifier
 const LOUPE_REGION = 7; // source pixels shown across the loupe (odd → true center)
 
+// Built-in demo images offered under the empty-state dropzone so a visitor can
+// try the extractor with one click - a deliberate spread of source types
+// (smooth gradient, flat solid-color logo, real photo, flat illustration). They
+// live in `public/samples/` (built by `scripts/generate-sample-images.mjs`).
+const SAMPLE_IMAGES: ReadonlyArray<{ id: string; label: string; src: string }> = [
+  { id: 'gradient', label: 'Gradient', src: '/samples/gradient.jpg' },
+  { id: 'logo', label: 'Logo', src: '/samples/logo.png' },
+  { id: 'photo', label: 'Photo', src: '/samples/photo.jpg' },
+  { id: 'landscape', label: 'Landscape', src: '/samples/landscape.jpg' },
+];
+
 export interface ImagePalettePanelProps {
   /** Current palette colors with their on-image locations (from the tray). */
   points: SamplePoint[];
@@ -97,6 +108,9 @@ export default function ImagePalettePanel({
 
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Which sample thumbnail is currently being fetched/decoded, so we can spotlight
+  // just that one (others dim) instead of a single shared busy state for all four.
+  const [loadingSampleId, setLoadingSampleId] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [loupe, setLoupe] = useState<LoupeState | null>(null);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -186,6 +200,37 @@ export default function ImagePalettePanel({
     [setImage],
   );
 
+  // Fetch a bundled sample image and run it through the same extraction path as
+  // an upload. Same-origin, so it's covered by the `connect-src 'self'` CSP.
+  // loadSample owns the busy lifecycle in a finally: `setImage` clears busy on
+  // its own paths, but its non-image-type guard early-returns *without* throwing,
+  // so trusting it alone could strand busy=true (every button stuck disabled) if
+  // a sample ever resolved to a non-image body (e.g. an HTML 200 fallback). We
+  // also reject a non-image content-type up front so that case shows the toast.
+  const loadSample = useCallback(
+    async (sample: { id: string; label: string; src: string }) => {
+      if (busy) return;
+      setBusy(true);
+      setLoadingSampleId(sample.id);
+      try {
+        const res = await fetch(sample.src);
+        if (!res.ok) throw new Error(`sample fetch failed: ${res.status}`);
+        const blob = await res.blob();
+        if (!blob.type.startsWith('image/')) {
+          throw new Error(`sample is not an image (${blob.type || 'unknown type'})`);
+        }
+        const file = new File([blob], `sample-${sample.label}`, { type: blob.type });
+        await setImage(file);
+      } catch {
+        notify("Couldn't load that sample image.");
+      } finally {
+        setBusy(false);
+        setLoadingSampleId(null);
+      }
+    },
+    [busy, notify, setImage],
+  );
+
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
@@ -256,6 +301,45 @@ export default function ImagePalettePanel({
     [],
   );
 
+  // A point drag fires `onMovePoint` on every pointermove. Each call rewrites
+  // the tray, recomputing every column's ramp/scale and re-rendering ~160
+  // swatches - far too heavy to run per move. Coalesce to one rAF: stash the
+  // latest {index, point} and flush at most once per frame, always delivering
+  // the trailing value (the final move schedules the last flush; `flushMove`
+  // on pointer-up/unmount drains anything still pending so the drop lands
+  // exactly where released). The loupe still updates per move - it's a cheap
+  // local setState confined to this lazy panel, not the grid rebuild.
+  const moveRafRef = useRef<number | null>(null);
+  const pendingMoveRef = useRef<{ index: number; point: SamplePoint } | null>(null);
+  const onMovePointRef = useRef(onMovePoint);
+  onMovePointRef.current = onMovePoint;
+  const flushMove = useCallback(() => {
+    if (moveRafRef.current !== null) {
+      cancelAnimationFrame(moveRafRef.current);
+      moveRafRef.current = null;
+    }
+    const m = pendingMoveRef.current;
+    if (m) {
+      pendingMoveRef.current = null;
+      onMovePointRef.current(m.index, m.point);
+    }
+  }, []);
+  const scheduleMove = useCallback(
+    (index: number, point: SamplePoint) => {
+      pendingMoveRef.current = { index, point };
+      if (typeof requestAnimationFrame !== 'function') {
+        flushMove();
+        return;
+      }
+      if (moveRafRef.current !== null) return;
+      moveRafRef.current = requestAnimationFrame(() => {
+        moveRafRef.current = null;
+        flushMove();
+      });
+    },
+    [flushMove],
+  );
+
   const handleOverlayPointerMove = useCallback(
     (e: React.PointerEvent) => {
       if (!imageDataRef.current) return;
@@ -264,7 +348,7 @@ export default function ImagePalettePanel({
 
       const dragIdx = dragRef.current;
       if (dragIdx !== null) {
-        onMovePoint(dragIdx, { hex: sampleHexAt(imageDataRef.current, x, y), x, y });
+        scheduleMove(dragIdx, { hex: sampleHexAt(imageDataRef.current, x, y), x, y });
         return;
       }
       const press = pressRef.current;
@@ -277,13 +361,22 @@ export default function ImagePalettePanel({
         }
       }
     },
-    [normFromEvent, onMovePoint, updateLoupe],
+    [normFromEvent, scheduleMove, updateLoupe],
+  );
+
+  // Flush any pending coalesced move if the panel unmounts mid-drag.
+  useEffect(
+    () => () => {
+      if (moveRafRef.current !== null) flushMove();
+    },
+    [flushMove],
   );
 
   const endDrag = useCallback(() => {
+    flushMove();
     dragRef.current = null;
     setDraggingIndex(null);
-  }, []);
+  }, [flushMove]);
 
   const handleOverlayPointerUp = useCallback(
     (e: React.PointerEvent) => {
@@ -417,7 +510,8 @@ export default function ImagePalettePanel({
       />
 
       {!hasImage ? (
-        /* Empty state: the upload-first hero dropzone. */
+        <>
+        {/* Empty state: the upload-first hero dropzone. */}
         <div
           role="region"
           aria-label="Drop an image here, or use the upload button; pasting an image from the clipboard also works"
@@ -451,6 +545,51 @@ export default function ImagePalettePanel({
             {busy ? 'Reading…' : 'Upload image'}
           </button>
         </div>
+
+        {/* Sample images: one click loads a bundled demo so a visitor can try
+            the extractor without finding a file of their own. */}
+        <div className="flex flex-col gap-2">
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
+            No image? Try a sample
+          </p>
+          <div className="grid grid-cols-4 gap-2">
+            {SAMPLE_IMAGES.map((s) => {
+              const isLoading = loadingSampleId === s.id;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => void loadSample(s)}
+                  disabled={busy}
+                  aria-label={`Use the ${s.label} sample image`}
+                  aria-busy={isLoading}
+                  title={s.label}
+                  className={[
+                    'group relative aspect-[4/3] overflow-hidden bg-paper-2 ring-1 transition-shadow duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none',
+                    // Keep the clicked thumbnail bright + accent-ringed while it
+                    // loads; dim the others so the click clearly registers.
+                    isLoading ? 'ring-accent' : 'ring-ink/15 hover:ring-ink/40',
+                    busy && !isLoading ? 'opacity-50' : '',
+                  ].join(' ')}
+                >
+                  <img
+                    src={s.src}
+                    alt=""
+                    loading="lazy"
+                    draggable={false}
+                    className="h-full w-full object-cover transition-transform duration-200 ease-out group-hover:scale-105"
+                  />
+                  {isLoading && (
+                    <span className="absolute inset-0 flex items-center justify-center bg-ink/35">
+                      <span className="h-5 w-5 animate-spin rounded-full border-2 border-paper/40 border-t-paper" />
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        </>
       ) : (
         <div
           className="relative mx-auto w-fit max-w-full select-none"

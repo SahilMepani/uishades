@@ -16,7 +16,10 @@
  * To avoid enumeration, the response is ALWAYS `{ ok: true }` (200) regardless of
  * whether the id exists, is already flagged, or just got flagged - a probe can't
  * distinguish a real palette from a miss. CSRF is enforced upstream in
- * `middleware.ts`. Cache-Control is `private, no-store` (it's a mutation).
+ * `middleware.ts`: `/api/palettes` is in `CSRF_PROTECTED_PREFIXES`, and the gate
+ * matches by `startsWith`, so this `/api/palettes/[id]/report` mutation is
+ * covered by the same-origin check. Cache-Control is `private, no-store` (it's a
+ * mutation).
  */
 export const prerender = false;
 
@@ -38,7 +41,10 @@ const RATE_MAX = 5; // reports per IP per hour
 // actor's burst (capped at RATE_MAX/hour) still needs sustained or multi-IP
 // pressure to hide a palette. Manual review catches the rest.
 const REPORT_THRESHOLD = 3;
-// Reports never expire from the tally - count across all time for this palette.
+// Reports never expire from the tally - we count across all time for this
+// palette (TALLY_SINCE = 0). This is now actually honored: `pruneMagicRequests`
+// excludes `report:%` keys, so the `report:<id>` tally rows survive pruning and
+// slow legitimate reports still accumulate to the flag threshold.
 const TALLY_SINCE = 0;
 
 export const POST: APIRoute = async ({ params, request }) => {

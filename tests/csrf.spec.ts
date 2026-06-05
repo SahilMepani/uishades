@@ -1,7 +1,10 @@
 /**
  * Same-origin CSRF gate (regression for the login-CSRF on the magic-link
- * callback). Astro's built-in origin check is a no-op under output:'static', so
- * middleware enforces this; here we test the pure logic it delegates to.
+ * callback). Astro's built-in origin check IS active in production - the
+ * `@astrojs/cloudflare` adapter declares `buildOutput: 'server'`, so Astro
+ * computes `checkOrigin = true` despite `output: 'static'`. This middleware gate
+ * is a stricter superset (it also blocks cross-origin application/json POSTs and
+ * honors Sec-Fetch-Site); here we test the pure logic it delegates to.
  */
 import { describe, it, expect } from 'vitest';
 import { isSameOrigin, isCsrfBlocked } from '../src/lib/auth/csrf';
@@ -49,6 +52,22 @@ describe('isCsrfBlocked', () => {
 
   it('allows a same-origin state-changing request through to the handler', () => {
     expect(isCsrfBlocked(req('POST', { Origin: 'https://uishades.com' }), u('/api/presets'))).toBe(false);
+  });
+
+  it('blocks a cross-origin POST to palettes (create)', () => {
+    expect(isCsrfBlocked(req('POST', { Origin: 'https://evil.com' }), u('/api/palettes'))).toBe(true);
+    expect(isSameOrigin(req('POST', { Origin: 'https://evil.com' }), u('/api/palettes'))).toBe(false);
+  });
+
+  it('blocks a cross-origin POST to a nested palettes route (vote)', () => {
+    expect(isCsrfBlocked(req('POST', { Origin: 'https://evil.com' }), u('/api/palettes/abc/vote'))).toBe(true);
+    expect(isSameOrigin(req('POST', { Origin: 'https://evil.com' }), u('/api/palettes/abc/vote'))).toBe(false);
+  });
+
+  it('allows same-origin state-changing requests to palettes and its nested routes', () => {
+    expect(isCsrfBlocked(req('POST', { Origin: 'https://uishades.com' }), u('/api/palettes'))).toBe(false);
+    expect(isCsrfBlocked(req('POST', { Origin: 'https://uishades.com' }), u('/api/palettes/abc/vote'))).toBe(false);
+    expect(isCsrfBlocked(req('PATCH', { Origin: 'https://uishades.com' }), u('/api/palettes/abc'))).toBe(false);
   });
 
   it('ignores GET — OAuth callbacks are GET and protected by state/PKCE', () => {
