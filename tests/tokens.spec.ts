@@ -163,6 +163,7 @@ describe('multi-color palette export (the reported bug)', () => {
 
 describe('dedupeGroupNames', () => {
   const tk = scaleToTokens(buildScale(hex));
+  const oklch = (l: number, c: number, h: number) => ({ l, c, h });
 
   it('leaves already-unique slugs untouched (sanitized)', () => {
     const out = dedupeGroupNames([
@@ -172,7 +173,7 @@ describe('dedupeGroupNames', () => {
     expect(out.map((g) => g.name)).toEqual(['coral', 'royal-blue']);
   });
 
-  it('suffixes colliding slugs so JSON/Tailwind keys never overwrite', () => {
+  it('falls back to a numeric suffix when no source OKLCH is given', () => {
     const out = dedupeGroupNames([
       { name: 'indigo', tokens: tk },
       { name: 'indigo', tokens: tk },
@@ -188,5 +189,64 @@ describe('dedupeGroupNames', () => {
     ]);
     const json = JSON.parse(toW3CTokens(deduped, 'hex'));
     expect(Object.keys(json)).toEqual(['indigo', 'indigo-2']);
+  });
+
+  describe('OKLCH-derived qualifiers (the descriptive fix)', () => {
+    it('appends light-/dark- when the collision differs in lightness', () => {
+      const lighter = dedupeGroupNames([
+        { name: 'maroon', tokens: tk, source: oklch(0.4, 0.1, 30) },
+        { name: 'maroon', tokens: tk, source: oklch(0.62, 0.1, 30) },
+      ]);
+      expect(lighter.map((g) => g.name)).toEqual(['maroon', 'light-maroon']);
+
+      const darker = dedupeGroupNames([
+        { name: 'maroon', tokens: tk, source: oklch(0.5, 0.1, 30) },
+        { name: 'maroon', tokens: tk, source: oklch(0.28, 0.1, 30) },
+      ]);
+      expect(darker.map((g) => g.name)).toEqual(['maroon', 'dark-maroon']);
+    });
+
+    it('appends muted-/vivid- when the collision differs in chroma', () => {
+      const out = dedupeGroupNames([
+        { name: 'teal', tokens: tk, source: oklch(0.5, 0.05, 195) },
+        { name: 'teal', tokens: tk, source: oklch(0.5, 0.2, 195) }, // more chroma
+        { name: 'teal', tokens: tk, source: oklch(0.5, 0.01, 195) }, // less chroma
+      ]);
+      expect(out.map((g) => g.name)).toEqual(['teal', 'vivid-teal', 'muted-teal']);
+    });
+
+    it('appends a hue word when the collision differs mainly in hue', () => {
+      const out = dedupeGroupNames([
+        { name: 'maroon', tokens: tk, source: oklch(0.5, 0.15, 30) }, // red
+        { name: 'maroon', tokens: tk, source: oklch(0.5, 0.15, 70) }, // orange
+      ]);
+      expect(out.map((g) => g.name)).toEqual(['maroon', 'orange-maroon']);
+    });
+
+    it('numerically suffixes a qualifier that itself collides', () => {
+      const out = dedupeGroupNames([
+        { name: 'maroon', tokens: tk, source: oklch(0.5, 0.1, 30) },
+        { name: 'maroon', tokens: tk, source: oklch(0.3, 0.1, 30) }, // dark
+        { name: 'maroon', tokens: tk, source: oklch(0.22, 0.1, 30) }, // also dark
+      ]);
+      expect(out.map((g) => g.name)).toEqual(['maroon', 'dark-maroon', 'dark-maroon-2']);
+    });
+
+    it('falls back to a numeric suffix for perceptually identical swatches', () => {
+      const out = dedupeGroupNames([
+        { name: 'maroon', tokens: tk, source: oklch(0.4, 0.1, 30) },
+        { name: 'maroon', tokens: tk, source: oklch(0.4, 0.1, 30) },
+      ]);
+      expect(out.map((g) => g.name)).toEqual(['maroon', 'maroon-2']);
+    });
+
+    it('keeps qualified W3C JSON keys distinct', () => {
+      const deduped = dedupeGroupNames([
+        { name: 'maroon', tokens: tk, source: oklch(0.5, 0.1, 30) },
+        { name: 'maroon', tokens: tk, source: oklch(0.3, 0.1, 30) },
+      ]);
+      const json = JSON.parse(toW3CTokens(deduped, 'hex'));
+      expect(Object.keys(json)).toEqual(['maroon', 'dark-maroon']);
+    });
   });
 });

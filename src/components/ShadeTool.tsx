@@ -16,7 +16,7 @@ import type {
   Shade,
 } from '../lib/color/types';
 import type { SamplePoint } from '../lib/color/extract-image';
-import { parseColor } from '../lib/color/parse';
+import { parseColor, toOklch } from '../lib/color/parse';
 import { formatForCopy } from '../lib/color/format';
 import { oklchRamp } from '../lib/color/ramp';
 import { buildScale } from '../lib/color/scale';
@@ -717,6 +717,9 @@ function ShadeToolInner({
   // Export groups for the current view + palette, consumed by the shade-grid
   // export row inside the view component. Multi-column (2+ palette colors) →
   // one collision-safe group per swatch; else just the active scale or ramp.
+  // `source` is each swatch's own OKLCH so dedupeGroupNames can disambiguate a
+  // name collision descriptively (e.g. `maroon` + `dark-maroon`) rather than
+  // with a bare `-2`.
   const exportGroups = useMemo<ColorGroup[]>(() => {
     const multiColumn = paletteHexes.length >= 2;
     const groupName = (i: number) => paletteNames[i] ?? brandName ?? 'brand';
@@ -726,6 +729,7 @@ function ShadeToolInner({
           paletteHexes.map((h, i) => ({
             name: groupName(i),
             tokens: rampToTokens(oklchRamp(h)),
+            source: toOklch(h),
           })),
         );
       }
@@ -736,6 +740,7 @@ function ShadeToolInner({
         paletteHexes.map((h, i) => ({
           name: groupName(i),
           tokens: scaleToTokens(buildScale(h)),
+          source: toOklch(h),
         })),
       );
     }
@@ -1986,9 +1991,9 @@ function wcagSpoken(level: WcagLevel): string {
  * the level black text and the level white text each reach against the swatch
  * color. Each badge is rendered in the very color it describes (the black-text
  * level in black, the white-text level in white) so its legibility on the
- * swatch is itself the demonstration of that contrast. Decorative here -
- * `aria-hidden` - because the swatch button's aria-label already spells both
- * levels out for screen readers.
+ * swatch is itself the demonstration of that contrast. Revealed on hover/focus.
+ * Decorative here - `aria-hidden` - because the swatch button's aria-label
+ * already spells both levels out for screen readers.
  */
 function ContrastLevels({ bg }: { bg: Hex }) {
   const swatches = [
@@ -2024,9 +2029,10 @@ function ContrastLevels({ bg }: { bg: Hex }) {
  * mirrors the smaller PaletteTray swatches: single-click makes it the live page
  * color (`onSelectColor`); double-click opens the color picker seeded with that
  * swatch and writes the adjustment back (`onEditColor`); and a small X revealed
- * on hover/focus removes it (`onRemove`). On hover (or keyboard focus) each
- * swatch also reveals its color name at the top and hex at the bottom,
- * left-aligned, in black or white for contrast against the swatch.
+ * on hover/focus removes it (`onRemove`). Each color's name is shown as a label
+ * ABOVE its swatch (not inside it, always visible); the swatch itself reveals
+ * its WCAG contrast levels + hex at the bottom on hover/focus, left-aligned, in
+ * black or white for contrast against the swatch.
  *
  * `onEditColor`/`onRemove` are optional so the band degrades gracefully: image
  * mode passes `readOnly` (colors are edited by dragging on the image, so no
@@ -2050,10 +2056,26 @@ function PalettePreviewBar({
 }) {
   const canEdit = !readOnly && !!onEditColor;
   return (
-    <ul
-      aria-label="Palette preview"
-      className="flex h-[150px] w-full overflow-hidden border border-hairline"
-    >
+    <div className="w-full">
+      {/* Per-column name labels, sitting ABOVE the colored band (not inside the
+          swatch). `aria-hidden` because each swatch button's aria-label already
+          spells out its name; columns are `flex-1` to line up with the band's
+          equal-width swatches below. */}
+      <div aria-hidden="true" className="flex w-full">
+        {tray.map((c, i) => (
+          <div
+            key={`name-${c.hex}-${i}`}
+            className="min-w-0 flex-1 truncate pb-1 pr-3 font-display text-sm text-ink"
+            title={nameForHex(c.hex)}
+          >
+            {nameForHex(c.hex)}
+          </div>
+        ))}
+      </div>
+      <ul
+        aria-label="Palette preview"
+        className="flex h-[150px] w-full overflow-hidden border border-hairline"
+      >
       {tray.map((c, i) => {
         const textColor = readableTextOn(c.hex);
         const blackLevel = wcagLevel(contrastRatio(c.hex, '#000000'));
@@ -2065,12 +2087,9 @@ function PalettePreviewBar({
               onClick={() => onSelectColor(i)}
               onDoubleClick={canEdit ? () => onEditColor!(i) : undefined}
               aria-label={`Use ${c.hex} (${nameForHex(c.hex)}) as the current color${canEdit ? ' (double-click to adjust)' : ''}. Black text ${wcagSpoken(blackLevel)}, white text ${wcagSpoken(whiteLevel)}.`}
-              className="group flex h-full w-full cursor-pointer flex-col justify-between p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60"
+              className="group flex h-full w-full cursor-pointer flex-col justify-end p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60"
               style={{ backgroundColor: c.hex, color: textColor }}
             >
-              <span className="truncate pr-7 font-display text-sm opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
-                {nameForHex(c.hex)}
-              </span>
               <span className="flex flex-col gap-1.5">
                 <ContrastLevels bg={c.hex} />
                 <span className="truncate font-mono text-xs uppercase opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
@@ -2097,7 +2116,8 @@ function PalettePreviewBar({
           </li>
         );
       })}
-    </ul>
+      </ul>
+    </div>
   );
 }
 
