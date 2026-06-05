@@ -18,14 +18,15 @@ import { useToast } from './Toast';
  * the shared "Copy as" value-format picker pushed to the far right of the row:
  *   - Copy - writes the currently-selected format's code straight to the
  *     clipboard (no popup).
- *   - View - opens a modal that shows every format as a tab, with the code
- *     for the active tab and its own Copy button.
+ *   - View - opens a modal that repeats the same "Export" + "Copy as" dropdown
+ *     controls over a live code preview with its own Copy button.
  *
  * Moving the code preview into the modal keeps the inline layout short so the
  * scale rows sit directly under the controls instead of being pushed down by
- * a tall `<pre>`. The dropdown is the single source of truth for the selected
- * format - the modal's tabs drive the same `onFormatChange`, so browsing a
- * tab updates the dropdown (and the persisted preference) too.
+ * a tall `<pre>`. The export-format dropdown is the single source of truth for
+ * the selected format - the modal's copy of it drives the same
+ * `onFormatChange`/`onCopyFormatChange`, so changing the format or value mode
+ * in the modal updates the inline row (and the persisted preference) too.
  */
 
 export interface ExportDropdownProps {
@@ -143,34 +144,12 @@ export default function ExportDropdown({
   return (
     <div className="flex flex-col gap-3" data-export-format={format}>
       <div className="flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-3 text-sm text-ink/80">
-          <span className="eyebrow">Export</span>
-          {/* `appearance-none` + overlaid chevron; shares `SELECT_CLASS` with
-              the "Copy as" picker so the two boxes are identical. */}
-          <span className="relative inline-flex">
-            <select
-              value={format}
-              onChange={(e) => onFormatChange(e.target.value as ExportFormat)}
-              aria-label="Export as"
-              className={SELECT_CLASS}
-            >
-              {FORMAT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <SelectChevron />
-          </span>
-        </label>
-
-        {/* The shared "Copy as" value-format picker, sitting inline right after the
-            export-format dropdown (no visible label - the options are self-describing). */}
-        <CopyFormatPicker
-          value={copyFormat}
-          onChange={onCopyFormatChange}
+        <ExportFormatControls
+          format={format}
+          copyFormat={copyFormat}
           hasStop={hasStop}
-          exportFormat={format}
+          onFormatChange={onFormatChange}
+          onCopyFormatChange={onCopyFormatChange}
         />
 
         <div className="flex items-center gap-2">
@@ -205,8 +184,11 @@ export default function ExportDropdown({
           groups={groups}
           format={format}
           valueMode={valueMode}
+          copyFormat={copyFormat}
+          hasStop={hasStop}
           canCopy={canCopy}
           onFormatChange={onFormatChange}
+          onCopyFormatChange={onCopyFormatChange}
           onCopy={copyText}
           onClose={closeModal}
           triggerRef={viewTriggerRef}
@@ -221,12 +203,71 @@ const ICON_BUTTON_CLASS =
   'transition-colors duration-150 ease-out hover:bg-paper-2 hover:text-ink ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60';
 
+/**
+ * The "Export" format `<select>` plus the shared "Copy as" value-format picker.
+ * Shared verbatim between the inline export-controls row (above the ramp/shades)
+ * and the export modal, so the two surfaces are identical - same boxes, same
+ * `onFormatChange`/`onCopyFormatChange`, same oklch()-greying behavior driven by
+ * the selected export format. The select uses `appearance-none` + an overlaid
+ * chevron and shares `SELECT_CLASS` with the "Copy as" picker so the boxes match.
+ */
+function ExportFormatControls({
+  format,
+  copyFormat,
+  hasStop,
+  onFormatChange,
+  onCopyFormatChange,
+}: {
+  format: ExportFormat;
+  copyFormat: CopyFormat;
+  hasStop: boolean;
+  onFormatChange: (next: ExportFormat) => void;
+  onCopyFormatChange: (next: CopyFormat) => void;
+}) {
+  return (
+    <>
+      <label className="flex items-center gap-3 text-sm text-ink/80">
+        <span className="eyebrow">Export</span>
+        <span className="relative inline-flex">
+          <select
+            value={format}
+            onChange={(e) => onFormatChange(e.target.value as ExportFormat)}
+            aria-label="Export as"
+            className={SELECT_CLASS}
+          >
+            {FORMAT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <SelectChevron />
+        </span>
+      </label>
+
+      {/* The shared "Copy as" value-format picker, sitting right after the
+          export-format dropdown (no visible label - the options are
+          self-describing). It greys out oklch() when the selected format only
+          emits hex (W3C / Figma). */}
+      <CopyFormatPicker
+        value={copyFormat}
+        onChange={onCopyFormatChange}
+        hasStop={hasStop}
+        exportFormat={format}
+      />
+    </>
+  );
+}
+
 function ExportModal({
   groups,
   format,
   valueMode,
+  copyFormat,
+  hasStop,
   canCopy,
   onFormatChange,
+  onCopyFormatChange,
   onCopy,
   onClose,
   triggerRef,
@@ -234,8 +275,11 @@ function ExportModal({
   groups: ColorGroup[];
   format: ExportFormat;
   valueMode: ValueMode;
+  copyFormat: CopyFormat;
+  hasStop: boolean;
   canCopy: boolean;
   onFormatChange: (next: ExportFormat) => void;
+  onCopyFormatChange: (next: CopyFormat) => void;
   onCopy: (value: string, label: ExportFormat) => void;
   onClose: () => void;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
@@ -332,31 +376,20 @@ function ExportModal({
           </button>
         </div>
 
-        <div
-          role="tablist"
-          aria-label="Export format"
-          className="flex flex-wrap gap-1 border-b border-hairline px-3 py-2"
-        >
-          {FORMAT_OPTIONS.map((opt) => {
-            const active = opt.value === format;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => onFormatChange(opt.value)}
-                className={[
-                  'rounded-sm px-2.5 py-1.5 font-mono text-xs tracking-tight whitespace-nowrap',
-                  'transition-colors duration-150 ease-out motion-reduce:transition-none',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
-                  active ? 'bg-ink text-paper' : 'text-ink/70 hover:bg-paper-2 hover:text-ink',
-                ].join(' ')}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
+        {/* Same dropdown controls as the inline export-controls row above the
+            ramp/shades: an "Export" format picker plus the shared "Copy as"
+            value-format picker (which greys out oklch() for formats that only
+            emit hex). The dropdown is the single source of truth for the
+            selected format - it drives the same `onFormatChange` as the inline
+            row, so changing it here updates the persisted preference too. */}
+        <div className="flex flex-wrap items-center gap-3 border-b border-hairline px-5 py-3">
+          <ExportFormatControls
+            format={format}
+            copyFormat={copyFormat}
+            hasStop={hasStop}
+            onFormatChange={onFormatChange}
+            onCopyFormatChange={onCopyFormatChange}
+          />
         </div>
 
         <div className="relative min-h-0 flex-1">
