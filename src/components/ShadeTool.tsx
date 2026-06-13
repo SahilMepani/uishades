@@ -781,6 +781,13 @@ function ShadeToolInner({
   // groups (and the grid) don't rebuild every palette color's ramp on each
   // render just because an inline `.map` produced a fresh array identity.
   const paletteHexes = useMemo(() => tray.map((c) => c.hex), [tray]);
+  // Column index where the auto-seeded semantic block (Neutral/…) begins —
+  // shared by the preview band and the shade grid so their user↔semantic gap
+  // lines up. `length` when there's no seeded block (no gap then).
+  const paletteBoundary = useMemo(() => {
+    const firstFixed = tray.findIndex((c) => c.fixed);
+    return firstFixed === -1 ? tray.length : firstFixed;
+  }, [tray]);
 
   // "See your color as a UI" preview inputs. The tool is single-color centric,
   // so we feed the neutral-shell adapter the tray (when it holds colors) or just
@@ -1303,6 +1310,7 @@ function ShadeToolInner({
                 sourceHex={hex}
                 paletteHexes={paletteHexes}
                 paletteNames={paletteNames}
+                paletteBoundary={paletteBoundary}
                 copyFormat={copyFormat}
                 brandName={brandName}
                 onCopy={handleCopyShade}
@@ -1315,6 +1323,7 @@ function ShadeToolInner({
                 sourceHex={hex}
                 paletteHexes={paletteHexes}
                 paletteNames={paletteNames}
+                paletteBoundary={paletteBoundary}
                 copyFormat={copyFormat}
                 brandName={brandName}
                 onCopy={handleCopyShade}
@@ -2213,6 +2222,42 @@ function PalettePreviewBar({
     commitSemanticEdit();
   };
 
+  // The user's brand colors are a contiguous prefix; the auto-seeded semantic
+  // block (Neutral/Success/Warning/Error) is the `fixed` suffix. `boundary` is
+  // where that suffix begins — exactly where `handleAddToTray` inserts a new
+  // color — so the "+" lives there (straddling the last user color's right edge,
+  // i.e. next to the freshly-added color, or just Primary when it's the only
+  // one) rather than trailing the whole band. A visible gap separates the two
+  // groups, but only when both are actually present.
+  const firstFixed = tray.findIndex((c) => c.fixed);
+  const boundary = firstFixed === -1 ? tray.length : firstFixed;
+  const hasGap = boundary > 0 && boundary < tray.length;
+  // Index of the user swatch the "+" straddles; -1 ⇒ no user colors, so it sits
+  // at the left edge of the first (fixed) swatch instead.
+  const addAfterIndex = boundary > 0 ? boundary - 1 : -1;
+  // Margin that opens the gap between the user group and the seeded block; the
+  // header column and the band swatch at the boundary both get it so the two
+  // rows stay aligned.
+  const gapClass = (i: number) => (hasGap && i === boundary ? ' ml-12' : '');
+
+  const renderAddButton = (side: 'right' | 'left') =>
+    onAddColor ? (
+      <button
+        type="button"
+        onClick={onAddColor}
+        aria-label="Add a color to the palette"
+        title="Add a color to the palette"
+        className={
+          'absolute top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-ink text-paper shadow-md ring-2 ring-paper transition duration-150 ease-out hover:scale-110 hover:bg-ink/90 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 active:scale-95 motion-reduce:transition-none motion-reduce:hover:scale-100 ' +
+          (side === 'right' ? 'right-0 translate-x-1/2' : 'left-0 -translate-x-1/2')
+        }
+      >
+        <svg viewBox="0 0 16 16" aria-hidden="true" className="h-4 w-4">
+          <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+        </svg>
+      </button>
+    ) : null;
+
   return (
     <div className="w-full">
       {/* Per-column header sitting ABOVE the colored band (not inside the
@@ -2228,7 +2273,7 @@ function PalettePreviewBar({
           return (
             <div
               key={`name-${c.hex}-${i}`}
-              className="flex min-w-0 flex-1 items-center gap-2 pb-1 pr-3"
+              className={'flex min-w-0 flex-1 items-center gap-2 pb-1 pr-3' + gapClass(i)}
             >
               {/* LEFT: semantic role + rename pencil (or the inline editor). */}
               {editing ? (
@@ -2295,7 +2340,7 @@ function PalettePreviewBar({
         const blackLevel = wcagLevel(contrastRatio(c.hex, '#000000'));
         const whiteLevel = wcagLevel(contrastRatio(c.hex, '#ffffff'));
         return (
-          <li key={`${c.hex}-${i}`} className="group relative min-w-0 flex-1">
+          <li key={`${c.hex}-${i}`} className={'group relative min-w-0 flex-1' + gapClass(i)}>
             <button
               type="button"
               onClick={() => onSelectColor(i)}
@@ -2352,26 +2397,16 @@ function PalettePreviewBar({
                 </svg>
               </button>
             )}
+            {/* The "+" straddles the right edge of the last user color (where a
+                new color gets inserted), sitting in the gap before the seeded
+                block. With no user colors at all it rides the first swatch's
+                left edge instead. */}
+            {addAfterIndex === i && renderAddButton('right')}
+            {addAfterIndex === -1 && i === 0 && renderAddButton('left')}
           </li>
         );
       })}
       </ul>
-      {onAddColor && (
-        // Straddles the band's right edge - half over the last swatch, half
-        // outside. Lives outside the <ul> (in the relative wrapper) so it's
-        // free to protrude; vertically centered on the band.
-        <button
-          type="button"
-          onClick={onAddColor}
-          aria-label="Add a color to the palette"
-          title="Add a color to the palette"
-          className="absolute right-0 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-ink text-paper shadow-md ring-2 ring-paper transition duration-150 ease-out hover:scale-110 hover:bg-ink/90 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 active:scale-95 motion-reduce:transition-none motion-reduce:hover:scale-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-md disabled:hover:scale-100 disabled:hover:bg-ink disabled:hover:shadow-md disabled:active:scale-100"
-        >
-          <svg viewBox="0 0 16 16" aria-hidden="true" className="h-4 w-4">
-            <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-          </svg>
-        </button>
-      )}
       </div>
     </div>
   );

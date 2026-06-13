@@ -29,6 +29,8 @@ export interface TailwindScaleProps {
    * `'brand'` when absent.
    */
   paletteNames?: string[];
+  /** Column index where the seeded semantic block begins; gaps the grid to match the band. */
+  paletteBoundary?: number;
   copyFormat: CopyFormat;
   brandName?: string;
   onCopy: (hex: Hex) => void;
@@ -43,6 +45,7 @@ export default function TailwindScale({
   sourceHex,
   paletteHexes,
   paletteNames,
+  paletteBoundary,
   copyFormat,
   brandName,
   onCopy,
@@ -56,6 +59,7 @@ export default function TailwindScale({
         <PaletteShadeGrid
           hexes={paletteHexes!}
           names={paletteNames}
+          boundary={paletteBoundary}
           kind="scale"
           copyFormat={copyFormat}
           brandName={brandName}

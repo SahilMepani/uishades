@@ -72,6 +72,13 @@ export interface PaletteShadeGridProps {
   brandName?: string;
   onCopy: (hex: Hex) => void;
   onNavigate: (hex: Hex) => void;
+  /**
+   * Column index where the auto-seeded semantic block (Neutral/…) begins. The
+   * column at this index gets a left gap so the grid's user↔semantic divide
+   * lines up with the `PalettePreviewBar` band above. Omit (or 0 / ≥ length) for
+   * no gap.
+   */
+  boundary?: number;
 }
 
 export default function PaletteShadeGrid({
@@ -82,7 +89,10 @@ export default function PaletteShadeGrid({
   brandName,
   onCopy,
   onNavigate,
+  boundary,
 }: PaletteShadeGridProps) {
+  // Mirror PalettePreviewBar's gap: only when both groups are actually present.
+  const hasGap = boundary != null && boundary > 0 && boundary < hexes.length;
   // Build each column's shades keyed by that column's OWN hex (+ kind), reusing
   // the prior computation for any hex that didn't change. During an image-mode
   // point drag only ONE column's hex changes per frame, but the tray's array
@@ -133,7 +143,10 @@ export default function PaletteShadeGrid({
             role="listitem"
             key={`${hexes[col]}-${col}`}
             aria-label={`Shades of ${hexes[col]}`}
-            className="flex min-w-0 flex-1 flex-col gap-[2px]"
+            className={
+              'flex min-w-0 flex-1 flex-col gap-[2px]' +
+              (hasGap && col === boundary ? ' ml-12' : '')
+            }
           >
             {shades.map((shade, row) => (
               <MemoGridSwatch

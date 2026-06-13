@@ -32,6 +32,8 @@ export interface ContinuousRampProps {
    * `brandName` / `'brand'` when absent.
    */
   paletteNames?: string[];
+  /** Column index where the seeded semantic block begins; gaps the grid to match the band. */
+  paletteBoundary?: number;
   copyFormat: CopyFormat;
   brandName?: string;
   onCopy: (hex: Hex) => void;
@@ -46,6 +48,7 @@ export default function ContinuousRamp({
   sourceHex,
   paletteHexes,
   paletteNames,
+  paletteBoundary,
   copyFormat,
   brandName,
   onCopy,
@@ -59,6 +62,7 @@ export default function ContinuousRamp({
         <PaletteShadeGrid
           hexes={paletteHexes!}
           names={paletteNames}
+          boundary={paletteBoundary}
           kind="ramp"
           copyFormat={copyFormat}
           brandName={brandName}
