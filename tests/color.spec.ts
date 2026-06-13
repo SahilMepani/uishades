@@ -67,11 +67,11 @@ describe('classicRamp — reference parity', () => {
 });
 
 describe('oklchRamp', () => {
-  it('produces exactly 20 shades with no pure white/black endpoints', () => {
+  it('produces exactly 11 shades with no pure white/black endpoints', () => {
     const ramp = oklchRamp('#4040ff');
-    expect(ramp.shades).toHaveLength(20);
+    expect(ramp.shades).toHaveLength(11);
     expect(ramp.shades[0].hex).not.toBe('#ffffff');
-    expect(ramp.shades[19].hex).not.toBe('#000000');
+    expect(ramp.shades[10].hex).not.toBe('#000000');
     expect(ramp.mode).toBe('oklch');
   });
 
@@ -89,14 +89,14 @@ describe('oklchRamp', () => {
     expect(ramp.shades[ramp.inputIndex].hex).toBe('#4040ff');
     expect(ramp.shades[ramp.inputIndex].isInput).toBe(true);
     expect(ramp.inputIndex).toBeGreaterThanOrEqual(0);
-    expect(ramp.inputIndex).toBeLessThanOrEqual(19);
+    expect(ramp.inputIndex).toBeLessThanOrEqual(10);
   });
 
   it('handles achromatic input (#777) without crashing', () => {
     const ramp = oklchRamp('#777777');
-    expect(ramp.shades).toHaveLength(20);
+    expect(ramp.shades).toHaveLength(11);
     expect(ramp.shades[0].hex).not.toBe('#ffffff');
-    expect(ramp.shades[19].hex).not.toBe('#000000');
+    expect(ramp.shades[10].hex).not.toBe('#000000');
   });
 });
 

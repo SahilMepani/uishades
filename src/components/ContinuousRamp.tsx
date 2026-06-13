@@ -1,25 +1,19 @@
 import type {
   ContinuousRamp as ContinuousRampData,
   CopyFormat,
-  ExportFormat,
   Hex,
 } from '../lib/color/types';
-import type { ColorGroup, ValueMode } from '../lib/exports/tokens';
+import { STOPS } from '../lib/color/anchors';
 import ShadeRow from './ShadeRow';
 import PaletteShadeGrid from './PaletteShadeGrid';
-import ExportRow from './ExportRow';
 
 /**
- * Renders a `ContinuousRamp` (OKLCH 20-step ramp) as a stack of `<ShadeRow>`
- * entries, with the shared `ExportRow` atop it (the same lazy boundary the
- * Tailwind scale and the sidebar use, so the export chunk downloads once).
+ * Renders a `ContinuousRamp` (OKLCH 11-step ramp) as a stack of `<ShadeRow>`
+ * entries. The export control no longer lives here - it sits in the metadata
+ * row up in `ShadeTool` as a single "Export" link (see `ExportControls`).
  *
- * Ramp tokens are keyed by 1-based step index (1..20). The export value format
- * (hex vs oklch()) is derived upstream from the shared "Copy as" picker and
- * passed down as `valueMode` - there is no separate value control. The export
- * groups are derived in `ShadeTool` and passed as `exportGroups`. The ramp data
- * carries its mode in `ramp.mode` (always `oklch` now that the classic walk is
- * no longer surfaced); we keep it as a data attribute for tests.
+ * The ramp data carries its mode in `ramp.mode` (always `oklch` now that the
+ * classic walk is no longer surfaced); we keep it as a data attribute for tests.
  */
 
 export interface ContinuousRampProps {
@@ -29,8 +23,7 @@ export interface ContinuousRampProps {
   /**
    * Palette tray colors (in tray order). When two or more are present the
    * single ramp is replaced by a column-per-color grid that lines up with the
-   * `PalettePreviewBar` band above; the export controls stay put but now emit
-   * every color, not just the active one.
+   * `PalettePreviewBar` band above.
    */
   paletteHexes?: Hex[];
   /**
@@ -40,21 +33,12 @@ export interface ContinuousRampProps {
    */
   paletteNames?: string[];
   copyFormat: CopyFormat;
-  exportFormat: ExportFormat;
-  /**
-   * Export groups for the current ramp/palette, derived in `ShadeTool` so the
-   * shade-grid row and the sidebar row emit identical code (single source of
-   * truth). One group per palette color in multi-column mode, else just the
-   * active ramp.
-   */
-  exportGroups: ColorGroup[];
-  valueMode: ValueMode;
   brandName?: string;
   onCopy: (hex: Hex) => void;
+  /** Multi-color grid only: use a shade as the new source. */
   onNavigate: (hex: Hex) => void;
-  onExportCopy: (text: string) => void;
-  onExportFormatChange: (next: ExportFormat) => void;
-  onCopyFormatChange: (next: CopyFormat) => void;
+  /** Single-color rows: load a shade into the picker without changing source. */
+  onInspect: (hex: Hex) => void;
 }
 
 export default function ContinuousRamp({
@@ -63,29 +47,14 @@ export default function ContinuousRamp({
   paletteHexes,
   paletteNames,
   copyFormat,
-  exportFormat,
-  exportGroups,
-  valueMode,
   brandName,
   onCopy,
   onNavigate,
-  onExportCopy,
-  onExportFormatChange,
-  onCopyFormatChange,
+  onInspect,
 }: ContinuousRampProps) {
   const multiColumn = (paletteHexes?.length ?? 0) >= 2;
   return (
     <div className="flex flex-col gap-4">
-      <ExportRow
-        groups={exportGroups}
-        format={exportFormat}
-        valueMode={valueMode}
-        copyFormat={copyFormat}
-        hasStop={false}
-        onCopyFormatChange={onCopyFormatChange}
-        onFormatChange={onExportFormatChange}
-        onCopy={onExportCopy}
-      />
       {multiColumn ? (
         <PaletteShadeGrid
           hexes={paletteHexes!}
@@ -109,10 +78,9 @@ export default function ContinuousRamp({
               <ShadeRow
                 shade={shade}
                 sourceHex={sourceHex}
-                copyFormat={copyFormat}
-                brandName={brandName}
+                gutterLabel={STOPS[i] ?? i + 1}
                 onCopy={onCopy}
-                onNavigate={onNavigate}
+                onInspect={onInspect}
               />
             </div>
           ))}

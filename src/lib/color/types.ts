@@ -43,4 +43,4 @@ export interface ColorPageData {
 
 export type CopyFormat = 'hex' | 'rgb' | 'hsl' | 'oklch' | 'cssVar' | 'tailwindClass';
 
-export type ExportFormat = 'tailwind-v4' | 'tailwind-v3' | 'css-vars' | 'w3c-tokens' | 'figma-vars';
+export type ExportFormat = 'tailwind-v4' | 'tailwind-v3' | 'css-vars' | 'w3c-tokens' | 'figma-vars' | 'style-dictionary';

@@ -28,13 +28,14 @@ import { test, expect } from '@playwright/test';
 const DEV_URL = '/4040ff';
 
 test.describe('shade tool — smoke', () => {
-  test('renders 20 OKLCH ramp rows for #4040ff', async ({ page }) => {
+  test('renders 11 OKLCH ramp rows for #4040ff', async ({ page }) => {
     // The OKLCH ramp is no longer the default view (Tailwind is), so deep-link
     // into it. Ramp rows are SSR-rendered, so they appear basically
-    // immediately after hydration.
+    // immediately after hydration. The ramp mirrors the Tailwind scale's 11
+    // stops, so it renders 11 rows too (distinguished by `data-ramp-mode`).
     await page.goto('/4040ff?view=ramp');
     const rows = page.locator('[data-shade-row="true"]');
-    await expect(rows).toHaveCount(20);
+    await expect(rows).toHaveCount(11);
 
     // The page shows the current hex prominently. Mobile-sticky duplicates
     // and the desktop sidebar both render the hex; the visible one depends
@@ -43,6 +44,20 @@ test.describe('shade tool — smoke', () => {
     await expect(
       page.getByText('#4040ff', { exact: false }).filter({ visible: true }).first(),
     ).toBeVisible();
+  });
+
+  test('shade-row value text is hidden until the row is hovered', async ({ page }) => {
+    // The row value fades in on hover via the `.pointer-fine-hide` utility
+    // (opacity 0 → 1). This spec never runs under the touch-only mobile-chrome
+    // project (it only runs mobile.spec.ts), so every project here is
+    // hover-capable and the `(hover: hover)` rule applies. `toHaveCSS`
+    // auto-retries past the 150ms fade.
+    await page.goto('/4040ff?view=scale');
+    const row = page.locator('[data-shade-row="true"]').nth(5);
+    const value = row.locator('span.pointer-fine-hide.font-mono');
+    await expect(value).toHaveCSS('opacity', '0');
+    await row.hover();
+    await expect(value).toHaveCSS('opacity', '1');
   });
 
   test('clicking a shade copies the hex and shows a toast', async ({
@@ -70,6 +85,41 @@ test.describe('shade tool — smoke', () => {
     // Clipboard contains the hex
     const clip = await page.evaluate(() => navigator.clipboard.readText());
     expect(clip).toBe(targetHex);
+  });
+
+  test('clicking a non-source shade loads it into the picker but leaves the ramp source fixed', async ({
+    page,
+  }) => {
+    // Single-color layout: a shade click inspects (loads the color into the top
+    // picker / preview so its swatch + format values reflect it) but must NOT
+    // change the ramp's source - the source stays pinned and the URL doesn't
+    // navigate. The old double-click "use as source" gesture was removed.
+    await page.goto('/4040ff?view=scale');
+
+    // The anchor row (#4040ff) is the pinned source and shows the Source badge.
+    const sourceRow = page.locator('[data-shade-row="true"][data-hex="#4040ff"]');
+    await expect(sourceRow).toContainText(/source/i);
+
+    // Click a different row.
+    const target = page.locator('[data-shade-row="true"]').nth(2);
+    const targetHex = await target.getAttribute('data-hex');
+    expect(targetHex).toBeTruthy();
+    expect(targetHex).not.toBe('#4040ff');
+    await target.click();
+
+    // The picker trigger's label now reflects the clicked color (the preview
+    // swatch + hex/rgb/hsl/oklch readouts follow it).
+    await expect(
+      page
+        .getByRole('button', { name: new RegExp(`Color ${targetHex} - open color picker`, 'i') })
+        .filter({ visible: true })
+        .first(),
+    ).toBeVisible();
+
+    // The source is untouched: the Source badge stays on #4040ff and the URL
+    // hasn't navigated away from /4040ff.
+    await expect(sourceRow).toContainText(/source/i);
+    expect(new URL(page.url()).pathname).toBe('/4040ff');
   });
 
   test('downloads the ramp as a PNG with a hex/mode filename', async ({
@@ -142,86 +192,85 @@ test.describe('shade tool — smoke', () => {
     browserName,
   }) => {
     // webkit under Playwright is flaky delivering clicks to the lazy export
-    // panel's controls (the "View code" modal never opens), so the preview
-    // assertion below times out. Same webkit click-delivery class as the other
-    // fixmes; real Safari is unaffected. Tailwind is the default view, so the
-    // controls are present on load and the dropdown chunk loads at hydration.
-    test.fixme(browserName === 'webkit', 'webkit click delivery on the lazy export panel');
+    // modal (it never opens), so the preview assertion below times out. Same
+    // webkit click-delivery class as the other fixmes; real Safari is
+    // unaffected.
+    test.fixme(browserName === 'webkit', 'webkit click delivery on the lazy export modal');
     await page.goto(DEV_URL);
 
-    // Change the export-format dropdown. The export row now appears twice (atop
-    // the shade grid and in the sidebar); both share state, so target whichever
-    // copy is visible.
+    // The inline UI is now a single "Export" link that opens the modal; the
+    // format dropdown, "Copy as" picker, and code preview all live inside it.
     await page
-      .getByLabel(/^Export as/)
-      .filter({ visible: true })
-      .first()
-      .selectOption('tailwind-v3');
-
-    // The code preview now lives in the "View code" modal, not inline.
-    await page
-      .getByRole('button', { name: /view export code/i })
+      .getByRole('button', { name: /open export options/i })
       .filter({ visible: true })
       .first()
       .click();
 
     const preview = page.locator('pre[data-export-preview="true"]');
     await expect(preview).toBeVisible();
+
+    // Change the export-format dropdown inside the modal.
+    await page
+      .getByLabel(/^Export as/)
+      .filter({ visible: true })
+      .first()
+      .selectOption('tailwind-v3');
+
     const text = await preview.innerText();
     expect(text).toContain('extend:');
     expect(text).toContain('colors:');
   });
 
-  test('OKLCH view export value format follows the Copy-as picker', async ({
+  test('OKLCH view export value format follows the modal Copy-as picker', async ({
     page,
     browserName,
   }) => {
-    // Same webkit lazy-export-panel click-delivery flakiness as the Tailwind
+    // Same webkit lazy-export-modal click-delivery flakiness as the Tailwind
     // export test above; real Safari is unaffected.
-    test.fixme(browserName === 'webkit', 'webkit click delivery on the lazy export panel');
+    test.fixme(browserName === 'webkit', 'webkit click delivery on the lazy export modal');
 
     await page.goto('/4040ff?view=ramp');
 
-    // The export dropdown now exists in the OKLCH view too. CSS variables shows
-    // the value format (hex vs oklch()) inline in each index-based token. The
-    // export row appears twice (grid + sidebar) and shares state, so drive
-    // whichever copy is visible.
+    // Open the export modal (the inline UI is just the "Export" link now).
+    await page
+      .getByRole('button', { name: /open export options/i })
+      .filter({ visible: true })
+      .first()
+      .click();
+
+    const preview = page.locator('pre[data-export-preview="true"]');
+    await expect(preview).toBeVisible();
+
+    // CSS variables shows the value format (hex vs oklch()) inline in each
+    // index-based token.
     await page
       .getByLabel(/^Export as/)
       .filter({ visible: true })
       .first()
       .selectOption('css-vars');
 
-    const viewBtn = page
-      .getByRole('button', { name: /view export code/i })
-      .filter({ visible: true })
-      .first();
-    const preview = page.locator('pre[data-export-preview="true"]');
-
-    // There is no separate value toggle: the export follows the shared "Copy as"
-    // picker. Its default is hex, so the tokens (--brand-1 .. --brand-20) emit
-    // hex values - no oklch().
-    await viewBtn.click();
-    await expect(preview).toBeVisible();
+    // The export follows the modal-local "Copy as" picker. Its default is hex,
+    // so the tokens (--brand-1 .. --brand-20) emit hex values - no oklch().
     // Slug prefix comes from the nearest named color, so match it generically.
     await expect(preview).toContainText(/--[\w-]+-1: #[0-9a-f]{6};/);
     await expect(preview).toContainText(/--[\w-]+-20: #[0-9a-f]{6};/);
     await expect(preview).not.toContainText('oklch(');
 
-    // Close the modal so the "Copy as" picker (behind the overlay) is reachable.
-    await page.getByRole('button', { name: /close export dialog/i }).click();
-    await expect(preview).toBeHidden();
-
-    // Switch "Copy as" to oklch(); the same export now emits oklch() values.
+    // Switch "Copy as" to oklch() inside the modal; the same export now emits
+    // oklch() values live (no need to close/reopen). This is local to the
+    // export - the ramp's own rows keep rendering hex.
     await page
       .getByLabel('Copy as', { exact: true })
       .filter({ visible: true })
       .first()
       .selectOption('oklch');
-    await viewBtn.click();
-    await expect(preview).toBeVisible();
     await expect(preview).toContainText(/--[\w-]+-1: oklch\(/);
     await expect(preview).toContainText(/--[\w-]+-20: oklch\(/);
+
+    // The ramp's shade rows are unaffected by the modal's "Copy as" - they
+    // still show hex, not oklch().
+    const firstRow = page.locator('[data-shade-row="true"]').first();
+    await expect(firstRow).toContainText(/#[0-9a-f]{6}/i);
   });
 
   test('deep-link `?view=scale` starts on the Tailwind scale view', async ({
@@ -231,13 +280,13 @@ test.describe('shade tool — smoke', () => {
     // the React island to mount in scale mode (not ramp), so a shared
     // link to a specific stop preview lands the user on the right tab.
     await page.goto('/4040ff?view=scale');
-    // 11-stop scale should be rendered, not the 20-step ramp.
+    // The Tailwind scale (11 rows) should be rendered for ?view=scale.
     const rows = page.locator('[data-shade-row="true"]');
     await expect(rows).toHaveCount(11);
-    // And the export dropdown should be reachable (it renders in both views now;
-    // two copies exist - grid + sidebar - so assert the first visible one).
+    // And the inline "Export" link (which opens the export modal) should be
+    // present in this view too.
     await expect(
-      page.getByLabel(/^Export as/).filter({ visible: true }).first(),
+      page.getByRole('button', { name: /open export options/i }).filter({ visible: true }).first(),
     ).toBeVisible();
   });
 
@@ -322,48 +371,25 @@ test.describe('shade tool — smoke', () => {
     await expect(value).not.toHaveValue(before);
   });
 
-  test('single-clicking a palette swatch sets the live color without opening the picker', async ({
-    page,
-    browserName,
-  }) => {
-    test.fixme(browserName === 'webkit', 'webkit click delivery on the swatch');
-    await page.goto('/ff7f50');
-
-    // The tray auto-seeds with the landing color (#ff7f50). Navigate away so the
-    // live color differs from the swatch, then single-click the swatch.
-    const input = page
-      .getByLabel('Color value (hex, rgb, hsl, oklch, or name)')
-      .filter({ visible: true })
-      .first();
-    await input.fill('4040ff');
-
-    const swatch = page
-      .getByRole('button', { name: /^Use #ff7f50/ })
-      .filter({ visible: true })
-      .first();
-    await expect(swatch).toBeVisible();
-    await swatch.click();
-
-    // A single click must NOT open the picker dialog...
-    await expect(page.locator('[role="dialog"]').filter({ visible: true })).toHaveCount(0);
-    // ...but it DOES make the swatch's color the live page color (URL is hex-synced).
-    await expect(page).toHaveURL(/ff7f50/i);
-  });
-
-  test('double-clicking a palette swatch re-opens the picker and edits that color in place', async ({
+  test('double-clicking a preview-bar swatch on a single-color palette adjusts it in place', async ({
     page,
     browserName,
   }) => {
     test.fixme(browserName === 'webkit', 'webkit click delivery on the picker trigger');
     await page.goto('/4040ff');
 
-    // The tray auto-seeds with the landing color, so a swatch for #4040ff exists.
-    const swatch = page
-      .getByRole('button', { name: /^Use #4040ff/ })
+    // The tray starts empty, so add the landing color (#4040ff) to the palette.
+    // A single add now opens the full multi-color palette band (the first add
+    // seeds the design-token roles), and #4040ff is the Primary swatch. The band
+    // swatches' double-click opens the picker to adjust the color in place.
+    await page
+      .getByRole('button', { name: 'Add to palette' })
       .filter({ visible: true })
-      .first();
-    await expect(swatch).toBeVisible();
-    await swatch.dblclick();
+      .first()
+      .click();
+    const bar = page.getByRole('list', { name: 'Palette preview' });
+    await expect(bar).toBeVisible();
+    await bar.getByRole('button', { name: /^Use #4040ff/ }).dblclick();
 
     // The same top picker opens, pre-seeded with the swatch's color.
     const dialog = page.locator('[role="dialog"]').filter({ visible: true }).first();
@@ -383,13 +409,11 @@ test.describe('shade tool — smoke', () => {
     await expect(dialog).toBeHidden();
 
     // The swatch was updated in place: the old color is gone, the new one is present.
-    await expect(page.getByRole('button', { name: /^Use #4040ff/ })).toHaveCount(0);
-    await expect(
-      page.getByRole('button', { name: /^Use #4140ff/ }).first(),
-    ).toBeVisible();
+    await expect(bar.getByRole('button', { name: /^Use #4040ff/ })).toHaveCount(0);
+    await expect(bar.getByRole('button', { name: /^Use #4140ff/ })).toBeVisible();
   });
 
-  test('a second palette color reveals the full-width preview bar above the ramp', async ({
+  test('the first palette color reveals the full-width preview bar above the ramp', async ({
     page,
     browserName,
   }) => {
@@ -398,10 +422,19 @@ test.describe('shade tool — smoke', () => {
     test.fixme(browserName === 'webkit', 'webkit fill() → React onChange flaky under Playwright');
     await page.goto('/4040ff');
 
-    // The tray auto-seeds with the single landing color (#4040ff), so the
-    // preview bar (which only shows at >= 2 colors) is absent on load.
+    // The tray starts empty. Adding the landing color (#4040ff) opens the palette
+    // immediately: the first "Add to palette" seeds the five design-token roles
+    // alongside it, so the bar reveals with six swatches (brand + Background +
+    // Neutral + Success + Warning + Error).
+    await page
+      .getByRole('button', { name: 'Add to palette' })
+      .filter({ visible: true })
+      .first()
+      .click();
     const bar = page.getByRole('list', { name: 'Palette preview' });
-    await expect(bar).toHaveCount(0);
+    await expect(bar).toBeVisible();
+    await expect(bar.getByRole('button', { name: /^Use #/ })).toHaveCount(6);
+    await expect(bar.getByRole('button', { name: /^Remove #/ })).toHaveCount(6);
 
     // Change the live color to a distinct hex, then add it to the palette.
     const input = page
@@ -415,11 +448,9 @@ test.describe('shade tool — smoke', () => {
       .first()
       .click();
 
-    // With two colors the bar appears. Each swatch now mirrors the left-rail
-    // tray: one select button plus one hover-revealed remove (×) button.
-    await expect(bar).toBeVisible();
-    await expect(bar.getByRole('button', { name: /^Use #/ })).toHaveCount(2);
-    await expect(bar.getByRole('button', { name: /^Remove #/ })).toHaveCount(2);
+    // The second brand color slots in ahead of the seeded roles: seven swatches.
+    await expect(bar.getByRole('button', { name: /^Use #/ })).toHaveCount(7);
+    await expect(bar.getByRole('button', { name: /^Remove #/ })).toHaveCount(7);
 
     // Clicking a swatch makes that color the live page color (URL is hex-synced).
     await bar.getByRole('button', { name: /^Use #4040ff/ }).click();
@@ -434,30 +465,32 @@ test.describe('shade tool — smoke', () => {
     test.fixme(browserName === 'webkit', 'webkit fill() → React onChange flaky under Playwright');
     await page.goto('/4040ff');
 
-    // Add a second, distinct color so the preview bar (>= 2 colors) appears.
+    // The tray starts empty: adding the landing color (#4040ff) opens the bar
+    // (brand + 5 seeded roles = 6 swatches), then a second distinct color makes 7.
     const input = page
       .getByLabel('Color value (hex, rgb, hsl, oklch, or name)')
       .filter({ visible: true })
       .first();
-    await input.fill('#ff0000');
-    await page
+    const addToPalette = page
       .getByRole('button', { name: 'Add to palette' })
       .filter({ visible: true })
-      .first()
-      .click();
+      .first();
+    await addToPalette.click();
+    await input.fill('#ff0000');
+    await addToPalette.click();
 
     const bar = page.getByRole('list', { name: 'Palette preview' });
     await expect(bar).toBeVisible();
-    await expect(bar.getByRole('button', { name: /^Use #/ })).toHaveCount(2);
+    await expect(bar.getByRole('button', { name: /^Use #/ })).toHaveCount(7);
 
     // Hover the swatch to surface its × (it's pointer-events-none until shown),
     // then remove #ff0000.
     await bar.getByRole('button', { name: /^Use #ff0000/ }).hover();
     await bar.getByRole('button', { name: 'Remove #ff0000 from palette' }).click();
 
-    // Back to a single color: the bar (>= 2 only) disappears and #ff0000 is gone
-    // from the palette everywhere (the tray drives both the bar and the rail).
-    await expect(bar).toHaveCount(0);
+    // #ff0000 is gone from the palette everywhere (the tray drives both the bar
+    // and the rail); the bar stays visible on the remaining six swatches.
+    await expect(bar.getByRole('button', { name: /^Use #/ })).toHaveCount(6);
     await expect(page.getByRole('button', { name: /^Use #ff0000/ })).toHaveCount(0);
   });
 
@@ -468,17 +501,19 @@ test.describe('shade tool — smoke', () => {
     test.fixme(browserName === 'webkit', 'webkit click delivery on the picker trigger');
     await page.goto('/4040ff');
 
-    // Reveal the preview bar with a second color.
+    // The tray starts empty: add the landing color (#4040ff) then a second color
+    // to reveal the preview bar.
     const input = page
       .getByLabel('Color value (hex, rgb, hsl, oklch, or name)')
       .filter({ visible: true })
       .first();
-    await input.fill('#ff0000');
-    await page
+    const addToPalette = page
       .getByRole('button', { name: 'Add to palette' })
       .filter({ visible: true })
-      .first()
-      .click();
+      .first();
+    await addToPalette.click();
+    await input.fill('#ff0000');
+    await addToPalette.click();
 
     const bar = page.getByRole('list', { name: 'Palette preview' });
     await expect(bar).toBeVisible();

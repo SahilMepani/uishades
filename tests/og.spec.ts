@@ -3,17 +3,17 @@
  *
  * `renderOgImage` itself needs the Workers/Satori runtime, so we test the pure
  * index selection it delegates to (`ogStripIndices`) plus its interaction with
- * real `oklchRamp` output. Pre-fix, the two darker indices clamped at a literal
- * 20 instead of `count - 1`, so a dark input (high `inputIndex`) produced index
- * 20 into a 20-element array → `ramp.shades[20].hex` threw → the OG endpoints
- * 500'd for every dark color.
+ * real `oklchRamp` output. The two darker indices must clamp at `count - 1`, not
+ * a literal: a dark input (high `inputIndex`) must never produce an index past
+ * the last shade, which would make `ramp.shades[i].hex` throw and 500 the OG
+ * endpoints for every dark color.
  */
 import { describe, it, expect } from 'vitest';
 import { ogStripIndices } from '../src/lib/og-strip';
 import { oklchRamp } from '../src/lib/color/ramp';
 import { parseColor } from '../src/lib/color/parse';
 
-const COUNT = 20; // oklchRamp always emits 20 inner shades (INNER_STEPS)
+const COUNT = 11; // oklchRamp always emits 11 inner shades (INNER_STEPS)
 
 describe('ogStripIndices', () => {
   it('returns only in-range indices for every possible inputIndex', () => {
@@ -25,9 +25,9 @@ describe('ogStripIndices', () => {
     }
   });
 
-  it('regression: high ix (dark colors) never reaches index 20', () => {
-    // ceil(ix + (21 - ix) * 0.75) used to hit 20 for ix >= 14.
-    for (let ix = 14; ix < COUNT; ix++) {
+  it('regression: high ix (dark colors) never reaches index `count`', () => {
+    // The darker targets can compute past the last shade; they must clamp.
+    for (let ix = Math.floor(COUNT / 2); ix < COUNT; ix++) {
       expect(Math.max(...ogStripIndices(ix, COUNT))).toBeLessThanOrEqual(COUNT - 1);
     }
   });

@@ -1,23 +1,28 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
-import type { Shade, CopyFormat, Hex } from '../lib/color/types';
+import type { Shade, Hex } from '../lib/color/types';
 import { contrastRatio } from '../lib/color/contrast';
-import { formatForCopy } from '../lib/color/format';
 import { useToast } from './Toast';
+import SourceInfoButton from './SourceInfoButton';
 
 /**
  * A single row in either the continuous ramp or the Tailwind scale.
  *
  * Behavior contract (per the spec):
- *   - Click on the row body = copy hex (or current copy-format preference)
- *   - Double-click on the row body = use that shade as the new source
+ *   - Click on the row body = copy the hex (always - matches the hover label;
+ *     the "Copy as" format preference governs Export and the multi-color grid,
+ *     not single-color row clicks) AND load that shade into the top color
+ *     picker / preview so its swatch + hex/rgb/hsl/oklch readouts reflect the
+ *     clicked color (`onInspect`). A shade click does NOT change the ramp's
+ *     source - the source is pinned and can only be re-set from the picker /
+ *     hex input. (The old double-click / Shift+Enter "use as source" gesture
+ *     was removed; the ramp now stays fixed while you click through shades.)
  *   - Cmd/Ctrl-click or middle-click on the row body = open the shade's own
- *     page in a new tab. The explicit "use as source" icon anchor is
- *     display:none in every view, so the row itself carries this (handleClick
- *     / handleAuxClick below), replicating the old anchor's modifier-click.
+ *     page in a new tab (a separate page, not an in-place source swap). The
+ *     row is a div, so handleClick / handleAuxClick replicate the browser's
+ *     native modifier/middle-click-a-link behavior against `navHref`.
  *
  * Keyboard:
- *   - Enter on focused row = copy
- *   - Shift+Enter on focused row = use as source
+ *   - Enter on focused row = copy + inspect (same as a plain click)
  *   - ArrowDown/ArrowUp move focus between sibling rows (handled via DOM
  *     traversal of [data-shade-row] elements so this component stays
  *     orchestrator-agnostic).
@@ -33,10 +38,21 @@ export interface ShadeRowProps {
    * just look like a solid row.
    */
   sourceHex: Hex;
-  copyFormat: CopyFormat;
-  brandName?: string;
+  /**
+   * Label printed once in the page's right gutter for this row - the Tailwind
+   * stop (50…950) or the OKLCH ramp's matching 50…950 stop label. Rendered in
+   * an absolutely-positioned cell floated to `left-full` (OUTSIDE the row's
+   * content box), matching the multi-color `PaletteShadeGrid` gutter so the
+   * single- and multi-color views read identically. Omitted = no gutter label.
+   */
+  gutterLabel?: string | number;
   onCopy: (hex: Hex) => void;
-  onNavigate: (hex: Hex) => void;
+  /**
+   * Load this shade into the top color picker / preview (swatch + format
+   * readouts) without changing the ramp's source. Fired on a plain click and
+   * on Enter, alongside the copy.
+   */
+  onInspect: (hex: Hex) => void;
 }
 
 const WHITE = '#ffffff';
@@ -51,35 +67,21 @@ function pickForeground(hex: Hex): 'white' | 'black' {
 function ShadeRow({
   shade,
   sourceHex,
-  copyFormat,
-  brandName,
+  gutterLabel,
   onCopy,
-  onNavigate,
+  onInspect,
 }: ShadeRowProps) {
   const showSourceBand = !shade.isInput;
   const fg = useMemo(() => pickForeground(shade.hex), [shade.hex]);
   const fgClass = fg === 'white' ? 'text-white' : 'text-black';
-  // Push the secondary label to 90% opacity. 70% was failing WCAG AA on
-  // some mid-lightness shades (the badge text fell below 4.5:1 vs the
-  // washed-out badge background). 90% keeps the visual hierarchy intact
-  // while clearing the audit threshold.
-  const subtleFgClass = fg === 'white' ? 'text-white/90' : 'text-black/90';
 
   const navHref = `/${shade.hex.slice(1)}`;
 
-  // What the row actually shows. Mirrors the user's "Copy as" preference so
-  // the displayed value matches what the click puts on the clipboard.
-  // `cssVar` / `tailwindClass` need a stop to be meaningful - in the
-  // continuous ramp (no stops) we fall back to hex so the column isn't a
-  // wall of identical labels.
-  const displayValue = useMemo(() => {
-    const needsStop = copyFormat === 'cssVar' || copyFormat === 'tailwindClass';
-    if (needsStop && shade.stop === undefined) return shade.hex;
-    return formatForCopy(shade.hex, copyFormat, {
-      name: brandName,
-      stop: shade.stop,
-    });
-  }, [shade.hex, shade.stop, copyFormat, brandName]);
+  // What the row shows on hover. Always the hex value for the single-color
+  // tool, regardless of the user's "Copy as" preference - the swatch's
+  // identity reads most clearly as a hex, and the click still copies in the
+  // chosen format (the "Click to copy" badge signals that action).
+  const displayValue = shade.hex;
 
   const { pushToast } = useToast();
 
@@ -113,10 +115,10 @@ function ShadeRow({
   }, [justCopied]);
 
   const handleCopy = useCallback(() => {
-    const text = formatForCopy(shade.hex, copyFormat, {
-      name: brandName,
-      stop: shade.stop,
-    });
+    // Always copy the plain hex so the clipboard matches the hover label the
+    // user just read. The "Copy as" format preference still drives Export and
+    // the multi-color palette grid - it just doesn't reformat single-row clicks.
+    const text = shade.hex;
     if (
       typeof navigator === 'undefined' ||
       !navigator.clipboard ||
@@ -141,31 +143,29 @@ function ShadeRow({
         pushToast("Couldn't copy - check browser permissions.");
       },
     );
-  }, [shade.hex, shade.stop, copyFormat, brandName, onCopy, pushToast]);
+  }, [shade.hex, onCopy, pushToast]);
 
   const handleClick = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
       if ((e.target as HTMLElement).closest('a')) return;
-      // The second click of a double-click also fires `click`, so without this
-      // guard we'd copy twice (and, for modifier-clicks, open two tabs) before
-      // dblclick runs. Must come before the modifier branch below.
+      // A fast double-click fires `click` twice. There's no double-click action
+      // anymore, but ignoring the second one keeps a double-tap from firing two
+      // copy toasts / two inspects. Must come before the modifier branch below.
       if (e.detail > 1) return;
-      // Modifier-click opens the shade's own page in a new tab - parity with
-      // the old per-row anchor's cmd/ctrl-click behavior now that the visible
-      // "use as source" icon is hidden in every view.
+      // Modifier-click opens the shade's own page in a new tab - this is a
+      // separate page, not an in-place source swap (the row is a div, so we
+      // replicate the browser's native cmd/ctrl-click-a-link behavior).
       if (e.metaKey || e.ctrlKey) {
         window.open(navHref, '_blank', 'noopener,noreferrer');
         return;
       }
-      // Without clipboard the row needs *some* affordance - fall the click
-      // back to navigation so it isn't a dead element.
-      if (!canCopy) {
-        onNavigate(shade.hex);
-        return;
-      }
-      handleCopy();
+      // Load the clicked shade into the top picker / preview either way. With
+      // clipboard available we also copy; without it, inspect is the row's
+      // only action (so it isn't a dead element).
+      if (canCopy) handleCopy();
+      onInspect(shade.hex);
     },
-    [handleCopy, canCopy, onNavigate, shade.hex, navHref],
+    [handleCopy, canCopy, onInspect, shade.hex, navHref],
   );
 
   // Middle-click opens the shade page in a new tab (the browser default for a
@@ -180,19 +180,13 @@ function ShadeRow({
     [navHref],
   );
 
-  const handleDoubleClick = useCallback(() => {
-    onNavigate(shade.hex);
-  }, [shade.hex, onNavigate]);
-
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
       if (e.key === 'Enter') {
         e.preventDefault();
-        if (e.shiftKey) {
-          onNavigate(shade.hex);
-        } else {
-          handleCopy();
-        }
+        // Mirror a plain click: copy (when available) + load into the picker.
+        if (canCopy) handleCopy();
+        onInspect(shade.hex);
       } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
         const dir = e.key === 'ArrowDown' ? 1 : -1;
@@ -204,7 +198,7 @@ function ShadeRow({
         if (next) next.focus();
       }
     },
-    [shade.hex, handleCopy, onNavigate],
+    [shade.hex, handleCopy, canCopy, onInspect],
   );
 
   // WCAG 2.5.3 (Label in Name) requires the accessible name to start with
@@ -217,11 +211,25 @@ function ShadeRow({
     .filter(Boolean)
     .join(' ');
   const ariaLabel = canCopy
-    ? `${visibleLabel}. Click to copy, double-click or Shift+Enter to use as source${shade.isInput ? ' (pinned source)' : ''}`
-    : `${visibleLabel}. Click to use as source${shade.isInput ? ' (pinned source)' : ''}`;
+    ? `${visibleLabel}. Click to copy${shade.isInput ? ' (pinned source)' : ''}`
+    : `${visibleLabel}. Click to view${shade.isInput ? ' (pinned source)' : ''}`;
 
   return (
     <div className="group relative">
+    {/* Row-label gutter: Tailwind stop (50…950) or the OKLCH ramp's matching 50…950 stop,
+        absolutely positioned just past the row's right edge so it lives in the
+        page padding and never disturbs the row's layout box. `inset-y-0` +
+        `items-center` keeps it centred on the row regardless of the row's
+        natural height. Decorative - the stop is already in the row's aria-label
+        and each swatch's copy value. Mirrors the multi-color grid's gutter. */}
+    {gutterLabel != null && (
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 left-full flex items-center whitespace-nowrap pl-2 font-mono text-[11px] uppercase tracking-[0.14em] tabular-nums text-mute sm:pl-3"
+      >
+        {gutterLabel}
+      </div>
+    )}
     <div
       ref={rowRef}
       data-shade-row="true"
@@ -231,7 +239,6 @@ function ShadeRow({
       aria-label={ariaLabel}
       onClick={handleClick}
       onAuxClick={handleAuxClick}
-      onDoubleClick={handleDoubleClick}
       onKeyDown={handleKeyDown}
       style={
         showSourceBand
@@ -285,19 +292,20 @@ function ShadeRow({
         </>
       )}
       <div className="flex shrink-0 items-center gap-4 font-mono text-sm">
-        {shade.stop !== undefined && (
-          <span className={`w-10 shrink-0 text-[11px] tracking-[0.14em] uppercase ${subtleFgClass}`}>
-            {shade.stop}
-          </span>
-        )}
+        {/* Stop / index values moved out to the right gutter (below) so the
+            single-color view matches the multi-color grid. Only the Source
+            badge stays inside the row. */}
         {shade.isInput && (
-          <span
-            className={
-              'px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ' +
-              (fg === 'white' ? 'bg-white text-black' : 'bg-black text-white')
-            }
-          >
-            Source
+          <span className="flex items-center gap-1.5">
+            <span
+              className={
+                'px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ' +
+                (fg === 'white' ? 'bg-white text-black' : 'bg-black text-white')
+              }
+            >
+              Source
+            </span>
+            <SourceInfoButton fg={fg} />
           </span>
         )}
       </div>
@@ -313,62 +321,29 @@ function ShadeRow({
             fg === 'white' ? 'bg-white/15 text-white' : 'bg-black/10 text-black',
           ].join(' ')}
         >
-          {canCopy ? (justCopied ? 'Copied' : 'Click to copy') : 'Click to open'}
+          {canCopy ? (justCopied ? 'Copied' : 'Click to copy') : 'Click to view'}
         </span>
-        <span className="min-w-0 truncate font-mono text-sm tracking-tight tabular-nums">{displayValue}</span>
+        {/* Value text hides at rest on hover-capable devices and fades in on
+            row hover/focus (same `.pointer-fine-hide` utility as the badge
+            above); always visible on touch. Keeps the strip swatch-first. */}
+        <span className="pointer-fine-hide min-w-0 truncate font-mono text-sm tracking-tight tabular-nums">{displayValue}</span>
       </div>
     </div>
     {!shade.isInput && (
-      <>
-      {/* Invisible bridge spanning the 10px gap between the row and the
-          icon so a slow cursor never crosses an unhovered region (which
-          would otherwise trigger a brief fade-out / fade-in cycle on the
-          icon and the "Click to copy" badge). Hidden in lockstep with the
-          icon below - the "use as source" icon is currently display:none in
-          every view, so the bridge stays hidden too. */}
-      <span
-        aria-hidden="true"
-        className="pointer-events-auto absolute inset-y-0 left-full hidden w-2.5"
-      />
+      // Display:none crawlable link to the shade's own page. It carries no
+      // click handler - clicking a shade no longer swaps the source in place
+      // (that gesture was removed); this stays purely so search crawlers find
+      // an <a href> to each sibling hex page for internal linking. Users open
+      // a shade's page via cmd/ctrl/middle-click on the row (see handleClick /
+      // handleAuxClick), which the row replicates against the same `navHref`.
       <a
         href={navHref}
-        aria-label={`Use ${shade.hex} as source`}
-        title="Use as source"
-        onClick={(e) => {
-          e.stopPropagation();
-          // Let the browser handle modifier/middle-click so cmd/ctrl-click
-          // still opens the shade in a new tab - see the file's behavior
-          // contract above. Plain left-click stays on the page and lets
-          // the parent swap the hex in place.
-          if (
-            e.metaKey ||
-            e.ctrlKey ||
-            e.shiftKey ||
-            e.altKey ||
-            e.button !== 0
-          ) {
-            return;
-          }
-          e.preventDefault();
-          onNavigate(shade.hex);
-        }}
-        className={[
-          'absolute top-1/2 left-full ml-2.5 -translate-y-1/2 h-[90%] aspect-square',
-          // Display:none in every view. The whole row stays clickable /
-          // double-clickable as the "use as source" affordance, so hiding the
-          // explicit icon loses no functionality. (Kept in the DOM rather than
-          // removed so the behavior can be re-enabled by restoring `lg:flex`.)
-          'hidden items-center justify-center border border-transparent',
-          'text-ink/60 transition-colors duration-200 ease-out hover:border-ink/20 hover:text-ink hover:bg-paper-2',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
-          // Fade in only when the row (or anything in the group wrapper) is
-          // hovered/focused - mirrors the "Click to copy" badge behavior.
-          'pointer-fine-hide',
-        ].join(' ')}
+        aria-label={`Open shade ${shade.hex}`}
+        title="Open shade page"
+        className="hidden"
       >
         <OpenIcon />
       </a>
-      </>
     )}
     </div>
   );
@@ -379,9 +354,9 @@ function ShadeRow({
  * hands every row a fresh `shade` object identity) only re-renders the rows
  * whose rendered output actually differs. The callbacks are stable
  * `useCallback`s in the parent, so we compare just the value-bearing fields:
- * the shade's hex/stop/isInput, the source band color, and the copy/name
- * inputs that feed the visible label. `sourceHex` is included because every
- * non-source row paints it in its 20% band, so it changes every row's output.
+ * the shade's hex/stop/isInput, the source band color, and the gutter label.
+ * `sourceHex` is included because every non-source row paints it in its 20%
+ * band, so it changes every row's output.
  */
 function shadeRowPropsEqual(a: ShadeRowProps, b: ShadeRowProps): boolean {
   return (
@@ -389,10 +364,9 @@ function shadeRowPropsEqual(a: ShadeRowProps, b: ShadeRowProps): boolean {
     a.shade.stop === b.shade.stop &&
     a.shade.isInput === b.shade.isInput &&
     a.sourceHex === b.sourceHex &&
-    a.copyFormat === b.copyFormat &&
-    a.brandName === b.brandName &&
+    a.gutterLabel === b.gutterLabel &&
     a.onCopy === b.onCopy &&
-    a.onNavigate === b.onNavigate
+    a.onInspect === b.onInspect
   );
 }
 

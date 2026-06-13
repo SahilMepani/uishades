@@ -1,8 +1,11 @@
 /**
  * OKLCH-based continuous ramp (default mode).
  *
- * Convention: 20 inner stepped shades at equal OKLCH lightness spacing
+ * Convention: 11 inner stepped shades at equal OKLCH lightness spacing
  * between L_TOP and L_BOTTOM. No literal `#ffffff` / `#000000` endpoints.
+ * The count mirrors the Tailwind scale's 11 stops so the two views are an
+ * apples-to-apples "same scale, two algorithms" pair, and the export keys
+ * the ramp to the same 50…950 stop labels (see `rampToTokens`).
  *
  * Input is pinned at the inner-step index whose target L is closest to
  * the input's measured OKLCH L. At that index, we use the input hex
@@ -16,7 +19,7 @@
 import { oklchToHex, toOklch } from './parse';
 import type { ContinuousRamp, Hex, OKLCH, Shade } from './types';
 
-const INNER_STEPS = 20;
+const INNER_STEPS = 11;
 const L_TOP = 0.95; // L of the lightest inner step (achromatic → #eeeeee)
 const L_BOTTOM = 0.06; // L of the darkest inner step (achromatic → #010101 - keeps c=0 inputs off pure black)
 
@@ -49,11 +52,11 @@ function nearestIndex(target: number, values: readonly number[]): number {
 }
 
 /**
- * Build a 20-shade OKLCH continuous ramp from a canonical hex input.
+ * Build an 11-shade OKLCH continuous ramp from a canonical hex input.
  *
  * The input hex appears verbatim at the inner step whose target L is
  * closest to the input's measured L. `inputIndex` points to that entry
- * in the returned `shades` array (range [0, 19]).
+ * in the returned `shades` array (range [0, 10]).
  */
 export function oklchRamp(input: Hex): ContinuousRamp {
   const inputOklch: OKLCH = toOklch(input);

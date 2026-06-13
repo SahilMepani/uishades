@@ -13,6 +13,7 @@
  */
 import { contrastRatio, wcagLevel } from '../color/contrast';
 import { findByHexSlim } from '../data/named-colors-slim';
+import { STOPS } from '../color/anchors';
 import type { ColorPageData, OKLCH, Shade } from '../color/types';
 
 const SITE = 'https://uishades.com';
@@ -39,7 +40,7 @@ function scaleRow(s: Shade): string {
 
 function rampRow(s: Shade, i: number): string {
   const marker = s.isInput ? ' ⬅ input' : '';
-  return `| ${i + 1} | \`${s.hex}\`${marker} | \`${fmtOklch(s.oklch)}\` |`;
+  return `| ${STOPS[i] ?? i + 1} | \`${s.hex}\`${marker} | \`${fmtOklch(s.oklch)}\` |`;
 }
 
 function neighborLinks(hexes: string[]): string {
@@ -76,9 +77,9 @@ export function colorPageMarkdown(data: ColorPageData): string {
   lines.push('_The bold stop is the input color, snapped to its nearest stop._');
   lines.push('');
 
-  lines.push('## OKLCH ramp (20 steps, lightest → darkest)');
+  lines.push('## OKLCH ramp (50–950, lightest → darkest)');
   lines.push('');
-  lines.push('| # | Hex | OKLCH |');
+  lines.push('| Stop | Hex | OKLCH |');
   lines.push('| ---: | --- | --- |');
   data.ramp.shades.forEach((s, i) => lines.push(rampRow(s, i)));
   lines.push('');

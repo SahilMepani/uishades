@@ -22,6 +22,7 @@ export const FMT_VALUES: readonly ExportFormat[] = [
   'css-vars',
   'w3c-tokens',
   'figma-vars',
+  'style-dictionary',
 ] as const;
 export const COPY_VALUES: readonly CopyFormat[] = [
   'hex',

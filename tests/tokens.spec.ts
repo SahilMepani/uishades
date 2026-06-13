@@ -2,8 +2,9 @@
  * Shared export-token normalization.
  *
  * tokens.ts is the single layer that turns either palette shape (Tailwind
- * 11-stop scale, OKLCH 20-step ramp) into a flat ColorToken[] the five
- * serializers consume, plus the hex/oklch() value renderer.
+ * 11-stop scale, OKLCH 11-step ramp - both keyed to the same 50…950 stops)
+ * into a flat ColorToken[] the five serializers consume, plus the hex/oklch()
+ * value renderer.
  */
 import { describe, it, expect } from 'vitest';
 import { parseColor } from '../src/lib/color/parse';
@@ -16,11 +17,13 @@ import {
   tokenValue,
   dedupeGroupNames,
 } from '../src/lib/exports/tokens';
+import { STOPS } from '../src/lib/color/anchors';
 import { toTailwindV4 } from '../src/lib/exports/tailwind-v4';
 import { toTailwindV3 } from '../src/lib/exports/tailwind-v3';
 import { toCssVars } from '../src/lib/exports/css-vars';
 import { toW3CTokens } from '../src/lib/exports/w3c-tokens';
 import { toFigmaVars } from '../src/lib/exports/figma-vars';
+import { toStyleDictionary } from '../src/lib/exports/style-dictionary';
 
 const hex = parseColor('#4040ff');
 
@@ -45,14 +48,12 @@ describe('scaleToTokens', () => {
 });
 
 describe('rampToTokens', () => {
-  it('keys tokens by 1-based step index, lightest first', () => {
+  it('keys tokens by the same 50…950 Tailwind stops, lightest first', () => {
     const tokens = rampToTokens(oklchRamp(hex));
-    expect(tokens).toHaveLength(20);
-    expect(tokens.map((t) => t.key)).toEqual(
-      Array.from({ length: 20 }, (_, i) => String(i + 1)),
-    );
-    // Lightest first: token 1's L should exceed token 20's L.
-    expect(tokens[0].oklch.l).toBeGreaterThan(tokens[19].oklch.l);
+    expect(tokens).toHaveLength(11);
+    expect(tokens.map((t) => t.key)).toEqual(STOPS.map(String));
+    // Lightest first: the '50' token's L should exceed the '950' token's L.
+    expect(tokens[0].oklch.l).toBeGreaterThan(tokens[tokens.length - 1].oklch.l);
   });
 });
 
@@ -65,6 +66,14 @@ describe('tokenValue', () => {
     const t = rampToTokens(oklchRamp(hex))[0];
     const v = tokenValue(t, 'oklch');
     expect(v).toMatch(/^oklch\([\d.]+ [\d.]+ [\d.]+\)$/);
+  });
+  it('returns an rgb() string derived from the hex in rgb mode', () => {
+    const t = rampToTokens(oklchRamp(hex))[0];
+    expect(tokenValue(t, 'rgb')).toMatch(/^rgb\(\d+ \d+ \d+\)$/);
+  });
+  it('returns an hsl() string derived from the hex in hsl mode', () => {
+    const t = rampToTokens(oklchRamp(hex))[0];
+    expect(tokenValue(t, 'hsl')).toMatch(/^hsl\([\d.]+ [\d.]+% [\d.]+%\)$/);
   });
 });
 
@@ -83,19 +92,19 @@ describe('CSS-family serializers (group signature)', () => {
 
   it('tailwind-v4 emits oklch() values in oklch mode', () => {
     const out = toTailwindV4(rampGroup, 'oklch');
-    expect(out).toContain('--color-brand-1: oklch(');
-    expect(out).toContain('--color-brand-20: oklch(');
+    expect(out).toContain('--color-brand-50: oklch(');
+    expect(out).toContain('--color-brand-950: oklch(');
   });
 
   it('css-vars emits --{slug}-{key} and follows the value mode', () => {
     expect(toCssVars(scaleGroup, 'hex')).toMatch(/--brand-500: #[0-9a-f]{6};/);
-    expect(toCssVars(rampGroup, 'oklch')).toContain('--brand-1: oklch(');
+    expect(toCssVars(rampGroup, 'oklch')).toContain('--brand-50: oklch(');
   });
 
   it('tailwind-v3 ramp keys are valid quoted JS object keys', () => {
     const out = toTailwindV3(rampGroup, 'hex');
-    expect(out).toContain("'1': '#");
-    expect(out).toContain("'20': '#");
+    expect(out).toContain("'50': '#");
+    expect(out).toContain("'950': '#");
   });
 });
 
@@ -105,8 +114,8 @@ describe('JSON serializers stay hex even in oklch mode', () => {
   it('w3c-tokens emits hex $value despite oklch mode', () => {
     const out = toW3CTokens(rampGroup, 'oklch');
     const json = JSON.parse(out);
-    expect(json.brand['1'].$value).toMatch(/^#[0-9a-f]{6}$/);
-    expect(json.brand['1'].$type).toBe('color');
+    expect(json.brand['50'].$value).toMatch(/^#[0-9a-f]{6}$/);
+    expect(json.brand['50'].$type).toBe('color');
     expect(out).not.toContain('oklch(');
   });
 
@@ -114,8 +123,15 @@ describe('JSON serializers stay hex even in oklch mode', () => {
     const out = toFigmaVars(rampGroup, 'oklch');
     const json = JSON.parse(out);
     const v = json.collections[0].variables[0];
-    expect(v.name).toBe('brand/1');
+    expect(v.name).toBe('brand/50');
     expect(Object.values(v.valuesByMode)[0]).toMatch(/^#[0-9a-f]{6}$/);
+    expect(out).not.toContain('oklch(');
+  });
+
+  it('style-dictionary emits hex value despite oklch mode', () => {
+    const out = toStyleDictionary(rampGroup, 'oklch');
+    const json = JSON.parse(out);
+    expect(json.color.brand['50'].value).toMatch(/^#[0-9a-f]{6}$/);
     expect(out).not.toContain('oklch(');
   });
 });
@@ -158,6 +174,14 @@ describe('multi-color palette export (the reported bug)', () => {
     const names = json.collections[0].variables.map((v: { name: string }) => v.name);
     expect(names).toContain('coral/500');
     expect(names).toContain('indigo/500');
+  });
+
+  it('style-dictionary nests every color under the top-level color category', () => {
+    const json = JSON.parse(toStyleDictionary(groups, 'hex'));
+    expect(Object.keys(json)).toEqual(['color']);
+    expect(Object.keys(json.color)).toEqual(['coral', 'indigo']);
+    expect(json.color.coral['500'].value).toMatch(/^#[0-9a-f]{6}$/);
+    expect(json.color.indigo['500'].value).toMatch(/^#[0-9a-f]{6}$/);
   });
 });
 

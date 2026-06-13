@@ -26,7 +26,7 @@ export const MCP_SERVER_INFO = { name: 'UIshades', version: '1.0.0' } as const;
 export const GENERATE_SHADES_TOOL = {
   name: 'generate_shades',
   description:
-    'Generate a 20-step OKLCH perceptual tints-and-shades ramp plus an 11-stop Tailwind scale (50–950) for any color. Accepts a hex (#4040ff or 4040ff), rgb()/hsl()/oklch(), or a CSS color name.',
+    'Generate an 11-step OKLCH perceptual tints-and-shades ramp plus an 11-stop Tailwind scale, both keyed to the same 50–950 stops, for any color. Accepts a hex (#4040ff or 4040ff), rgb()/hsl()/oklch(), or a CSS color name.',
   inputSchema: {
     type: 'object',
     properties: {

@@ -1,12 +1,12 @@
 /**
- * Shared styling for the inline `<select>` controls in the export-controls row
- * (the "Export" format picker and the "Copy as" value-format picker). Kept in
- * one place so the two dropdowns stay the exact same style and height - the
- * boxes drift apart fast if each owns its own Tailwind string.
+ * Shared styling for the `<select>` controls in the export modal (the "Export"
+ * format picker and the "Copy as" value-format picker). Kept in one place so the
+ * two dropdowns stay the exact same style and height - the boxes drift apart
+ * fast if each owns its own Tailwind string.
  *
- * Both consumers (`ExportDropdown`, `CopyFormatPicker`) live under the lazy
- * export boundary, so this module rides into that chunk - it never touches the
- * eager path.
+ * Both consumers (`ExportModal`, `CopyFormatPicker`) live under the lazy export
+ * boundary, so this module rides into that chunk - it never touches the eager
+ * path.
  */
 
 export const SELECT_CLASS =

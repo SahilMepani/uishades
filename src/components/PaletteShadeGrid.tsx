@@ -11,7 +11,9 @@ import { contrastRatio } from '../lib/color/contrast';
 import { formatForCopy } from '../lib/color/format';
 import { oklchRamp } from '../lib/color/ramp';
 import { buildScale } from '../lib/color/scale';
+import { STOPS } from '../lib/color/anchors';
 import { useToast } from './Toast';
+import SourceInfoButton from './SourceInfoButton';
 
 /**
  * Multi-column shade grid shown in place of the single ramp once the palette
@@ -26,14 +28,15 @@ import { useToast } from './Toast';
  * copy, double-click / Shift+Enter to use as source, modifier / middle click
  * to open the shade's page).
  *
- * In `kind="scale"` (Tailwind) mode each row additionally gets its stop value
- * (50…950) printed once at the row's right end, in an absolutely-positioned
- * column that floats into the page's right gutter (`left-full`) - OUTSIDE the
- * `overflow-hidden` swatch lattice. It's positioned rather than added as a flex
- * sibling on purpose: a trailing in-flow column would shrink every `flex-1`
- * swatch column and progressively knock them out of alignment with the
- * equal-width `PalettePreviewBar` name headers above. The OKLCH ramp has no
- * stops, so no label column renders there.
+ * Each row additionally gets a label printed once at its right end, in an
+ * absolutely-positioned column that floats into the page's right gutter
+ * (`left-full`) - OUTSIDE the `overflow-hidden` swatch lattice. In
+ * `kind="scale"` (Tailwind) mode the label is the stop value (50…950); in
+ * `kind="ramp"` (OKLCH) it's the same 50…950 stop labels by row index, since the ramp has
+ * no stops. It's positioned rather than added as a flex sibling on purpose: a
+ * trailing in-flow column would shrink every `flex-1` swatch column and
+ * progressively knock them out of alignment with the equal-width
+ * `PalettePreviewBar` name headers above.
  *
  * Each swatch is a fixed `ROW_H` tall - the same height as a single-column
  * `ShadeRow` (its `py-3.5` + text line ≈ 48px) - and the container sizes to its
@@ -56,8 +59,10 @@ export interface PaletteShadeGridProps {
   /** Palette colors, in tray order - one column each. */
   hexes: Hex[];
   /**
-   * Brand name per column, parallel to `hexes` (nearest-named slug). Each
-   * column's copy labels (var(--name)/bg-name) use its own color's name rather
+   * Family name per column, parallel to `hexes` — the swatch's effective
+   * semantic name (the user's rename, else "Primary"/"Accent N"/a seeded role),
+   * matching the preview-bar header above and the exported token family. Each
+   * column's copy labels (var(--name)/bg-name) use its own column's name rather
    * than the active color's. Falls back to `brandName` when absent.
    */
   names?: string[];
@@ -104,11 +109,15 @@ export default function PaletteShadeGrid({
     return cols;
   }, [hexes, kind]);
 
-  // Tailwind scale only: the per-row stop values (50…950), read straight off
-  // the rendered rows so the labels can't drift from the swatches. Every column
-  // shares the same stop order, so column 0 is representative.
-  const stopLabels =
-    kind === 'scale' ? (columns[0] ?? []).map((s) => s.stop) : [];
+  // Per-row gutter labels. Tailwind scale: the stop values (50…950), read
+  // straight off the rendered rows so they can't drift from the swatches. OKLCH
+  // ramp: the same 50…950 stop labels by row index (ramp shades have no `stop`
+  // of their own, but the ramp is sized to match `STOPS`). Every column shares
+  // the same row order, so column 0 is representative.
+  const rowLabels =
+    kind === 'scale'
+      ? (columns[0] ?? []).map((s) => s.stop)
+      : (columns[0] ?? []).map((_, i) => STOPS[i] ?? i + 1);
 
   return (
     <div className="relative">
@@ -141,22 +150,23 @@ export default function PaletteShadeGrid({
           </div>
         ))}
       </div>
-      {/* Stop-value gutter (Tailwind only). Absolutely positioned just past the
-          grid's right edge so it lives in the page padding and never disturbs
-          the flex-1 swatch columns. Each cell mirrors a swatch's `ROW_H` +
-          `gap-[2px]` rhythm, top-anchored, so the labels line up row-for-row.
-          Decorative: the stop is already part of each swatch's copy value. */}
-      {stopLabels.length > 0 && (
+      {/* Row-label gutter: Tailwind stop value (50…950); the OKLCH ramp keys to
+          the same 50…950 stops. Absolutely positioned just past the grid's right edge so it
+          lives in the page padding and never disturbs the flex-1 swatch
+          columns. Each cell mirrors a swatch's `ROW_H` + `gap-[2px]` rhythm,
+          top-anchored, so the labels line up row-for-row. Decorative: for the
+          scale the stop is already part of each swatch's copy value. */}
+      {rowLabels.length > 0 && (
         <div
           aria-hidden="true"
           className="pointer-events-none absolute left-full top-0 flex flex-col gap-[2px] pl-2 sm:pl-3"
         >
-          {stopLabels.map((stop, row) => (
+          {rowLabels.map((label, row) => (
             <div
-              key={`stop-${stop}-${row}`}
+              key={`row-${label}-${row}`}
               className={`flex ${ROW_H} items-center whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.14em] tabular-nums text-mute`}
             >
-              {stop}
+              {label}
             </div>
           ))}
         </div>
@@ -306,13 +316,19 @@ function GridSwatch({
       ].join(' ')}
     >
       {shade.isInput && (
-        <span
-          className={
-            'min-w-0 truncate px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ' +
-            (fg === 'white' ? 'bg-white text-black' : 'bg-black text-white')
-          }
-        >
-          Source
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span
+            className={
+              'min-w-0 truncate px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ' +
+              (fg === 'white' ? 'bg-white text-black' : 'bg-black text-white')
+            }
+          >
+            Source
+          </span>
+          {/* Only the first (primary) column carries the explainer - the
+              "source" concept is identical for every column, so one icon is
+              enough and avoids cluttering every palette color. */}
+          {col === 0 && <SourceInfoButton fg={fg} />}
         </span>
       )}
     </div>

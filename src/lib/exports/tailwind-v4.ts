@@ -2,8 +2,8 @@
  * Tailwind v4 `@theme` block export.
  *
  * Produces a single `@theme` directive of `--color-{name}-{key}` custom
- * properties. `key` is the Tailwind stop (50..950) or the OKLCH ramp index
- * (1..20). One color family is one group; a multi-color palette emits every
+ * properties. `key` is the Tailwind stop (50..950) - the OKLCH ramp keys to the
+ * same 50..950 stops. One color family is one group; a multi-color palette emits every
  * group's vars inside the same block, separated by a blank line.
  */
 

@@ -3,6 +3,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -34,6 +35,7 @@ import {
 } from '../lib/data/named-colors-slim';
 import { nearestNamedSlug } from '../lib/data/nearest-named';
 import ContinuousRamp from './ContinuousRamp';
+import ExportControls from './ExportControls';
 import { ToastProvider, useToast } from './Toast';
 import ColorPicker, { type ColorPickerHandle } from './ColorPicker';
 import ShareRow from './ShareRow';
@@ -41,19 +43,27 @@ import SignInModal from './SignInModal';
 import type { MeResponse } from '../lib/auth/types';
 
 // The Tailwind scale is the default view, so its grid ships eagerly and is
-// server-rendered - real content on first paint, no skeleton flash. Only the
-// heaviest leaf (the export-dropdown UI plus the five export-format
-// serializers) stays lazy, split out *inside* `TailwindScale` behind a small
-// height-stable fallback. The OKLCH continuous ramp is eager too - it just
-// reuses the shared `ShadeRow` - so toggling between the two views is instant.
+// server-rendered - real content on first paint, no skeleton flash. The
+// heaviest leaf (the export modal plus the five export-format serializers)
+// stays lazy: the inline "Export" trigger (`ExportControls`) is eager, but the
+// modal it opens is `React.lazy`-loaded on first use. The OKLCH continuous ramp
+// is eager too - it just reuses the shared `ShadeRow` - so toggling views is
+// instant.
 import TailwindScale from './TailwindScale';
 import {
   rampToTokens,
   scaleToTokens,
   dedupeGroupNames,
+  sanitizeName,
   type ColorGroup,
-  type ValueMode,
 } from '../lib/exports/tokens';
+import { mockColorsForTool } from './mocks/tool-roles';
+
+// The "see your color as a UI" preview is below the fold, so it stays out of the
+// eager / SSR-critical island chunk: `client:load` means SSR emits only the
+// height-reserving Suspense fallback, and the preview (plus its four templates
+// and the canvas PNG path) loads as its own lazy chunk after hydration.
+const MockPreview = lazy(() => import('./MockPreview'));
 
 /**
  * Top-level React island for the shade tool.
@@ -89,12 +99,62 @@ interface TrayColor {
   view: View;
   copyFormat: CopyFormat;
   /**
+   * Semantic role for this swatch. Two ways it's set:
+   *   - Explicitly, for the auto-seeded fixed roles (Background, Neutral,
+   *     Success, Warning, Error - see `DEFAULT_PALETTE_EXTRAS`) and for any
+   *     swatch the user renames.
+   *   - Implicitly (absent), for the user's own brand colors: the band then
+   *     falls back to `defaultSemanticName(tray, index)`, which labels the
+   *     first un-named swatch "Primary" and the rest "Accent 1", "Accent 2", …
+   */
+  semanticName?: string;
+  /**
+   * True for the conventional design-token roles auto-seeded when the palette
+   * first becomes multi-color (Background/Neutral/Success/Warning/Error). Marks
+   * where the fixed block begins so a newly-added brand color is inserted ahead
+   * of it (keeping Primary + Accents grouped). Dropped on save like the rest of
+   * the tray's non-color metadata.
+   */
+  fixed?: boolean;
+  /**
    * Normalized (0..1) location on the source image, present only in image mode
    * (`/image-color-picker`). Every tray color there mirrors a draggable sample
    * point on the uploaded image; ImagePalettePanel reads this to position the
    * circle and writes it back on a drag. Absent for the default tool.
    */
   point?: { x: number; y: number };
+}
+
+/**
+ * Conventional design-token roles auto-seeded the first time a palette becomes
+ * multi-color (the user adds a second color). They're ordinary, editable,
+ * removable swatches - the user can recolor or delete any of them - but they
+ * give a fresh multi-color palette a sensible starting shape instead of two
+ * bare brand colors. `Background` (white) sits just before `Neutral`. Hexes are
+ * canonical lowercase `#rrggbb`; the common bases are Tailwind's gray-500 /
+ * green-500 / amber-500 / red-500.
+ */
+const DEFAULT_PALETTE_EXTRAS: { hex: Hex; semanticName: string }[] = [
+  { hex: '#ffffff', semanticName: 'Background' },
+  { hex: '#6b7280', semanticName: 'Neutral' },
+  { hex: '#22c55e', semanticName: 'Success' },
+  { hex: '#f59e0b', semanticName: 'Warning' },
+  { hex: '#ef4444', semanticName: 'Error' },
+];
+
+/**
+ * Positional default label for a swatch with no explicit `semanticName`. The
+ * fixed Background/Neutral/Success/Warning/Error swatches carry their own
+ * explicit name, so they're skipped here: only the user's brand colors fall
+ * through, and they read "Primary" (the first un-named swatch) then "Accent 1",
+ * "Accent 2", … - regardless of how the fixed block is interleaved or trimmed.
+ */
+function defaultSemanticName(tray: TrayColor[], index: number): string {
+  let rank = 0;
+  for (let j = 0; j < index; j++) {
+    if (!tray[j].semanticName) rank++;
+  }
+  return rank === 0 ? 'Primary' : `Accent ${rank}`;
 }
 
 // Lazy so the canvas/extraction code (and the `quantize` dependency it pulls in)
@@ -239,12 +299,13 @@ function isDevHostingRoute(): boolean {
 }
 
 // Brand-name slug for a hex: the exact named slug when known, else the nearest
-// by OKLab distance. `nearestNamedSlug` scans all ~209 named colors, so during
-// an image-mode drag the per-frame `paletteNames` recompute would re-run that
-// scan for EVERY tray color even though only the dragged one changed. The
-// result for a given hex is deterministic, so we cache it module-wide: a drag
-// then scans only each newly-seen color once. Bounded so it can't grow without
-// limit across a long session of arbitrary picks.
+// by OKLab distance. `nearestNamedSlug` scans all ~209 named colors, so each
+// call is non-trivial; the result for a given hex is deterministic, so we cache
+// it module-wide. Now feeds only the single-color `brandName` (multi-color
+// family names switched to the tray's semantic names), but the cache is kept:
+// an image-mode drag re-derives `brandName` for the active hex every frame, and
+// without it that would rescan all ~209 colors per move. Bounded so it can't
+// grow without limit across a long session of arbitrary picks.
 const brandNameCache = new Map<Hex, string>();
 function brandNameForHex(hex: Hex): string {
   const cached = brandNameCache.get(hex);
@@ -351,13 +412,29 @@ function ShadeToolInner({
 }: ShadeToolProps) {
   const isImage = mode === 'image';
   const [hex, setHex] = useState<Hex>(() => normalizeHexInput(initialHex));
+  // The color shown in the top picker / preview (swatch + hex/rgb/hsl/oklch
+  // readouts). Decoupled from `hex` (the ramp source): clicking a ramp shade
+  // loads it here for inspection WITHOUT regenerating the ramp. `null` means
+  // "follow the source"; an effect below clears it whenever `hex` changes so
+  // the preview snaps back to the source after any real source change (picker
+  // edit, hex input, navigation, deep link). The source itself can only be
+  // re-set from the picker / hex input, never from a shade click.
+  const [inspectedHex, setInspectedHex] = useState<Hex | null>(null);
+  const activeHex = inspectedHex ?? hex;
+  useEffect(() => {
+    setInspectedHex(null);
+  }, [hex]);
   const [view, setView] = usePersistedState<View>(
     STORAGE_KEYS.view,
     ['ramp', 'scale'] as const,
     initialView,
     'view',
   );
-  const [copyFormat, setCopyFormat] = usePersistedState<CopyFormat>(
+  // The shade rows always render/copy hex now - there's no inline "Copy as"
+  // picker. The persisted preference still seeds the value (so a returning
+  // visitor who set oklch() keeps it), but nothing in the UI mutates it; the
+  // export modal's own "Copy as" is local to the export (see `ExportControls`).
+  const [copyFormat] = usePersistedState<CopyFormat>(
     STORAGE_KEYS.copyFormat,
     ['hex', 'oklch', 'rgb', 'hsl', 'cssVar', 'tailwindClass'] as const,
     initialCopyFormat,
@@ -365,21 +442,18 @@ function ShadeToolInner({
   );
   const [exportFormat, setExportFormat] = usePersistedState<ExportFormat>(
     STORAGE_KEYS.exportFormat,
-    ['tailwind-v4', 'tailwind-v3', 'css-vars', 'w3c-tokens', 'figma-vars'] as const,
+    ['tailwind-v4', 'tailwind-v3', 'css-vars', 'w3c-tokens', 'figma-vars', 'style-dictionary'] as const,
     initialExportFormat,
     'fmt',
   );
-  // OKLCH-ramp export value format follows the shared "Copy as" picker: when the
-  // user is copying oklch() the export emits oklch() too, otherwise it falls
-  // back to hex. (W3C/Figma JSON exports ignore this and stay hex.) No separate
-  // control or stored preference - it's purely derived.
-  const oklchValueMode: ValueMode = copyFormat === 'oklch' ? 'oklch' : 'hex';
 
   const { pushToast } = useToast();
 
   // Tracks whether the current hex resulted from a user-initiated change
-  // (picker, text input, shade-row navigation, or an explicit `?hex=` deep
-  // link). It gates the root-route URL rewrite in `syncUrl`: the post-
+  // (picker, text input, multi-color grid "use as source", or an explicit
+  // `?hex=` deep link). Note a single-color shade click only inspects (it sets
+  // `inspectedHex`, never `hex`), so it doesn't flip this gate.
+  // It gates the root-route URL rewrite in `syncUrl`: the post-
   // hydration localStorage seed-swap on `/` leaves this false so the URL
   // stays clean, while the first real interaction flips it true so `/` is
   // promoted to `/[hex]`. Refs are not reactive - read `.current` at fire
@@ -434,14 +508,10 @@ function ShadeToolInner({
       }
     };
 
-    // Auto-seed the palette tray with whatever color the user lands on, once
-    // per load. Always uses the *resolved* hex (after the deep-link / last-used
-    // swap below) so the first palette swatch matches the color actually shown.
-    // Seeding is invisible to the `/` ⇄ `/[hex]` contract: it does NOT flip
-    // userChoseRef and does NOT touch the URL or localStorage. Seeding only
-    // happens here on mount - if the user later removes every color the tray
-    // stays empty (no re-seed).
-    const seedPalette = (h: Hex) => setTray([{ hex: h, view, copyFormat }]);
+    // The palette tray starts empty - the user opts in by adding colors via
+    // "Add to palette" / the "+" box. This mount handler only resolves which
+    // color is *shown* (the deep-link / last-used hand-off below); it never
+    // seeds the tray.
 
     if (rawHex) {
       // 1. Explicit `?hex=` deep link - user intent, so promote to /[hex].
@@ -453,10 +523,8 @@ function ShadeToolInner({
         const parsed = parseColor(decoded);
         userChoseRef.current = true;
         if (parsed !== hex) setHex(parsed);
-        seedPalette(parsed);
       } catch {
         pushToast(`Couldn't parse "${decoded}" - showing ${hex} instead.`);
-        seedPalette(hex);
       }
       return;
     }
@@ -469,15 +537,13 @@ function ShadeToolInner({
       try {
         const parsed = parseColor(decoded);
         if (parsed !== hex) setHex(parsed);
-        seedPalette(parsed);
       } catch {
         pushToast(`Couldn't parse "${decoded}" - showing ${hex} instead.`);
-        seedPalette(hex);
       }
       return;
     }
 
-    // 3. No param - on the root route, seed the last-used color from
+    // 3. No param - on the root route, restore the last-used color from
     // localStorage. This swap happens post-hydration (SSR painted the
     // initialHex), and because the gate stays false the URL stays at `/`.
     if (window.location.pathname === '/') {
@@ -486,17 +552,11 @@ function ShadeToolInner({
         if (stored) {
           const parsed = parseColor(stored);
           if (parsed !== hex) setHex(parsed);
-          seedPalette(parsed);
-          return;
         }
       } catch {
-        /* localStorage unavailable or stored value unparseable - keep seed */
+        /* localStorage unavailable or stored value unparseable - keep default */
       }
     }
-
-    // 4. (implicit) SSR initialHex - /[hex], named-color pages, or `/` with no
-    // stored color. Seed the tray with the color already in state.
-    seedPalette(hex);
   }, []);
 
   // Derive ramp + scale lazily from inputs.
@@ -580,7 +640,7 @@ function ShadeToolInner({
     setHex(next);
   }, []);
 
-  // Copy-success toasts are fired by ShadeRow / ExportDropdown themselves -
+  // Copy-success toasts are fired by ShadeRow / ExportModal themselves -
   // they're the only places that know whether the underlying clipboard write
   // actually resolved.
   const handleCopyShade = useCallback((_h: Hex) => {}, []);
@@ -613,14 +673,18 @@ function ShadeToolInner({
   // updates - just without reloading the page. Mirrors the color-picker
   // flow so the arrow link behaves the same as the top-left color box.
   const handleNavigate = useCallback((h: Hex) => {
-    // User-initiated (shade-row "use as source"). Flip the gate so syncUrl
-    // promotes the root `/` to `/[hex]`.
+    // User-initiated (multi-color grid "use as source"). Flip the gate so
+    // syncUrl promotes the root `/` to `/[hex]`.
     userChoseRef.current = true;
     setHex(h);
   }, []);
 
-  const handleExportCopy = useCallback((_text: string) => {
-    // intentionally no-op; ExportDropdown owns the toast
+  // Single-color shade click: load the shade into the top picker / preview for
+  // inspection (its swatch + format readouts) without touching the ramp source.
+  // Not URL-synced - this is ephemeral preview state, and the page's identity
+  // stays the source hex.
+  const handleInspect = useCallback((h: Hex) => {
+    setInspectedHex(h);
   }, []);
 
   // WebMCP: expose `set_color` / `get_current_palette` to in-browser agents via
@@ -694,25 +758,44 @@ function ShadeToolInner({
   // on signed-in (reuses the same /api/me probe + the AuthMenu sign-in modal
   // surfaced by the header's HeaderAuth island).
   //
-  // The tray section is always visible and is auto-seeded with the landing
-  // color on mount (see the mount effect's `seedPalette`), so a fresh visitor
-  // always starts with the current color already in the palette. Seeding still
-  // touches neither the URL nor localStorage, so `/` and `/[hex]` stay
-  // identical and `/` is only promoted to `/[hex]` on a real color change.
+  // The tray section is always visible but starts empty: a fresh visitor opts
+  // in by adding colors via "Add to palette" / the "+" box. The tray never
+  // touches the URL or localStorage, so `/` and `/[hex]` stay identical and `/`
+  // is only promoted to `/[hex]` on a real color change.
   const [tray, setTray] = useState<TrayColor[]>([]);
 
-  // Per-palette-color brand names, parallel to the tray - mirrors `brandName`'s
-  // derivation for each swatch (exact named slug when known, else nearest by
-  // OKLab distance). Threaded into the ramp/scale so a multi-color export names
-  // every color and the grid's per-column copy labels match their column.
+  // Token-form family slug per tray slot — the single source for BOTH the
+  // multi-color export token family names and the grid's per-column copy labels
+  // (`var(--<name>-…)` / `bg-<name>-…`), so the copied tokens and the exported
+  // file always agree. Derived from each swatch's EFFECTIVE semantic name — the
+  // user's explicit rename, else the positional default ("Primary"/"Accent N")
+  // or a seeded role (Background/Neutral/…), i.e. exactly what the preview band
+  // header shows — then `sanitizeName`d to a CSS-safe slug ("Accent 1" →
+  // "accent-1"). `sanitizeName` is idempotent, so the export path's own
+  // `dedupeGroupNames`→`sanitizeName` pass is a no-op on these. (The band header
+  // still renders the human form; `brandNameForHex` still derives the
+  // single-color `brandName` below — only multi-color families went semantic.)
   const paletteNames = useMemo(
-    () => tray.map((c) => brandNameForHex(c.hex)),
+    () =>
+      tray.map((c, i) =>
+        sanitizeName(c.semanticName?.trim() || defaultSemanticName(tray, i)),
+      ),
     [tray],
   );
   // Stable hex array for the ramp/scale views. Memoized so the per-color export
   // groups (and the grid) don't rebuild every palette color's ramp on each
   // render just because an inline `.map` produced a fresh array identity.
   const paletteHexes = useMemo(() => tray.map((c) => c.hex), [tray]);
+
+  // "See your color as a UI" preview inputs. The tool is single-color centric,
+  // so we feed the neutral-shell adapter the tray (when it holds colors) or just
+  // the live `hex`; it pins white bg / faint surface and routes the brand
+  // color(s) into accent + chart extras (see `mocks/tool-roles.ts`).
+  const previewHexes = useMemo(
+    () => (tray.length >= 1 ? paletteHexes : [hex]),
+    [tray.length, paletteHexes, hex],
+  );
+  const mockColors = useMemo(() => mockColorsForTool(previewHexes), [previewHexes]);
 
   // Export groups for the current view + palette, consumed by the shade-grid
   // export row inside the view component. Multi-column (2+ palette colors) →
@@ -748,19 +831,52 @@ function ShadeToolInner({
   }, [view, paletteHexes, paletteNames, brandName, ramp, scale]);
 
   const handleAddToTray = useCallback(() => {
+    // Add the color the preview is currently showing (`activeHex` = the
+    // inspected shade if one was clicked, else the source). Keeps the "Add to
+    // palette" button consistent with the swatch/values above it. In the "+"
+    // picker-append flow the picker edit resets the inspect override, so
+    // `activeHex === hex` there - it appends the freshly-picked color as before.
+    const addHex = activeHex;
     setTray((prev) => {
       if (prev.length >= 8) {
         pushToast('A palette can hold up to 8 colors.', { durationMs: 3000 });
         return prev;
       }
-      if (prev.some((c) => c.hex === hex)) {
+      if (prev.some((c) => c.hex === addHex)) {
         pushToast('That color is already in the palette.', { durationMs: 2500 });
         return prev;
       }
-      pushToast(`Added ${hex} to the palette.`);
-      return [...prev, { hex, view, copyFormat }];
+      const added: TrayColor = { hex: addHex, view, copyFormat };
+      // First time the palette opens (0 → 1): seed the conventional
+      // design-token roles alongside the user's first color, so the palette
+      // opens as Primary + Background/Neutral/Success/Warning/Error rather than
+      // a single bare swatch. Adding one color now switches straight to the
+      // multi-color palette layout. Any fixed color whose hex collides with an
+      // existing swatch is skipped (the tray keeps hexes unique). Default tool
+      // only - image mode owns its extracted palette and adds via
+      // `handleImageAddPoint`, never here.
+      if (prev.length === 0) {
+        const used = new Set([...prev.map((c) => c.hex), addHex]);
+        const extras: TrayColor[] = DEFAULT_PALETTE_EXTRAS.filter(
+          (e) => !used.has(e.hex),
+        ).map((e) => ({
+          hex: e.hex,
+          view,
+          copyFormat,
+          semanticName: e.semanticName,
+          fixed: true,
+        }));
+        pushToast(`Added ${addHex} to the palette.`);
+        return [...prev, added, ...extras];
+      }
+      // Later adds: drop the new brand color in just before the fixed block so
+      // Primary + Accents stay grouped ahead of Background/Neutral/…
+      pushToast(`Added ${addHex} to the palette.`);
+      const firstFixed = prev.findIndex((c) => c.fixed);
+      if (firstFixed === -1) return [...prev, added];
+      return [...prev.slice(0, firstFixed), added, ...prev.slice(firstFixed)];
     });
-  }, [hex, view, copyFormat, pushToast]);
+  }, [activeHex, view, copyFormat, pushToast]);
 
   // The palette "+" box opens the SAME top color picker (anchored at the top
   // swatch), driving the live page color while open. We arm this ref before
@@ -834,6 +950,19 @@ function ShadeToolInner({
     [openPickerForEdit],
   );
 
+  // Sibling of `editBandColor` for the band's trailing "+" button: resolve the
+  // viewport-visible picker (same `rem`-based breakpoint query) and open it to
+  // append a new color to the palette on close.
+  const addBandColor = useCallback(() => {
+    const desktopVisible =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(min-width: 48rem)').matches;
+    const picker = desktopVisible
+      ? desktopPickerRef.current
+      : mobilePickerRef.current;
+    openPickerForPalette(picker);
+  }, [openPickerForPalette]);
+
   const handlePickerOpenChange = useCallback(
     (open: boolean, canceled: boolean) => {
       if (open) return;
@@ -870,7 +999,18 @@ function ShadeToolInner({
     setTray((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
-  const handleClearTray = useCallback(() => setTray([]), []);
+  // Rename a swatch's semantic role (Primary, Neutral, …). A blank/whitespace
+  // value clears the override so the band reverts to the positional default.
+  const handleRenameSemantic = useCallback((index: number, name: string) => {
+    const trimmed = name.trim();
+    setTray((prev) =>
+      prev.map((c, i) =>
+        i === index
+          ? { ...c, semanticName: trimmed.length > 0 ? trimmed : undefined }
+          : c,
+      ),
+    );
+  }, []);
 
   // --- Image mode (the /image-color-picker source-image panel) -------------
   // In image mode the tray IS the set of sample points: each entry carries its
@@ -1036,14 +1176,14 @@ function ShadeToolInner({
             <div>
               <div className="mb-2 flex items-center gap-1.5">
                 <span className="font-mono text-xs uppercase tracking-tight text-mute">
-                  Palette · contrast (WCAG)
+                  Palette
                 </span>
-                <WcagInfoButton />
               </div>
               <PalettePreviewBar
                 tray={tray}
                 onSelectColor={selectTrayColor}
                 onRemove={handleRemoveFromTray}
+                onRenameSemantic={handleRenameSemantic}
                 readOnly
               />
             </div>
@@ -1060,30 +1200,16 @@ function ShadeToolInner({
               (mt-auto) so it lines up with the bottom of the shade grid. */}
           <div className="md:sticky md:top-8">
             <PreviewBlock
-              hex={hex}
+              hex={activeHex}
               onChange={handleChangeHex}
               copyFormat={copyFormat}
               onAddToPalette={handleAddToTray}
-              inPalette={tray.some((c) => c.hex === hex)}
+              inPalette={tray.some((c) => c.hex === activeHex)}
               paletteFull={tray.length >= 8}
               pickerRef={desktopPickerRef}
               onPickerOpenChange={handlePickerOpenChange}
               readOnly={isImage}
             />
-            <div className="mt-6 border-t border-hairline pt-5">
-              <PaletteTray
-                tray={tray}
-                signedIn={!!authUser}
-                defaultName={defaultPaletteName}
-                onAddViaPicker={() => openPickerForPalette(desktopPickerRef.current)}
-                onSelectColor={selectTrayColor}
-                onEditColor={(i) => openPickerForEdit(i, desktopPickerRef.current)}
-                onRemove={handleRemoveFromTray}
-                onClear={handleClearTray}
-                onSave={handleSavePalette}
-                readOnly={isImage}
-              />
-            </div>
           </div>
           <div className="mt-auto pt-8">
             <ShareRow hex={hex} named={named} />
@@ -1100,75 +1226,32 @@ function ShadeToolInner({
               have no way to enter or change a color on a phone. */}
           <div className="flex flex-col gap-5 md:hidden">
             <PreviewBlock
-              hex={hex}
+              hex={activeHex}
               onChange={handleChangeHex}
               copyFormat={copyFormat}
               onAddToPalette={handleAddToTray}
-              inPalette={tray.some((c) => c.hex === hex)}
+              inPalette={tray.some((c) => c.hex === activeHex)}
               paletteFull={tray.length >= 8}
               pickerRef={mobilePickerRef}
               onPickerOpenChange={handlePickerOpenChange}
               readOnly={isImage}
             />
             <div className="flex flex-col gap-3 border-t border-hairline pt-5">
-              <PaletteTray
-                tray={tray}
-                signedIn={!!authUser}
-                defaultName={defaultPaletteName}
-                onAddViaPicker={() => openPickerForPalette(mobilePickerRef.current)}
-                onSelectColor={selectTrayColor}
-                onEditColor={(i) => openPickerForEdit(i, mobilePickerRef.current)}
-                onRemove={handleRemoveFromTray}
-                onClear={handleClearTray}
-                onSave={handleSavePalette}
-                readOnly={isImage}
-              />
               <ShareRow hex={hex} named={named} />
             </div>
           </div>
 
-          {/* Full-width palette preview: appears only once the tray holds a
-              second color, sitting above the ramp's header row. Its swatches
-              mirror the left-rail tray's verbs: click sets the live page color
-              (`selectTrayColor`), double-click opens the picker to adjust it
-              (`editBandColor` → `openPickerForEdit`), and a hover-revealed ×
-              removes it (`handleRemoveFromTray`). A small header row labels the
-              band and carries the WCAG explainer, since these swatches are the
-              only place contrast levels surface. Suppressed in image mode - the
-              band renders full-width above the tool there instead. */}
-          {!isImage && tray.length >= 2 && (
-            <div>
-              <div className="mb-2 flex items-center gap-1.5">
-                <span className="font-mono text-xs uppercase tracking-tight text-mute">
-                  Contrast (WCAG)
-                </span>
-                <WcagInfoButton />
-              </div>
-              <PalettePreviewBar
-                tray={tray}
-                onSelectColor={selectTrayColor}
-                onEditColor={editBandColor}
-                onRemove={handleRemoveFromTray}
-              />
-            </div>
-          )}
-
-          {/* Metadata row: the algorithm toggle + stops · PNG. The "Copy as"
-              value-format picker now rides at the far right of the export-
-              controls row (see `ExportDropdown`), so it's no longer here. The
-              sr-only <h1> still carries the heading. The algorithm toggle lives
-              here (compact, inline) for both breakpoints rather than in the
-              left rail / mobile control stack. A bottom hairline always divides
-              this row from the export-controls row below. Extra top margin when
-              the full-width palette preview sits above it gives that big block
-              room to breathe. */}
-          <div className={`flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-hairline pb-2${tray.length >= 2 ? ' mt-3' : ''}`}>
+          {/* Metadata row: the algorithm toggle + stops · PNG on the left, with
+              the "Export" link pushed to the far end (it opens the export
+              modal; the format + "Copy as" controls live inside it now, so this
+              row stays compact). The sr-only <h1> still carries the heading. The
+              algorithm toggle lives here (compact, inline) for both breakpoints
+              rather than in the left rail / mobile control stack. This row sits
+              at the top of the palette column; its bottom hairline divides it
+              from the full-width palette preview (or the shades) below. */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-hairline pb-2">
             <div className="flex items-center gap-3">
               <AlgorithmToggle view={view} onChange={setView} compact />
-              <span aria-hidden="true" className="font-mono text-[11px] text-mute">·</span>
-              <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-                {view === 'ramp' ? `${ramp.shades.length} stops` : '11 stops'}
-              </span>
               <span aria-hidden="true" className="font-mono text-[11px] text-mute">·</span>
               {view === 'ramp' ? (
                 <DownloadPngButton
@@ -1190,7 +1273,48 @@ function ShadeToolInner({
                 />
               )}
             </div>
+            <div className="ml-auto flex items-center gap-4">
+              {/* Save is a whole-palette action like Export, so the two sit
+                  together. Mounted only once the palette holds a color, keeping
+                  the calm single-color view unchanged. */}
+              {tray.length >= 1 && (
+                <SavePaletteButton
+                  signedIn={!!authUser}
+                  defaultName={defaultPaletteName}
+                  onSave={handleSavePalette}
+                />
+              )}
+              <ExportControls
+                groups={exportGroups}
+                format={exportFormat}
+                copyFormat={copyFormat}
+                onFormatChange={setExportFormat}
+              />
+            </div>
           </div>
+
+          {/* Full-width palette preview: appears only once the tray holds a
+              color, sitting just below the metadata row and above the shades.
+              Its swatches mirror the left-rail tray's verbs: click sets the live
+              page color (`selectTrayColor`), double-click opens the picker to
+              adjust it (`editBandColor` → `openPickerForEdit`), and a
+              hover-revealed × removes it (`handleRemoveFromTray`). The WCAG
+              explainer (`?`) now rides each swatch's hover-revealed contrast
+              badges - the only place contrast levels surface - so the band needs
+              no header row. Suppressed in image mode - the band renders
+              full-width above the tool there instead. */}
+          {!isImage && tray.length >= 1 && (
+            <div>
+              <PalettePreviewBar
+                tray={tray}
+                onSelectColor={selectTrayColor}
+                onEditColor={editBandColor}
+                onAddColor={tray.length < 8 ? addBandColor : undefined}
+                onRemove={handleRemoveFromTray}
+                onRenameSemantic={handleRenameSemantic}
+              />
+            </div>
+          )}
 
           <div className="relative flex flex-col gap-2.5">
             {showHintBanner && <HintBanner onDismiss={dismissHintBanner} />}
@@ -1201,15 +1325,10 @@ function ShadeToolInner({
                 paletteHexes={paletteHexes}
                 paletteNames={paletteNames}
                 copyFormat={copyFormat}
-                exportFormat={exportFormat}
-                exportGroups={exportGroups}
-                valueMode={oklchValueMode}
                 brandName={brandName}
                 onCopy={handleCopyShade}
                 onNavigate={handleNavigate}
-                onExportCopy={handleExportCopy}
-                onExportFormatChange={setExportFormat}
-                onCopyFormatChange={setCopyFormat}
+                onInspect={handleInspect}
               />
             ) : (
               <TailwindScale
@@ -1218,17 +1337,33 @@ function ShadeToolInner({
                 paletteHexes={paletteHexes}
                 paletteNames={paletteNames}
                 copyFormat={copyFormat}
-                exportFormat={exportFormat}
-                exportGroups={exportGroups}
                 brandName={brandName}
                 onCopy={handleCopyShade}
                 onNavigate={handleNavigate}
-                onExportCopy={handleExportCopy}
-                onExportFormatChange={setExportFormat}
-                onCopyFormatChange={setCopyFormat}
+                onInspect={handleInspect}
               />
             )}
           </div>
+
+          {/* "See your color as a UI" preview. Full-width below the shade list,
+              shown for single colors and multi-color trays alike. Lazy-loaded
+              (declared at module top) so it never weighs down the eager / SSR
+              island chunk; SSR emits only the height-reserving fallback.
+              Suppressed in image mode, matching the rest of this column. */}
+          {!isImage && mockColors.length > 0 && (
+            <section className="mt-8 flex flex-col gap-3 border-t border-hairline pt-6">
+              <Suspense
+                fallback={
+                  <div className="aspect-[16/10] w-full rounded-lg border border-hairline" />
+                }
+              >
+                <MockPreview
+                  colors={mockColors}
+                  name={tray.length >= 1 ? defaultPaletteName : (named?.name ?? hex)}
+                />
+              </Suspense>
+            </section>
+          )}
         </section>
       </div>
       )}
@@ -1465,11 +1600,11 @@ function PreviewBlock({
   // Color name shown at the top of the preview. A non-exact pick is announced
   // to screen readers via the "Closest named color" lead (no visible prefix).
   const nameHeader = (
-    <div className="flex items-baseline gap-1.5">
+    <div className="-mb-2 flex items-baseline gap-1.5">
       {displayName.exact ? (
-        <span className="font-display text-base text-ink-2">{displayName.name}</span>
+        <span className="font-display text-[13px] text-ink-2">{displayName.name}</span>
       ) : (
-        <span className="font-display text-base text-ink-2">
+        <span className="font-display text-[13px] text-ink-2">
           <span className="sr-only">Closest named color: </span>
           {displayName.name}
         </span>
@@ -1550,7 +1685,7 @@ function PreviewBlock({
         type="button"
         onClick={onAddToPalette}
         disabled={inPalette || paletteFull}
-        className="-mt-2 inline-flex items-center justify-center border border-ink/20 bg-paper-2 px-3 py-2 font-mono text-xs uppercase tracking-tight text-ink transition-colors duration-150 ease-out hover:bg-paper-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-default disabled:opacity-50 motion-reduce:transition-none"
+        className="-mt-2 inline-flex items-center justify-center gap-1.5 bg-ink px-3 py-2 font-mono text-xs uppercase tracking-tight text-paper transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-default disabled:opacity-40 motion-reduce:transition-none"
       >
         {inPalette ? 'Added in Palette' : 'Add to palette'}
       </button>
@@ -1630,7 +1765,7 @@ function HintBanner({ onDismiss }: { onDismiss: () => void }) {
   return (
     <button
       type="button"
-      aria-label="Dismiss tip: double-click a shade to use as your new source"
+      aria-label="Dismiss tip: click a shade to copy it and preview its color values"
       onClick={onDismiss}
       className="group flex w-auto self-end items-center gap-3 bg-ink px-3.5 py-2 text-left text-sm text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 min-[1400px]:absolute min-[1400px]:right-0 min-[1400px]:top-0 min-[1400px]:z-10 min-[1400px]:self-auto"
     >
@@ -1639,7 +1774,7 @@ function HintBanner({ onDismiss }: { onDismiss: () => void }) {
           aria-hidden="true"
           className="mr-2 h-5 w-5 shrink-0 text-yellow-400"
         />
-        Double-click a shade to use as your new source.
+        Click a shade to copy it and preview its color values.
       </span>
       <span
         aria-hidden="true"
@@ -1833,10 +1968,10 @@ function AlgorithmInfoButton() {
             design system.
           </p>
           <p>
-            <span className="font-mono font-semibold">OKLCH</span> walks a 20-shade ramp
-            in a perceptually uniform color space. Lightness steps feel evenly spaced and
-            chroma stays controlled, so mid-tones don't go muddy. Pick this for a full
-            tint-to-shade range.
+            <span className="font-mono font-semibold">OKLCH</span> walks the same 50–950
+            scale in a perceptually uniform color space. Lightness steps feel evenly spaced
+            and chroma stays controlled, so mid-tones don't go muddy. Same stops as Tailwind,
+            a different algorithm - pick this for a smoother tint-to-shade range.
           </p>
         </div>
       )}
@@ -1848,13 +1983,20 @@ function AlgorithmInfoButton() {
  * `?` info button + popover explaining WCAG contrast and how to read the
  * AAA / AA / AA-Lg / Fail badges shown on the palette preview swatches.
  * Same click-to-toggle / outside-click / Escape pattern as
- * `AlgorithmInfoButton`; lives on the preview-bar header because those
- * swatches are the only place contrast levels surface in the UI.
+ * `AlgorithmInfoButton`; rendered next to each swatch's hover-revealed
+ * contrast badges (the only place contrast levels surface in the UI).
+ *
+ * `inline`: sits inside a swatch's hover overlay, so it fades + disables
+ * pointer events with the badges at rest and only reveals on the swatch's
+ * hover/focus - except while its own popover is open, where it stays visible
+ * so the popover (which extends below the band) can be read and dismissed.
+ * `useId` keeps the popover/aria-controls ids unique across the up-to-8 swatch
+ * instances.
  */
-function WcagInfoButton() {
+function WcagInfoButton({ inline = false }: { inline?: boolean }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
-  const id = 'wcag-info-popover';
+  const id = useId();
 
   useEffect(() => {
     if (!open) return;
@@ -1873,8 +2015,16 @@ function WcagInfoButton() {
     };
   }, [open]);
 
+  const inlineReveal = inline
+    ? ' transition-opacity duration-150 ease-out motion-reduce:transition-none' +
+      (open
+        ? ' opacity-100 pointer-events-auto'
+        : ' opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto' +
+          ' group-focus-within:opacity-100 group-focus-within:pointer-events-auto')
+    : '';
+
   return (
-    <div ref={wrapRef} className="relative inline-flex">
+    <div ref={wrapRef} className={'relative inline-flex' + inlineReveal}>
       <button
         type="button"
         aria-label="About WCAG contrast levels"
@@ -1883,8 +2033,12 @@ function WcagInfoButton() {
         onClick={() => setOpen(o => !o)}
         className={
           'inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] ' +
-          'font-semibold leading-none text-mute ring-1 ring-ink/20 ' +
-          'hover:text-ink hover:ring-ink/40 ' +
+          'font-semibold leading-none ring-1 ' +
+          // Inline: inherit the swatch's readable text color (black/white) so the
+          // `?` stays legible on any swatch. Default: muted on the paper bg.
+          (inline
+            ? 'text-current ring-current/40 hover:ring-current/70 '
+            : 'text-mute ring-ink/20 hover:text-ink hover:ring-ink/40 ') +
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60'
         }
       >
@@ -2003,7 +2157,7 @@ function ContrastLevels({ bg }: { bg: Hex }) {
   return (
     <span
       aria-hidden="true"
-      className="flex items-center gap-4 opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none"
+      className="flex items-center gap-4 opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-within:opacity-100 motion-reduce:transition-none"
     >
       {swatches.map(({ fg }) => {
         const level = wcagLevel(contrastRatio(bg, fg));
@@ -2022,8 +2176,10 @@ function ContrastLevels({ bg }: { bg: Hex }) {
 }
 
 /**
- * Full-width palette preview band shown above the ramp once the tray holds a
- * second color (`tray.length >= 2`). Reuses the proportional swatch-band shape
+ * Full-width palette preview band shown above the ramp once the tray holds any
+ * color (`tray.length >= 1` - the first "Add to palette" seeds the design-token
+ * roles, so a single add opens the full multi-color palette). Reuses the
+ * proportional swatch-band shape
  * from `PaletteCard` (equal-width `flex-1` fills, inline `backgroundColor` so the
  * colors survive the theme toggle), but each swatch is a real control that
  * mirrors the smaller PaletteTray swatches: single-click makes it the live page
@@ -2042,39 +2198,138 @@ function PalettePreviewBar({
   tray,
   onSelectColor,
   onEditColor,
+  onAddColor,
   onRemove,
+  onRenameSemantic,
   readOnly = false,
 }: {
   tray: TrayColor[];
   onSelectColor: (index: number) => void;
   /** Double-click: open the picker seeded with the swatch; omitted ⇒ no edit. */
   onEditColor?: (index: number) => void;
+  /**
+   * Renders a trailing "+" button straddling the band's right edge that opens
+   * the picker to append a color. Omitted (or undefined when the palette is at
+   * its 8-color cap) ⇒ no add button.
+   */
+  onAddColor?: () => void;
   /** Reveal an X on hover/focus that removes the swatch; omitted ⇒ no remove. */
   onRemove?: (index: number) => void;
+  /** Pencil-click commits a renamed semantic role; omitted ⇒ no rename pencil. */
+  onRenameSemantic?: (index: number, name: string) => void;
   /** Image-authoritative mode: suppress double-click edit (remove still works). */
   readOnly?: boolean;
 }) {
   const canEdit = !readOnly && !!onEditColor;
+  // Which column's semantic name is being edited inline, plus its draft text.
+  // Local to the band: a commit flows up through `onRenameSemantic`, but the
+  // open/typing state never needs to live in the parent.
+  const [editingSemantic, setEditingSemantic] = useState<number | null>(null);
+  const [semanticDraft, setSemanticDraft] = useState('');
+  // Set true whenever we tear the editor down ourselves (Enter commit / Escape
+  // cancel) so the resulting `onBlur` doesn't fire a second, stale commit -
+  // critical for Escape, which must NOT persist the draft.
+  const closingSemanticRef = useRef(false);
+
+  const startSemanticEdit = (index: number, current: string) => {
+    setEditingSemantic(index);
+    setSemanticDraft(current);
+  };
+  const commitSemanticEdit = () => {
+    if (editingSemantic !== null) onRenameSemantic?.(editingSemantic, semanticDraft);
+    closingSemanticRef.current = true;
+    setEditingSemantic(null);
+  };
+  const cancelSemanticEdit = () => {
+    closingSemanticRef.current = true;
+    setEditingSemantic(null);
+  };
+  const handleSemanticBlur = () => {
+    // A programmatic close (Enter/Escape) already settled the value; only a real
+    // focus-loss click-away should commit here.
+    if (closingSemanticRef.current) {
+      closingSemanticRef.current = false;
+      return;
+    }
+    commitSemanticEdit();
+  };
+
   return (
     <div className="w-full">
-      {/* Per-column name labels, sitting ABOVE the colored band (not inside the
-          swatch). `aria-hidden` because each swatch button's aria-label already
-          spells out its name; columns are `flex-1` to line up with the band's
-          equal-width swatches below. */}
-      <div aria-hidden="true" className="flex w-full">
-        {tray.map((c, i) => (
-          <div
-            key={`name-${c.hex}-${i}`}
-            className="min-w-0 flex-1 truncate pb-1 pr-3 font-display text-sm text-ink"
-            title={nameForHex(c.hex)}
-          >
-            {nameForHex(c.hex)}
-          </div>
-        ))}
+      {/* Per-column header sitting ABOVE the colored band (not inside the
+          swatch): the editable semantic role (with a pencil to rename it).
+          The detected color name lives inside the swatch instead, revealed on
+          hover alongside the hex. Columns are `flex-1` to line up with the
+          band's equal-width swatches below. */}
+      <div className="flex w-full">
+        {tray.map((c, i) => {
+          const actualName = nameForHex(c.hex);
+          const semantic = c.semanticName ?? defaultSemanticName(tray, i);
+          const editing = editingSemantic === i;
+          return (
+            <div
+              key={`name-${c.hex}-${i}`}
+              className="flex min-w-0 flex-1 items-center gap-2 pb-1 pr-3"
+            >
+              {/* LEFT: semantic role + rename pencil (or the inline editor). */}
+              {editing ? (
+                <input
+                  type="text"
+                  autoFocus
+                  value={semanticDraft}
+                  onChange={(e) => setSemanticDraft(e.target.value)}
+                  onFocus={(e) => e.currentTarget.select()}
+                  onBlur={handleSemanticBlur}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      commitSemanticEdit();
+                    } else if (e.key === 'Escape') {
+                      e.preventDefault();
+                      cancelSemanticEdit();
+                    }
+                  }}
+                  aria-label={`Semantic name for ${actualName}`}
+                  className="min-w-0 flex-1 rounded-sm border border-hairline bg-paper px-1 py-0.5 font-display text-[13px] text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                />
+              ) : (
+                <span className="flex min-w-0 items-center gap-1">
+                  <span
+                    className="truncate font-display text-[13px] font-medium text-ink"
+                    title={semantic}
+                  >
+                    {semantic}
+                  </span>
+                  {onRenameSemantic && (
+                    <button
+                      type="button"
+                      onClick={() => startSemanticEdit(i, semantic)}
+                      aria-label={`Rename the ${semantic} role`}
+                      title="Rename semantic role"
+                      className="inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-sm text-mute transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                    >
+                      <svg viewBox="0 0 16 16" aria-hidden="true" className="h-3 w-3">
+                        <path
+                          d="M11 2.5l2.5 2.5L6 12.5l-3 .5.5-3L11 2.5z"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
+      <div className="relative">
       <ul
         aria-label="Palette preview"
-        className="flex h-[150px] w-full overflow-hidden border border-hairline"
+        className="flex h-[150px] w-full gap-[2px] border border-hairline"
       >
       {tray.map((c, i) => {
         const textColor = readableTextOn(c.hex);
@@ -2087,16 +2342,41 @@ function PalettePreviewBar({
               onClick={() => onSelectColor(i)}
               onDoubleClick={canEdit ? () => onEditColor!(i) : undefined}
               aria-label={`Use ${c.hex} (${nameForHex(c.hex)}) as the current color${canEdit ? ' (double-click to adjust)' : ''}. Black text ${wcagSpoken(blackLevel)}, white text ${wcagSpoken(whiteLevel)}.`}
-              className="group flex h-full w-full cursor-pointer flex-col justify-end p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60"
+              className="h-full w-full cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60"
               style={{ backgroundColor: c.hex, color: textColor }}
+            />
+            {/* Hover overlay sitting over the swatch: the contrast badges + the
+                WCAG explainer (`?`), then the detected name/hex. It lives OUTSIDE
+                the swatch <button> so the interactive `?` isn't an invalid nested
+                button; `pointer-events-none` lets swatch clicks fall through to
+                the button, and only the `?` re-enables pointer events on hover.
+                The swatch button's aria-label already spells the contrast levels
+                out, so the badges + name/hex stay aria-hidden. */}
+            <div
+              className="pointer-events-none absolute inset-0 flex flex-col justify-end p-3"
+              style={{ color: textColor }}
             >
               <span className="flex flex-col gap-1.5">
-                <ContrastLevels bg={c.hex} />
-                <span className="truncate font-mono text-xs uppercase opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
-                  {c.hex}
+                <span className="flex items-center gap-2">
+                  <ContrastLevels bg={c.hex} />
+                  <WcagInfoButton inline />
+                </span>
+                {/* Detected color name + hex, hidden at rest and revealed with
+                    the badges on hover/focus (mirrors the single-color
+                    ShadeRow's hover label). */}
+                <span
+                  aria-hidden="true"
+                  className="flex flex-col gap-0.5 opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-within:opacity-100 motion-reduce:transition-none"
+                >
+                  <span className="truncate font-display text-xs font-medium">
+                    {nameForHex(c.hex)}
+                  </span>
+                  <span className="truncate font-mono text-xs uppercase">
+                    {c.hex}
+                  </span>
                 </span>
               </span>
-            </button>
+            </div>
             {onRemove && (
               <button
                 type="button"
@@ -2117,78 +2397,109 @@ function PalettePreviewBar({
         );
       })}
       </ul>
+      {onAddColor && (
+        // Straddles the band's right edge - half over the last swatch, half
+        // outside. Lives outside the <ul> (in the relative wrapper) so it's
+        // free to protrude; vertically centered on the band.
+        <button
+          type="button"
+          onClick={onAddColor}
+          aria-label="Add a color to the palette"
+          title="Add a color to the palette"
+          className="absolute right-0 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-ink text-paper shadow-md ring-2 ring-paper transition duration-150 ease-out hover:scale-110 hover:bg-ink/90 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 active:scale-95 motion-reduce:transition-none motion-reduce:hover:scale-100"
+        >
+          <svg viewBox="0 0 16 16" aria-hidden="true" className="h-4 w-4">
+            <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+          </svg>
+        </button>
+      )}
+      </div>
     </div>
   );
 }
 
+/** Class for the "Save" trigger - mirrors ExportControls' EXPORT_TRIGGER_CLASS
+ *  so Save and Export read as one matched pair in the metadata toolbar. */
+const SAVE_TRIGGER_CLASS =
+  'font-mono text-[11px] uppercase tracking-[0.16em] text-ink ' +
+  'underline decoration-ink/30 underline-offset-4 ' +
+  'transition-colors duration-150 ease-out hover:text-accent hover:decoration-accent ' +
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60';
+
 /**
- * "Add to palette" tray - the single new verb in the tool's left rail.
+ * Inline "Save" control for the top-right metadata toolbar, paired with Export.
  *
- * Collects the current `{hex, view, copyFormat}` into a working strip of
- * swatches. "Save palette →" reveals an inline name field (pre-filled with the
- * current color's friendly name) and, on submit, hands the tray off to the
- * parent's `onSave` which POSTs to `/api/palettes` and routes to the editor.
- *
- * Anti-overwhelm: the tray is empty (just the "Add" button) until the user
- * opts in, so the calm single-color view is unchanged for casual visitors. The
- * tray needs ≥1 color before saving; the Save button stays disabled until then.
+ * A whole-palette action: clicking "Save" reveals a small inline popover with a
+ * name field (pre-filled with the suggested palette name as placeholder) and,
+ * on submit, hands the name to `onSave` (which POSTs to `/api/palettes` and
+ * routes to the owner editor). Signed-out submit opens the same `SignInModal`
+ * the header uses rather than dead-ending. Only mounted once the palette holds a
+ * color, so the calm single-color view is unchanged. Mirrors `PaletteTray`'s
+ * naming logic; that component is the left-rail variant.
  */
-function PaletteTray({
-  tray,
+function SavePaletteButton({
   signedIn,
   defaultName,
-  onAddViaPicker,
-  onSelectColor,
-  onEditColor,
-  onRemove,
-  onClear,
   onSave,
-  readOnly = false,
 }: {
-  tray: TrayColor[];
   signedIn: boolean;
   defaultName: string;
-  /** Opens the top color picker; the chosen color is appended on close. */
-  onAddViaPicker: () => void;
-  /** Single click: makes the swatch at `index` the live page color (no picker). */
-  onSelectColor: (index: number) => void;
-  /** Double click: opens the top color picker seeded with the swatch at `index`;
-   *  the adjusted color is written back into that swatch on close. */
-  onEditColor: (index: number) => void;
-  onRemove: (index: number) => void;
-  onClear: () => void;
   onSave: (name: string) => void;
-  /**
-   * Image-authoritative mode (`/image-color-picker`): colors are edited by
-   * dragging circles on the image, not here - so the "+" add box and the
-   * double-click-to-edit affordance are suppressed. Click-to-select, remove,
-   * clear and save stay.
-   */
-  readOnly?: boolean;
 }) {
-  const [naming, setNaming] = useState(false);
+  const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [signInOpen, setSignInOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const saveButtonRef = useRef<HTMLButtonElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const popRef = useRef<HTMLDivElement | null>(null);
+  // True once the user has typed a custom name; after that we keep their value
+  // across re-opens and stop auto-selecting it.
+  const editedRef = useRef(false);
 
-  const canSave = tray.length >= 1;
-
-  const beginNaming = useCallback(() => {
-    // Leave the field empty so the suggested name shows as a placeholder; an
-    // empty submit saves with it (see `submit`).
-    setName('');
-    setNaming(true);
-  }, []);
-
+  // On open, focus the field. The first time (name still the untouched
+  // suggestion) we pre-fill the suggested name and select it so the user can
+  // Save immediately or type to replace. Once they've given it a custom name,
+  // we keep that value and place the cursor at the end without selecting.
   useEffect(() => {
-    if (naming) inputRef.current?.focus();
-  }, [naming]);
+    if (open) {
+      if (!editedRef.current) setName(defaultName);
+      // Defer to the next frame so it runs after React commits the value to the
+      // DOM, otherwise select() grabs the stale text.
+      const id = requestAnimationFrame(() => {
+        const el = inputRef.current;
+        if (!el) return;
+        el.focus();
+        if (editedRef.current) {
+          el.setSelectionRange(el.value.length, el.value.length);
+        } else {
+          el.select();
+        }
+      });
+      return () => cancelAnimationFrame(id);
+    }
+  }, [open, defaultName]);
+
+  // Dismiss the popover on an outside click (the button itself toggles).
+  useEffect(() => {
+    if (!open) return;
+    const onDocMouseDown = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        !popRef.current?.contains(target) &&
+        !buttonRef.current?.contains(target)
+      ) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDocMouseDown);
+    return () => document.removeEventListener('mousedown', onDocMouseDown);
+  }, [open]);
 
   const submit = useCallback(() => {
-    // Saving requires an account: a signed-out submit opens the same sign-in
-    // modal the header uses (a signup nudge) rather than a dead-end toast.
+    // Saving requires an account: a signed-out submit opens the sign-in modal
+    // (a signup nudge) instead of dead-ending.
     if (!signedIn) {
+      setOpen(false);
       setSignInOpen(true);
       return;
     }
@@ -2198,109 +2509,48 @@ function PaletteTray({
   }, [signedIn, name, onSave, defaultName]);
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <span className="eyebrow">Palette</span>
-        {tray.length > 0 && (
-          <button
-            type="button"
-            onClick={onClear}
-            className="font-mono text-[10px] uppercase tracking-[0.14em] text-mute transition-colors duration-150 ease-out hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
-          >
-            Clear
-          </button>
-        )}
-      </div>
+    <div className="relative">
+      <button
+        ref={buttonRef}
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className={SAVE_TRIGGER_CLASS}
+      >
+        Save
+      </button>
 
-      {/* The tray section is always visible (the surrounding ShadeTool render
-          no longer gates it on a non-empty tray), and it's auto-seeded with the
-          landing color on mount. An empty tray (the user removed everything)
-          still shows the "+" box so a color can be added back. */}
-      <ul className="flex flex-wrap gap-1.5">
-        {tray.map((c, i) => (
-          <li key={`${c.hex}-${i}`} className="group relative">
-            <button
-              type="button"
-              onClick={() => onSelectColor(i)}
-              onDoubleClick={readOnly ? undefined : () => onEditColor(i)}
-              aria-label={readOnly ? `Use ${c.hex}` : `Use ${c.hex} (double-click to adjust)`}
-              title={readOnly ? `${c.hex} — click to use` : `${c.hex} — click to use, double-click to adjust`}
-              className="block h-9 w-9 ring-1 ring-ink/15 transition-shadow duration-150 ease-out hover:ring-2 hover:ring-ink/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
-              style={{ backgroundColor: c.hex }}
-            />
-            <button
-              type="button"
-              aria-label={`Remove ${c.hex} from palette`}
-              onClick={() => onRemove(i)}
-              className="absolute -right-1.5 -top-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-ink text-paper opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
-            >
-              <svg viewBox="0 0 16 16" aria-hidden="true" className="h-2.5 w-2.5">
-                <path d="M3 3l10 10M13 3L3 13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </button>
-          </li>
-        ))}
-
-        {/* "+" box: opens the same top color picker (anchored at the top
-            swatch). It drives the live page color while open, and the chosen
-            color is appended to the palette when the picker closes. Hidden
-            once the tray hits the 8-color cap, and in image mode (colors are
-            added by clicking the image instead). */}
-        {!readOnly && tray.length < 8 && (
-          <li>
-            <button
-              type="button"
-              onClick={onAddViaPicker}
-              aria-label="Add a color to the palette"
-              title="Add a color to the palette"
-              className="group flex h-9 w-9 items-center justify-center border border-dashed border-ink/30 text-mute transition-colors duration-150 ease-out hover:border-ink/60 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
-            >
-              <svg viewBox="0 0 16 16" aria-hidden="true" className="h-4 w-4">
-                <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-              </svg>
-            </button>
-          </li>
-        )}
-      </ul>
-
-      {tray.length > 0 && !naming && (
-        <button
-          type="button"
-          onClick={beginNaming}
-          disabled={!canSave}
-          className="inline-flex items-center justify-center gap-1.5 bg-ink px-3 py-2 font-mono text-xs uppercase tracking-tight text-paper transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-default disabled:opacity-40 motion-reduce:transition-none"
+      {open && (
+        <div
+          ref={popRef}
+          role="dialog"
+          aria-label="Name and save palette"
+          className="absolute right-0 top-full z-20 mt-2 flex w-60 flex-col gap-2 border border-ink/15 bg-paper p-3 shadow-lg"
         >
-          Save palette
-        </button>
-      )}
-
-      {naming && (
-        <div className="flex flex-col gap-2">
-          <label className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-mute">
-              Palette name
-            </span>
-            <input
-              ref={inputRef}
-              type="text"
-              value={name}
-              maxLength={60}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  submit();
-                } else if (e.key === 'Escape') {
-                  setNaming(false);
-                }
-              }}
-              placeholder={defaultName}
-              className="border border-ink/20 bg-paper px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
-            />
-          </label>
+          <input
+            ref={inputRef}
+            type="text"
+            value={name}
+            maxLength={60}
+            aria-label="Palette name"
+            placeholder={defaultName}
+            onChange={(e) => {
+              editedRef.current = true;
+              setName(e.target.value);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                submit();
+              } else if (e.key === 'Escape') {
+                setOpen(false);
+              }
+            }}
+            className="border border-ink/20 bg-paper px-3 py-2 font-mono text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+          />
           <div className="flex items-center gap-2">
             <button
-              ref={saveButtonRef}
               type="button"
               onClick={submit}
               className="inline-flex flex-1 items-center justify-center bg-ink px-3 py-2 font-mono text-xs uppercase tracking-tight text-paper transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
@@ -2309,7 +2559,7 @@ function PaletteTray({
             </button>
             <button
               type="button"
-              onClick={() => setNaming(false)}
+              onClick={() => setOpen(false)}
               className="inline-flex items-center justify-center border border-ink/20 px-3 py-2 font-mono text-xs uppercase tracking-tight text-ink transition-colors duration-150 ease-out hover:bg-paper-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
             >
               Cancel
@@ -2321,7 +2571,7 @@ function PaletteTray({
       {signInOpen && (
         <SignInModal
           onClose={() => setSignInOpen(false)}
-          triggerRef={saveButtonRef}
+          triggerRef={buttonRef}
           ariaLabel="Sign in to save palettes"
         />
       )}

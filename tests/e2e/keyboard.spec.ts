@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
  *  - Tab order reaches every interactive control (incl. the color picker
  *    trigger button)
  *  - ArrowDown / ArrowUp cycle focus between sibling shade rows
- *  - Enter on a focused row copies; Shift+Enter navigates
+ *  - Enter on a focused row copies (and loads the shade into the picker)
  *  - Escape closes the color picker popover
  *
  * Note: the color picker is a trigger button that opens a popover containing

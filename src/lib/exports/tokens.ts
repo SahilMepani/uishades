@@ -3,8 +3,9 @@
  *
  * The five serializers in this directory used to take a `TailwindScale` and
  * key their output off `s.stop`. To also export the OKLCH ramp (which has no
- * stops, only a 1..20 step index) we normalize BOTH palette shapes into a
- * flat `ColorToken[]` here, and let serializers code against that.
+ * `stop` of its own - we key it to the same 50..950 stops by row index) we
+ * normalize BOTH palette shapes into a flat `ColorToken[]` here, and let
+ * serializers code against that.
  *
  * `tokenValue` renders a token as either a hex string or an `oklch()` string.
  * The oklch() form is derived from the *rendered hex* (via the same
@@ -16,9 +17,10 @@
 import type { ContinuousRamp, ExportFormat, Hex, OKLCH, TailwindScale } from '../color/types';
 import { formatForCopy } from '../color/format';
 import { ACHROMATIC_CHROMA } from '../color/hue';
+import { STOPS } from '../color/anchors';
 
 export interface ColorToken {
-  /** Token name suffix: '50'..'950' for the scale, '1'..'20' for the ramp. */
+  /** Token name suffix: '50'..'950' (both the scale and the OKLCH ramp). */
   key: string;
   hex: Hex;
   oklch: OKLCH;
@@ -43,21 +45,23 @@ export interface ColorGroup {
   source?: OKLCH;
 }
 
-export type ValueMode = 'hex' | 'oklch';
+export type ValueMode = 'hex' | 'rgb' | 'hsl' | 'oklch';
 
 /**
- * Which export formats honor the `oklch` value mode. The W3C and Figma JSON
- * serializers always emit hex by design (see `w3c-tokens.ts` / `figma-vars.ts`),
- * so `oklch()` is inert for them - the "Copy as" picker disables that option when
- * one of these formats is selected. Single source of truth for that capability;
- * keep it in lockstep with which serializers actually consume `valueMode`.
+ * Which export formats honor a non-hex value mode (`rgb()`/`hsl()`/`oklch()`).
+ * The W3C and Figma JSON serializers always emit hex by design (see
+ * `w3c-tokens.ts` / `figma-vars.ts`), so every non-hex format is inert for them -
+ * the "Copy as" picker disables those options when one of these formats is
+ * selected. Single source of truth for that capability; keep it in lockstep with
+ * which serializers actually consume `valueMode`.
  */
-export const EXPORT_SUPPORTS_OKLCH: Record<ExportFormat, boolean> = {
+export const EXPORT_SUPPORTS_NON_HEX: Record<ExportFormat, boolean> = {
   'tailwind-v4': true,
   'tailwind-v3': true,
   'css-vars': true,
   'w3c-tokens': false,
   'figma-vars': false,
+  'style-dictionary': false,
 };
 
 /**
@@ -83,18 +87,24 @@ export function scaleToTokens(scale: TailwindScale): ColorToken[] {
   }));
 }
 
-/** OKLCH 20-step ramp → tokens keyed by 1-based step index, lightest first. */
+/**
+ * OKLCH ramp → tokens keyed by the same 50…950 Tailwind stop labels as the
+ * scale, lightest first (index 0 → 50, last → 950), so the OKLCH export is a
+ * drop-in token scale rather than non-standard `brand-1…N` keys. The ramp is
+ * sized to `STOPS.length` (see `INNER_STEPS` in ramp.ts); the `?? i + 1` is a
+ * defensive fallback if that ever drifts out of lockstep.
+ */
 export function rampToTokens(ramp: ContinuousRamp): ColorToken[] {
   return ramp.shades.map((s, i) => ({
-    key: String(i + 1),
+    key: String(STOPS[i] ?? i + 1),
     hex: s.hex,
     oklch: s.oklch,
   }));
 }
 
-/** Render a token's value in the requested mode. */
+/** Render a token's value in the requested mode (hex / rgb() / hsl() / oklch()). */
 export function tokenValue(t: ColorToken, mode: ValueMode): string {
-  return mode === 'oklch' ? formatForCopy(t.hex, 'oklch') : t.hex;
+  return mode === 'hex' ? t.hex : formatForCopy(t.hex, mode);
 }
 
 /** Below this OKLab-unit spread no axis is a meaningful descriptor for a pair of

@@ -1,18 +1,17 @@
 import type {
   CopyFormat,
-  ExportFormat,
   Hex,
   TailwindScale as TailwindScaleData,
 } from '../lib/color/types';
-import type { ColorGroup } from '../lib/exports/tokens';
 import ShadeRow from './ShadeRow';
 import PaletteShadeGrid from './PaletteShadeGrid';
-import ExportRow from './ExportRow';
 
 /**
- * Renders the 11-stop Tailwind scale and the export dropdown that sits
- * atop it. The anchor-stop row carries the `isInput` flag from the
- * builder so the `<ShadeRow>` displays the "input" badge + ring.
+ * Renders the 11-stop Tailwind scale. The anchor-stop row carries the `isInput`
+ * flag from the builder so the `<ShadeRow>` displays the "input" badge + ring.
+ *
+ * The export control no longer lives here - it sits in the metadata row up in
+ * `ShadeTool` as a single "Export" link (see `ExportControls`).
  */
 
 export interface TailwindScaleProps {
@@ -21,8 +20,7 @@ export interface TailwindScaleProps {
   sourceHex: Hex;
   /**
    * Palette tray colors (in tray order). Two or more swaps the single scale
-   * for a column-per-color grid aligned with the `PalettePreviewBar` band; the
-   * export controls stay put but now emit every color, not just the active one.
+   * for a column-per-color grid aligned with the `PalettePreviewBar` band.
    */
   paletteHexes?: Hex[];
   /**
@@ -32,20 +30,12 @@ export interface TailwindScaleProps {
    */
   paletteNames?: string[];
   copyFormat: CopyFormat;
-  exportFormat: ExportFormat;
-  /**
-   * Export groups for the current scale/palette, derived in `ShadeTool` so the
-   * shade-grid row and the sidebar row emit identical code (single source of
-   * truth). One group per palette color in multi-column mode, else just the
-   * active scale.
-   */
-  exportGroups: ColorGroup[];
   brandName?: string;
   onCopy: (hex: Hex) => void;
+  /** Multi-color grid only: use a shade as the new source. */
   onNavigate: (hex: Hex) => void;
-  onExportCopy: (text: string) => void;
-  onExportFormatChange: (next: ExportFormat) => void;
-  onCopyFormatChange: (next: CopyFormat) => void;
+  /** Single-color rows: load a shade into the picker without changing source. */
+  onInspect: (hex: Hex) => void;
 }
 
 export default function TailwindScale({
@@ -54,28 +44,14 @@ export default function TailwindScale({
   paletteHexes,
   paletteNames,
   copyFormat,
-  exportFormat,
-  exportGroups,
   brandName,
   onCopy,
   onNavigate,
-  onExportCopy,
-  onExportFormatChange,
-  onCopyFormatChange,
+  onInspect,
 }: TailwindScaleProps) {
   const multiColumn = (paletteHexes?.length ?? 0) >= 2;
   return (
     <div className="flex flex-col gap-4" data-anchor-stop={scale.anchorStop}>
-      <ExportRow
-        groups={exportGroups}
-        format={exportFormat}
-        valueMode="hex"
-        copyFormat={copyFormat}
-        hasStop={true}
-        onCopyFormatChange={onCopyFormatChange}
-        onFormatChange={onExportFormatChange}
-        onCopy={onExportCopy}
-      />
       {multiColumn ? (
         <PaletteShadeGrid
           hexes={paletteHexes!}
@@ -97,10 +73,9 @@ export default function TailwindScale({
               <ShadeRow
                 shade={shade}
                 sourceHex={sourceHex}
-                copyFormat={copyFormat}
-                brandName={brandName}
+                gutterLabel={shade.stop}
                 onCopy={onCopy}
-                onNavigate={onNavigate}
+                onInspect={onInspect}
               />
             </div>
           ))}
