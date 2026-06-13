@@ -313,14 +313,13 @@ function GridSwatch({
       role="button"
       tabIndex={0}
       aria-label={ariaLabel}
-      title={valueLabel}
       onClick={handleClick}
       onAuxClick={handleAuxClick}
       onDoubleClick={handleDoubleClick}
       onKeyDown={handleKeyDown}
       style={{ backgroundColor: shade.hex }}
       className={[
-        `relative flex ${ROW_H} items-center px-2`,
+        `group relative flex ${ROW_H} items-center px-2`,
         'cursor-pointer select-none',
         'ring-2 ring-transparent ring-inset',
         'focus-visible:outline-none focus-visible:ring-current',
@@ -328,6 +327,19 @@ function GridSwatch({
         fg === 'white' ? 'text-white' : 'text-black',
       ].join(' ')}
     >
+      {/* Hover hex readout. The swatch's `fg` (white/black, whichever wins the
+          WCAG contrast check against the swatch color) is already applied to
+          the swatch's text color, so the label stays legible on any shade.
+          Decorative - the hex is in `aria-label`/`title` already. Hidden on the
+          source swatch, whose persistent "Source" badge owns that corner. */}
+      {!shade.isInput && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none ml-auto font-mono text-[13px] tabular-nums opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+        >
+          {shade.hex}
+        </span>
+      )}
       {shade.isInput && (
         <span className="flex min-w-0 items-center gap-1.5">
           <span
