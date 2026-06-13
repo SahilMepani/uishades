@@ -93,8 +93,8 @@ interface TrayColor {
   copyFormat: CopyFormat;
   /**
    * Semantic role for this swatch. Two ways it's set:
-   *   - Explicitly, for the auto-seeded fixed roles (Background, Neutral,
-   *     Success, Warning, Error - see `DEFAULT_PALETTE_EXTRAS`) and for any
+   *   - Explicitly, for the auto-seeded fixed roles (Neutral, Success,
+   *     Warning, Error - see `DEFAULT_PALETTE_EXTRAS`) and for any
    *     swatch the user renames.
    *   - Implicitly (absent), for the user's own brand colors: the band then
    *     falls back to `defaultSemanticName(tray, index)`, which labels the
@@ -103,7 +103,7 @@ interface TrayColor {
   semanticName?: string;
   /**
    * True for the conventional design-token roles auto-seeded when the palette
-   * first becomes multi-color (Background/Neutral/Success/Warning/Error). Marks
+   * first becomes multi-color (Neutral/Success/Warning/Error). Marks
    * where the fixed block begins so a newly-added brand color is inserted ahead
    * of it (keeping Primary + Accents grouped). Dropped on save like the rest of
    * the tray's non-color metadata.
@@ -123,12 +123,10 @@ interface TrayColor {
  * multi-color (the user adds a second color). They're ordinary, editable,
  * removable swatches - the user can recolor or delete any of them - but they
  * give a fresh multi-color palette a sensible starting shape instead of two
- * bare brand colors. `Background` (white) sits just before `Neutral`. Hexes are
- * canonical lowercase `#rrggbb`; the common bases are Tailwind's gray-500 /
- * green-500 / amber-500 / red-500.
+ * bare brand colors. Hexes are canonical lowercase `#rrggbb`; the common bases
+ * are Tailwind's gray-500 / green-500 / amber-500 / red-500.
  */
 const DEFAULT_PALETTE_EXTRAS: { hex: Hex; semanticName: string }[] = [
-  { hex: '#ffffff', semanticName: 'Background' },
   { hex: '#6b7280', semanticName: 'Neutral' },
   { hex: '#22c55e', semanticName: 'Success' },
   { hex: '#f59e0b', semanticName: 'Warning' },
@@ -137,7 +135,7 @@ const DEFAULT_PALETTE_EXTRAS: { hex: Hex; semanticName: string }[] = [
 
 /**
  * Positional default label for a swatch with no explicit `semanticName`. The
- * fixed Background/Neutral/Success/Warning/Error swatches carry their own
+ * fixed Neutral/Success/Warning/Error swatches carry their own
  * explicit name, so they're skipped here: only the user's brand colors fall
  * through, and they read "Primary" (the first un-named swatch), then
  * "Secondary", then "Accent", then "Accent 2", "Accent 3", … - regardless of
@@ -766,7 +764,7 @@ function ShadeToolInner({
   // (`var(--<name>-…)` / `bg-<name>-…`), so the copied tokens and the exported
   // file always agree. Derived from each swatch's EFFECTIVE semantic name — the
   // user's explicit rename, else the positional default ("Primary"/"Secondary"/
-  // "Accent") or a seeded role (Background/Neutral/…), i.e. exactly what the
+  // "Accent") or a seeded role (Neutral/Success/…), i.e. exactly what the
   // preview band header shows — then `sanitizeName`d to a CSS-safe slug
   // ("Accent 2" → "accent-2"). `sanitizeName` is idempotent, so the export path's own
   // `dedupeGroupNames`→`sanitizeName` pass is a no-op on these. (The band header
@@ -829,10 +827,6 @@ function ShadeToolInner({
     // `activeHex === hex` there - it appends the freshly-picked color as before.
     const addHex = activeHex;
     setTray((prev) => {
-      if (prev.length >= 8) {
-        pushToast('A palette can hold up to 8 colors.', { durationMs: 3000 });
-        return prev;
-      }
       if (prev.some((c) => c.hex === addHex)) {
         pushToast('That color is already in the palette.', { durationMs: 2500 });
         return prev;
@@ -840,7 +834,7 @@ function ShadeToolInner({
       const added: TrayColor = { hex: addHex, view, copyFormat };
       // First time the palette opens (0 → 1): seed the conventional
       // design-token roles alongside the user's first color, so the palette
-      // opens as Primary + Background/Neutral/Success/Warning/Error rather than
+      // opens as Primary + Neutral/Success/Warning/Error rather than
       // a single bare swatch. Adding one color now switches straight to the
       // multi-color palette layout. Any fixed color whose hex collides with an
       // existing swatch is skipped (the tray keeps hexes unique). Default tool
@@ -861,7 +855,7 @@ function ShadeToolInner({
         return [...prev, added, ...extras];
       }
       // Later adds: drop the new brand color in just before the fixed block so
-      // Primary + Accents stay grouped ahead of Background/Neutral/…
+      // Primary + Accents stay grouped ahead of Neutral/…
       pushToast(`Added ${addHex} to the palette.`);
       const firstFixed = prev.findIndex((c) => c.fixed);
       if (firstFixed === -1) return [...prev, added];
@@ -1028,13 +1022,7 @@ function ShadeToolInner({
 
   const handleImageAddPoint = useCallback(
     (p: SamplePoint) => {
-      setTray((prev) => {
-        if (prev.length >= 8) {
-          pushToast('A palette can hold up to 8 colors.', { durationMs: 3000 });
-          return prev;
-        }
-        return [...prev, { hex: p.hex, view, copyFormat, point: { x: p.x, y: p.y } }];
-      });
+      setTray((prev) => [...prev, { hex: p.hex, view, copyFormat, point: { x: p.x, y: p.y } }]);
       setHex(p.hex);
     },
     [view, copyFormat, pushToast],
@@ -1196,7 +1184,7 @@ function ShadeToolInner({
               copyFormat={copyFormat}
               onAddToPalette={handleAddToTray}
               inPalette={tray.some((c) => c.hex === activeHex)}
-              paletteFull={tray.length >= 8}
+              paletteFull={false}
               pickerRef={desktopPickerRef}
               onPickerOpenChange={handlePickerOpenChange}
               readOnly={isImage}
@@ -1222,7 +1210,7 @@ function ShadeToolInner({
               copyFormat={copyFormat}
               onAddToPalette={handleAddToTray}
               inPalette={tray.some((c) => c.hex === activeHex)}
-              paletteFull={tray.length >= 8}
+              paletteFull={false}
               pickerRef={mobilePickerRef}
               onPickerOpenChange={handlePickerOpenChange}
               readOnly={isImage}
@@ -1301,7 +1289,6 @@ function ShadeToolInner({
                 onSelectColor={selectTrayColor}
                 onEditColor={editBandColor}
                 onAddColor={addBandColor}
-                addColorDisabled={tray.length >= 8}
                 onRemove={handleRemoveFromTray}
                 onRenameSemantic={handleRenameSemantic}
               />
@@ -2172,7 +2159,6 @@ function PalettePreviewBar({
   onSelectColor,
   onEditColor,
   onAddColor,
-  addColorDisabled = false,
   onRemove,
   onRenameSemantic,
   readOnly = false,
@@ -2186,11 +2172,6 @@ function PalettePreviewBar({
    * the picker to append a color. Omitted ⇒ no add button.
    */
   onAddColor?: () => void;
-  /**
-   * Renders the "+" button visibly disabled rather than active — set when the
-   * palette is at its 8-color cap so the affordance stays put but is inert.
-   */
-  addColorDisabled?: boolean;
   /** Reveal an X on hover/focus that removes the swatch; omitted ⇒ no remove. */
   onRemove?: (index: number) => void;
   /** Pencil-click commits a renamed semantic role; omitted ⇒ no rename pencil. */
@@ -2382,9 +2363,8 @@ function PalettePreviewBar({
         <button
           type="button"
           onClick={onAddColor}
-          disabled={addColorDisabled}
-          aria-label={addColorDisabled ? 'Palette is full (8 colors max)' : 'Add a color to the palette'}
-          title={addColorDisabled ? 'Palette is full (8 colors max)' : 'Add a color to the palette'}
+          aria-label="Add a color to the palette"
+          title="Add a color to the palette"
           className="absolute right-0 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-ink text-paper shadow-md ring-2 ring-paper transition duration-150 ease-out hover:scale-110 hover:bg-ink/90 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 active:scale-95 motion-reduce:transition-none motion-reduce:hover:scale-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-md disabled:hover:scale-100 disabled:hover:bg-ink disabled:hover:shadow-md disabled:active:scale-100"
         >
           <svg viewBox="0 0 16 16" aria-hidden="true" className="h-4 w-4">

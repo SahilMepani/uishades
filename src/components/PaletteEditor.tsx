@@ -12,7 +12,7 @@ import type { CopyFormat, Hex } from '../lib/color/types';
  * Loads `GET /api/palettes/[id]` (returns `{ palette }`). Surfaces:
  *  - a prominent inline-editable palette NAME (PATCH on blur, ≤60 chars) +
  *    optional description (PATCH on blur);
- *  - a reorderable list of 2–8 color slots, each opening the shared
+ *  - a reorderable list of color slots, each opening the shared
  *    `ColorPicker`; add / remove / move-up / move-down; "shuffle roles";
  *  - a `MockPreview` panel fed `{ hex, role }[]`;
  *  - a `ShareRow` (suppressed on `/me/*` by ShareRow's own guard - see note);
@@ -27,7 +27,6 @@ import type { CopyFormat, Hex } from '../lib/color/types';
  */
 
 const MIN_COLORS = 1;
-const MAX_COLORS = 8;
 const ROLE_ORDER: PaletteRole[] = ['bg', 'surface', 'accent', 'text', 'extra'];
 
 interface PaletteResponse {
@@ -139,7 +138,7 @@ function EditorInner() {
   );
 
   const handleAddColor = useCallback(() => {
-    if (!palette || palette.colors.length >= MAX_COLORS) return;
+    if (!palette) return;
     const last = palette.colors[palette.colors.length - 1];
     const position = palette.colors.length;
     const added: PaletteColor = {
@@ -265,15 +264,13 @@ function EditorInner() {
           ))}
         </ul>
 
-        {palette.colors.length < MAX_COLORS && (
-          <button
-            type="button"
-            onClick={handleAddColor}
-            className="inline-flex w-fit items-center gap-1.5 border border-ink/20 px-3 py-2 font-mono text-[12px] uppercase tracking-tight text-ink transition-colors duration-150 ease-out hover:bg-paper-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
-          >
-            + Add color
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={handleAddColor}
+          className="inline-flex w-fit items-center gap-1.5 border border-ink/20 px-3 py-2 font-mono text-[12px] uppercase tracking-tight text-ink transition-colors duration-150 ease-out hover:bg-paper-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none"
+        >
+          + Add color
+        </button>
       </section>
 
       <section className="flex flex-col gap-3">

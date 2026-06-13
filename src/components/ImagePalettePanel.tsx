@@ -59,7 +59,7 @@ export interface ImagePalettePanelProps {
   points: SamplePoint[];
   /** The active/selected color, highlighted on the image, or null when none. */
   activeHex: Hex | null;
-  /** Hard cap on sample points (mirrors the 8-color tray cap). */
+  /** How many dominant colors to auto-extract on image load. */
   cap: number;
   /** Replace the whole palette (fired once per successful extraction). */
   onExtract: (points: SamplePoint[]) => void;
@@ -293,7 +293,7 @@ export default function ImagePalettePanel({
   const handleOverlayPointerDown = useCallback(
     (e: React.PointerEvent) => {
       // Ignore presses that land on a circle (those start a drag and stop
-      // propagation), and presses while at the cap.
+      // propagation).
       if (!imageDataRef.current) return;
       overlayRef.current?.setPointerCapture(e.pointerId);
       pressRef.current = { startX: e.clientX, startY: e.clientY, moved: false };
@@ -393,14 +393,10 @@ export default function ImagePalettePanel({
       pressRef.current = null;
       if (!press || press.moved || !imageDataRef.current) return;
       // A clean click on empty area: drop a new sample point.
-      if (points.length >= cap) {
-        notify(`A palette can hold up to ${cap} colors.`);
-        return;
-      }
       const { x, y } = normFromEvent(e.clientX, e.clientY);
       onAddPoint({ hex: sampleHexAt(imageDataRef.current, x, y), x, y });
     },
-    [cap, endDrag, normFromEvent, notify, onAddPoint, points.length],
+    [endDrag, normFromEvent, onAddPoint],
   );
 
   // --- Per-circle drag ----------------------------------------------------
@@ -731,7 +727,7 @@ export default function ImagePalettePanel({
       {hasImage && (
         <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
           Drag a circle to change its color · click the image to add one
-          {points.length >= cap ? ` · ${cap}/${cap} max` : ` · ${points.length}/${cap}`}
+          {` · ${points.length} ${points.length === 1 ? 'color' : 'colors'}`}
         </p>
       )}
     </div>
