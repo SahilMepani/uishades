@@ -886,12 +886,11 @@ function ShadeToolInner({
     });
   }, [activeHex, view, copyFormat, pushToast]);
 
-  // Double-clicking a band swatch opens the SAME top color picker (anchored at
-  // the left-rail / mobile preview swatch) to adjust that color. Separate refs
-  // per column (desktop rail / mobile panel) because both PreviewBlocks are
-  // always mounted; the edit must open the visible one. The palette "+" box no
-  // longer borrows these - it owns a dedicated picker rendered next to the "+"
-  // (see `handleBandPickerOpenChange` + `PalettePreviewBar`'s add-pill).
+  // The left-rail / mobile preview swatches each own a ColorPicker for editing
+  // the live page color. Separate refs per column (desktop rail / mobile panel)
+  // because both PreviewBlocks are always mounted. The palette band's swatches
+  // and the "+" box each own their own picker rendered next to them, so they
+  // don't borrow these.
   const desktopPickerRef = useRef<ColorPickerHandle>(null);
   const mobilePickerRef = useRef<ColorPickerHandle>(null);
   const addToTrayOnCloseRef = useRef(false);
@@ -913,64 +912,42 @@ function ShadeToolInner({
     [tray, handleChangeHex],
   );
 
-  // Double-clicking a palette swatch opens the SAME top picker pre-seeded with
-  // that swatch's color (it becomes the live page color), then writes the
-  // adjusted color back into that swatch on close.
-  const openPickerForEdit = useCallback(
-    (index: number, picker: ColorPickerHandle | null) => {
-      const target = tray[index];
-      if (!target) return;
-      editTrayIndexRef.current = index;
-      editTrayOriginalHexRef.current = target.hex;
-      handleChangeHex(target.hex);
-      picker?.open();
-    },
-    [tray, handleChangeHex],
-  );
-
-  // The full-width palette band spans both breakpoints (it lives in the right
-  // column, visible on phone and desktop alike), so unlike the rail/mobile
-  // PaletteTrays it can't bind to a single picker ref up front. Resolve the
-  // viewport-visible picker at click time so the edit popover anchors to the
-  // swatch the user can actually see (desktop rail ≥ md, mobile block below).
-  // The query MUST use the same UNIT as the CSS that toggles the aside
-  // (`hidden md:flex`) / mobile block (`md:hidden`): Tailwind v4's `md` is
-  // `48rem`, not `768px`. They only coincide at a 16px root font-size - at a
-  // larger root size (a common a11y setting) a px query would pick the picker
-  // that lives in the currently-hidden container, opening the popover inside a
-  // `display:none` rail (invisible) and silently killing double-click-to-edit.
-  // `matchMedia` resolves `rem` against the live root font-size, so this stays
-  // in lockstep with the breakpoint.
-  const editBandColor = useCallback(
-    (index: number) => {
-      const desktopVisible =
-        typeof window !== 'undefined' &&
-        window.matchMedia('(min-width: 48rem)').matches;
-      const picker = desktopVisible
-        ? desktopPickerRef.current
-        : mobilePickerRef.current;
-      openPickerForEdit(index, picker);
-    },
-    [openPickerForEdit],
-  );
+  // Live color edit for a band swatch: while its picker is open
+  // (`editTrayIndexRef` set on open by `handleEditSwatchOpenChange`), write the
+  // chosen color into that tray slot on EVERY change - not just on close - so
+  // the swatch AND its grid column update in real time as the user drags the
+  // picker (mirrors the image-mode point drag). Also keeps the live source
+  // `hex` in sync so the picker readouts track. An Escape cancel rolls the slot
+  // back to its original color in `handlePickerOpenChange`.
+  const handleEditPickerChange = useCallback((next: Hex) => {
+    userChoseRef.current = true;
+    setHex(next);
+    const idx = editTrayIndexRef.current;
+    if (idx !== null) {
+      setTray((prev) => prev.map((c, i) => (i === idx ? { ...c, hex: next } : c)));
+    }
+  }, []);
 
   const handlePickerOpenChange = useCallback(
     (open: boolean, canceled: boolean) => {
       if (open) return;
-      // Editing an existing swatch: write the live color back into that slot in
-      // place (preserving its view/copyFormat). An Escape dismiss (canceled)
-      // leaves the swatch untouched.
+      // Editing an existing swatch: the live color was already written into the
+      // slot on every change (see `handleEditPickerChange`), so a committing
+      // close just confirms. An Escape dismiss (canceled) rolls the slot - and
+      // the live source hex - back to the color the picker opened with.
       if (editTrayIndexRef.current !== null) {
         const idx = editTrayIndexRef.current;
         const originalHex = editTrayOriginalHexRef.current;
         editTrayIndexRef.current = null;
         editTrayOriginalHexRef.current = null;
-        // Skip the write-back + toast if the picker closed on the same color it
-        // opened with (or was dismissed via Escape) - nothing actually changed.
-        if (!canceled && hex !== originalHex) {
-          setTray((prev) =>
-            prev.map((c, i) => (i === idx ? { ...c, hex } : c)),
-          );
+        if (canceled) {
+          if (originalHex !== null) {
+            setTray((prev) =>
+              prev.map((c, i) => (i === idx ? { ...c, hex: originalHex } : c)),
+            );
+            setHex(originalHex);
+          }
+        } else if (hex !== originalHex) {
           pushToast(`Updated palette color to ${hex}.`);
         }
         return;
@@ -1000,6 +977,27 @@ function ShadeToolInner({
       handlePickerOpenChange(open, canceled);
     },
     [handlePickerOpenChange],
+  );
+
+  // Clicking a band swatch opens that swatch's OWN picker, rendered right next
+  // to it (not the far-off left-rail one). Opening seeds the edit refs and makes
+  // the swatch the live page color so the picker tracks it; the rest of the
+  // lifecycle reuses `handlePickerOpenChange`, which writes the adjusted color
+  // back into that slot on a committing close (and leaves it untouched on an
+  // Escape cancel).
+  const handleEditSwatchOpenChange = useCallback(
+    (index: number, open: boolean, canceled: boolean) => {
+      if (open) {
+        const target = tray[index];
+        if (!target) return;
+        editTrayIndexRef.current = index;
+        editTrayOriginalHexRef.current = target.hex;
+        handleChangeHex(target.hex);
+        return;
+      }
+      handlePickerOpenChange(open, canceled);
+    },
+    [tray, handleChangeHex, handlePickerOpenChange],
   );
 
   const handleRemoveFromTray = useCallback((index: number) => {
@@ -1130,6 +1128,13 @@ function ShadeToolInner({
     return suggestPaletteName(tray.map((c) => c.hex));
   }, [tray]);
 
+  // Multi-color palette mode (default tool only): once the tray holds a color,
+  // the full-width palette band + shade grid carry their own per-swatch pickers
+  // and naming, so the single-color left rail (picker / value readouts / share)
+  // is redundant - drop it and let the shade column span the full width. Image
+  // mode keeps its own read-only rail and is excluded.
+  const hasPalette = !isImage && tray.length >= 1;
+
   return (
     <div className="text-ink">
       {/* Mobile sticky header: visible only < lg. Hidden in image mode until a
@@ -1194,8 +1199,17 @@ function ShadeToolInner({
       )}
 
       {(!isImage || tray.length > 0) && (
-      <div className="grid w-full gap-8 px-4 py-8 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:grid-cols-[22rem_minmax(0,1fr)] lg:gap-14 lg:px-8 lg:py-12">
-        {/* Left rail: preview + input + controls (sticky on desktop) */}
+      <div
+        className={
+          hasPalette
+            ? 'w-full px-4 py-8 lg:px-8 lg:py-12'
+            : 'grid w-full gap-8 px-4 py-8 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:grid-cols-[22rem_minmax(0,1fr)] lg:gap-14 lg:px-8 lg:py-12'
+        }
+      >
+        {/* Left rail: preview + input + controls (sticky on desktop). Dropped
+            once a multi-color palette is open (`hasPalette`) - the full-width
+            band + grid replace it. */}
+        {!hasPalette && (
         <aside className="hidden md:flex md:flex-col md:self-stretch">
           {/* Preview + palette tray stay pinned near the top while the long
               shade list scrolls; Share is pushed to the bottom of the rail
@@ -1217,6 +1231,7 @@ function ShadeToolInner({
             <ShareRow hex={hex} named={named} />
           </div>
         </aside>
+        )}
 
         {/* Right column: ramp or scale + the algorithm toggle on mobile.
             `min-w-0` lets this grid item shrink to its track instead of being
@@ -1297,9 +1312,10 @@ function ShadeToolInner({
 
           {/* Full-width palette preview: appears only once the tray holds a
               color, sitting just below the metadata row and above the shades.
-              Its swatches mirror the left-rail tray's verbs: click sets the live
-              page color (`selectTrayColor`), double-click opens the picker to
-              adjust it (`editBandColor` → `openPickerForEdit`), and a
+              Each swatch IS its own color picker: clicking it opens the picker
+              right next to that swatch and makes it the live page color, and
+              the adjustment is written back into that slot on close
+              (`editColorPicker` → `handleEditSwatchOpenChange`). A
               hover-revealed × removes it (`handleRemoveFromTray`). The WCAG
               explainer (`?`) now rides each swatch's hover-revealed contrast
               badges - the only place contrast levels surface - so the band needs
@@ -1310,7 +1326,12 @@ function ShadeToolInner({
               <PalettePreviewBar
                 tray={tray}
                 onSelectColor={selectTrayColor}
-                onEditColor={editBandColor}
+                editColorPicker={{
+                  hex: activeHex,
+                  onChange: handleEditPickerChange,
+                  copyFormat,
+                  onOpenChange: handleEditSwatchOpenChange,
+                }}
                 addColorPicker={{
                   hex: activeHex,
                   onChange: handleChangeHex,
@@ -2173,23 +2194,24 @@ function ContrastLevels({ bg }: { bg: Hex }) {
  * roles, so a single add opens the full multi-color palette). Reuses the
  * proportional swatch-band shape
  * from `PaletteCard` (equal-width `flex-1` fills, inline `backgroundColor` so the
- * colors survive the theme toggle), but each swatch is a real control that
- * mirrors the smaller PaletteTray swatches: single-click makes it the live page
- * color (`onSelectColor`); double-click opens the color picker seeded with that
- * swatch and writes the adjustment back (`onEditColor`); and a small X revealed
- * on hover/focus removes it (`onRemove`). Each color's name is shown as a label
- * ABOVE its swatch (not inside it, always visible); the swatch itself reveals
- * its WCAG contrast levels + hex at the bottom on hover/focus, left-aligned, in
- * black or white for contrast against the swatch.
+ * colors survive the theme toggle), but each swatch is a real control. In the
+ * default (editable) mode each swatch IS its own color picker (`editColorPicker`):
+ * clicking it opens the picker right next to that swatch, makes it the live page
+ * color, and writes the adjustment back into that slot on close. A small X
+ * revealed on hover/focus removes it (`onRemove`). Each color's name is shown as a
+ * label ABOVE its swatch (not inside it, always visible); the swatch itself
+ * reveals its WCAG contrast levels + hex at the bottom on hover/focus,
+ * left-aligned, in black or white for contrast against the swatch.
  *
- * `onEditColor`/`onRemove` are optional so the band degrades gracefully: image
- * mode passes `readOnly` (colors are edited by dragging on the image, so no
- * double-click edit) but still allows removal.
+ * `editColorPicker`/`onRemove` are optional so the band degrades gracefully:
+ * image mode passes `readOnly` (no `editColorPicker`; colors are edited by
+ * dragging on the image), so its swatches fall back to a plain click that just
+ * makes the color live (`onSelectColor`), and removal still works.
  */
 function PalettePreviewBar({
   tray,
   onSelectColor,
-  onEditColor,
+  editColorPicker,
   addColorPicker,
   onRemove,
   onRenameSemantic,
@@ -2197,8 +2219,19 @@ function PalettePreviewBar({
 }: {
   tray: TrayColor[];
   onSelectColor: (index: number) => void;
-  /** Double-click: open the picker seeded with the swatch; omitted ⇒ no edit. */
-  onEditColor?: (index: number) => void;
+  /**
+   * Editable mode: makes each swatch its own color picker that opens RIGHT NEXT
+   * TO that swatch. While open, the swatch is the live page color
+   * (`hex`/`onChange`); `onOpenChange(index, open, canceled)` seeds the edit on
+   * open and writes the adjusted color back into that slot on a committing close.
+   * Omitted (image `readOnly` mode) ⇒ swatches are plain select buttons.
+   */
+  editColorPicker?: {
+    hex: Hex;
+    onChange: (next: Hex) => void;
+    copyFormat: CopyFormat;
+    onOpenChange: (index: number, open: boolean, canceled: boolean) => void;
+  };
   /**
    * Renders the "+" add button (straddling the user/seeded boundary) as a
    * self-contained color picker that opens RIGHT NEXT TO the button rather than
@@ -2219,7 +2252,7 @@ function PalettePreviewBar({
   /** Image-authoritative mode: suppress double-click edit (remove still works). */
   readOnly?: boolean;
 }) {
-  const canEdit = !readOnly && !!onEditColor;
+  const canEdit = !readOnly && !!editColorPicker;
   // Which column's semantic name is being edited inline, plus its draft text.
   // Local to the band: a commit flows up through `onRenameSemantic`, but the
   // open/typing state never needs to live in the parent.
@@ -2321,7 +2354,11 @@ function PalettePreviewBar({
           const editing = editingSemantic === i;
           return (
             <div
-              key={`name-${c.hex}-${i}`}
+              // Keyed by position, not hex: editing a swatch rewrites its hex
+              // live (see `handleEditPickerChange`), and a hex-based key would
+              // remount this header (and, below, the swatch's open ColorPicker)
+              // on every change - snapping the picker shut mid-adjust.
+              key={`name-${i}`}
               style={{ flexGrow: grows[i], flexBasis: 0 }}
               // No `flex-basis` padding here: with `flex-basis: 0` a right pad
               // would become a per-column width floor, widening each header box
@@ -2393,27 +2430,81 @@ function PalettePreviewBar({
         const textColor = readableTextOn(c.hex);
         const blackLevel = wcagLevel(contrastRatio(c.hex, '#000000'));
         const whiteLevel = wcagLevel(contrastRatio(c.hex, '#ffffff'));
+        // Edit popover placement. On desktop (md+) the picker opens BESIDE the
+        // column, never below it: editing a swatch updates its ramp column live,
+        // so a popover sitting on top of that column (the old `top-full`) would
+        // hide the very change the user is watching. Left-half swatches open to
+        // the right of their column (`left-full`), right-half swatches open to
+        // the left (`right-full`) - the active column is always fully clear, and
+        // the box stays on-screen. A lone (full-width) column has no room beside
+        // it, so it keeps the centered drop-down (its wide ramp still shows on
+        // either side of the box). On mobile there's no room beside a narrow
+        // column, so the fixed-width box keeps the old top-full thirds anchoring.
+        const openLeft = i >= tray.length / 2;
+        const mobileAnchor =
+          i <= (tray.length - 1) / 3
+            ? 'left-0'
+            : i >= ((tray.length - 1) * 2) / 3
+              ? 'right-0'
+              : 'left-1/2 -translate-x-1/2';
+        const popoverPlacement =
+          tray.length <= 1
+            ? 'absolute left-1/2 top-full mt-2 w-72 -translate-x-1/2'
+            : [
+                'absolute w-72 top-full mt-2',
+                mobileAnchor,
+                openLeft
+                  ? 'md:left-auto md:right-full md:top-0 md:mt-0 md:ml-0 md:mr-3 md:translate-x-0'
+                  : 'md:right-auto md:left-full md:top-0 md:mt-0 md:mr-0 md:ml-3 md:translate-x-0',
+              ].join(' ');
         return (
           <li
-            key={`${c.hex}-${i}`}
+            // Position-keyed (not hex): a live swatch edit rewrites `c.hex`
+            // every frame, and a hex-based key would remount this <li> - and the
+            // ColorPicker open inside it - on each change, closing it instantly.
+            key={`swatch-${i}`}
             style={{ flexGrow: grows[i], flexBasis: 0 }}
             className={'group relative min-w-0' + gapClass(i)}
           >
-            <button
-              type="button"
-              onClick={() => onSelectColor(i)}
-              onDoubleClick={canEdit ? () => onEditColor!(i) : undefined}
-              aria-label={`Use ${c.hex} (${nameForHex(c.hex)}) as the current color${canEdit ? ' (double-click to adjust)' : ''}. Black text ${wcagSpoken(blackLevel)}, white text ${wcagSpoken(whiteLevel)}.`}
-              className="h-full w-full cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60"
-              style={{ backgroundColor: c.hex, color: textColor }}
-            />
+            {canEdit ? (
+              // The swatch IS the picker's trigger, so the popover anchors to it
+              // and opens just below the swatch. The trigger fills the column and
+              // carries the focus ring; a child span paints the swatch color
+              // (ColorPicker's trigger takes no inline style of its own).
+              <ColorPicker
+                hex={editColorPicker!.hex}
+                onChange={editColorPicker!.onChange}
+                copyFormat={editColorPicker!.copyFormat}
+                onOpenChange={(open, canceled) =>
+                  editColorPicker!.onOpenChange(i, open, canceled)
+                }
+                triggerLabel={`Adjust ${c.hex} (${nameForHex(c.hex)}). Black text ${wcagSpoken(blackLevel)}, white text ${wcagSpoken(whiteLevel)}.`}
+                className="block h-full w-full"
+                triggerClassName="block h-full w-full cursor-pointer border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60"
+                popoverClassName={popoverPlacement}
+              >
+                <span
+                  aria-hidden="true"
+                  className="block h-full w-full"
+                  style={{ backgroundColor: c.hex }}
+                />
+              </ColorPicker>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onSelectColor(i)}
+                aria-label={`Use ${c.hex} (${nameForHex(c.hex)}) as the current color. Black text ${wcagSpoken(blackLevel)}, white text ${wcagSpoken(whiteLevel)}.`}
+                className="h-full w-full cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60"
+                style={{ backgroundColor: c.hex, color: textColor }}
+              />
+            )}
             {/* Hover overlay sitting over the swatch: the contrast badges + the
                 WCAG explainer (`?`), then the detected name/hex. It lives OUTSIDE
-                the swatch <button> so the interactive `?` isn't an invalid nested
+                the swatch trigger so the interactive `?` isn't an invalid nested
                 button; `pointer-events-none` lets swatch clicks fall through to
-                the button, and only the `?` re-enables pointer events on hover.
-                The swatch button's aria-label already spells the contrast levels
-                out, so the badges + name/hex stay aria-hidden. */}
+                the trigger, and only the `?` re-enables pointer events on hover.
+                The swatch's aria-label already spells the contrast levels out, so
+                the badges + name/hex stay aria-hidden. */}
             <div
               className="pointer-events-none absolute inset-0 flex flex-col justify-end p-3"
               style={{ color: textColor }}
