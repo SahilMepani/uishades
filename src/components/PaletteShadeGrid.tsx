@@ -53,6 +53,12 @@ const ROW_H = 'h-12';
 const WHITE = '#ffffff';
 const BLACK = '#000000';
 
+// Diagonal-stripe fill for an in-flight band "+" placeholder column (mirrors the
+// same fill in PalettePreviewBar). Mid-gray at low opacity so it reads on both
+// themes without showing any real color until the user picks one.
+const PENDING_STRIPE =
+  'repeating-linear-gradient(45deg, rgba(128,128,128,0.18) 0, rgba(128,128,128,0.18) 7px, transparent 7px, transparent 14px)';
+
 function pickForeground(hex: Hex): 'white' | 'black' {
   return contrastRatio(hex, WHITE) >= contrastRatio(hex, BLACK) ? 'white' : 'black';
 }
@@ -82,6 +88,13 @@ export interface PaletteShadeGridProps {
    */
   boundary?: number;
   /**
+   * Column index of an in-flight band "+" placeholder (or -1 / omitted). That
+   * column renders a striped "pick a color" placeholder instead of a real ramp,
+   * so no default seed color is shown until the user picks one. Its hex in
+   * `hexes` is still a valid color (the picker seed) and is ignored here.
+   */
+  pendingIndex?: number;
+  /**
    * Hex of the color just added to the tray, if any. The matching column fades
    * in (`palette-column-enter`); keyed by hex (not index) because new brand
    * colors are inserted before the seeded block, not appended. Cleared by the
@@ -100,6 +113,7 @@ export default function PaletteShadeGrid({
   onCopy,
   onNavigate,
   boundary,
+  pendingIndex,
   enterHex,
 }: PaletteShadeGridProps) {
   // Mirror PalettePreviewBar's gap: only when both groups are actually present.
@@ -152,32 +166,61 @@ export default function PaletteShadeGrid({
         aria-label={kind === 'ramp' ? 'Palette OKLCH ramps' : 'Palette Tailwind scales'}
         className="flex w-full gap-[2px] overflow-hidden"
       >
-        {columns.map((shades, col) => (
-          <div
-            role="listitem"
-            key={`${hexes[col]}-${col}`}
-            aria-label={`Shades of ${hexes[col]}`}
-            style={{ flexGrow: grows[col], flexBasis: 0 }}
-            className={
-              'flex min-w-0 flex-col gap-[2px]' +
-              (hasGap && col === boundary ? ' ml-12' : '') +
-              (enterHex && hexes[col] === enterHex ? ' palette-column-enter' : '')
-            }
-          >
-            {shades.map((shade, row) => (
-              <MemoGridSwatch
-                key={`${shade.hex}-${row}`}
-                shade={shade}
-                col={col}
-                row={row}
-                copyFormat={copyFormat}
-                brandName={names?.[col] ?? brandName}
-                onCopy={onCopy}
-                onNavigate={onNavigate}
-              />
-            ))}
-          </div>
-        ))}
+        {columns.map((shades, col) =>
+          col === pendingIndex ? (
+            // In-flight "+" placeholder column: striped "pick a color" cells
+            // (one per row so heights line up with the real columns) instead of
+            // a ramp, so no default seed color is shown until the user picks.
+            <div
+              role="listitem"
+              key={`pending-${col}`}
+              aria-label="New color (pick one)"
+              style={{ flexGrow: grows[col], flexBasis: 0 }}
+              className={
+                'relative flex min-w-0 flex-col gap-[2px]' +
+                (hasGap && col === boundary ? ' ml-12' : '')
+              }
+            >
+              {shades.map((_, row) => (
+                <div
+                  key={`pending-${row}`}
+                  className={`flex ${ROW_H} items-center border-2 border-dashed border-hairline`}
+                  style={{ backgroundImage: PENDING_STRIPE }}
+                />
+              ))}
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <span className="font-display text-[11px] font-medium uppercase tracking-[0.12em] text-mute motion-safe:animate-pulse">
+                  Pick a color
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div
+              role="listitem"
+              key={`${hexes[col]}-${col}`}
+              aria-label={`Shades of ${hexes[col]}`}
+              style={{ flexGrow: grows[col], flexBasis: 0 }}
+              className={
+                'flex min-w-0 flex-col gap-[2px]' +
+                (hasGap && col === boundary ? ' ml-12' : '') +
+                (enterHex && hexes[col] === enterHex ? ' palette-column-enter' : '')
+              }
+            >
+              {shades.map((shade, row) => (
+                <MemoGridSwatch
+                  key={`${shade.hex}-${row}`}
+                  shade={shade}
+                  col={col}
+                  row={row}
+                  copyFormat={copyFormat}
+                  brandName={names?.[col] ?? brandName}
+                  onCopy={onCopy}
+                  onNavigate={onNavigate}
+                />
+              ))}
+            </div>
+          ),
+        )}
       </div>
       {/* Row-label gutter: Tailwind stop value (50…950); the OKLCH ramp keys to
           the same 50…950 stops. Absolutely positioned just past the grid's right edge so it

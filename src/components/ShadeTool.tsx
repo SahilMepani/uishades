@@ -111,6 +111,16 @@ interface TrayColor {
    */
   fixed?: boolean;
   /**
+   * True for a column the user is mid-adding through the band "+": its swatch
+   * picker is open and the user hasn't picked a color yet. While pending the
+   * band and shade grid render a striped "pick a color" placeholder instead of
+   * the seed color (so no default white/black is shown), and the column is
+   * dropped if the picker is dismissed without a pick. Cleared on the first
+   * picker adjustment (`handleEditPickerChange`), which turns it into a normal
+   * swatch.
+   */
+  pending?: boolean;
+  /**
    * Normalized (0..1) location on the source image, present only in image mode
    * (`/image-color-picker`). Every tray color there mirrors a draggable sample
    * point on the uploaded image; ImagePalettePanel reads this to position the
@@ -133,6 +143,12 @@ const DEFAULT_PALETTE_EXTRAS: { hex: Hex; semanticName: string }[] = [
   { hex: '#f59e0b', semanticName: 'Warning' },
   { hex: '#ef4444', semanticName: 'Error' },
 ];
+
+// Diagonal-stripe fill for an in-flight "+" placeholder column (band + shade
+// grid). A mid-gray at low opacity so it reads on both light and dark themes
+// without showing any real color until the user picks one.
+const PENDING_STRIPE =
+  'repeating-linear-gradient(45deg, rgba(128,128,128,0.18) 0, rgba(128,128,128,0.18) 7px, transparent 7px, transparent 14px)';
 
 /**
  * Positional default label for a swatch with no explicit `semanticName`. The
@@ -800,6 +816,13 @@ function ShadeToolInner({
     const firstFixed = tray.findIndex((c) => c.fixed);
     return firstFixed === -1 ? tray.length : firstFixed;
   }, [tray]);
+  // Index of the in-flight "+" placeholder column (or -1). The band and shade
+  // grid render a striped "pick a color" placeholder there instead of the seed
+  // color, so no default white/black shows until the user picks one.
+  const palettePendingIndex = useMemo(
+    () => tray.findIndex((c) => c.pending),
+    [tray],
+  );
 
   // "See your color as a UI" preview inputs. The tool is single-color centric,
   // so we feed the neutral-shell adapter the tray (when it holds colors) or just
@@ -812,12 +835,15 @@ function ShadeToolInner({
   // name collision descriptively (e.g. `maroon` + `dark-maroon`) rather than
   // with a bare `-2`.
   const exportGroups = useMemo<ColorGroup[]>(() => {
-    const multiColumn = paletteHexes.length >= 2;
-    const groupName = (i: number) => paletteNames[i] ?? brandName ?? 'brand';
+    // Skip any in-flight "+" placeholder column - it has no chosen color yet.
+    const realHexes = paletteHexes.filter((_, i) => !tray[i]?.pending);
+    const realNames = paletteNames.filter((_, i) => !tray[i]?.pending);
+    const multiColumn = realHexes.length >= 2;
+    const groupName = (i: number) => realNames[i] ?? brandName ?? 'brand';
     if (view === 'ramp') {
       if (multiColumn) {
         return dedupeGroupNames(
-          paletteHexes.map((h, i) => ({
+          realHexes.map((h, i) => ({
             name: groupName(i),
             tokens: rampToTokens(oklchRamp(h)),
             source: toOklch(h),
@@ -828,7 +854,7 @@ function ShadeToolInner({
     }
     if (multiColumn) {
       return dedupeGroupNames(
-        paletteHexes.map((h, i) => ({
+        realHexes.map((h, i) => ({
           name: groupName(i),
           tokens: scaleToTokens(buildScale(h)),
           source: toOklch(h),
@@ -836,7 +862,7 @@ function ShadeToolInner({
       );
     }
     return [{ name: brandName ?? 'brand', tokens: scaleToTokens(scale) }];
-  }, [view, paletteHexes, paletteNames, brandName, ramp, scale]);
+  }, [view, paletteHexes, paletteNames, brandName, ramp, scale, tray]);
 
   const handleAddToTray = useCallback(() => {
     // Add the color the preview is currently showing (`activeHex` = the
@@ -893,10 +919,27 @@ function ShadeToolInner({
   // don't borrow these.
   const desktopPickerRef = useRef<ColorPickerHandle>(null);
   const mobilePickerRef = useRef<ColorPickerHandle>(null);
-  const addToTrayOnCloseRef = useRef(false);
+  // Band "+" add flow. Clicking "+" inserts a `pending` placeholder column and
+  // opens ITS OWN swatch picker (not a picker on the "+" button - that would
+  // remount and snap shut the instant the new column shifts the band). These
+  // track the in-flight add so the close handler can keep it (only if the user
+  // actually picked a color) or drop it:
+  //   - `bandAddIndexRef`: the pending column's index, or null when no add is in
+  //     flight. Doubles as a re-entrancy guard against a second "+" click.
+  //   - `bandAddAdjustedRef`: flipped true on the first picker adjustment, so a
+  //     dismiss-without-picking discards the column instead of committing white.
+  //   - `bandAddPrevHexRef`: the live page color before the add, restored when
+  //     the add is discarded (opening the picker makes the seed color live).
+  const bandAddIndexRef = useRef<number | null>(null);
+  const bandAddAdjustedRef = useRef(false);
+  const bandAddPrevHexRef = useRef<Hex | null>(null);
+  // Drives PalettePreviewBar to imperatively open a freshly-added column's
+  // picker (position-keyed pickers can't auto-open on mount because an insert
+  // reuses the component by position rather than remounting it).
+  const [bandAutoOpenIndex, setBandAutoOpenIndex] = useState<number | null>(null);
   // Index of the tray swatch currently being edited through the picker, or null
-  // when the picker isn't in edit mode. Mutually exclusive with
-  // `addToTrayOnCloseRef`: a swatch click arms this, the "+" arms that.
+  // when the picker isn't in edit mode. Both a swatch click and the band "+"
+  // arm this (the "+" additionally arms `bandAddIndexRef`).
   const editTrayIndexRef = useRef<number | null>(null);
   // The color the edited swatch held when the picker opened, so we can skip the
   // write-back + toast when the user closes without actually changing it.
@@ -924,60 +967,95 @@ function ShadeToolInner({
     setHex(next);
     const idx = editTrayIndexRef.current;
     if (idx !== null) {
-      setTray((prev) => prev.map((c, i) => (i === idx ? { ...c, hex: next } : c)));
+      // First real adjustment of a "+"-added column promotes it from a striped
+      // placeholder to a normal colored swatch (clears `pending`) and records
+      // that a color was actually chosen, so a later commit keeps it.
+      if (bandAddIndexRef.current !== null) bandAddAdjustedRef.current = true;
+      setTray((prev) =>
+        prev.map((c, i) => (i === idx ? { ...c, hex: next, pending: false } : c)),
+      );
     }
   }, []);
 
   const handlePickerOpenChange = useCallback(
     (open: boolean, canceled: boolean) => {
       if (open) return;
+      if (editTrayIndexRef.current === null) return;
+      const idx = editTrayIndexRef.current;
+      const originalHex = editTrayOriginalHexRef.current;
+      const isAdd = bandAddIndexRef.current !== null;
+      const adjusted = bandAddAdjustedRef.current;
+      const prevHex = bandAddPrevHexRef.current;
+      editTrayIndexRef.current = null;
+      editTrayOriginalHexRef.current = null;
+      bandAddIndexRef.current = null;
+      bandAddAdjustedRef.current = false;
+      bandAddPrevHexRef.current = null;
+
+      // A "+"-initiated add (placeholder column). Keep it ONLY if the user
+      // actually picked a color; on Escape, or a click-away without ever
+      // adjusting, drop the placeholder column and restore the page color that
+      // was live before the add (opening the picker had made the seed live).
+      if (isAdd) {
+        if (canceled || !adjusted) {
+          setTray((prev) => prev.filter((_, i) => i !== idx));
+          if (prevHex !== null) setHex(prevHex);
+        } else {
+          pushToast(`Added ${hex} to the palette.`);
+        }
+        return;
+      }
+
       // Editing an existing swatch: the live color was already written into the
       // slot on every change (see `handleEditPickerChange`), so a committing
       // close just confirms. An Escape dismiss (canceled) rolls the slot - and
       // the live source hex - back to the color the picker opened with.
-      if (editTrayIndexRef.current !== null) {
-        const idx = editTrayIndexRef.current;
-        const originalHex = editTrayOriginalHexRef.current;
-        editTrayIndexRef.current = null;
-        editTrayOriginalHexRef.current = null;
-        if (canceled) {
-          if (originalHex !== null) {
-            setTray((prev) =>
-              prev.map((c, i) => (i === idx ? { ...c, hex: originalHex } : c)),
-            );
-            setHex(originalHex);
-          }
-        } else if (hex !== originalHex) {
-          pushToast(`Updated palette color to ${hex}.`);
+      if (canceled) {
+        if (originalHex !== null) {
+          setTray((prev) =>
+            prev.map((c, i) => (i === idx ? { ...c, hex: originalHex } : c)),
+          );
+          setHex(originalHex);
         }
-        return;
-      }
-      // Only a "+"-initiated open arms the add-on-close; a normal top-swatch
-      // open/close leaves the flag false and adds nothing. Any close consumes
-      // the flag, but an Escape dismiss (canceled) appends nothing.
-      if (addToTrayOnCloseRef.current) {
-        addToTrayOnCloseRef.current = false;
-        if (!canceled) handleAddToTray();
+      } else if (hex !== originalHex) {
+        pushToast(`Updated palette color to ${hex}.`);
       }
     },
-    [handleAddToTray, hex, pushToast],
+    [hex, pushToast],
   );
 
-  // The palette "+" owns its own picker, rendered next to the button (not the
-  // left-rail one), so it opens beside the "+" rather than over in the sidebar.
-  // Opening arms the add-on-close; the rest of the lifecycle reuses
-  // `handlePickerOpenChange` (which, with `editTrayIndexRef` null, appends the
-  // chosen color on a committing close).
-  const handleBandPickerOpenChange = useCallback(
-    (open: boolean, canceled: boolean) => {
-      if (open) {
-        addToTrayOnCloseRef.current = true;
-        return;
-      }
-      handlePickerOpenChange(open, canceled);
-    },
-    [handlePickerOpenChange],
-  );
+  // The band "+". Rather than hang a picker off the "+" button (which would
+  // remount and snap shut the moment the new column shifts the band layout), it
+  // inserts a `pending` placeholder column and asks the band to imperatively
+  // open THAT column's own (position-stable) picker. The placeholder shows a
+  // striped "pick a color" affordance instead of the seed color, so no default
+  // white/black is ever shown; `handlePickerOpenChange` discards it unless the
+  // user picks. Re-entrant clicks while an add is already in flight are ignored.
+  const handleAddColor = useCallback(() => {
+    if (bandAddIndexRef.current !== null) return;
+    // Seed the picker from a clean slate per theme: white in light, black in
+    // dark (matched to the `dark` class the theme toggle sets on the doc root).
+    const isDark =
+      typeof document !== 'undefined' &&
+      document.documentElement.classList.contains('dark');
+    const seed: Hex = isDark ? '#000000' : '#ffffff';
+    // Drop the new color in just before the fixed block so Primary + Accents
+    // stay grouped ahead of the seeded roles (the insert point the old append
+    // used).
+    const firstFixed = tray.findIndex((c) => c.fixed);
+    const insertAt = firstFixed === -1 ? tray.length : firstFixed;
+    bandAddPrevHexRef.current = hex;
+    bandAddAdjustedRef.current = false;
+    bandAddIndexRef.current = insertAt;
+    // Have the band imperatively open this column's picker once it renders.
+    setBandAutoOpenIndex(insertAt);
+    const added: TrayColor = { hex: seed, view, copyFormat, pending: true };
+    setTray((prev) => [...prev.slice(0, insertAt), added, ...prev.slice(insertAt)]);
+  }, [tray, hex, view, copyFormat]);
+
+  // Stable so the band's auto-open effect only fires when the index changes, not
+  // on every unrelated parent re-render.
+  const handleBandAutoOpenConsumed = useCallback(() => setBandAutoOpenIndex(null), []);
 
   // Clicking a band swatch opens that swatch's OWN picker, rendered right next
   // to it (not the far-off left-rail one). Opening seeds the edit refs and makes
@@ -1332,12 +1410,9 @@ function ShadeToolInner({
                   copyFormat,
                   onOpenChange: handleEditSwatchOpenChange,
                 }}
-                addColorPicker={{
-                  hex: activeHex,
-                  onChange: handleChangeHex,
-                  copyFormat,
-                  onOpenChange: handleBandPickerOpenChange,
-                }}
+                onAddColor={handleAddColor}
+                autoOpenIndex={bandAutoOpenIndex}
+                onAutoOpenConsumed={handleBandAutoOpenConsumed}
                 onRemove={handleRemoveFromTray}
                 onRenameSemantic={handleRenameSemantic}
               />
@@ -1353,6 +1428,7 @@ function ShadeToolInner({
                 paletteHexes={paletteHexes}
                 paletteNames={paletteNames}
                 paletteBoundary={paletteBoundary}
+                palettePendingIndex={palettePendingIndex}
                 paletteEnterHex={enterHex}
                 copyFormat={copyFormat}
                 brandName={brandName}
@@ -1367,6 +1443,7 @@ function ShadeToolInner({
                 paletteHexes={paletteHexes}
                 paletteNames={paletteNames}
                 paletteBoundary={paletteBoundary}
+                palettePendingIndex={palettePendingIndex}
                 paletteEnterHex={enterHex}
                 copyFormat={copyFormat}
                 brandName={brandName}
@@ -2212,7 +2289,9 @@ function PalettePreviewBar({
   tray,
   onSelectColor,
   editColorPicker,
-  addColorPicker,
+  onAddColor,
+  autoOpenIndex,
+  onAutoOpenConsumed,
   onRemove,
   onRenameSemantic,
   readOnly = false,
@@ -2233,18 +2312,21 @@ function PalettePreviewBar({
     onOpenChange: (index: number, open: boolean, canceled: boolean) => void;
   };
   /**
-   * Renders the "+" add button (straddling the user/seeded boundary) as a
-   * self-contained color picker that opens RIGHT NEXT TO the button rather than
-   * borrowing the far-off left-rail picker. The chosen color drives the live
-   * page color while open (`hex`/`onChange`) and is appended to the palette on a
-   * committing close (`onOpenChange`). Omitted ⇒ no add button.
+   * Renders the "+" add button (straddling the user/seeded boundary). It's a
+   * plain button, not a picker: clicking it inserts a `pending` placeholder
+   * column upstream and the parent then drives `autoOpenIndex` to open that
+   * column's OWN picker (a picker on the "+" itself would remount and close the
+   * instant the new column shifts the band). Omitted ⇒ no add button.
    */
-  addColorPicker?: {
-    hex: Hex;
-    onChange: (next: Hex) => void;
-    copyFormat: CopyFormat;
-    onOpenChange: (open: boolean, canceled: boolean) => void;
-  };
+  onAddColor?: () => void;
+  /**
+   * When set, imperatively open the picker of the swatch at this index (the
+   * freshly-added "+" column). Position-keyed pickers can't auto-open on mount
+   * because an insert reuses the component by position, so the parent triggers
+   * the open from here and clears it via `onAutoOpenConsumed`.
+   */
+  autoOpenIndex?: number | null;
+  onAutoOpenConsumed?: () => void;
   /** Reveal an X on hover/focus that removes the swatch; omitted ⇒ no remove. */
   onRemove?: (index: number) => void;
   /** Pencil-click commits a renamed semantic role; omitted ⇒ no rename pencil. */
@@ -2253,6 +2335,14 @@ function PalettePreviewBar({
   readOnly?: boolean;
 }) {
   const canEdit = !readOnly && !!editColorPicker;
+  // Per-column picker handles so the parent can imperatively open a freshly
+  // added column's picker (see `autoOpenIndex`). Indexed by column position.
+  const swatchPickerRefs = useRef<Array<ColorPickerHandle | null>>([]);
+  useEffect(() => {
+    if (autoOpenIndex == null) return;
+    swatchPickerRefs.current[autoOpenIndex]?.open();
+    onAutoOpenConsumed?.();
+  }, [autoOpenIndex, onAutoOpenConsumed]);
   // Which column's semantic name is being edited inline, plus its draft text.
   // Local to the band: a commit flows up through `onRenameSemantic`, but the
   // open/typing state never needs to live in the parent.
@@ -2308,33 +2398,28 @@ function PalettePreviewBar({
   // (`PaletteShadeGrid`) so the band, headers, and grid columns stay aligned.
   const grows = paletteColumnGrows(tray.length, boundary);
 
-  // The "+" pill IS the add picker's trigger, so the popover anchors to it and
-  // opens just below - next to the button - instead of in the left rail. An
-  // outer absolutely-positioned wrapper places it at the band boundary; the
-  // ColorPicker stays `relative` inside it so its popover (centered, fixed
-  // width) anchors to the pill.
+  // The "+" is a plain button (not a picker): clicking it asks the parent to
+  // insert a `pending` placeholder column, which then opens its OWN swatch
+  // picker via `autoOpenIndex`. An outer absolutely-positioned wrapper places it
+  // at the band boundary, straddling the last user color's right edge.
   const renderAddButton = (side: 'right' | 'left') =>
-    addColorPicker ? (
+    onAddColor ? (
       <div
         className={
           'absolute top-1/2 z-10 -translate-y-1/2 ' +
           (side === 'right' ? 'right-0 translate-x-1/2' : 'left-0 -translate-x-1/2')
         }
       >
-        <ColorPicker
-          hex={addColorPicker.hex}
-          onChange={addColorPicker.onChange}
-          copyFormat={addColorPicker.copyFormat}
-          onOpenChange={addColorPicker.onOpenChange}
-          triggerLabel="Add a color to the palette"
-          className="relative block"
-          triggerClassName="group inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-ink text-paper shadow-md ring-2 ring-paper transition duration-150 ease-out hover:scale-110 hover:bg-ink/90 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 active:scale-95 motion-reduce:transition-none motion-reduce:hover:scale-100"
-          popoverClassName="absolute left-1/2 top-full mt-3 w-72 -translate-x-1/2"
+        <button
+          type="button"
+          onClick={onAddColor}
+          aria-label="Add a color to the palette"
+          className="group inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-ink text-paper shadow-md ring-2 ring-paper transition duration-150 ease-out hover:scale-110 hover:bg-ink/90 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 active:scale-95 motion-reduce:transition-none motion-reduce:hover:scale-100"
         >
           <svg viewBox="0 0 16 16" aria-hidden="true" className="h-4 w-4">
             <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
           </svg>
-        </ColorPicker>
+        </button>
       </div>
     ) : null;
 
@@ -2472,22 +2557,44 @@ function PalettePreviewBar({
               // carries the focus ring; a child span paints the swatch color
               // (ColorPicker's trigger takes no inline style of its own).
               <ColorPicker
+                ref={(el) => {
+                  swatchPickerRefs.current[i] = el;
+                }}
                 hex={editColorPicker!.hex}
                 onChange={editColorPicker!.onChange}
                 copyFormat={editColorPicker!.copyFormat}
                 onOpenChange={(open, canceled) =>
                   editColorPicker!.onOpenChange(i, open, canceled)
                 }
-                triggerLabel={`Adjust ${c.hex} (${nameForHex(c.hex)}). Black text ${wcagSpoken(blackLevel)}, white text ${wcagSpoken(whiteLevel)}.`}
+                triggerLabel={
+                  c.pending
+                    ? 'Pick a color for the new palette entry'
+                    : `Adjust ${c.hex} (${nameForHex(c.hex)}). Black text ${wcagSpoken(blackLevel)}, white text ${wcagSpoken(whiteLevel)}.`
+                }
                 className="block h-full w-full"
                 triggerClassName="block h-full w-full cursor-pointer border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60"
                 popoverClassName={popoverPlacement}
               >
-                <span
-                  aria-hidden="true"
-                  className="block h-full w-full"
-                  style={{ backgroundColor: c.hex }}
-                />
+                {c.pending ? (
+                  // Placeholder for an in-flight "+" add: a striped, dashed box
+                  // with a pulsing "pick a color" hint instead of the seed color,
+                  // so no default white/black is shown until the user picks one.
+                  <span
+                    aria-hidden="true"
+                    className="flex h-full w-full items-center justify-center border-2 border-dashed border-hairline"
+                    style={{ backgroundImage: PENDING_STRIPE }}
+                  >
+                    <span className="font-display text-[11px] font-medium uppercase tracking-[0.12em] text-mute motion-safe:animate-pulse">
+                      Pick a color
+                    </span>
+                  </span>
+                ) : (
+                  <span
+                    aria-hidden="true"
+                    className="block h-full w-full"
+                    style={{ backgroundColor: c.hex }}
+                  />
+                )}
               </ColorPicker>
             ) : (
               <button
@@ -2505,6 +2612,7 @@ function PalettePreviewBar({
                 the trigger, and only the `?` re-enables pointer events on hover.
                 The swatch's aria-label already spells the contrast levels out, so
                 the badges + name/hex stay aria-hidden. */}
+            {!c.pending && (
             <div
               className="pointer-events-none absolute inset-0 flex flex-col justify-end p-3"
               style={{ color: textColor }}
@@ -2530,7 +2638,8 @@ function PalettePreviewBar({
                 </span>
               </span>
             </div>
-            {onRemove && (
+            )}
+            {onRemove && !c.pending && (
               <button
                 type="button"
                 aria-label={`Remove ${c.hex} from palette`}
