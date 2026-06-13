@@ -12,6 +12,7 @@ import { formatForCopy } from '../lib/color/format';
 import { oklchRamp } from '../lib/color/ramp';
 import { buildScale } from '../lib/color/scale';
 import { STOPS } from '../lib/color/anchors';
+import { paletteColumnGrows } from '../lib/palette-weights';
 import { useToast } from './Toast';
 import SourceInfoButton from './SourceInfoButton';
 
@@ -19,8 +20,10 @@ import SourceInfoButton from './SourceInfoButton';
  * Multi-column shade grid shown in place of the single ramp once the palette
  * tray holds two or more colors. Each palette color gets its own column - the
  * full OKLCH ramp (`kind="ramp"`) or 11-stop Tailwind scale (`kind="scale"`) -
- * and the columns are equal-width (`flex-1`), separated by a 2px vertical gap
- * (matching the rows' `gap-[2px]`) so the grid reads as a clean lattice.
+ * separated by a 2px vertical gap (matching the rows' `gap-[2px]`) so the grid
+ * reads as a clean lattice. Column widths come from `paletteColumnGrows`: the
+ * user-color prefix keeps ≥50% of the width and the seeded suffix shares the
+ * rest (equal within each group), matching the `PalettePreviewBar` above.
  *
  * Unlike `ShadeRow`, swatches here carry no value label and no source band:
  * the column IS the color, so the only chrome is the `Source` badge on the
@@ -34,9 +37,8 @@ import SourceInfoButton from './SourceInfoButton';
  * `kind="scale"` (Tailwind) mode the label is the stop value (50…950); in
  * `kind="ramp"` (OKLCH) it's the same 50…950 stop labels by row index, since the ramp has
  * no stops. It's positioned rather than added as a flex sibling on purpose: a
- * trailing in-flow column would shrink every `flex-1` swatch column and
- * progressively knock them out of alignment with the equal-width
- * `PalettePreviewBar` name headers above.
+ * trailing in-flow column would shrink every swatch column and progressively
+ * knock them out of alignment with the `PalettePreviewBar` name headers above.
  *
  * Each swatch is a fixed `ROW_H` tall - the same height as a single-column
  * `ShadeRow` (its `py-3.5` + text line ≈ 48px) - and the container sizes to its
@@ -93,6 +95,9 @@ export default function PaletteShadeGrid({
 }: PaletteShadeGridProps) {
   // Mirror PalettePreviewBar's gap: only when both groups are actually present.
   const hasGap = boundary != null && boundary > 0 && boundary < hexes.length;
+  // Mirror PalettePreviewBar's column widths: the user-color prefix keeps ≥50%
+  // of the width, the seeded suffix shares the rest (equal within each group).
+  const grows = paletteColumnGrows(hexes.length, boundary ?? hexes.length);
   // Build each column's shades keyed by that column's OWN hex (+ kind), reusing
   // the prior computation for any hex that didn't change. During an image-mode
   // point drag only ONE column's hex changes per frame, but the tray's array
@@ -143,8 +148,9 @@ export default function PaletteShadeGrid({
             role="listitem"
             key={`${hexes[col]}-${col}`}
             aria-label={`Shades of ${hexes[col]}`}
+            style={{ flexGrow: grows[col], flexBasis: 0 }}
             className={
-              'flex min-w-0 flex-1 flex-col gap-[2px]' +
+              'flex min-w-0 flex-col gap-[2px]' +
               (hasGap && col === boundary ? ' ml-12' : '')
             }
           >

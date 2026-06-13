@@ -25,6 +25,7 @@ import { buildColorPageData } from '../lib/color/page-data';
 import { colorPageMarkdown } from '../lib/markdown/color-page';
 import { registerWebMcpTools } from '../lib/mcp/webmcp';
 import { suggestPaletteName } from '../lib/color/palette-name';
+import { paletteColumnGrows } from '../lib/palette-weights';
 import { contrastRatio, wcagLevel, type WcagLevel } from '../lib/color/contrast';
 // Use the slim hex-lookup so the React island doesn't drag the full
 // blurb-bearing NAMED_COLORS module into its bundle. The page chrome
@@ -2239,6 +2240,10 @@ function PalettePreviewBar({
   // header column and the band swatch at the boundary both get it so the two
   // rows stay aligned.
   const gapClass = (i: number) => (hasGap && i === boundary ? ' ml-12' : '');
+  // The user-color prefix keeps ≥50% of the width; the seeded suffix shares the
+  // rest (equal within each group). Same weights feed the shade grid below
+  // (`PaletteShadeGrid`) so the band, headers, and grid columns stay aligned.
+  const grows = paletteColumnGrows(tray.length, boundary);
 
   const renderAddButton = (side: 'right' | 'left') =>
     onAddColor ? (
@@ -2263,8 +2268,8 @@ function PalettePreviewBar({
       {/* Per-column header sitting ABOVE the colored band (not inside the
           swatch): the editable semantic role (with a pencil to rename it).
           The detected color name lives inside the swatch instead, revealed on
-          hover alongside the hex. Columns are `flex-1` to line up with the
-          band's equal-width swatches below. */}
+          hover alongside the hex. Columns share the band's per-column widths
+          (`paletteColumnGrows`) below so headers line up with their swatches. */}
       <div className="flex w-full">
         {tray.map((c, i) => {
           const actualName = nameForHex(c.hex);
@@ -2273,7 +2278,8 @@ function PalettePreviewBar({
           return (
             <div
               key={`name-${c.hex}-${i}`}
-              className={'flex min-w-0 flex-1 items-center gap-2 pb-1 pr-3' + gapClass(i)}
+              style={{ flexGrow: grows[i], flexBasis: 0 }}
+              className={'flex min-w-0 items-center gap-2 pb-1 pr-3' + gapClass(i)}
             >
               {/* LEFT: semantic role + rename pencil (or the inline editor). */}
               {editing ? (
@@ -2340,7 +2346,11 @@ function PalettePreviewBar({
         const blackLevel = wcagLevel(contrastRatio(c.hex, '#000000'));
         const whiteLevel = wcagLevel(contrastRatio(c.hex, '#ffffff'));
         return (
-          <li key={`${c.hex}-${i}`} className={'group relative min-w-0 flex-1' + gapClass(i)}>
+          <li
+            key={`${c.hex}-${i}`}
+            style={{ flexGrow: grows[i], flexBasis: 0 }}
+            className={'group relative min-w-0' + gapClass(i)}
+          >
             <button
               type="button"
               onClick={() => onSelectColor(i)}
