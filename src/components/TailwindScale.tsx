@@ -31,6 +31,8 @@ export interface TailwindScaleProps {
   paletteNames?: string[];
   /** Column index where the seeded semantic block begins; gaps the grid to match the band. */
   paletteBoundary?: number;
+  /** Hex just added to the tray; its grid column fades in. */
+  paletteEnterHex?: Hex | null;
   copyFormat: CopyFormat;
   brandName?: string;
   onCopy: (hex: Hex) => void;
@@ -46,6 +48,7 @@ export default function TailwindScale({
   paletteHexes,
   paletteNames,
   paletteBoundary,
+  paletteEnterHex,
   copyFormat,
   brandName,
   onCopy,
@@ -60,6 +63,7 @@ export default function TailwindScale({
           hexes={paletteHexes!}
           names={paletteNames}
           boundary={paletteBoundary}
+          enterHex={paletteEnterHex}
           kind="scale"
           copyFormat={copyFormat}
           brandName={brandName}

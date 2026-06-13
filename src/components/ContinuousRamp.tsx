@@ -34,6 +34,8 @@ export interface ContinuousRampProps {
   paletteNames?: string[];
   /** Column index where the seeded semantic block begins; gaps the grid to match the band. */
   paletteBoundary?: number;
+  /** Hex just added to the tray; its grid column fades in. */
+  paletteEnterHex?: Hex | null;
   copyFormat: CopyFormat;
   brandName?: string;
   onCopy: (hex: Hex) => void;
@@ -49,6 +51,7 @@ export default function ContinuousRamp({
   paletteHexes,
   paletteNames,
   paletteBoundary,
+  paletteEnterHex,
   copyFormat,
   brandName,
   onCopy,
@@ -63,6 +66,7 @@ export default function ContinuousRamp({
           hexes={paletteHexes!}
           names={paletteNames}
           boundary={paletteBoundary}
+          enterHex={paletteEnterHex}
           kind="ramp"
           copyFormat={copyFormat}
           brandName={brandName}

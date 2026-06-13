@@ -81,6 +81,14 @@ export interface PaletteShadeGridProps {
    * no gap.
    */
   boundary?: number;
+  /**
+   * Hex of the color just added to the tray, if any. The matching column fades
+   * in (`palette-column-enter`); keyed by hex (not index) because new brand
+   * colors are inserted before the seeded block, not appended. Cleared by the
+   * owner shortly after, so it only fires on add - never on reorder, hex edits,
+   * image-drag, or an algorithm-view toggle that remounts the grid.
+   */
+  enterHex?: Hex | null;
 }
 
 export default function PaletteShadeGrid({
@@ -92,6 +100,7 @@ export default function PaletteShadeGrid({
   onCopy,
   onNavigate,
   boundary,
+  enterHex,
 }: PaletteShadeGridProps) {
   // Mirror PalettePreviewBar's gap: only when both groups are actually present.
   const hasGap = boundary != null && boundary > 0 && boundary < hexes.length;
@@ -141,7 +150,7 @@ export default function PaletteShadeGrid({
         data-palette-grid="true"
         data-grid-columns={hexes.length}
         aria-label={kind === 'ramp' ? 'Palette OKLCH ramps' : 'Palette Tailwind scales'}
-        className="flex w-full gap-[2px] overflow-hidden border-b border-ink/15"
+        className="flex w-full gap-[2px] overflow-hidden"
       >
         {columns.map((shades, col) => (
           <div
@@ -151,7 +160,8 @@ export default function PaletteShadeGrid({
             style={{ flexGrow: grows[col], flexBasis: 0 }}
             className={
               'flex min-w-0 flex-col gap-[2px]' +
-              (hasGap && col === boundary ? ' ml-12' : '')
+              (hasGap && col === boundary ? ' ml-12' : '') +
+              (enterHex && hexes[col] === enterHex ? ' palette-column-enter' : '')
             }
           >
             {shades.map((shade, row) => (

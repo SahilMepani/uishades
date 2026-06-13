@@ -166,6 +166,20 @@ export interface ColorPickerProps {
   copyFormat?: CopyFormat;
   className?: string;
   /**
+   * Overrides the trigger button's classes. Default is a full-width block; the
+   * palette "+" box passes the round add-pill styling so the button itself is
+   * the "+".
+   */
+  triggerClassName?: string;
+  /**
+   * Overrides the popover's position + width classes (default: anchored at the
+   * trigger's bottom-left, 400% wide to span the input row it opens from). The
+   * visual chrome (border / bg / padding / shadow) is always applied. The
+   * palette "+" picker passes a fixed-width, trigger-centered placement so the
+   * popover opens next to the "+" rather than spanning a row.
+   */
+  popoverClassName?: string;
+  /**
    * Fired on every open/close transition (internal trigger, outside-click,
    * Escape, or an imperative `open()` via ref). On close, `canceled` is true
    * when the user dismissed via Escape - the palette "+" box uses this to
@@ -186,6 +200,8 @@ const ColorPicker = forwardRef<ColorPickerHandle, ColorPickerProps>(function Col
   triggerLabel,
   copyFormat,
   className,
+  triggerClassName,
+  popoverClassName,
   onOpenChange,
   children,
 }: ColorPickerProps, ref) {
@@ -494,7 +510,10 @@ const ColorPicker = forwardRef<ColorPickerHandle, ColorPickerProps>(function Col
         title={triggerLabel}
         aria-expanded={open}
         aria-controls={popoverId}
-        className="group block w-full cursor-pointer p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+        className={
+          triggerClassName ??
+          'group block w-full cursor-pointer p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60'
+        }
       >
         {children}
       </button>
@@ -507,14 +526,17 @@ const ColorPicker = forwardRef<ColorPickerHandle, ColorPickerProps>(function Col
           aria-label="Color picker"
           data-open={visible ? 'true' : 'false'}
           aria-hidden={!visible}
-          // Width matches the full input row the picker was opened from.
-          // `w-[400%]` works because the trigger wrapper is `w-1/4` of that row
-          // (set by PreviewBlock in ShadeTool) - 400% of a quarter = the whole
-          // row. If that wrapper width ever changes, this number must too.
+          // Position + width come from `popoverClassName`, defaulting to the
+          // full input row the picker was opened from. The default `w-[400%]`
+          // works because the trigger wrapper is `w-1/4` of that row (set by
+          // PreviewBlock in ShadeTool) - 400% of a quarter = the whole row. If
+          // that wrapper width ever changes, the default must too. The palette
+          // "+" picker overrides this with a fixed, trigger-centered placement.
           className={
-            'popover-anim absolute left-0 top-full z-40 mt-2 flex w-[400%] flex-col gap-3 ' +
+            'popover-anim z-40 flex flex-col gap-3 ' +
             'border border-hairline bg-paper p-3 ' +
-            'shadow-[0_12px_32px_rgba(17,17,16,0.14)]'
+            'shadow-[0_12px_32px_rgba(17,17,16,0.14)] ' +
+            (popoverClassName ?? 'absolute left-0 top-full mt-2 w-[400%]')
           }
         >
           <HexColorPicker color={hex} onChange={handlePickerChange} />

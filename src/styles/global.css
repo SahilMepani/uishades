@@ -303,6 +303,22 @@ select:not(:disabled),
   }
 }
 
+/* Newly-added palette column (PaletteShadeGrid): the whole column fades and
+   eases in from the left as it mounts, so adding a color to the tray reads as
+   the new column sliding into the lattice rather than snapping in. Applied only
+   to columns whose index just appeared (the grid tracks the previous count).
+   Honors prefers-reduced-motion. */
+@keyframes palette-column-enter {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.palette-column-enter {
+  animation: palette-column-enter 220ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .palette-column-enter { animation: none; }
+}
+
 /* Theme switch (ThemeToggle.astro): a segmented sun (light) / moon (dark)
    pill. The sliding indicator and active-icon colour are driven purely by the
    `.dark` class on <html>, so the control reflects the active theme even

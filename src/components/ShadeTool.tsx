@@ -760,6 +760,17 @@ function ShadeToolInner({
   // is only promoted to `/[hex]` on a real color change.
   const [tray, setTray] = useState<TrayColor[]>([]);
 
+  // Hex of the color most recently added to the tray, so its grid column fades
+  // in (`PaletteShadeGrid` matches it by hex). Self-clears ~one animation later
+  // so it only fires on add - never on reorder, hex edits, an image-point drag,
+  // or an algorithm-view toggle that remounts the grid.
+  const [enterHex, setEnterHex] = useState<Hex | null>(null);
+  useEffect(() => {
+    if (!enterHex) return;
+    const t = window.setTimeout(() => setEnterHex(null), 280);
+    return () => window.clearTimeout(t);
+  }, [enterHex]);
+
   // Token-form family slug per tray slot — the single source for BOTH the
   // multi-color export token family names and the grid's per-column copy labels
   // (`var(--<name>-…)` / `bg-<name>-…`), so the copied tokens and the exported
@@ -839,6 +850,10 @@ function ShadeToolInner({
         pushToast('That color is already in the palette.', { durationMs: 2500 });
         return prev;
       }
+      // Fade the new column in (matched by hex in PaletteShadeGrid). Set here -
+      // inside the real-add path, after the duplicate guard - so a no-op
+      // duplicate add never re-animates the existing column.
+      setEnterHex(addHex);
       const added: TrayColor = { hex: addHex, view, copyFormat };
       // First time the palette opens (0 → 1): seed the conventional
       // design-token roles alongside the user's first color, so the palette
@@ -871,11 +886,12 @@ function ShadeToolInner({
     });
   }, [activeHex, view, copyFormat, pushToast]);
 
-  // The palette "+" box opens the SAME top color picker (anchored at the top
-  // swatch), driving the live page color while open. We arm this ref before
-  // opening so that when that picker closes, the chosen color is also appended
-  // to the tray. Separate refs per column (desktop rail / mobile panel) because
-  // both PreviewBlocks are always mounted; the "+" must open the visible one.
+  // Double-clicking a band swatch opens the SAME top color picker (anchored at
+  // the left-rail / mobile preview swatch) to adjust that color. Separate refs
+  // per column (desktop rail / mobile panel) because both PreviewBlocks are
+  // always mounted; the edit must open the visible one. The palette "+" box no
+  // longer borrows these - it owns a dedicated picker rendered next to the "+"
+  // (see `handleBandPickerOpenChange` + `PalettePreviewBar`'s add-pill).
   const desktopPickerRef = useRef<ColorPickerHandle>(null);
   const mobilePickerRef = useRef<ColorPickerHandle>(null);
   const addToTrayOnCloseRef = useRef(false);
@@ -886,11 +902,6 @@ function ShadeToolInner({
   // The color the edited swatch held when the picker opened, so we can skip the
   // write-back + toast when the user closes without actually changing it.
   const editTrayOriginalHexRef = useRef<Hex | null>(null);
-
-  const openPickerForPalette = useCallback((picker: ColorPickerHandle | null) => {
-    addToTrayOnCloseRef.current = true;
-    picker?.open();
-  }, []);
 
   // Single-clicking a palette swatch just makes it the live page color - it does
   // not open the picker.
@@ -943,19 +954,6 @@ function ShadeToolInner({
     [openPickerForEdit],
   );
 
-  // Sibling of `editBandColor` for the band's trailing "+" button: resolve the
-  // viewport-visible picker (same `rem`-based breakpoint query) and open it to
-  // append a new color to the palette on close.
-  const addBandColor = useCallback(() => {
-    const desktopVisible =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(min-width: 48rem)').matches;
-    const picker = desktopVisible
-      ? desktopPickerRef.current
-      : mobilePickerRef.current;
-    openPickerForPalette(picker);
-  }, [openPickerForPalette]);
-
   const handlePickerOpenChange = useCallback(
     (open: boolean, canceled: boolean) => {
       if (open) return;
@@ -986,6 +984,22 @@ function ShadeToolInner({
       }
     },
     [handleAddToTray, hex, pushToast],
+  );
+
+  // The palette "+" owns its own picker, rendered next to the button (not the
+  // left-rail one), so it opens beside the "+" rather than over in the sidebar.
+  // Opening arms the add-on-close; the rest of the lifecycle reuses
+  // `handlePickerOpenChange` (which, with `editTrayIndexRef` null, appends the
+  // chosen color on a committing close).
+  const handleBandPickerOpenChange = useCallback(
+    (open: boolean, canceled: boolean) => {
+      if (open) {
+        addToTrayOnCloseRef.current = true;
+        return;
+      }
+      handlePickerOpenChange(open, canceled);
+    },
+    [handlePickerOpenChange],
   );
 
   const handleRemoveFromTray = useCallback((index: number) => {
@@ -1032,6 +1046,7 @@ function ShadeToolInner({
     (p: SamplePoint) => {
       setTray((prev) => [...prev, { hex: p.hex, view, copyFormat, point: { x: p.x, y: p.y } }]);
       setHex(p.hex);
+      setEnterHex(p.hex);
     },
     [view, copyFormat, pushToast],
   );
@@ -1296,7 +1311,12 @@ function ShadeToolInner({
                 tray={tray}
                 onSelectColor={selectTrayColor}
                 onEditColor={editBandColor}
-                onAddColor={addBandColor}
+                addColorPicker={{
+                  hex: activeHex,
+                  onChange: handleChangeHex,
+                  copyFormat,
+                  onOpenChange: handleBandPickerOpenChange,
+                }}
                 onRemove={handleRemoveFromTray}
                 onRenameSemantic={handleRenameSemantic}
               />
@@ -1312,6 +1332,7 @@ function ShadeToolInner({
                 paletteHexes={paletteHexes}
                 paletteNames={paletteNames}
                 paletteBoundary={paletteBoundary}
+                paletteEnterHex={enterHex}
                 copyFormat={copyFormat}
                 brandName={brandName}
                 onCopy={handleCopyShade}
@@ -1325,6 +1346,7 @@ function ShadeToolInner({
                 paletteHexes={paletteHexes}
                 paletteNames={paletteNames}
                 paletteBoundary={paletteBoundary}
+                paletteEnterHex={enterHex}
                 copyFormat={copyFormat}
                 brandName={brandName}
                 onCopy={handleCopyShade}
@@ -1655,7 +1677,7 @@ function PreviewBlock({
         type="button"
         onClick={onAddToPalette}
         disabled={inPalette || paletteFull}
-        className="-mt-2 inline-flex items-center justify-center gap-1.5 bg-ink px-3 py-2 font-mono text-xs uppercase tracking-tight text-paper transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-default disabled:opacity-40 motion-reduce:transition-none"
+        className="-mt-2 inline-flex items-center justify-center gap-1.5 bg-ink px-3 py-[14px] font-mono text-xs uppercase tracking-tight text-paper transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-default disabled:opacity-40 motion-reduce:transition-none"
       >
         {inPalette ? 'Added in Palette' : 'Add to palette'}
       </button>
@@ -2168,7 +2190,7 @@ function PalettePreviewBar({
   tray,
   onSelectColor,
   onEditColor,
-  onAddColor,
+  addColorPicker,
   onRemove,
   onRenameSemantic,
   readOnly = false,
@@ -2178,10 +2200,18 @@ function PalettePreviewBar({
   /** Double-click: open the picker seeded with the swatch; omitted ⇒ no edit. */
   onEditColor?: (index: number) => void;
   /**
-   * Renders a trailing "+" button straddling the band's right edge that opens
-   * the picker to append a color. Omitted ⇒ no add button.
+   * Renders the "+" add button (straddling the user/seeded boundary) as a
+   * self-contained color picker that opens RIGHT NEXT TO the button rather than
+   * borrowing the far-off left-rail picker. The chosen color drives the live
+   * page color while open (`hex`/`onChange`) and is appended to the palette on a
+   * committing close (`onOpenChange`). Omitted ⇒ no add button.
    */
-  onAddColor?: () => void;
+  addColorPicker?: {
+    hex: Hex;
+    onChange: (next: Hex) => void;
+    copyFormat: CopyFormat;
+    onOpenChange: (open: boolean, canceled: boolean) => void;
+  };
   /** Reveal an X on hover/focus that removes the swatch; omitted ⇒ no remove. */
   onRemove?: (index: number) => void;
   /** Pencil-click commits a renamed semantic role; omitted ⇒ no rename pencil. */
@@ -2245,22 +2275,34 @@ function PalettePreviewBar({
   // (`PaletteShadeGrid`) so the band, headers, and grid columns stay aligned.
   const grows = paletteColumnGrows(tray.length, boundary);
 
+  // The "+" pill IS the add picker's trigger, so the popover anchors to it and
+  // opens just below - next to the button - instead of in the left rail. An
+  // outer absolutely-positioned wrapper places it at the band boundary; the
+  // ColorPicker stays `relative` inside it so its popover (centered, fixed
+  // width) anchors to the pill.
   const renderAddButton = (side: 'right' | 'left') =>
-    onAddColor ? (
-      <button
-        type="button"
-        onClick={onAddColor}
-        aria-label="Add a color to the palette"
-        title="Add a color to the palette"
+    addColorPicker ? (
+      <div
         className={
-          'absolute top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-ink text-paper shadow-md ring-2 ring-paper transition duration-150 ease-out hover:scale-110 hover:bg-ink/90 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 active:scale-95 motion-reduce:transition-none motion-reduce:hover:scale-100 ' +
+          'absolute top-1/2 z-10 -translate-y-1/2 ' +
           (side === 'right' ? 'right-0 translate-x-1/2' : 'left-0 -translate-x-1/2')
         }
       >
-        <svg viewBox="0 0 16 16" aria-hidden="true" className="h-4 w-4">
-          <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-        </svg>
-      </button>
+        <ColorPicker
+          hex={addColorPicker.hex}
+          onChange={addColorPicker.onChange}
+          copyFormat={addColorPicker.copyFormat}
+          onOpenChange={addColorPicker.onOpenChange}
+          triggerLabel="Add a color to the palette"
+          className="relative block"
+          triggerClassName="group inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-ink text-paper shadow-md ring-2 ring-paper transition duration-150 ease-out hover:scale-110 hover:bg-ink/90 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 active:scale-95 motion-reduce:transition-none motion-reduce:hover:scale-100"
+          popoverClassName="absolute left-1/2 top-full mt-3 w-72 -translate-x-1/2"
+        >
+          <svg viewBox="0 0 16 16" aria-hidden="true" className="h-4 w-4">
+            <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+          </svg>
+        </ColorPicker>
+      </div>
     ) : null;
 
   return (
@@ -2269,8 +2311,10 @@ function PalettePreviewBar({
           swatch): the editable semantic role (with a pencil to rename it).
           The detected color name lives inside the swatch instead, revealed on
           hover alongside the hex. Columns share the band's per-column widths
-          (`paletteColumnGrows`) below so headers line up with their swatches. */}
-      <div className="flex w-full">
+          (`paletteColumnGrows`) AND its `gap-[2px]` below so each header sits
+          directly over its swatch/shade column - without the matching gap the
+          left edges drift progressively out of alignment. */}
+      <div className="flex w-full gap-[2px]">
         {tray.map((c, i) => {
           const actualName = nameForHex(c.hex);
           const semantic = c.semanticName ?? defaultSemanticName(tray, i);
@@ -2279,7 +2323,11 @@ function PalettePreviewBar({
             <div
               key={`name-${c.hex}-${i}`}
               style={{ flexGrow: grows[i], flexBasis: 0 }}
-              className={'flex min-w-0 items-center gap-2 pb-1 pr-3' + gapClass(i)}
+              // No `flex-basis` padding here: with `flex-basis: 0` a right pad
+              // would become a per-column width floor, widening each header box
+              // past its swatch and drifting the left edges. Keep the box pure
+              // grow; truncation handles long names.
+              className={'flex min-w-0 items-center gap-2 pb-1' + gapClass(i)}
             >
               {/* LEFT: semantic role + rename pencil (or the inline editor). */}
               {editing ? (
@@ -2339,7 +2387,7 @@ function PalettePreviewBar({
       <div className="relative">
       <ul
         aria-label="Palette preview"
-        className="flex h-[150px] w-full gap-[2px] border border-hairline"
+        className="flex h-[150px] w-full gap-[2px] border-x border-hairline"
       >
       {tray.map((c, i) => {
         const textColor = readableTextOn(c.hex);
