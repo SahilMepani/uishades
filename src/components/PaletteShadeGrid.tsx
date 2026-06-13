@@ -60,7 +60,7 @@ export interface PaletteShadeGridProps {
   hexes: Hex[];
   /**
    * Family name per column, parallel to `hexes` — the swatch's effective
-   * semantic name (the user's rename, else "Primary"/"Accent N"/a seeded role),
+   * semantic name (the user's rename, else "Primary"/"Secondary"/"Accent"/a seeded role),
    * matching the preview-bar header above and the exported token family. Each
    * column's copy labels (var(--name)/bg-name) use its own column's name rather
    * than the active color's. Falls back to `brandName` when absent.
@@ -200,10 +200,10 @@ function GridSwatch({
   const { pushToast } = useToast();
 
   const handleCopy = useCallback(() => {
-    const text = formatForCopy(shade.hex, copyFormat, {
-      name: brandName,
-      stop: shade.stop,
-    });
+    // Always copy the plain hex so a click matches the hover label (parity with
+    // ShadeRow). The "Copy as" format preference still drives Export, not the
+    // grid swatch click.
+    const text = shade.hex;
     if (
       typeof navigator === 'undefined' ||
       !navigator.clipboard ||
@@ -222,7 +222,7 @@ function GridSwatch({
       },
       () => pushToast("Couldn't copy - check browser permissions."),
     );
-  }, [shade.hex, shade.stop, copyFormat, brandName, onCopy, onNavigate, pushToast]);
+  }, [shade.hex, onCopy, onNavigate, pushToast]);
 
   const handleClick = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {

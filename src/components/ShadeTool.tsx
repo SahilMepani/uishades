@@ -57,13 +57,6 @@ import {
   sanitizeName,
   type ColorGroup,
 } from '../lib/exports/tokens';
-import { mockColorsForTool } from './mocks/tool-roles';
-
-// The "see your color as a UI" preview is below the fold, so it stays out of the
-// eager / SSR-critical island chunk: `client:load` means SSR emits only the
-// height-reserving Suspense fallback, and the preview (plus its four templates
-// and the canvas PNG path) loads as its own lazy chunk after hydration.
-const MockPreview = lazy(() => import('./MockPreview'));
 
 /**
  * Top-level React island for the shade tool.
@@ -105,7 +98,7 @@ interface TrayColor {
    *     swatch the user renames.
    *   - Implicitly (absent), for the user's own brand colors: the band then
    *     falls back to `defaultSemanticName(tray, index)`, which labels the
-   *     first un-named swatch "Primary" and the rest "Accent 1", "Accent 2", …
+   *     first un-named swatch "Primary", then "Secondary", "Accent", …
    */
   semanticName?: string;
   /**
@@ -146,15 +139,19 @@ const DEFAULT_PALETTE_EXTRAS: { hex: Hex; semanticName: string }[] = [
  * Positional default label for a swatch with no explicit `semanticName`. The
  * fixed Background/Neutral/Success/Warning/Error swatches carry their own
  * explicit name, so they're skipped here: only the user's brand colors fall
- * through, and they read "Primary" (the first un-named swatch) then "Accent 1",
- * "Accent 2", … - regardless of how the fixed block is interleaved or trimmed.
+ * through, and they read "Primary" (the first un-named swatch), then
+ * "Secondary", then "Accent", then "Accent 2", "Accent 3", … - regardless of
+ * how the fixed block is interleaved or trimmed.
  */
 function defaultSemanticName(tray: TrayColor[], index: number): string {
   let rank = 0;
   for (let j = 0; j < index; j++) {
     if (!tray[j].semanticName) rank++;
   }
-  return rank === 0 ? 'Primary' : `Accent ${rank}`;
+  if (rank === 0) return 'Primary';
+  if (rank === 1) return 'Secondary';
+  if (rank === 2) return 'Accent';
+  return `Accent ${rank - 1}`;
 }
 
 // Lazy so the canvas/extraction code (and the `quantize` dependency it pulls in)
@@ -768,10 +765,10 @@ function ShadeToolInner({
   // multi-color export token family names and the grid's per-column copy labels
   // (`var(--<name>-…)` / `bg-<name>-…`), so the copied tokens and the exported
   // file always agree. Derived from each swatch's EFFECTIVE semantic name — the
-  // user's explicit rename, else the positional default ("Primary"/"Accent N")
-  // or a seeded role (Background/Neutral/…), i.e. exactly what the preview band
-  // header shows — then `sanitizeName`d to a CSS-safe slug ("Accent 1" →
-  // "accent-1"). `sanitizeName` is idempotent, so the export path's own
+  // user's explicit rename, else the positional default ("Primary"/"Secondary"/
+  // "Accent") or a seeded role (Background/Neutral/…), i.e. exactly what the
+  // preview band header shows — then `sanitizeName`d to a CSS-safe slug
+  // ("Accent 2" → "accent-2"). `sanitizeName` is idempotent, so the export path's own
   // `dedupeGroupNames`→`sanitizeName` pass is a no-op on these. (The band header
   // still renders the human form; `brandNameForHex` still derives the
   // single-color `brandName` below — only multi-color families went semantic.)
@@ -791,12 +788,6 @@ function ShadeToolInner({
   // so we feed the neutral-shell adapter the tray (when it holds colors) or just
   // the live `hex`; it pins white bg / faint surface and routes the brand
   // color(s) into accent + chart extras (see `mocks/tool-roles.ts`).
-  const previewHexes = useMemo(
-    () => (tray.length >= 1 ? paletteHexes : [hex]),
-    [tray.length, paletteHexes, hex],
-  );
-  const mockColors = useMemo(() => mockColorsForTool(previewHexes), [previewHexes]);
-
   // Export groups for the current view + palette, consumed by the shade-grid
   // export row inside the view component. Multi-column (2+ palette colors) →
   // one collision-safe group per swatch; else just the active scale or ramp.
@@ -1309,7 +1300,8 @@ function ShadeToolInner({
                 tray={tray}
                 onSelectColor={selectTrayColor}
                 onEditColor={editBandColor}
-                onAddColor={tray.length < 8 ? addBandColor : undefined}
+                onAddColor={addBandColor}
+                addColorDisabled={tray.length >= 8}
                 onRemove={handleRemoveFromTray}
                 onRenameSemantic={handleRenameSemantic}
               />
@@ -1345,25 +1337,6 @@ function ShadeToolInner({
             )}
           </div>
 
-          {/* "See your color as a UI" preview. Full-width below the shade list,
-              shown for single colors and multi-color trays alike. Lazy-loaded
-              (declared at module top) so it never weighs down the eager / SSR
-              island chunk; SSR emits only the height-reserving fallback.
-              Suppressed in image mode, matching the rest of this column. */}
-          {!isImage && mockColors.length > 0 && (
-            <section className="mt-8 flex flex-col gap-3 border-t border-hairline pt-6">
-              <Suspense
-                fallback={
-                  <div className="aspect-[16/10] w-full rounded-lg border border-hairline" />
-                }
-              >
-                <MockPreview
-                  colors={mockColors}
-                  name={tray.length >= 1 ? defaultPaletteName : (named?.name ?? hex)}
-                />
-              </Suspense>
-            </section>
-          )}
         </section>
       </div>
       )}
@@ -2199,6 +2172,7 @@ function PalettePreviewBar({
   onSelectColor,
   onEditColor,
   onAddColor,
+  addColorDisabled = false,
   onRemove,
   onRenameSemantic,
   readOnly = false,
@@ -2209,10 +2183,14 @@ function PalettePreviewBar({
   onEditColor?: (index: number) => void;
   /**
    * Renders a trailing "+" button straddling the band's right edge that opens
-   * the picker to append a color. Omitted (or undefined when the palette is at
-   * its 8-color cap) ⇒ no add button.
+   * the picker to append a color. Omitted ⇒ no add button.
    */
   onAddColor?: () => void;
+  /**
+   * Renders the "+" button visibly disabled rather than active — set when the
+   * palette is at its 8-color cap so the affordance stays put but is inert.
+   */
+  addColorDisabled?: boolean;
   /** Reveal an X on hover/focus that removes the swatch; omitted ⇒ no remove. */
   onRemove?: (index: number) => void;
   /** Pencil-click commits a renamed semantic role; omitted ⇒ no rename pencil. */
@@ -2404,9 +2382,10 @@ function PalettePreviewBar({
         <button
           type="button"
           onClick={onAddColor}
-          aria-label="Add a color to the palette"
-          title="Add a color to the palette"
-          className="absolute right-0 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-ink text-paper shadow-md ring-2 ring-paper transition duration-150 ease-out hover:scale-110 hover:bg-ink/90 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 active:scale-95 motion-reduce:transition-none motion-reduce:hover:scale-100"
+          disabled={addColorDisabled}
+          aria-label={addColorDisabled ? 'Palette is full (8 colors max)' : 'Add a color to the palette'}
+          title={addColorDisabled ? 'Palette is full (8 colors max)' : 'Add a color to the palette'}
+          className="absolute right-0 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-ink text-paper shadow-md ring-2 ring-paper transition duration-150 ease-out hover:scale-110 hover:bg-ink/90 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 active:scale-95 motion-reduce:transition-none motion-reduce:hover:scale-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-md disabled:hover:scale-100 disabled:hover:bg-ink disabled:hover:shadow-md disabled:active:scale-100"
         >
           <svg viewBox="0 0 16 16" aria-hidden="true" className="h-4 w-4">
             <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
