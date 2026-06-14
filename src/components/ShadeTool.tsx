@@ -1203,12 +1203,15 @@ function ShadeToolInner({
     return suggestPaletteName(tray.map((c) => c.hex));
   }, [tray]);
 
-  // Multi-color palette mode (default tool only): once the tray holds a color,
-  // the full-width palette band + shade grid carry their own per-swatch pickers
-  // and naming, so the single-color left rail (picker / value readouts / share)
-  // is redundant - drop it and let the shade column span the full width. Image
-  // mode keeps its own read-only rail and is excluded.
-  const hasPalette = !isImage && tray.length >= 1;
+  // Multi-color palette mode: once the tray holds a color, the full-width palette
+  // band + shade grid carry their own per-swatch pickers and naming, so the
+  // single-color left rail (picker / value readouts / share) is redundant - drop
+  // it and let the shade column span the full width. Image mode is included so
+  // its extracted palette gets the same chrome-free, full-width layout: the
+  // read-only band (rendered above, under the source image) and the shade grid
+  // line up column-for-column instead of being squeezed into a narrow right
+  // column beside a sidebar.
+  const hasPalette = tray.length >= 1;
 
   return (
     <div className="text-ink">

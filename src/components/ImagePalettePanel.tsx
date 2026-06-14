@@ -724,12 +724,6 @@ export default function ImagePalettePanel({
         </div>
       )}
 
-      {hasImage && (
-        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
-          Drag a circle to change its color · click the image to add one
-          {` · ${points.length} ${points.length === 1 ? 'color' : 'colors'}`}
-        </p>
-      )}
     </div>
   );
 }

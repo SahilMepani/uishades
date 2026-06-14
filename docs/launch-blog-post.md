@@ -83,8 +83,8 @@ The stack is intentionally simple:
 - **React island** for the interactive bits - the input, the ramps, the
   copy buttons. Around 30KB Brotli, deferred.
 - **Cloudflare Workers** for the SSR path. Arbitrary `/[hex]` requests render
-  on demand at the edge in single-digit milliseconds and sit on a long
-  edge cache for repeat visitors.
+  on demand at the edge in single-digit milliseconds (~11ms), with a 30-day
+  `Cache-Control` for browsers and downstream caches.
 - **culori** for colour math. Battle-tested, gamut-correct, supports OKLCH
   out of the box. No reinventing colour-space conversions.
 - **OG images** rendered on demand with workers-og - Satori under the hood -
@@ -94,16 +94,18 @@ Page weight on the named-color pages is under 20KB Brotli for HTML/CSS, with
 the React island deferred. Lighthouse scores: 95+ Performance, 100 SEO, 100
 Accessibility, 100 Best Practices on every route in CI.
 
-The whole thing runs on Cloudflare's free tier. There's no database, no
-analytics SDK, no third-party JS. The cheapest, fastest version of a tool
-that does one thing well.
+The whole thing runs on Cloudflare's free tier. No ads, no paywall, no signup
+wall on the tool itself. The cheapest, fastest version of a tool that does one
+thing well.
 
-## Open source
+## Built for agents, too
 
-The full source is on GitHub: **[github.com/sahilmepani/uishades](https://github.com/sahilmepani/uishades)**
-(placeholder - link will be live at launch). MIT licensed. The Astro setup,
-the colour math, the export templates, the OG image renderer - all of it
-ready to fork or learn from.
+The same data a browser renders is available to AI assistants and tools
+directly. Every colour page answers `Accept: text/markdown` with a clean
+markdown palette, there's an `llms.txt` describing the data model, and a
+public MCP endpoint at `/mcp` exposes a `generate_shades` tool over JSON-RPC -
+no auth, no key. Ask Claude or another agent for "an OKLCH Tailwind scale for
+#4040ff" and it can pull the answer straight from here instead of guessing.
 
 We borrowed the URL structure from 0to255 deliberately, so anyone with an
 old bookmark or a search result pointing at `0to255.com/4040ff` can swap
@@ -119,5 +121,5 @@ specific shades you use most. If you find it useful, share it with someone
 who used to bookmark 0to255.
 
 If something's missing - an export format we don't support, a colour space
-we should handle, a paste format you want - open an issue. We're shipping
-fixes weekly.
+we should handle, a paste format you want - there's a feedback box right in
+the tool. We're shipping fixes weekly.

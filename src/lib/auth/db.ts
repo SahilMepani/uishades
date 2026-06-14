@@ -340,10 +340,11 @@ export async function deletePreset(db: D1Database, userId: string, id: string): 
 // --- Billing seam ------------------------------------------------------------
 
 /**
- * The single seam the future paywall plugs into. Defined and exported now,
- * called nowhere user-facing in v1 (everyone is `'free'` by migration default).
- * A user is "Pro" only while their plan is `'pro'` AND the subscription window
- * hasn't lapsed.
+ * Inert leftover from an abandoned paywall plan (monetization dropped 2026-06-14
+ * — the site is free forever; see `docs/audience-roadmap.md`). Called nowhere
+ * user-facing; everyone is `'free'` by migration default. Kept (with its tests)
+ * only because removing it churns the schema for no benefit — do NOT build new
+ * gates on it. A user is "Pro" only while plan is `'pro'` AND the window holds.
  */
 export function isPro(user: Pick<User, 'plan' | 'planUntil'>): boolean {
   return user.plan === 'pro' && (user.planUntil ?? 0) > Date.now();
@@ -598,9 +599,10 @@ export interface PalettePatch {
  * `db.batch`. Returns the refreshed palette, or NULL if the caller doesn't own
  * a palette with that id. `updated_at` is bumped on every successful patch.
  *
- * NOTE: `visibility='private'` is accepted at the type level but the v1 API
- * route rejects it (billing deferred); this helper itself is unopinionated so
- * the future paywall route can flip it without a signature change.
+ * NOTE: `visibility='private'` is accepted at the type level but the API route
+ * rejects it — palettes are public-only (no privacy feature; monetization was
+ * abandoned 2026-06-14, see `docs/audience-roadmap.md`). This helper itself
+ * stays unopinionated so the policy lives in the route, not here.
  */
 export async function updatePalette(
   db: D1Database,

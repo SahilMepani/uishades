@@ -28,7 +28,10 @@ ways:
   shown inline so you can see at a glance which step of your brand ramp
   passes body-text contrast.
 
-Built on Astro + Cloudflare Workers, ~20KB HTML/CSS per page, MIT licensed.
+Built on Astro + Cloudflare Workers, ~20KB HTML/CSS per page. It's also
+agent-readable: a public MCP endpoint at `/mcp`, an `llms.txt`, and
+`Accept: text/markdown` content negotiation on every colour page, so an AI
+assistant can pull a palette as cleanly as a browser can.
 
 ---
 
@@ -94,11 +97,11 @@ Cuts the spreadsheet round-trip designers were doing to ship brand ramps.
 **Tweet 4 (CTA + link):**
 
 ```
-Free, no signup, no ads. ~20KB per page. Runs on Cloudflare Workers, MIT licensed, fork-friendly.
+Free, no signup, no ads. ~20KB per page, runs on Cloudflare Workers.
+
+Bonus: it's agent-ready - MCP endpoint + llms.txt + markdown content-negotiation, so AI assistants can read a palette too.
 
 Try it: UIshades.com
-Source: github.com/sahilmepani/uishades
-
 If you used to bookmark a 0to255 URL, swap the host and yours still works.
 ```
 
@@ -119,7 +122,7 @@ on-hue across muddy colours like olives and browns where the old algorithm
 drifts grey. There's a Classic toggle if you need bit-for-bit parity. Every
 page also renders an 11-stop Tailwind-style scale with paste-ready exports
 for Tailwind v4, v3, CSS variables, W3C Design Tokens, and Figma Variables.
-Stack is Astro + Cloudflare Workers, MIT licensed, ~20KB HTML/CSS per page.
+Stack is Astro + Cloudflare Workers, ~20KB HTML/CSS per page.
 Feedback welcome - especially on export formats you want that aren't there
 yet.
 

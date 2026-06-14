@@ -1,0 +1,203 @@
+---
+/**
+ * /blog/[slug] - blog post pages, pre-rendered (like /colors/*).
+ *
+ * Content lives in the `blog` collection (`src/content/blog/*.md`, schema in
+ * `src/content.config.ts`). The post title is rendered from front-matter as the
+ * page H1, so the markdown body should NOT repeat a top-level `# heading`.
+ */
+import { getCollection, render } from 'astro:content';
+import '../../styles/global.css';
+import BaseHead from '../../components/BaseHead.astro';
+import HeaderAuth from '../../components/HeaderAuth';
+import FeedbackLink from '../../components/FeedbackLink';
+import { safeJsonForScript } from '../../lib/safe-json';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft || !import.meta.env.PROD);
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const TITLE = `${post.data.title} | UI Shades`;
+const DESCRIPTION = post.data.description;
+const canonicalUrl = `https://UIshades.com/blog/${post.id}`;
+const ogImage = post.data.ogImage ?? 'https://UIshades.com/og/4040ff.png';
+const pubDate = post.data.pubDate.toISOString().slice(0, 10);
+const updatedDate = (post.data.updatedDate ?? post.data.pubDate).toISOString().slice(0, 10);
+const pubDateLabel = post.data.pubDate.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://UIshades.com/' },
+    { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://UIshades.com/blog' },
+    { '@type': 'ListItem', position: 3, name: post.data.title, item: canonicalUrl },
+  ],
+};
+
+const postJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  '@id': `${canonicalUrl}#article`,
+  headline: post.data.title,
+  description: DESCRIPTION,
+  datePublished: pubDate,
+  dateModified: updatedDate,
+  url: canonicalUrl,
+  mainEntityOfPage: canonicalUrl,
+  inLanguage: 'en',
+  isAccessibleForFree: true,
+  isPartOf: { '@id': 'https://UIshades.com/#website' },
+  publisher: { '@id': 'https://UIshades.com/#org' },
+  image: {
+    '@type': 'ImageObject',
+    url: ogImage,
+    width: 1200,
+    height: 630,
+  },
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead />
+    <title>{TITLE}</title>
+    <meta name="description" content={DESCRIPTION} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content={TITLE} />
+    <meta property="og:description" content={DESCRIPTION} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="article:published_time" content={pubDate} />
+    <meta property="article:modified_time" content={updatedDate} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={TITLE} />
+    <meta name="twitter:description" content={DESCRIPTION} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <script type="application/ld+json" set:html={safeJsonForScript(breadcrumbJsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(postJsonLd)} />
+  </head>
+  <body class="bg-paper text-ink">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W6D48RVL" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <header class="mx-auto max-w-3xl px-6">
+      <div class="flex items-center justify-between gap-4 border-b border-hairline py-4">
+        <a href="/" class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink hover:text-accent">UI Shades</a>
+        <div class="flex items-center gap-4 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <a href="/blog" class="text-ink hover:text-accent">Blog</a>
+          <a href="/explore" class="text-ink hover:text-accent">Explore</a>
+          <HeaderAuth client:load />
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-3xl px-6">
+      <article class="py-12">
+        <nav aria-label="Breadcrumb" class="mb-6 font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
+          <a href="/blog" class="hover:text-accent">Blog</a> <span aria-hidden="true">/</span>
+        </nav>
+        <h1 class="font-display text-3xl leading-tight text-ink sm:text-4xl">{post.data.title}</h1>
+        <p class="mt-3 font-mono text-xs uppercase tracking-[0.14em] text-mute">
+          <time datetime={pubDate}>{pubDateLabel}</time>
+        </p>
+        <div class="post-body mt-10">
+          <Content />
+        </div>
+      </article>
+
+      <footer class="mt-8 border-t border-hairline py-6">
+        <nav aria-label="Footer" class="flex items-center gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <a href="/" class="text-ink hover:text-accent">Open the tool</a>
+          <a href="/blog" class="text-ink hover:text-accent">All posts</a>
+          <FeedbackLink client:load />
+        </nav>
+      </footer>
+    </main>
+
+    <style>
+      .post-body {
+        line-height: 1.75;
+        color: var(--color-ink-2, inherit);
+      }
+      .post-body :global(h2) {
+        font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+        font-size: 1.5rem;
+        line-height: 1.25;
+        margin-top: 2.5rem;
+        margin-bottom: 1rem;
+        color: var(--color-ink);
+      }
+      .post-body :global(h3) {
+        font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+        font-size: 1.2rem;
+        margin-top: 2rem;
+        margin-bottom: 0.75rem;
+        color: var(--color-ink);
+      }
+      .post-body :global(p) {
+        margin-bottom: 1.25rem;
+      }
+      .post-body :global(a) {
+        color: var(--color-accent);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+      .post-body :global(ul) {
+        margin: 0 0 1.25rem 1.25rem;
+        list-style: disc;
+      }
+      .post-body :global(li) {
+        margin-bottom: 0.4rem;
+      }
+      .post-body :global(code) {
+        font-family: var(--font-jb-mono), ui-monospace, monospace;
+        font-size: 0.85em;
+        padding: 0.1em 0.35em;
+        border-radius: 3px;
+        background: var(--color-paper-2, rgba(0, 0, 0, 0.05));
+      }
+      .post-body :global(table) {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+      }
+      .post-body :global(th),
+      .post-body :global(td) {
+        border: 1px solid var(--color-hairline, rgba(0, 0, 0, 0.12));
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+      }
+      .post-body :global(th) {
+        font-family: var(--font-jb-mono), ui-monospace, monospace;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--color-mute, inherit);
+      }
+      .post-body :global(strong) {
+        color: var(--color-ink);
+        font-weight: 600;
+      }
+    </style>
+  </body>
+</html>

@@ -1,0 +1,117 @@
+---
+/**
+ * /blog - index of blog posts, pre-rendered. Lists the `blog` collection
+ * newest-first. Drafts are hidden in PROD builds.
+ */
+import { getCollection } from 'astro:content';
+import '../../styles/global.css';
+import BaseHead from '../../components/BaseHead.astro';
+import HeaderAuth from '../../components/HeaderAuth';
+import FeedbackLink from '../../components/FeedbackLink';
+import { safeJsonForScript } from '../../lib/safe-json';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft || !import.meta.env.PROD)).sort(
+  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime(),
+);
+
+const TITLE = 'Blog | UI Shades';
+const DESCRIPTION = 'Notes on color, OKLCH ramps, Tailwind scales, and building a free shade tool.';
+const canonicalUrl = 'https://UIshades.com/blog';
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://UIshades.com/' },
+    { '@type': 'ListItem', position: 2, name: 'Blog', item: canonicalUrl },
+  ],
+};
+
+const blogJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Blog',
+  '@id': `${canonicalUrl}#blog`,
+  name: 'UI Shades Blog',
+  description: DESCRIPTION,
+  url: canonicalUrl,
+  inLanguage: 'en',
+  isPartOf: { '@id': 'https://UIshades.com/#website' },
+  publisher: { '@id': 'https://UIshades.com/#org' },
+  blogPost: posts.map((p) => ({
+    '@type': 'BlogPosting',
+    headline: p.data.title,
+    url: `https://UIshades.com/blog/${p.id}`,
+    datePublished: p.data.pubDate.toISOString().slice(0, 10),
+  })),
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead />
+    <title>{TITLE}</title>
+    <meta name="description" content={DESCRIPTION} />
+    <link rel="canonical" href={canonicalUrl} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={TITLE} />
+    <meta property="og:description" content={DESCRIPTION} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content="https://UIshades.com/og/4040ff.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={TITLE} />
+    <meta name="twitter:description" content={DESCRIPTION} />
+
+    <script type="application/ld+json" set:html={safeJsonForScript(breadcrumbJsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(blogJsonLd)} />
+  </head>
+  <body class="bg-paper text-ink">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W6D48RVL" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <header class="mx-auto max-w-3xl px-6">
+      <div class="flex items-center justify-between gap-4 border-b border-hairline py-4">
+        <a href="/" class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink hover:text-accent">UI Shades</a>
+        <div class="flex items-center gap-4 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <a href="/explore" class="text-ink hover:text-accent">Explore</a>
+          <HeaderAuth client:load />
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-3xl px-6">
+      <div class="py-12">
+        <span class="eyebrow">Writing</span>
+        <h1 class="mt-2 font-display text-3xl text-ink sm:text-4xl">Blog</h1>
+        <p class="mt-3 max-w-xl leading-relaxed text-ink-2">{DESCRIPTION}</p>
+
+        {posts.length === 0 ? (
+          <p class="mt-12 text-mute">No posts yet.</p>
+        ) : (
+          <ul class="mt-12 divide-y divide-hairline border-y border-hairline">
+            {posts.map((p) => (
+              <li>
+                <a href={`/blog/${p.id}`} class="group block py-6 hover:bg-paper-2 px-2">
+                  <p class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
+                    <time datetime={p.data.pubDate.toISOString().slice(0, 10)}>
+                      {p.data.pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </time>
+                  </p>
+                  <h2 class="mt-2 font-display text-xl text-ink group-hover:text-accent">{p.data.title}</h2>
+                  <p class="mt-2 leading-relaxed text-ink-2">{p.data.description}</p>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <footer class="mt-8 border-t border-hairline py-6">
+        <nav aria-label="Footer" class="flex items-center gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <a href="/" class="text-ink hover:text-accent">Open the tool</a>
+          <FeedbackLink client:load />
+        </nav>
+      </footer>
+    </main>
+  </body>
+</html>
