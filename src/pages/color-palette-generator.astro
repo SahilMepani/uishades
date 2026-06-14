@@ -1,0 +1,229 @@
+---
+/**
+ * Color Palette Generator - build a multi-color palette and export every color
+ * as an OKLCH ramp or Tailwind scale.
+ *
+ * Renders the shared `ColorToolLayout` in `mode="palette"`, which opens the
+ * underlying shade tool straight into its multi-color palette view: the tray is
+ * pre-seeded with a brand color plus the conventional Neutral / Success /
+ * Warning / Error roles (see ShadeTool's `mode` prop and `buildSeededPaletteTray`).
+ *
+ * Like `/image-color-picker`, this page has no canonical color and nothing for
+ * agents to content-negotiate, so it stays a plain **prerendered, indexable**
+ * page with its own title/description/OG plus editorial copy + JSON-LD for
+ * SEO/GEO. The tool keeps the stable `/color-palette-generator` URL (palettes
+ * are saved/shared via the account system, not per-URL).
+ */
+import ColorToolLayout from '../layouts/ColorToolLayout.astro';
+import { readInitialPrefs } from '../lib/url-prefs';
+import { safeJsonForScript } from '../lib/safe-json';
+
+// The brand/"Primary" color the palette opens on; the Neutral/Success/Warning/
+// Error roles are seeded alongside it by the tool.
+const SEED_HEX = '#4040ff';
+
+const TITLE = 'Color Palette Generator - Build & Export a Multi-Color Palette';
+const DESCRIPTION =
+  'Build a multi-color palette - primary, accents, and semantic Neutral/Success/Warning/Error roles - then turn every color into an OKLCH tint-to-shade ramp or 11-stop Tailwind scale. Free, ad-free, export to Tailwind, CSS variables, design tokens and Figma.';
+const CANONICAL = 'https://UIshades.com/color-palette-generator';
+const OG = 'https://UIshades.com/og/4040ff.png';
+
+// The site-level Organization / WebSite are canonically defined on `/`, but the
+// WebApplication below references them by `@id` (publisher / isPartOf). Since
+// this is a standalone indexable page a crawler may parse in isolation, define
+// them here too so those references resolve rather than dangle.
+const orgJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  '@id': 'https://UIshades.com/#org',
+  name: 'UIshades.com',
+  url: 'https://UIshades.com/',
+  logo: {
+    '@type': 'ImageObject',
+    url: 'https://UIshades.com/favicon.svg',
+    width: 512,
+    height: 512,
+  },
+};
+
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  '@id': 'https://UIshades.com/#website',
+  url: 'https://UIshades.com/',
+  name: 'UIshades.com',
+  inLanguage: 'en',
+  publisher: { '@id': 'https://UIshades.com/#org' },
+};
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'UIshades.com',
+      item: 'https://UIshades.com/',
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Color Palette Generator',
+      item: CANONICAL,
+    },
+  ],
+};
+
+const appJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  '@id': `${CANONICAL}#app`,
+  name: 'Color Palette Generator',
+  url: CANONICAL,
+  description: DESCRIPTION,
+  applicationCategory: 'DesignApplication',
+  applicationSubCategory: 'Color Tool',
+  operatingSystem: 'Any',
+  browserRequirements: 'Requires JavaScript. Modern evergreen browser.',
+  inLanguage: 'en',
+  isAccessibleForFree: true,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  publisher: { '@id': 'https://UIshades.com/#org' },
+  isPartOf: { '@id': 'https://UIshades.com/#website' },
+  image: OG,
+  featureList: [
+    'Build a multi-color palette: primary, secondary and accent colors',
+    'Seeded semantic roles - Neutral, Success, Warning, Error',
+    'Every color expands to an OKLCH ramp or 11-stop Tailwind scale',
+    'Export to Tailwind v4/v3, CSS variables, W3C design tokens and Figma',
+    'Download the whole palette as a PNG, or sign in to save and share it',
+  ],
+};
+
+const howToJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: 'How to generate a color palette',
+  description:
+    'Build and export a multi-color palette with UIshades, entirely in your browser.',
+  step: [
+    {
+      '@type': 'HowToStep',
+      position: 1,
+      name: 'Pick your brand color',
+      text: 'The palette opens on a primary color plus seeded Neutral, Success, Warning and Error roles. Click the primary swatch to set it to your own brand color.',
+    },
+    {
+      '@type': 'HowToStep',
+      position: 2,
+      name: 'Add and adjust colors',
+      text: 'Use the “+” to add secondary and accent colors, recolor any swatch, rename its role, or remove the ones you don’t need.',
+    },
+    {
+      '@type': 'HowToStep',
+      position: 3,
+      name: 'Generate shades',
+      text: 'Every color in the palette expands into a full OKLCH tint-to-shade ramp or an 11-stop Tailwind scale, keyed to the standard 50…950 stops.',
+    },
+    {
+      '@type': 'HowToStep',
+      position: 4,
+      name: 'Export or save',
+      text: 'Copy the palette as Tailwind, CSS variables, W3C design tokens or Figma variables, download a PNG, or sign in to save and share it.',
+    },
+  ],
+};
+
+const faq = [
+  {
+    q: 'What is a color palette generator?',
+    a: 'It is a tool for assembling a set of colors that work together - a primary brand color, secondary and accent colors, and semantic roles like Neutral, Success, Warning and Error - then turning each into a full range of shades you can use in a design system.',
+  },
+  {
+    q: 'How many colors can a palette hold?',
+    a: 'The palette opens with a primary color plus the four seeded semantic roles, and you can add more brand and accent colors with the “+”. Recolor, rename or remove any swatch to shape the palette around your project.',
+  },
+  {
+    q: 'How are the shades generated?',
+    a: 'Each color expands into either an OKLCH tint-to-shade ramp (perceptually even lightness steps) or an 11-stop Tailwind scale. Both are keyed to the same 50…950 stop labels, so an export is a drop-in token scale.',
+  },
+  {
+    q: 'What can I export?',
+    a: 'The whole palette exports to Tailwind v4 and v3, CSS variables, W3C design tokens, Style Dictionary and Figma variables, with each color getting its own collision-safe token family. You can also download the palette as a PNG.',
+  },
+  {
+    q: 'Is it free?',
+    a: 'Yes. UIshades is free and ad-free. Sign in if you want to save a palette and share it with an unguessable link; everything else works without an account.',
+  },
+];
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faq.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
+---
+
+<ColorToolLayout
+  title={TITLE}
+  description={DESCRIPTION}
+  canonical={CANONICAL}
+  ogType="website"
+  ogImage={OG}
+  ogImageAlt="UIshades.com color palette generator - build and export a multi-color palette"
+  initialHex={SEED_HEX}
+  prefs={readInitialPrefs(Astro.url)}
+  h1="Color palette generator - build and export a multi-color palette"
+  footerHex={SEED_HEX.slice(1)}
+  mode="palette"
+>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={safeJsonForScript(orgJsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(websiteJsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(breadcrumbJsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(appJsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(howToJsonLd)} />
+    <script type="application/ld+json" set:html={safeJsonForScript(faqJsonLd)} />
+  </Fragment>
+
+  <section class="mx-auto mt-16 flex max-w-3xl flex-col gap-10 px-4 lg:px-8">
+    <div class="flex flex-col gap-3">
+      <h2 class="font-display text-2xl text-ink">Build a multi-color palette</h2>
+      <p class="font-display text-mute">
+        Start from a primary brand color and the conventional semantic roles -
+        Neutral, Success, Warning and Error - then add secondary and accent colors
+        to taste. Every color in the palette expands into a full OKLCH tint-to-shade
+        ramp or an 11-stop Tailwind scale, keyed to the same 50…950 stops, so what
+        you export drops straight into a design system. Recolor, rename or remove any
+        swatch; nothing is uploaded and the palette is yours to export or save.
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-3">
+      <h2 class="font-display text-2xl text-ink">How it works</h2>
+      <ol class="flex flex-col gap-2 font-display text-mute">
+        <li><span class="text-ink">1. Set your brand color.</span> Click the primary swatch to choose it.</li>
+        <li><span class="text-ink">2. Add colors.</span> Use “+” for secondary and accent colors; rename or remove roles.</li>
+        <li><span class="text-ink">3. Generate shades.</span> Each color becomes an OKLCH ramp or Tailwind scale.</li>
+        <li><span class="text-ink">4. Export or save.</span> Copy tokens, download a PNG, or sign in to save and share.</li>
+      </ol>
+    </div>
+
+    <div class="flex flex-col gap-4">
+      <h2 class="font-display text-2xl text-ink">Frequently asked questions</h2>
+      <dl class="flex flex-col gap-5">
+        {faq.map((f) => (
+          <div class="flex flex-col gap-1.5">
+            <dt class="font-display text-base text-ink">{f.q}</dt>
+            <dd class="font-display text-mute">{f.a}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  </section>
+</ColorToolLayout>

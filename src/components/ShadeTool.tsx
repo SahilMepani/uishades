@@ -144,6 +144,33 @@ const DEFAULT_PALETTE_EXTRAS: { hex: Hex; semanticName: string }[] = [
   { hex: '#ef4444', semanticName: 'Error' },
 ];
 
+/**
+ * Build the tray a `mode="palette"` page opens into: the page's brand color as
+ * the Primary swatch, followed by the conventional Neutral/Success/Warning/Error
+ * roles - i.e. the exact shape a first "Add to palette" produces (see
+ * `handleAddToTray`'s 0 → 1 branch). Seeded synchronously in the tray's
+ * `useState` initializer so the multi-color palette is what SSR renders and what
+ * the first client paint hydrates - no empty-tray flash. Any fixed role that
+ * collides with the seed hex is dropped so the tray keeps hexes unique.
+ */
+function buildSeededPaletteTray(
+  seedHex: Hex,
+  view: View,
+  copyFormat: CopyFormat,
+): TrayColor[] {
+  const used = new Set<Hex>([seedHex]);
+  const extras: TrayColor[] = DEFAULT_PALETTE_EXTRAS.filter(
+    (e) => !used.has(e.hex),
+  ).map((e) => ({
+    hex: e.hex,
+    view,
+    copyFormat,
+    semanticName: e.semanticName,
+    fixed: true,
+  }));
+  return [{ hex: seedHex, view, copyFormat }, ...extras];
+}
+
 // Diagonal-stripe fill for an in-flight "+" placeholder column (band + shade
 // grid). A mid-gray at low opacity so it reads on both light and dark themes
 // without showing any real color until the user picks one.
@@ -390,9 +417,13 @@ export interface ShadeToolProps {
    * `/image-color-picker`: it mounts the source-image panel above the tool,
    * makes the image the only editor of palette colors (the hand-entry / picker
    * add+edit affordances are hidden), starts with an empty palette, and never
-   * rewrites the URL or touches the last-used-color in localStorage.
+   * rewrites the URL or touches the last-used-color in localStorage. `'palette'`
+   * powers `/color-palette-generator`: the same default tool but it opens
+   * straight into the multi-color palette (tray pre-seeded with a brand color +
+   * the Neutral/Success/Warning/Error roles) and, like image mode, keeps a
+   * stable URL and leaves the home tool's last-used color untouched.
    */
-  mode?: 'default' | 'image';
+  mode?: 'default' | 'image' | 'palette';
 }
 
 export default function ShadeTool({
@@ -423,6 +454,7 @@ function ShadeToolInner({
   mode = 'default',
 }: ShadeToolProps) {
   const isImage = mode === 'image';
+  const isPalette = mode === 'palette';
   const [hex, setHex] = useState<Hex>(() => normalizeHexInput(initialHex));
   // The color shown in the top picker / preview (swatch + hex/rgb/hsl/oklch
   // readouts). Decoupled from `hex` (the ramp source): clicking a ramp shade
@@ -491,7 +523,9 @@ function ShadeToolInner({
     if (typeof window === 'undefined') return;
     // Image mode starts with an empty palette (the uploaded image seeds it) and
     // never participates in the `?hex=`/last-used hand-off, so skip all of it.
-    if (isImage) return;
+    // Palette mode opens on a pre-seeded tray at a stable URL, so it skips the
+    // hand-off too - its brand color comes from the page's `initialHex`.
+    if (isImage || isPalette) return;
     let rawHex: string | null = null;
     let rawSeed: string | null = null;
     try {
@@ -615,8 +649,10 @@ function ShadeToolInner({
   useEffect(() => {
     // Image mode keeps a stable `/image-color-picker` URL (the active color is
     // an image sample point, not a destination) and must not clobber the home
-    // tool's remembered last-used color - so neither sync runs there.
-    if (isImage) return;
+    // tool's remembered last-used color - so neither sync runs there. Palette
+    // mode (`/color-palette-generator`) is the same: stable URL, leave the home
+    // tool's last-used color alone.
+    if (isImage || isPalette) return;
     pendingHexRef.current = hex;
     if (typeof window === 'undefined' || typeof requestAnimationFrame !== 'function') {
       // SSR / no rAF: run synchronously (also keeps non-browser test envs happy).
@@ -635,14 +671,14 @@ function ShadeToolInner({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hex, isImage]);
+  }, [hex, isImage, isPalette]);
   // Unmount: flush the last pending value synchronously so a gesture that ends
   // with an immediate navigation/unmount still persists its settled hex.
   useEffect(
     () => () => {
-      if (!isImage && syncRafRef.current !== null) flushHexSync();
+      if (!isImage && !isPalette && syncRafRef.current !== null) flushHexSync();
     },
-    [isImage, flushHexSync],
+    [isImage, isPalette, flushHexSync],
   );
 
   const handleChangeHex = useCallback((next: Hex) => {
@@ -774,7 +810,17 @@ function ShadeToolInner({
   // in by adding colors via "Add to palette" / the "+" box. The tray never
   // touches the URL or localStorage, so `/` and `/[hex]` stay identical and `/`
   // is only promoted to `/[hex]` on a real color change.
-  const [tray, setTray] = useState<TrayColor[]>([]);
+  // `mode="palette"` (`/color-palette-generator`) opens straight into the
+  // multi-color palette, so its tray is seeded synchronously here - same shape a
+  // first "Add to palette" produces. SSR therefore renders the palette layout
+  // and the first client paint hydrates it with no empty-tray flash (`view` /
+  // `copyFormat` are still their SSR seeds at initializer time, so the snapshot
+  // matches). Default / image modes start empty as before.
+  const [tray, setTray] = useState<TrayColor[]>(() =>
+    isPalette
+      ? buildSeededPaletteTray(normalizeHexInput(initialHex), view, copyFormat)
+      : [],
+  );
 
   // Hex of the color most recently added to the tray, so its grid column fades
   // in (`PaletteShadeGrid` matches it by hex). Self-clears ~one animation later
@@ -2522,7 +2568,7 @@ function PalettePreviewBar({
       <div className="relative">
       <ul
         aria-label="Palette preview"
-        className="flex h-[150px] w-full gap-[2px] border-x border-hairline"
+        className="flex h-[150px] w-full gap-[2px]"
       >
       {tray.map((c, i) => {
         const textColor = readableTextOn(c.hex);

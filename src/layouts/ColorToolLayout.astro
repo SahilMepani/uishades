@@ -33,9 +33,11 @@ interface Props {
   h1: string; // sr-only heading text
   footerHex: string; // e.g. "4040ff" (for the /api/<hex>.json link)
   // 'image' powers `/image-color-picker`: the tool mounts a source-image panel
-  // and becomes image-authoritative (see ShadeTool's `mode` prop). Defaults to
-  // the normal `/` and `/[hex]` tool, whose output stays byte-identical.
-  mode?: 'default' | 'image';
+  // and becomes image-authoritative (see ShadeTool's `mode` prop). 'palette'
+  // powers `/color-palette-generator`: the tool opens straight into the
+  // multi-color palette. Defaults to the normal `/` and `/[hex]` tool, whose
+  // output stays byte-identical.
+  mode?: 'default' | 'image' | 'palette';
 }
 
 const {
@@ -103,6 +105,8 @@ const {
       <div class="flex items-center justify-between gap-4 border-b border-hairline py-4">
         <a href="/" class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink hover:text-accent">UI Shades</a>
         <div class="flex items-center gap-7 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <a href="/" class="hidden text-ink hover:text-accent sm:inline">Tints &amp; Shades</a>
+          <a href="/color-palette-generator" class="hidden text-ink hover:text-accent sm:inline">Color Palette</a>
           <a href="/image-color-picker" class="hidden text-ink hover:text-accent sm:inline">Image picker</a>
           <a href="/explore" class="text-ink hover:text-accent">Explore</a>
           <HeaderAuth client:load />

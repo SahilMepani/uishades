@@ -4,10 +4,15 @@
  * Draws the palette as a stack of full-width colour bands - one per shade,
  * lightest → darkest, mirroring the on-screen order - each labelled with its
  * hex value (and its Tailwind stop, when present) in a contrast-appropriate
- * ink, the source/anchor shade marked with a SOURCE badge, and a centred
- * "UIshades.com" footer wordmark. The multi-color grid (see `columns` below)
- * drops the per-band hex/stop labels - its columns are bare color bands with
- * only the SOURCE badge, matching the on-screen `PaletteShadeGrid`.
+ * ink, the source/anchor shade marked with a small foreground dot, and a
+ * centred "UIshades.com" footer wordmark. The dot (never a text label) mirrors
+ * the on-screen swatches. The multi-color grid (see `columns` below) drops the
+ * per-band hex/stop labels too - its columns are bare color bands carrying only
+ * the source dot, matching the on-screen `PaletteShadeGrid`.
+ *
+ * The footer wordmark follows the page theme: a light (paper) bar in light
+ * mode, a dark (ink) bar in dark mode, read from `html.dark` at draw time. So
+ * a PNG exported from the light-theme site isn't a dark-themed card.
  *
  * This module is deliberately imported *lazily* from the React island (via a
  * dynamic `import()` inside the download click handler) so the canvas-drawing
@@ -40,8 +45,8 @@ const STOP_SLOT = 52; // horizontal room reserved for the Tailwind stop label
 
 // Multi-color grid layout: one column per palette color, equal width, with a
 // 2px gutter between them (matching the on-screen PaletteShadeGrid's gap).
-// Columns carry no hex/stop labels (just the SOURCE badge), so they're kept
-// narrow - wide enough for the badge - rather than the single stack's width.
+// Columns carry no hex/stop labels (just the source dot), so they're kept
+// narrow rather than at the single stack's width.
 const COL_WIDTH = 170;
 const COL_GAP = 2;
 
@@ -79,6 +84,13 @@ export function rampToPngBlob({ shades, columns }: RampPngOptions): Promise<Blob
   // labelled stack. Fall back to `[shades]` so a 0/1-entry `columns` still works.
   const grid = columns && columns.length >= 2 ? columns : null;
 
+  // Follow the page theme for the footer wordmark band so a PNG exported from
+  // the light-themed site doesn't come out as a dark-themed card. `html.dark`
+  // is the site's theme flag (see ThemeToggle); default to light off-DOM.
+  const isDark =
+    typeof document !== 'undefined' &&
+    document.documentElement.classList.contains('dark');
+
   const dpr = Math.min(2, (typeof window !== 'undefined' && window.devicePixelRatio) || 1);
   const rows = grid
     ? Math.max(...grid.map((col) => col.length))
@@ -100,7 +112,7 @@ export function rampToPngBlob({ shades, columns }: RampPngOptions): Promise<Blob
 
   // --- Shade bands ---------------------------------------------------------
   // The multi-color grid mirrors the on-screen PaletteShadeGrid: bare color
-  // bands with only the SOURCE badge - no per-cell hex/stop labels (the column
+  // bands with only the source dot - no per-cell hex/stop labels (the column
   // IS the color). The single-color stack keeps its hex/stop labels.
   if (grid) {
     grid.forEach((col, c) => {
@@ -116,11 +128,13 @@ export function rampToPngBlob({ shades, columns }: RampPngOptions): Promise<Blob
   }
 
   // --- Footer wordmark -----------------------------------------------------
+  // Theme-aware: dark ink bar in dark mode, light paper bar in light mode, so
+  // the card matches the site the user exported it from.
   const footerY = rows * ROW_HEIGHT;
-  ctx.fillStyle = INK;
+  ctx.fillStyle = isDark ? INK : PAPER;
   ctx.fillRect(0, footerY, logicalWidth, FOOTER_HEIGHT);
 
-  ctx.fillStyle = PAPER;
+  ctx.fillStyle = isDark ? PAPER : INK;
   ctx.font = `700 14px ${SANS}`;
   ctx.textAlign = 'center';
   const supportsTracking = 'letterSpacing' in ctx;
@@ -138,12 +152,12 @@ export function rampToPngBlob({ shades, columns }: RampPngOptions): Promise<Blob
 
 /**
  * Draw one full-width shade band at (`x0`, `y`) spanning `width`: the fill and
- * the SOURCE badge on the pinned input shade. When `showLabels` is true it also
- * paints the Tailwind stop label (when present) and the hex value in a
- * contrast-appropriate ink; the multi-color grid passes `false` so its columns
- * are bare color bands (no hex/stop text), matching the on-screen grid. The
- * SOURCE badge sits flush-left in label-less mode (parity with the grid swatch)
- * and flush-right alongside the labels otherwise.
+ * a source marker on the pinned input shade. When `showLabels` is true (the
+ * single-color stack) it also paints the Tailwind stop label (when present) and
+ * the hex value in a contrast-appropriate ink. The source shade is always
+ * marked with a small foreground dot (never a text label) - flush-right in the
+ * labelled stack so it clears the hex on the left, flush-left in the label-less
+ * grid columns - mirroring the on-screen swatches, which show a dot.
  */
 function drawBand(
   ctx: CanvasRenderingContext2D,
@@ -178,43 +192,31 @@ function drawBand(
   }
 
   if (shade.isInput) {
-    drawSourceBadge(ctx, x0, width, midY, fg, shade.hex, showLabels ? 'right' : 'left');
+    // Labelled stack: dot on the right so it clears the hex; grid: dot on the
+    // left, matching the on-screen swatch.
+    drawSourceDot(ctx, x0, width, midY, fg, showLabels ? 'right' : 'left');
   }
 }
 
 /**
- * Inverted "SOURCE" pill within the band starting at `x0` spanning `width`,
- * `PAD_X`-inset from the chosen edge (`right` beside the labels, `left` for the
- * label-less grid columns).
+ * Small source dot, mirroring the on-screen swatch's 8px foreground dot
+ * (white/black, whichever wins the WCAG contrast check - already resolved into
+ * `fg`). `PAD_X`-inset from the chosen edge of the band at `x0` spanning `width`.
  */
-function drawSourceBadge(
+function drawSourceDot(
   ctx: CanvasRenderingContext2D,
   x0: number,
   width: number,
   midY: number,
   fg: string,
-  bandHex: Hex,
   align: 'left' | 'right',
 ): void {
-  const label = 'SOURCE';
-  ctx.font = `600 11px ${SANS}`;
-  // `letterSpacing` is supported in all evergreen browsers; guard for old ones.
-  const supportsTracking = 'letterSpacing' in ctx;
-  if (supportsTracking) ctx.letterSpacing = '1.5px';
-  const textW = ctx.measureText(label).width;
-  const padX = 8;
-  const badgeH = 20;
-  const badgeW = textW + padX * 2;
-  const x = align === 'right' ? x0 + width - PAD_X - badgeW : x0 + PAD_X;
-  const y = midY - badgeH / 2;
-
-  ctx.fillStyle = fg; // inverted: badge background is the row's ink colour
-  ctx.fillRect(x, y, badgeW, badgeH);
-
-  ctx.fillStyle = bandHex; // text is the band colour, so the pill reads inverted
-  ctx.textAlign = 'left';
-  ctx.fillText(label, x + padX, midY);
-  if (supportsTracking) ctx.letterSpacing = '0px';
+  const radius = 4; // 8px diameter, matching the on-screen dot
+  const cx = align === 'right' ? x0 + width - PAD_X - radius : x0 + PAD_X + radius;
+  ctx.fillStyle = fg;
+  ctx.beginPath();
+  ctx.arc(cx, midY, radius, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 /**
