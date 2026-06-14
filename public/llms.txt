@@ -1,7 +1,7 @@
 # UIshades.com
 
 > Free, ad-free generator for tints and shades of any color. Convert any hex,
-> rgb(), hsl(), oklch(), or CSS color name into a 20-step OKLCH perceptual ramp
+> rgb(), hsl(), oklch(), or CSS color name into an 11-step OKLCH perceptual ramp
 > or an 11-stop Tailwind scale (50–950), with copy-ready exports. Mirrors
 > 0to255.com's URL structure: /[hex] and /colors/[name] permanent links.
 
@@ -13,11 +13,16 @@
 
 ## How the palettes work
 - Tailwind scale (default): 11 stops (50–950); the input snaps to its nearest stop, with copy-ready exports.
-- OKLCH ramp: a 20-shade perceptual ramp at evenly spaced lightness (about L=0.95 down to L=0.06). The input hex is pinned to its nearest lightness step. Chroma follows a bell-curve multiplier (1.0 at mid lightness, about 0.3 at the extremes) to stay inside the sRGB gamut and avoid washed-out clipping near white and black.
+- OKLCH ramp: an 11-shade perceptual ramp at evenly spaced lightness (about L=0.95 down to L=0.06). The input hex is pinned to its nearest lightness step. Chroma follows a bell-curve multiplier (1.0 at mid lightness, about 0.3 at the extremes) to stay inside the sRGB gamut and avoid washed-out clipping near white and black.
 
 ## Exports
-- Tailwind v4 @theme, Tailwind v3 config, CSS custom properties, W3C Design Tokens (DTCG) JSON, and Figma Variables.
+- Per color or for a whole palette: Tailwind v4 @theme, Tailwind v3 config, CSS custom properties, W3C Design Tokens (DTCG) JSON, and Figma Variables. A palette exports every role (primary/accents/Neutral/Success/Warning/Error) as named scales in one pass.
+
+## For agents
+- JSON API (no auth, no key): GET https://UIshades.com/api/[hex].json returns the full color data - OKLCH ramp, Tailwind scale, and lighter/darker neighbors. The same payload backs the web page, the markdown view, and the MCP tool, so all three agree.
+- Markdown: request any color page with `Accept: text/markdown` for a palette as a markdown table with WCAG contrast (e.g. https://UIshades.com/4040ff).
+- MCP endpoint: POST https://UIshades.com/mcp (JSON-RPC 2.0 over streamable HTTP) exposes a `generate_shades` tool accepting a hex, rgb()/hsl()/oklch() value, or CSS color name.
+- Discovery: /.well-known/agent-skills/index.json (agent skills), /.well-known/mcp/server-card.json (MCP card), /.well-known/api-catalog (RFC 9727 linkset to openapi.json), and the expanded /llms-full.txt.
 
 ## Notes
 - Free, no ads, no signup. A WCAG contrast badge is shown on every shade.
-- JSON API for any hex: https://UIshades.com/api/[hex].json

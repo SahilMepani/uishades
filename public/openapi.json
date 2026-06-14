@@ -18,7 +18,7 @@
     "/api/{hex}.json": {
       "get": {
         "summary": "Get color shades for a hex",
-        "description": "Returns the full ColorPageData for a color: a 20-step OKLCH ramp, an 11-stop Tailwind scale, and lighter/darker neighbor hexes. The hex path segment is a bare 3-, 6-, or 8-digit hex value (no leading '#').",
+        "description": "Returns the full ColorPageData for a color: an 11-step OKLCH ramp, an 11-stop Tailwind scale, and lighter/darker neighbor hexes. The hex path segment is a bare 3-, 6-, or 8-digit hex value (no leading '#').",
         "operationId": "getColorByHex",
         "parameters": [
           {
@@ -141,8 +141,8 @@
         "properties": {
           "mode": {
             "type": "string",
-            "enum": ["oklch", "classic"],
-            "description": "Ramp algorithm used."
+            "enum": ["oklch"],
+            "description": "Ramp algorithm used. This API always returns \"oklch\"."
           },
           "shades": {
             "type": "array",

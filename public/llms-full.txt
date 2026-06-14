@@ -1,7 +1,7 @@
 # UIshades.com
 
 > Free, ad-free generator for tints and shades of any color. Convert any hex,
-> rgb(), hsl(), oklch(), or CSS color name into a 20-step OKLCH perceptual ramp
+> rgb(), hsl(), oklch(), or CSS color name into an 11-step OKLCH perceptual ramp
 > or an 11-stop Tailwind scale (50–950), with copy-ready exports. Mirrors
 > 0to255.com's URL structure: /[hex] and /colors/[name] permanent links.
 
@@ -24,7 +24,7 @@ An 11-stop scale at the familiar Tailwind stops: 50, 100, 200, 300, 400, 500,
 default view and the server-rendered content on `/` and `/[hex]`.
 
 ### OKLCH ramp
-A 20-shade perceptual ramp at evenly spaced lightness, from about L=0.95 down
+An 11-shade perceptual ramp at evenly spaced lightness, from about L=0.95 down
 to L=0.06. There are no pure `#ffffff` / `#000000` endpoints — the L=0.06 lower
 bound keeps achromatic inputs off pure black after sRGB rounding. The input hex
 is pinned verbatim to the inner step whose target lightness is closest to the
@@ -67,7 +67,7 @@ GET https://uishades.com/api/4040ff.json
 
 {
   "input": "#4040ff",
-  "ramp": { "mode": "oklch", "shades": [ /* 20 shades */ ], "inputIndex": 11 },
+  "ramp": { "mode": "oklch", "shades": [ /* 11 shades */ ], "inputIndex": 5 },
   "scale": { "shades": [ /* 11 shades, stops 50–950 */ ], "anchorStop": 500 },
   "neighbors": { "lighter": ["#5050ff"], "darker": ["#3030ef"] }
 }

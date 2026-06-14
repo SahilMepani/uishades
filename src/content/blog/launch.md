@@ -38,20 +38,20 @@ in equal steps while holding `C` (chroma) and `H` (hue) constant, which keeps
 the mid-shades on-hue and on-chroma. The difference is most visible at
 muddy mid-yellows like olive `#808000`:
 
-| Step          | Classic RGB walk | OKLCH                    |
+| Step          | 0to255 RGB walk  | OKLCH                    |
 |---------------|------------------|--------------------------|
 | Input         | `#808000`        | `#808000`                |
 | -1 (darker)   | `#737300`        | `#787700` - same hue     |
 | -2            | `#666600`        | `#6f6e00` - same hue     |
 | -3            | `#595900` (drifts to khaki-brown) | `#666500` - still olive |
 
-The Classic ramp's darker steps drift toward a grey-green olive that no longer
+The RGB walk's darker steps drift toward a grey-green olive that no longer
 reads as the input colour; OKLCH's stay anchored. On bright reds the
 difference is smaller; on muddied warms it is the whole story.
 
-If you want the familiar 0to255 output bit-for-bit, say to match an existing
-design system that was built against the RGB-walk algorithm, there's a Classic
-toggle that reproduces the original formula exactly.
+That's why OKLCH is what the tool ships. The toggle on every page switches
+between this perceptual ramp and an 11-stop Tailwind scale (50–950) keyed to
+the same colour - two views of one input, not two gradient algorithms.
 
 ## Tailwind-first exports
 

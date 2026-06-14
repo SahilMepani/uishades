@@ -6,7 +6,7 @@
       "type": "skill-md",
       "description": "Generate a full perceptual OKLCH ramp plus an 11-stop Tailwind scale (50-950) for any color via the free no-auth UIshades JSON API or generate_shades MCP tool.",
       "url": "/.well-known/agent-skills/generate-shades/SKILL.md",
-      "digest": "sha256:7c827ec31e9496a92c8dd4358ac11410d80b941eb1e9d3998d67380c383f2f11"
+      "digest": "sha256:fe32b457b39be86aa45eccb10a32e2e5b7ae9f4e90207e4872c0f0498f4da373"
     },
     {
       "name": "color-conversion",

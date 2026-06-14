@@ -6,7 +6,7 @@ description: Generate a full perceptual OKLCH ramp plus an 11-stop Tailwind scal
 # Generate shades for any color
 
 UIshades (https://uishades.com) turns a single color into a complete palette:
-a 20-step perceptual **OKLCH ramp** (lightest to darkest) and an 11-stop
+an 11-step perceptual **OKLCH ramp** (lightest to darkest) and an 11-stop
 **Tailwind scale** (50-950), with WCAG contrast and nearby colors. It is a free,
 ad-free, public tool. **No authentication, no API key, no rate-limit signup.**
 
@@ -32,12 +32,12 @@ The response is a single `ColorPageData` object:
   "input": "#4040ff",              // canonical lowercase #rrggbb
   "ramp": {
     "mode": "oklch",
-    "shades": [                    // 20 shades, lightest -> darkest
+    "shades": [                    // 11 shades, lightest -> darkest
       { "hex": "#f3f2ff",
         "oklch": { "l": 0.95, "c": 0.03, "h": 270.1 } }
       // ...
     ],
-    "inputIndex": 11               // index in shades[] where the input is pinned
+    "inputIndex": 5                // index in shades[] where the input is pinned
   },
   "scale": {
     "shades": [                    // exactly 11 entries, stops 50..950 in order
