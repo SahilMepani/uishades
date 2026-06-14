@@ -9,6 +9,7 @@
 import { getCollection, render } from 'astro:content';
 import '../../styles/global.css';
 import BaseHead from '../../components/BaseHead.astro';
+import ThemeToggle from '../../components/ThemeToggle.astro';
 import HeaderAuth from '../../components/HeaderAuth';
 import FeedbackLink from '../../components/FeedbackLink';
 import { safeJsonForScript } from '../../lib/safe-json';
@@ -54,6 +55,7 @@ const postJsonLd = {
   description: DESCRIPTION,
   datePublished: pubDate,
   dateModified: updatedDate,
+  author: { '@type': 'Person', name: 'Sahil Mepani' },
   url: canonicalUrl,
   mainEntityOfPage: canonicalUrl,
   inLanguage: 'en',
@@ -99,19 +101,23 @@ const postJsonLd = {
     <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W6D48RVL" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
-    <header class="mx-auto max-w-3xl px-6">
+    <header class="w-full px-10 lg:px-16">
       <div class="flex items-center justify-between gap-4 border-b border-hairline py-4">
         <a href="/" class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink hover:text-accent">UI Shades</a>
-        <div class="flex items-center gap-4 font-mono text-[11px] uppercase tracking-[0.14em]">
-          <a href="/blog" class="text-ink hover:text-accent">Blog</a>
+        <div class="flex items-center gap-7 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <a href="/" class="hidden text-ink hover:text-accent sm:inline">Tints &amp; Shades</a>
+          <a href="/color-palette-generator" class="hidden text-ink hover:text-accent sm:inline">Color Palette</a>
+          <a href="/image-color-picker" class="hidden text-ink hover:text-accent sm:inline">Image picker</a>
+          <a href="/blog" class="hidden text-ink hover:text-accent sm:inline">Blog</a>
           <a href="/explore" class="text-ink hover:text-accent">Explore</a>
           <HeaderAuth client:load />
+          <ThemeToggle />
         </div>
       </div>
     </header>
 
-    <main class="mx-auto max-w-3xl px-6">
-      <article class="py-12">
+    <main class="w-full px-6 pb-24 lg:px-8">
+      <article class="mx-auto max-w-3xl py-12">
         <nav aria-label="Breadcrumb" class="mb-6 font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
           <a href="/blog" class="hover:text-accent">Blog</a> <span aria-hidden="true">/</span>
         </nav>
@@ -124,10 +130,10 @@ const postJsonLd = {
         </div>
       </article>
 
-      <footer class="mt-8 border-t border-hairline py-6">
-        <nav aria-label="Footer" class="flex items-center gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
-          <a href="/" class="text-ink hover:text-accent">Open the tool</a>
-          <a href="/blog" class="text-ink hover:text-accent">All posts</a>
+      <footer class="mt-20 px-4 lg:px-8">
+        <nav aria-label="Footer" class="flex items-center gap-5 border-t border-hairline pt-6 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <a href="/colors" class="text-ink hover:text-accent">Named colors</a>
+          <a href="/api/4040ff.json" class="text-ink hover:text-accent">JSON API</a>
           <FeedbackLink client:load />
         </nav>
       </footer>
@@ -135,6 +141,7 @@ const postJsonLd = {
 
     <style>
       .post-body {
+        font-size: 1.125rem; /* 18px - base body copy bumped +2px from the 16px default */
         line-height: 1.75;
         color: var(--color-ink-2, inherit);
       }

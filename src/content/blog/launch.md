@@ -25,7 +25,7 @@ shade carries a WCAG contrast badge against white and black. Permanent URLs
 for every hex, so you can paste `/4040ff` into Slack and your teammate sees
 the same page you saw.
 
-## The algorithm is the differentiator
+## The algorithm is where it splits from 0to255
 
 0to255 generates its ramps by walking each RGB channel toward 0 (for darker)
 or 255 (for lighter) in equal steps. The math is simple. The output looks
@@ -49,9 +49,9 @@ The Classic ramp's darker steps drift toward a grey-green olive that no longer
 reads as the input colour; OKLCH's stay anchored. On bright reds the
 difference is smaller; on muddied warms it is the whole story.
 
-For users who want the familiar 0to255 output bit-for-bit - to match an
-existing design system that was built against the RGB-walk algorithm -
-there's a Classic toggle that reproduces the original formula exactly.
+If you want the familiar 0to255 output bit-for-bit, say to match an existing
+design system that was built against the RGB-walk algorithm, there's a Classic
+toggle that reproduces the original formula exactly.
 
 ## Tailwind-first exports
 
@@ -92,8 +92,8 @@ The stack is intentionally simple:
   `Cache-Control` for browsers and downstream caches.
 - **culori** for colour math. Battle-tested, gamut-correct, supports OKLCH
   out of the box. No reinventing colour-space conversions.
-- **OG images** rendered on demand with workers-og - Satori under the hood -
-  so every shareable URL gets a custom preview image.
+- **OG images** rendered on demand with workers-og (Satori under the hood), so
+  every shareable URL gets a custom preview image.
 
 Page weight on the named-color pages is under 20KB Brotli for HTML/CSS, with
 the React island deferred. Lighthouse scores: 95+ Performance, 100 SEO, 100
@@ -108,8 +108,8 @@ thing well.
 The same data a browser renders is available to AI assistants and tools
 directly. Every colour page answers `Accept: text/markdown` with a clean
 markdown palette, there's an `llms.txt` describing the data model, and a
-public MCP endpoint at `/mcp` exposes a `generate_shades` tool over JSON-RPC -
-no auth, no key. Ask Claude or another agent for "an OKLCH Tailwind scale for
+public MCP endpoint at `/mcp` exposes a `generate_shades` tool over JSON-RPC,
+with no auth and no key. Ask Claude or another agent for "an OKLCH Tailwind scale for
 #4040ff" and it can pull the answer straight from here instead of guessing.
 
 We borrowed the URL structure from 0to255 deliberately, so anyone with an

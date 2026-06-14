@@ -7,6 +7,7 @@
 
 ## Core pages
 - [Home](https://UIshades.com/): Generate tints and shades from any color.
+- [Color palette generator](https://UIshades.com/color-palette-generator): Build a multi-color palette (primary, accents, and Neutral/Success/Warning/Error roles) and expand every color into an OKLCH ramp or Tailwind scale, with copy-ready exports.
 - [Named colors](https://UIshades.com/colors/coral): 209 CSS named colors, each with an OKLCH ramp, aliases, a harmony palette, and WCAG contrast badges.
 - [Hex pages](https://UIshades.com/4040ff): Permanent /[hex] page for any 3-, 6-, or 8-digit hex.
 
