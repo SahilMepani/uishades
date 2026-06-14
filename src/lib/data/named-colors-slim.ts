@@ -6,7 +6,8 @@
  * for runtime autocomplete - the React island only matches against
  * `slug` / `name` prefixes and renders `hex`.
  *
- * Importing this slim shape in `ColorInput.tsx` instead of the full
+ * Importing this slim shape in the React island (`ShadeTool` /
+ * `ColorPicker`) instead of the full
  * `NAMED_COLORS` keeps the slim fields available client-side while
  * leaving the blurbs as build-time-only data on the Astro pages
  * (`/colors/[name]`, the home page's bake of CSS names, etc.).

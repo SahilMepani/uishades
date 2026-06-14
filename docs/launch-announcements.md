@@ -11,7 +11,7 @@ Short-form copy for the launch surface. Long-form is in
 
 **Body:**
 
-0to255.com - the free shade generator most of us bookmarked years ago - went
+0to255.com - the free shade gener ator most of us bookmarked years ago - went
 behind a paywall recently. UIshades.com is a free replacement with the same URL
 structure (`/4040ff` works), so old bookmarks and Google results can swap the
 hostname and land where they expected. The defaults are different in three

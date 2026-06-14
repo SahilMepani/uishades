@@ -870,10 +870,6 @@ function ShadeToolInner({
     [tray],
   );
 
-  // "See your color as a UI" preview inputs. The tool is single-color centric,
-  // so we feed the neutral-shell adapter the tray (when it holds colors) or just
-  // the live `hex`; it pins white bg / faint surface and routes the brand
-  // color(s) into accent + chart extras (see `mocks/tool-roles.ts`).
   // Export groups for the current view + palette, consumed by the shade-grid
   // export row inside the view component. Multi-column (2+ palette colors) →
   // one collision-safe group per swatch; else just the active scale or ramp.
