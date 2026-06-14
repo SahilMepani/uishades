@@ -1420,7 +1420,9 @@ function ShadeToolInner({
           )}
 
           <div className="relative flex flex-col gap-2.5">
-            {showHintBanner && <HintBanner onDismiss={dismissHintBanner} />}
+            {showHintBanner && paletteHexes.length < 2 && (
+              <HintBanner onDismiss={dismissHintBanner} />
+            )}
             {view === 'ramp' ? (
               <ContinuousRamp
                 ramp={ramp}
