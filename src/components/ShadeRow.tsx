@@ -297,14 +297,18 @@ function ShadeRow({
             badge stays inside the row. */}
         {shade.isInput && (
           <span className="flex items-center gap-1.5">
+            {/* Source marker: an 8px dot in the row's chosen foreground
+                (white/black, whichever wins the WCAG contrast check) so it
+                stays legible on any swatch - same logic as the row text. The
+                word "source" still lives in the row's aria-label, so the dot
+                is decorative. */}
             <span
+              aria-hidden="true"
               className={
-                'px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ' +
-                (fg === 'white' ? 'bg-white text-black' : 'bg-black text-white')
+                'h-2 w-2 shrink-0 rounded-full ' +
+                (fg === 'white' ? 'bg-white' : 'bg-black')
               }
-            >
-              Source
-            </span>
+            />
             <SourceInfoButton fg={fg} />
           </span>
         )}

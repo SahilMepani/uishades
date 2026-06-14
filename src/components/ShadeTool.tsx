@@ -148,7 +148,7 @@ const DEFAULT_PALETTE_EXTRAS: { hex: Hex; semanticName: string }[] = [
 // grid). A mid-gray at low opacity so it reads on both light and dark themes
 // without showing any real color until the user picks one.
 const PENDING_STRIPE =
-  'repeating-linear-gradient(45deg, rgba(128,128,128,0.18) 0, rgba(128,128,128,0.18) 7px, transparent 7px, transparent 14px)';
+  'repeating-linear-gradient(45deg, rgba(128,128,128,0.07) 0, rgba(128,128,128,0.07) 6px, transparent 6px, transparent 12px)';
 
 /**
  * Positional default label for a swatch with no explicit `semanticName`. The
@@ -922,14 +922,15 @@ function ShadeToolInner({
   // Band "+" add flow. Clicking "+" inserts a `pending` placeholder column and
   // opens ITS OWN swatch picker (not a picker on the "+" button - that would
   // remount and snap shut the instant the new column shifts the band). These
-  // track the in-flight add so the close handler can keep it (only if the user
-  // actually picked a color) or drop it:
+  // track the in-flight add so the close handler can resolve the placeholder
+  // into a real swatch on close (any close - Escape, click-away, or commit -
+  // keeps the column and accepts the current color):
   //   - `bandAddIndexRef`: the pending column's index, or null when no add is in
   //     flight. Doubles as a re-entrancy guard against a second "+" click.
-  //   - `bandAddAdjustedRef`: flipped true on the first picker adjustment, so a
-  //     dismiss-without-picking discards the column instead of committing white.
-  //   - `bandAddPrevHexRef`: the live page color before the add, restored when
-  //     the add is discarded (opening the picker makes the seed color live).
+  //   - `bandAddAdjustedRef`: flipped true on the first picker adjustment (still
+  //     clears the column's `pending` flag mid-drag so it shows a real color).
+  //   - `bandAddPrevHexRef`: the live page color before the add (opening the
+  //     picker makes the seed color live).
   const bandAddIndexRef = useRef<number | null>(null);
   const bandAddAdjustedRef = useRef(false);
   const bandAddPrevHexRef = useRef<Hex | null>(null);
@@ -984,25 +985,22 @@ function ShadeToolInner({
       const idx = editTrayIndexRef.current;
       const originalHex = editTrayOriginalHexRef.current;
       const isAdd = bandAddIndexRef.current !== null;
-      const adjusted = bandAddAdjustedRef.current;
-      const prevHex = bandAddPrevHexRef.current;
       editTrayIndexRef.current = null;
       editTrayOriginalHexRef.current = null;
       bandAddIndexRef.current = null;
       bandAddAdjustedRef.current = false;
       bandAddPrevHexRef.current = null;
 
-      // A "+"-initiated add (placeholder column). Keep it ONLY if the user
-      // actually picked a color; on Escape, or a click-away without ever
-      // adjusting, drop the placeholder column and restore the page color that
-      // was live before the add (opening the picker had made the seed live).
+      // A "+"-initiated add (placeholder column). Closing the picker any way -
+      // Escape, click-away, or an explicit commit - is treated as accepting the
+      // color it currently shows: the seeded last-brand color if untouched, or
+      // the adjusted value. Resolve the pending placeholder into a real swatch
+      // (clear `pending`, pin the live `hex`) and keep the column.
       if (isAdd) {
-        if (canceled || !adjusted) {
-          setTray((prev) => prev.filter((_, i) => i !== idx));
-          if (prevHex !== null) setHex(prevHex);
-        } else {
-          pushToast(`Added ${hex} to the palette.`);
-        }
+        setTray((prev) =>
+          prev.map((c, i) => (i === idx ? { ...c, hex, pending: false } : c)),
+        );
+        pushToast(`Added ${hex} to the palette.`);
         return;
       }
 
@@ -1028,22 +1026,21 @@ function ShadeToolInner({
   // remount and snap shut the moment the new column shifts the band layout), it
   // inserts a `pending` placeholder column and asks the band to imperatively
   // open THAT column's own (position-stable) picker. The placeholder shows a
-  // striped "pick a color" affordance instead of the seed color, so no default
-  // white/black is ever shown; `handlePickerOpenChange` discards it unless the
-  // user picks. Re-entrant clicks while an add is already in flight are ignored.
+  // striped "pick a color" affordance while the picker is open; closing it any
+  // way commits the current color via `handlePickerOpenChange` (the column is
+  // kept). Re-entrant clicks while an add is already in flight are ignored.
   const handleAddColor = useCallback(() => {
     if (bandAddIndexRef.current !== null) return;
-    // Seed the picker from a clean slate per theme: white in light, black in
-    // dark (matched to the `dark` class the theme toggle sets on the doc root).
-    const isDark =
-      typeof document !== 'undefined' &&
-      document.documentElement.classList.contains('dark');
-    const seed: Hex = isDark ? '#000000' : '#ffffff';
     // Drop the new color in just before the fixed block so Primary + Accents
     // stay grouped ahead of the seeded roles (the insert point the old append
     // used).
     const firstFixed = tray.findIndex((c) => c.fixed);
     const insertAt = firstFixed === -1 ? tray.length : firstFixed;
+    // Seed the picker from the last brand color in the palette (the swatch just
+    // before the insert point) so the user starts from an existing color and
+    // tweaks it, rather than from a blank white/black. Fall back to the current
+    // page color when there's no prior brand swatch to copy.
+    const seed: Hex = tray[insertAt - 1]?.hex ?? hex;
     bandAddPrevHexRef.current = hex;
     bandAddAdjustedRef.current = false;
     bandAddIndexRef.current = insertAt;
@@ -1454,6 +1451,17 @@ function ShadeToolInner({
                 onInspect={handleInspect}
               />
             )}
+          </div>
+
+          {/* Teaser for the upcoming full UI preview. Sits below both the
+              single- and multi-color shade views, regardless of algorithm. */}
+          <div className="mt-4 rounded-lg border border-dashed border-hairline px-4 py-6 text-center">
+            <p className="text-sm font-medium text-ink">
+              See your palette on a real UI - coming soon
+            </p>
+            <p className="mt-1 text-xs text-mute">
+              Preview these shades across buttons, cards, and components in a live interface.
+            </p>
           </div>
 
         </section>
@@ -2583,10 +2591,10 @@ function PalettePreviewBar({
                   // so no default white/black is shown until the user picks one.
                   <span
                     aria-hidden="true"
-                    className="flex h-full w-full items-center justify-center border-2 border-dashed border-hairline"
+                    className="flex h-full w-full items-center justify-center border border-dashed border-hairline"
                     style={{ backgroundImage: PENDING_STRIPE }}
                   >
-                    <span className="font-display text-[11px] font-medium uppercase tracking-[0.12em] text-mute motion-safe:animate-pulse">
+                    <span className="font-display text-[11px] font-medium uppercase tracking-[0.12em] text-mute/70">
                       Pick a color
                     </span>
                   </span>

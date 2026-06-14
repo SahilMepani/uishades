@@ -57,7 +57,7 @@ const BLACK = '#000000';
 // same fill in PalettePreviewBar). Mid-gray at low opacity so it reads on both
 // themes without showing any real color until the user picks one.
 const PENDING_STRIPE =
-  'repeating-linear-gradient(45deg, rgba(128,128,128,0.18) 0, rgba(128,128,128,0.18) 7px, transparent 7px, transparent 14px)';
+  'repeating-linear-gradient(45deg, rgba(128,128,128,0.07) 0, rgba(128,128,128,0.07) 6px, transparent 6px, transparent 12px)';
 
 function pickForeground(hex: Hex): 'white' | 'black' {
   return contrastRatio(hex, WHITE) >= contrastRatio(hex, BLACK) ? 'white' : 'black';
@@ -184,12 +184,12 @@ export default function PaletteShadeGrid({
               {shades.map((_, row) => (
                 <div
                   key={`pending-${row}`}
-                  className={`flex ${ROW_H} items-center border-2 border-dashed border-hairline`}
+                  className={`flex ${ROW_H} items-center border border-dashed border-hairline`}
                   style={{ backgroundImage: PENDING_STRIPE }}
                 />
               ))}
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                <span className="font-display text-[11px] font-medium uppercase tracking-[0.12em] text-mute motion-safe:animate-pulse">
+                <span className="font-display text-[11px] font-medium uppercase tracking-[0.12em] text-mute/70">
                   Pick a color
                 </span>
               </div>
@@ -401,14 +401,18 @@ function GridSwatch({
       )}
       {shade.isInput && (
         <span className="flex min-w-0 items-center gap-1.5">
+          {/* Source marker: an 8px dot in the swatch's chosen foreground
+              (white/black, whichever wins the WCAG contrast check) so it stays
+              legible on any color - same logic as the swatch text. The word
+              "source" still lives in the swatch's aria-label, so the dot is
+              decorative. */}
           <span
+            aria-hidden="true"
             className={
-              'min-w-0 truncate px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ' +
-              (fg === 'white' ? 'bg-white text-black' : 'bg-black text-white')
+              'h-2 w-2 shrink-0 rounded-full ' +
+              (fg === 'white' ? 'bg-white' : 'bg-black')
             }
-          >
-            Source
-          </span>
+          />
           {/* Only the first (primary) column carries the explainer - the
               "source" concept is identical for every column, so one icon is
               enough and avoids cluttering every palette color. */}
