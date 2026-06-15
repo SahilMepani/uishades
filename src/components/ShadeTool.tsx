@@ -56,6 +56,7 @@ import {
   scaleToTokens,
   dedupeGroupNames,
   sanitizeName,
+  roleVariantsByStop,
   type ColorGroup,
 } from '../lib/exports/tokens';
 import { STOPS } from '../lib/color/anchors';
@@ -970,6 +971,32 @@ function ShadeToolInner({
         ];
   }, [view, paletteColorNames, paletteNames, brandName, ramp, scale, tray]);
 
+  // Per-shade role labels, derived from the SAME `exportGroups` that drive the
+  // export modal, so what a hovered shade claims ("Hover") always matches the
+  // tier-2 token actually exported (`--color-<role>-hover`). Each map is
+  // stop → variant labels for one color's ramp.
+  //
+  // `singleRoleVariants` covers the single-color ramp/scale rows (always
+  // `exportGroups[0]`, since that array holds exactly one group for 0–1 colors).
+  const singleRoleVariants = useMemo(
+    () => roleVariantsByStop(exportGroups[0]),
+    [exportGroups],
+  );
+  // `paletteRoleVariants` is parallel to the tray (and thus to `paletteHexes` /
+  // the grid columns): the multi-color grid includes the in-flight "+" column,
+  // which `exportGroups` skips, so we realign by walking the tray and pulling
+  // the next non-pending group. Pending slots get `null`.
+  const paletteRoleVariants = useMemo(() => {
+    const out: (Map<number, string[]> | null)[] = tray.map(() => null);
+    let gi = 0;
+    tray.forEach((c, i) => {
+      if (c.pending) return;
+      const g = exportGroups[gi++];
+      if (g) out[i] = roleVariantsByStop(g);
+    });
+    return out;
+  }, [tray, exportGroups]);
+
   const handleAddToTray = useCallback(() => {
     // Add the color the preview is currently showing (`activeHex` = the
     // inspected shade if one was clicked, else the source). Keeps the "Add to
@@ -1565,6 +1592,8 @@ function ShadeToolInner({
                 paletteBoundary={paletteBoundary}
                 palettePendingIndex={palettePendingIndex}
                 paletteEnterHex={enterHex}
+                roleVariants={singleRoleVariants}
+                paletteRoleVariants={paletteRoleVariants}
                 copyFormat={copyFormat}
                 brandName={brandName}
                 onCopy={handleCopyShade}
@@ -1580,6 +1609,8 @@ function ShadeToolInner({
                 paletteBoundary={paletteBoundary}
                 palettePendingIndex={palettePendingIndex}
                 paletteEnterHex={enterHex}
+                roleVariants={singleRoleVariants}
+                paletteRoleVariants={paletteRoleVariants}
                 copyFormat={copyFormat}
                 brandName={brandName}
                 onCopy={handleCopyShade}

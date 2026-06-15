@@ -18,6 +18,8 @@ import {
   dedupeGroupNames,
   semanticTokens,
   semanticVarName,
+  roleVariantsByStop,
+  roleLabelForStop,
   type ColorGroup,
 } from '../src/lib/exports/tokens';
 import { STOPS } from '../src/lib/color/anchors';
@@ -233,6 +235,49 @@ describe('semanticTokens (tier-2 default variant set)', () => {
   it('emits no on-color variant', () => {
     const out = semanticTokens(group({ anchorKey: '500' }));
     expect(out.find((s) => s.variant === 'on')).toBeUndefined();
+  });
+});
+
+describe('roleVariantsByStop / roleLabelForStop (on-screen role labels)', () => {
+  const tokens = scaleToTokens(buildScale(hex));
+  const group = (over: Partial<ColorGroup> = {}): ColorGroup => ({
+    name: 'brand',
+    semantic: 'Primary',
+    anchorKey: '500',
+    tokens,
+    ...over,
+  });
+
+  it('keys each variant label to the stop its token aliases', () => {
+    const map = roleVariantsByStop(group({ anchorKey: '500' }));
+    expect(map.get(500)).toEqual(['Base']);
+    expect(map.get(600)).toEqual(['Hover']);
+    expect(map.get(700)).toEqual(['Active']);
+    expect(map.get(50)).toEqual(['Surface']);
+    expect(map.get(100)).toEqual(['Muted']);
+    expect(map.get(200)).toEqual(['Border']);
+    expect(map.get(800)).toEqual(['Emphasis']);
+    expect(map.get(300)).toBeUndefined(); // stop with no role variant
+  });
+
+  it('returns an empty map for a tier-1-only group', () => {
+    expect(roleVariantsByStop(group({ semantic: undefined }))).toEqual(new Map());
+  });
+
+  it('collects multiple labels when variants collapse onto one stop', () => {
+    // Near-black anchor clamps base/hover/active toward 950, and emphasis 800
+    // stays put — so several stops carry more than one label.
+    const map = roleVariantsByStop(group({ anchorKey: '900' }));
+    expect(map.get(950)).toEqual(['Hover', 'Active']); // both clamp to 950
+  });
+
+  it('roleLabelForStop joins multiple labels and skips bare stops', () => {
+    const map = roleVariantsByStop(group({ anchorKey: '900' }));
+    expect(roleLabelForStop(map, 950)).toBe('Hover · Active');
+    expect(roleLabelForStop(map, 900)).toBe('Base');
+    expect(roleLabelForStop(map, 300)).toBeUndefined();
+    expect(roleLabelForStop(map, undefined)).toBeUndefined();
+    expect(roleLabelForStop(null, 500)).toBeUndefined();
   });
 });
 

@@ -46,6 +46,14 @@ export interface ShadeRowProps {
    * single- and multi-color views read identically. Omitted = no gutter label.
    */
   gutterLabel?: string | number;
+  /**
+   * Semantic role label(s) for this stop (e.g. "Hover", "Active", or
+   * "Base · Emphasis" when several collapse onto one stop) when the active
+   * color's exported tier-2 tokens alias this stop. Shown as a small pill on
+   * hover/focus alongside the hex so users can see which role variant a shade
+   * maps to. Omitted = this stop is not used as any role variant.
+   */
+  roleLabel?: string;
   onCopy: (hex: Hex) => void;
   /**
    * Load this shade into the top color picker / preview (swatch + format
@@ -68,6 +76,7 @@ function ShadeRow({
   shade,
   sourceHex,
   gutterLabel,
+  roleLabel,
   onCopy,
   onInspect,
 }: ShadeRowProps) {
@@ -206,6 +215,7 @@ function ShadeRow({
   const visibleLabel = [
     displayValue,
     shade.stop !== undefined ? String(shade.stop) : '',
+    roleLabel ?? '',
     shade.isInput ? 'source' : '',
   ]
     .filter(Boolean)
@@ -315,6 +325,23 @@ function ShadeRow({
       </div>
 
       <div className="flex min-w-0 flex-1 items-center justify-end gap-3">
+        {/* Role-variant tag: shows which exported tier-2 token (Hover/Active/…)
+            aliases this stop, so the on-screen shade and the export agree.
+            aria-hidden because the role text is already folded into the row's
+            aria-label (visibleLabel); same hover/touch reveal as the hex. */}
+        {roleLabel && (
+          <span
+            aria-hidden="true"
+            className={[
+              'pointer-fine-hide shrink-0 whitespace-nowrap rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]',
+              fg === 'white'
+                ? 'bg-white/20 text-white ring-1 ring-white/30'
+                : 'bg-black/10 text-black ring-1 ring-black/20',
+            ].join(' ')}
+          >
+            {roleLabel}
+          </span>
+        )}
         <span
           aria-hidden="true"
           className={[
@@ -369,6 +396,7 @@ function shadeRowPropsEqual(a: ShadeRowProps, b: ShadeRowProps): boolean {
     a.shade.isInput === b.shade.isInput &&
     a.sourceHex === b.sourceHex &&
     a.gutterLabel === b.gutterLabel &&
+    a.roleLabel === b.roleLabel &&
     a.onCopy === b.onCopy &&
     a.onInspect === b.onInspect
   );

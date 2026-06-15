@@ -3,6 +3,7 @@ import type {
   Hex,
   TailwindScale as TailwindScaleData,
 } from '../lib/color/types';
+import { roleLabelForStop } from '../lib/exports/tokens';
 import ShadeRow from './ShadeRow';
 import PaletteShadeGrid from './PaletteShadeGrid';
 
@@ -35,6 +36,14 @@ export interface TailwindScaleProps {
   palettePendingIndex?: number;
   /** Hex just added to the tray; its grid column fades in. */
   paletteEnterHex?: Hex | null;
+  /**
+   * Single-color view: stop → semantic role labels ("Hover", "Active", …) for
+   * the active color, so each row can flag which exported role variant aliases
+   * its stop. Derived from the same export groups, so the row matches the export.
+   */
+  roleVariants?: Map<number, string[]>;
+  /** Multi-color grid: the same map per column (parallel to `paletteHexes`). */
+  paletteRoleVariants?: (Map<number, string[]> | null)[];
   copyFormat: CopyFormat;
   brandName?: string;
   onCopy: (hex: Hex) => void;
@@ -52,6 +61,8 @@ export default function TailwindScale({
   paletteBoundary,
   palettePendingIndex,
   paletteEnterHex,
+  roleVariants,
+  paletteRoleVariants,
   copyFormat,
   brandName,
   onCopy,
@@ -68,6 +79,7 @@ export default function TailwindScale({
           boundary={paletteBoundary}
           pendingIndex={palettePendingIndex}
           enterHex={paletteEnterHex}
+          roleVariants={paletteRoleVariants}
           kind="scale"
           copyFormat={copyFormat}
           brandName={brandName}
@@ -86,6 +98,7 @@ export default function TailwindScale({
                 shade={shade}
                 sourceHex={sourceHex}
                 gutterLabel={shade.stop}
+                roleLabel={roleLabelForStop(roleVariants, shade.stop)}
                 onCopy={onCopy}
                 onInspect={onInspect}
               />

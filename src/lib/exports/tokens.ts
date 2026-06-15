@@ -205,6 +205,63 @@ export function semanticTokens(group: ColorGroup): SemanticToken[] {
   return out;
 }
 
+/**
+ * Human-readable label for each semantic variant key, used by the on-screen
+ * shade views to tell users which stop a role's exported variant aliases (e.g.
+ * the row hovered shows "Hover" because that stop is exported as
+ * `--color-<role>-hover`). The empty-key base is the role's pinned color, shown
+ * as "Base". Keys mirror `SEMANTIC_VARIANTS` so the labels can't drift from the
+ * exports.
+ */
+export const SEMANTIC_VARIANT_LABELS: Readonly<Record<string, string>> = {
+  '': 'Base',
+  hover: 'Hover',
+  active: 'Active',
+  surface: 'Surface',
+  muted: 'Muted',
+  border: 'Border',
+  emphasis: 'Emphasis',
+};
+
+/**
+ * Invert `semanticTokens(group)` into a stop → variant-labels map so a shade
+ * view can answer "is this stop used as a role variant, and which?" in O(1).
+ * A single stop can carry more than one label (e.g. when the anchor sits near
+ * an edge the clamped base/hover/active collapse onto the same stop, or when
+ * `emphasis` 800 coincides with the base), so values are arrays. Returns an
+ * empty map for tier-1-only groups (no `semantic`).
+ */
+export function roleVariantsByStop(group: ColorGroup): Map<number, string[]> {
+  const out = new Map<number, string[]>();
+  for (const t of semanticTokens(group)) {
+    const stop = Number(t.ref.stop);
+    if (!Number.isFinite(stop)) continue;
+    const label = SEMANTIC_VARIANT_LABELS[t.variant];
+    if (!label) continue;
+    const arr = out.get(stop);
+    if (arr) {
+      if (!arr.includes(label)) arr.push(label);
+    } else {
+      out.set(stop, [label]);
+    }
+  }
+  return out;
+}
+
+/**
+ * Resolve a single shade's role label from a `roleVariantsByStop` map, joining
+ * multiple labels with " · ". Returns `undefined` when the stop carries no role
+ * variant (so callers can skip rendering entirely).
+ */
+export function roleLabelForStop(
+  map: Map<number, string[]> | null | undefined,
+  stop: number | undefined,
+): string | undefined {
+  if (!map || stop == null) return undefined;
+  const labels = map.get(stop);
+  return labels && labels.length > 0 ? labels.join(' · ') : undefined;
+}
+
 /** Below this OKLab-unit spread no axis is a meaningful descriptor for a pair of
  * colliding swatches (two near-identical hexes), so we fall back to a numeric
  * suffix rather than slap on a misleading "light"/"dark". */

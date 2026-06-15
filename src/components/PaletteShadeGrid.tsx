@@ -12,6 +12,7 @@ import { formatForCopy } from '../lib/color/format';
 import { oklchRamp } from '../lib/color/ramp';
 import { buildScale } from '../lib/color/scale';
 import { STOPS } from '../lib/color/anchors';
+import { roleLabelForStop } from '../lib/exports/tokens';
 import { paletteColumnGrows } from '../lib/palette-weights';
 import { useToast } from './Toast';
 import SourceInfoButton from './SourceInfoButton';
@@ -104,6 +105,13 @@ export interface PaletteShadeGridProps {
    * image-drag, or an algorithm-view toggle that remounts the grid.
    */
   enterHex?: Hex | null;
+  /**
+   * Per-column stop → semantic role labels ("Hover", "Active", …), parallel to
+   * `hexes` (so it includes the pending "+" column as `null`). When a swatch's
+   * stop carries a role variant the swatch shows that label on hover, matching
+   * the exported tier-2 token for that column's role.
+   */
+  roleVariants?: (Map<number, string[]> | null)[];
 }
 
 export default function PaletteShadeGrid({
@@ -117,6 +125,7 @@ export default function PaletteShadeGrid({
   boundary,
   pendingIndex,
   enterHex,
+  roleVariants,
 }: PaletteShadeGridProps) {
   // Mirror PalettePreviewBar's gap: only when both groups are actually present.
   const hasGap = boundary != null && boundary > 0 && boundary < hexes.length;
@@ -216,6 +225,10 @@ export default function PaletteShadeGrid({
                   row={row}
                   copyFormat={copyFormat}
                   brandName={names?.[col] ?? brandName}
+                  roleLabel={roleLabelForStop(
+                    roleVariants?.[col],
+                    kind === 'scale' ? shade.stop : STOPS[row],
+                  )}
                   onCopy={onCopy}
                   onNavigate={onNavigate}
                 />
@@ -256,6 +269,8 @@ interface GridSwatchProps {
   row: number;
   copyFormat: CopyFormat;
   brandName?: string;
+  /** Semantic role label(s) for this swatch's stop ("Hover", …), or undefined. */
+  roleLabel?: string;
   onCopy: (hex: Hex) => void;
   onNavigate: (hex: Hex) => void;
 }
@@ -266,6 +281,7 @@ function GridSwatch({
   row,
   copyFormat,
   brandName,
+  roleLabel,
   onCopy,
   onNavigate,
 }: GridSwatchProps) {
@@ -361,9 +377,24 @@ function GridSwatch({
   );
   const ariaLabel = useMemo(
     () =>
-      `${valueLabel}${shade.isInput ? ' source' : ''}. Click to copy, double-click or Shift+Enter to use as source`,
-    [valueLabel, shade.isInput],
+      `${valueLabel}${roleLabel ? ` ${roleLabel}` : ''}${shade.isInput ? ' source' : ''}. Click to copy, double-click or Shift+Enter to use as source`,
+    [valueLabel, roleLabel, shade.isInput],
   );
+
+  // Role pill: which exported tier-2 token (Hover/Active/…) aliases this stop.
+  // Same hover/focus reveal as the hex readout; aria-hidden since it's folded
+  // into `ariaLabel`.
+  const rolePill = roleLabel ? (
+    <span
+      aria-hidden="true"
+      className={[
+        'pointer-events-none shrink-0 whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100',
+        fg === 'white' ? 'bg-white/20 text-white' : 'bg-black/10 text-black',
+      ].join(' ')}
+    >
+      {roleLabel}
+    </span>
+  ) : null;
 
   return (
     <div
@@ -394,15 +425,18 @@ function GridSwatch({
           Decorative - the hex is in `aria-label`/`title` already. Hidden on the
           source swatch, whose persistent "Source" badge owns that corner. */}
       {!shade.isInput && (
-        <span
-          aria-hidden="true"
-          className="pointer-events-none ml-auto font-mono text-[13px] tabular-nums opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
-        >
-          {shade.hex}
-        </span>
+        <>
+          {rolePill}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none ml-auto font-mono text-[13px] tabular-nums opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+          >
+            {shade.hex}
+          </span>
+        </>
       )}
       {shade.isInput && (
-        <span className="flex min-w-0 items-center gap-1.5">
+        <span className="flex min-w-0 flex-1 items-center gap-1.5">
           {/* Source marker: an 8px dot in the swatch's chosen foreground
               (white/black, whichever wins the WCAG contrast check) so it stays
               legible on any color - same logic as the swatch text. The word
@@ -419,6 +453,9 @@ function GridSwatch({
               "source" concept is identical for every column, so one icon is
               enough and avoids cluttering every palette color. */}
           {col === 0 && <SourceInfoButton fg={fg} />}
+          {/* The source stop is also the role's exported `base` variant, so the
+              pill (e.g. "Base") rides the source swatch too, pushed to the end. */}
+          {rolePill && <span className="ml-auto">{rolePill}</span>}
         </span>
       )}
     </div>
@@ -439,6 +476,7 @@ const MemoGridSwatch = memo(GridSwatch, (a, b) =>
   a.row === b.row &&
   a.copyFormat === b.copyFormat &&
   a.brandName === b.brandName &&
+  a.roleLabel === b.roleLabel &&
   a.onCopy === b.onCopy &&
   a.onNavigate === b.onNavigate,
 );
