@@ -67,11 +67,13 @@ export interface PaletteShadeGridProps {
   /** Palette colors, in tray order - one column each. */
   hexes: Hex[];
   /**
-   * Family name per column, parallel to `hexes` — the swatch's effective
-   * semantic name (the user's rename, else "Primary"/"Secondary"/"Accent"/a seeded role),
-   * matching the preview-bar header above and the exported token family. Each
-   * column's copy labels (var(--name)/bg-name) use its own column's name rather
-   * than the active color's. Falls back to `brandName` when absent.
+   * Primitive (color-name) family slug per column, parallel to `hexes` — the
+   * swatch's own color name (`sandy-brown`, `tailwind-indigo`, …), deduped,
+   * matching the EXPORTED tier-1 primitive ramp keys. Each column's copy labels
+   * (var(--name)-stop / bg-name-stop) use its own column's name, so a copied
+   * token always resolves against the exported primitives. (The semantic role
+   * label — Primary/Neutral — lives in the preview band above, not here.) Falls
+   * back to `brandName` when absent.
    */
   names?: string[];
   /** `ramp` = OKLCH continuous ramp, `scale` = 11-stop Tailwind scale. */

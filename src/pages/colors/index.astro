@@ -104,8 +104,6 @@ const collectionJsonLd = {
       <div class="flex items-center justify-between gap-4 border-b border-hairline py-4">
         <a href="/" class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink hover:text-accent">UI Shades</a>
         <div class="flex items-center gap-4 font-mono text-[11px] uppercase tracking-[0.14em]">
-          <a href="/blog" class="text-ink hover:text-accent">Blog</a>
-          <a href="/explore" class="text-ink hover:text-accent">Explore</a>
           <HeaderAuth client:load />
           <ThemeToggle />
         </div>
@@ -149,6 +147,7 @@ const collectionJsonLd = {
 
       <footer class="mt-20">
         <nav aria-label="Footer" class="flex items-center gap-5 border-t border-hairline pt-6 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <a href="/blog" class="text-ink hover:text-accent">Blog</a>
           <a href="/explore" class="text-ink hover:text-accent">Explore</a>
           <a href="/" class="text-ink hover:text-accent">Tool</a>
           <FeedbackLink client:load />

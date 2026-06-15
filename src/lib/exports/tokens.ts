@@ -16,6 +16,7 @@
 
 import type { ContinuousRamp, ExportFormat, Hex, OKLCH, TailwindScale } from '../color/types';
 import { formatForCopy } from '../color/format';
+import { contrastRatio } from '../color/contrast';
 import { ACHROMATIC_CHROMA } from '../color/hue';
 import { STOPS } from '../color/anchors';
 
@@ -33,9 +34,29 @@ export interface ColorToken {
  * against `ColorGroup[]` so the same code path handles one color or eight.
  */
 export interface ColorGroup {
-  /** Brand name for this family - sanitized to a slug by each serializer. */
+  /**
+   * **Tier-1 (primitive) name** for this family — the color's own name
+   * (e.g. `sandy-brown`, `tailwind-indigo`), sanitized to a slug by each
+   * serializer. Keys the primitive ramp: `--color-sandy-brown-500`.
+   */
   name: string;
   tokens: ColorToken[];
+  /**
+   * **Tier-2 (semantic) label** — the user's editable role name (Primary,
+   * Neutral, …). When present, the CSS-family serializers emit a semantic alias
+   * layer (`--color-primary: var(--color-sandy-brown-…)`) keyed by this label;
+   * the default variant set (`semanticTokens`) is applied uniformly. Absent →
+   * tier-1 only (the JSON serializers always ignore it). See `semanticTokens`.
+   */
+  semantic?: string;
+  /**
+   * The primitive stop the semantic *base* token aliases (e.g. `'400'`) — the
+   * stop where the user's actual color is pinned in this ramp
+   * (`scale.anchorStop` / `STOPS[ramp.inputIndex]`), so `--color-{role}` *is*
+   * the brand color. Interaction states offset from it; surface/border use
+   * fixed light stops. Defaults to `'500'` when omitted.
+   */
+  anchorKey?: string;
   /**
    * The swatch's own source OKLCH (NOT derived from `tokens`, whose lightness
    * spans the whole 0..1 ramp and so can't identify the input). Optional;
@@ -102,9 +123,105 @@ export function rampToTokens(ramp: ContinuousRamp): ColorToken[] {
   }));
 }
 
+/** Render a raw hex in the requested value mode (hex / rgb() / hsl() / oklch()). */
+export function formatValue(hex: Hex, mode: ValueMode): string {
+  return mode === 'hex' ? hex : formatForCopy(hex, mode);
+}
+
 /** Render a token's value in the requested mode (hex / rgb() / hsl() / oklch()). */
 export function tokenValue(t: ColorToken, mode: ValueMode): string {
-  return mode === 'hex' ? t.hex : formatForCopy(t.hex, mode);
+  return formatValue(t.hex, mode);
+}
+
+/**
+ * The default semantic variant set, applied uniformly to every role so the user
+ * carries no extra cognitive load. Maps each variant onto a stop of the role's
+ * own primitive ramp:
+ *   - `base`/`hover`/`active` track the user's pinned color (anchor, then one and
+ *     two stops darker) — the Tailwind 500→600→700 interaction convention.
+ *   - `surface`/`muted`/`border` are fixed light stops (50/100/200) for tinted
+ *     backgrounds and dividers — Radix-style container steps.
+ *   - `emphasis` (800) is high-contrast text/icon in the hue.
+ * `on` (readable foreground on the base) is appended separately by
+ * `semanticTokens` since it's contrast-derived, not a ramp stop.
+ *
+ * `offset` = steps darker than the anchor (clamped into the ramp); `abs` = an
+ * absolute stop number (skipped if that stop isn't present in the ramp).
+ */
+const SEMANTIC_VARIANTS: ReadonlyArray<
+  { variant: string; offset: number } | { variant: string; abs: number }
+> = [
+  { variant: '', offset: 0 }, // base = the user's pinned color
+  { variant: 'hover', offset: 1 },
+  { variant: 'active', offset: 2 },
+  { variant: 'surface', abs: 50 },
+  { variant: 'muted', abs: 100 },
+  { variant: 'border', abs: 200 },
+  { variant: 'emphasis', abs: 800 },
+];
+
+/** A resolved tier-2 token: a variant of a role, aliasing either a primitive
+ * stop (`{ stop }`) or a literal color (`{ hex }`, used for the `on-` foreground
+ * which has no primitive of its own). */
+export interface SemanticToken {
+  /** Variant key without the role prefix: '' (the base/DEFAULT), 'hover',
+   * 'active', 'surface', 'muted', 'border', 'emphasis', 'on'. */
+  variant: string;
+  ref: { stop: string } | { hex: Hex };
+}
+
+/**
+ * Compose the flat CSS custom-property local name for a semantic variant, e.g.
+ * `('primary','')` → `primary`, `('primary','hover')` → `primary-hover`,
+ * `('primary','on')` → `on-primary` (the foreground reads naturally as
+ * "on primary"). The role is already a sanitized slug.
+ */
+export function semanticVarName(role: string, variant: string): string {
+  if (variant === '') return role;
+  if (variant === 'on') return `on-${role}`;
+  return `${role}-${variant}`;
+}
+
+/**
+ * Resolve a group's tier-2 semantic tokens from the default variant set. Returns
+ * `[]` when the group has no `semantic` label (tier-1 only). Each stop-backed
+ * variant points at a stop of the group's OWN primitive ramp; the appended
+ * `on` variant is the WCAG-higher-contrast of white vs the role's darkest shade,
+ * measured against the base (anchor) color, emitted as a literal hex.
+ */
+export function semanticTokens(group: ColorGroup): SemanticToken[] {
+  if (!group.semantic || group.tokens.length === 0) return [];
+  const keys = group.tokens.map((t) => t.key);
+  const byKey = new Map(group.tokens.map((t) => [t.key, t]));
+
+  // Anchor index within this ramp: the requested stop, else 500, else the middle.
+  let anchorIdx = keys.indexOf(group.anchorKey ?? '500');
+  if (anchorIdx === -1) anchorIdx = keys.indexOf('500');
+  if (anchorIdx === -1) anchorIdx = Math.floor((keys.length - 1) / 2);
+
+  const out: SemanticToken[] = [];
+  for (const v of SEMANTIC_VARIANTS) {
+    if ('abs' in v) {
+      const key = String(v.abs);
+      if (byKey.has(key)) out.push({ variant: v.variant, ref: { stop: key } });
+    } else {
+      const idx = Math.min(keys.length - 1, Math.max(0, anchorIdx + v.offset));
+      out.push({ variant: v.variant, ref: { stop: keys[idx] } });
+    }
+  }
+
+  // Readable foreground on the base: pick whichever of white / the darkest shade
+  // has the higher contrast ratio against the base color.
+  const baseHex = byKey.get(keys[anchorIdx])?.hex;
+  const darkest = group.tokens[group.tokens.length - 1]?.hex;
+  if (baseHex && darkest) {
+    const onHex =
+      contrastRatio('#ffffff', baseHex) >= contrastRatio(darkest, baseHex)
+        ? '#ffffff'
+        : darkest;
+    out.push({ variant: 'on', ref: { hex: onHex } });
+  }
+  return out;
 }
 
 /** Below this OKLab-unit spread no axis is a meaningful descriptor for a pair of
@@ -177,12 +294,12 @@ function describeVariation(d: OKLCH, o: OKLCH): string | null {
  *
  * The first occurrence keeps its bare slug. Each subsequent colliding swatch is
  * disambiguated by an OKLCH-derived qualifier describing how IT differs from the
- * swatch that owns the base name — e.g. `maroon` + `dark-maroon` instead of
+ * swatch that owns the base name — e.g. `maroon` + `maroon-dark` instead of
  * `maroon` + `maroon-2`, which is far more meaningful in an exported token file.
  * This needs each group's `source` OKLCH; when it's missing (single-color paths
  * never hit this) or the two swatches are perceptually identical, we fall back to
  * the old numeric suffix. If a derived qualifier itself collides (e.g. two even
- * darker maroons), it too gets a numeric suffix (`dark-maroon-2`), so output is
+ * darker maroons), it too gets a numeric suffix (`maroon-dark-2`), so output is
  * always unique and deterministic. Returned names are already sanitized, and
  * `sanitizeName` is idempotent, so re-sanitizing in a serializer is a no-op.
  */
@@ -205,7 +322,7 @@ export function dedupeGroupNames(groups: ColorGroup[]): ColorGroup[] {
     let candidate: string | null = null;
     if (g.source && owner) {
       const word = describeVariation(g.source, owner);
-      if (word) candidate = `${word}-${base}`;
+      if (word) candidate = `${base}-${word}`;
     }
 
     let slug: string;

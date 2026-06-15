@@ -1,7 +1,7 @@
 ---
 title: "We rebuilt 0to255 because it went paid. Here's what we learned."
 description: "Free OKLCH-based shade generator with Tailwind exports and WCAG contrast badges, built on Astro + Cloudflare Workers as a 0to255 replacement."
-pubDate: 2026-06-14
+pubDate: 2026-06-01
 ogImage: "https://UIshades.com/og/4040ff.png"
 ---
 

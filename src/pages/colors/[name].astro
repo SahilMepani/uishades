@@ -235,8 +235,6 @@ const faqJsonLd = {
       <div class="flex items-center justify-between gap-4 border-b border-hairline py-4">
         <a href="/" class="font-mono text-[11px] uppercase tracking-[0.18em] text-ink hover:text-accent">UI Shades</a>
         <div class="flex items-center gap-4 font-mono text-[11px] uppercase tracking-[0.14em]">
-          <a href="/blog" class="text-ink hover:text-accent">Blog</a>
-          <a href="/explore" class="text-ink hover:text-accent">Explore</a>
           <HeaderAuth client:load />
           <ThemeToggle />
         </div>
@@ -373,6 +371,8 @@ const faqJsonLd = {
       <footer class="mt-20 border-t border-hairline pt-6">
         <nav aria-label="Footer" class="flex items-center gap-5 font-mono text-[11px] uppercase tracking-[0.14em]">
           <a href={`/${color.hex.slice(1)}`} class="text-ink hover:text-accent">Open in tool</a>
+          <a href="/blog" class="text-ink hover:text-accent">Blog</a>
+          <a href="/explore" class="text-ink hover:text-accent">Explore</a>
           <a href={`/api/${color.hex.slice(1)}.json`} class="text-ink hover:text-accent">View JSON</a>
           <FeedbackLink client:load />
         </nav>

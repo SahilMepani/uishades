@@ -5,16 +5,54 @@
  * without the `color-` prefix (that prefix is Tailwind-v4-specific). Variable
  * names follow `--{name}-{key}`. A multi-color palette emits every group's
  * vars inside the same `:root` block, separated by a blank line.
+ *
+ * **Two-tier:** when any group carries a `semantic` label the `:root` block
+ * grows a second tier of `--{role}*: var(--{primitive}-{stop})` aliases under a
+ * `/* semantic *\/` header. With no semantic labels the output is byte-for-byte
+ * the original single-tier block.
  */
 
-import { sanitizeName, tokenValue, type ColorGroup, type ValueMode } from './tokens';
+import {
+  sanitizeName,
+  tokenValue,
+  formatValue,
+  semanticTokens,
+  semanticVarName,
+  type ColorGroup,
+  type ValueMode,
+} from './tokens';
+
+function primitiveBlock(g: ColorGroup, valueMode: ValueMode): string {
+  const slug = sanitizeName(g.name);
+  return g.tokens
+    .map((t) => `  --${slug}-${t.key}: ${tokenValue(t, valueMode)};`)
+    .join('\n');
+}
+
+function semanticBlock(g: ColorGroup, valueMode: ValueMode): string {
+  const role = sanitizeName(g.semantic ?? '');
+  const slug = sanitizeName(g.name);
+  return semanticTokens(g)
+    .map((s) => {
+      const value =
+        'stop' in s.ref
+          ? `var(--${slug}-${s.ref.stop})`
+          : formatValue(s.ref.hex, valueMode);
+      return `  --${semanticVarName(role, s.variant)}: ${value};`;
+    })
+    .join('\n');
+}
 
 export function toCssVars(groups: ColorGroup[], valueMode: ValueMode): string {
-  const blocks = groups.map((g) => {
-    const slug = sanitizeName(g.name);
-    return g.tokens
-      .map((t) => `  --${slug}-${t.key}: ${tokenValue(t, valueMode)};`)
-      .join('\n');
-  });
-  return `:root {\n${blocks.join('\n\n')}\n}\n`;
+  const primitives = groups.map((g) => primitiveBlock(g, valueMode));
+  const semantics = groups
+    .map((g) => semanticBlock(g, valueMode))
+    .filter((b) => b.length > 0);
+  if (semantics.length === 0) {
+    return `:root {\n${primitives.join('\n\n')}\n}\n`;
+  }
+  return (
+    `:root {\n  /* primitives */\n${primitives.join('\n\n')}\n\n` +
+    `  /* semantic */\n${semantics.join('\n\n')}\n}\n`
+  );
 }

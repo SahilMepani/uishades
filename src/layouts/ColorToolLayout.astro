@@ -108,8 +108,6 @@ const {
           <a href="/" class="hidden text-ink hover:text-accent sm:inline">Tints &amp; Shades</a>
           <a href="/color-palette-generator" class="hidden text-ink hover:text-accent sm:inline">Color Palette</a>
           <a href="/image-color-picker" class="hidden text-ink hover:text-accent sm:inline">Image picker</a>
-          <a href="/blog" class="hidden text-ink hover:text-accent sm:inline">Blog</a>
-          <a href="/explore" class="text-ink hover:text-accent">Explore</a>
           <HeaderAuth client:load />
           <ThemeToggle />
         </div>
@@ -143,6 +141,8 @@ const {
       <footer class="mt-20 px-4 lg:px-8">
         <nav aria-label="Footer" class="flex items-center gap-5 border-t border-hairline pt-6 font-mono text-[11px] uppercase tracking-[0.14em]">
           <a href="/colors" class="text-ink hover:text-accent">Named colors</a>
+          <a href="/blog" class="text-ink hover:text-accent">Blog</a>
+          <a href="/explore" class="text-ink hover:text-accent">Explore</a>
           <a href={`/api/${footerHex}.json`} class="text-ink hover:text-accent">JSON API</a>
           <FeedbackLink client:load />
         </nav>

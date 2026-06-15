@@ -16,8 +16,12 @@ import {
   rampToTokens,
   tokenValue,
   dedupeGroupNames,
+  semanticTokens,
+  semanticVarName,
+  type ColorGroup,
 } from '../src/lib/exports/tokens';
 import { STOPS } from '../src/lib/color/anchors';
+import { contrastRatio } from '../src/lib/color/contrast';
 import { toTailwindV4 } from '../src/lib/exports/tailwind-v4';
 import { toTailwindV3 } from '../src/lib/exports/tailwind-v3';
 import { toCssVars } from '../src/lib/exports/css-vars';
@@ -185,6 +189,129 @@ describe('multi-color palette export (the reported bug)', () => {
   });
 });
 
+describe('semanticTokens (tier-2 default variant set)', () => {
+  const tokens = scaleToTokens(buildScale(hex));
+  const group = (over: Partial<ColorGroup> = {}): ColorGroup => ({
+    name: 'brand',
+    semantic: 'Primary',
+    anchorKey: '500',
+    tokens,
+    ...over,
+  });
+
+  it('returns [] when the group has no semantic label (tier-1 only)', () => {
+    expect(semanticTokens(group({ semantic: undefined }))).toEqual([]);
+  });
+
+  it('maps base/hover/active off the anchor and surface/muted/border/emphasis to fixed stops', () => {
+    const out = semanticTokens(group({ anchorKey: '500' }));
+    const byVariant = Object.fromEntries(out.map((s) => [s.variant, s.ref]));
+    expect(byVariant['']).toEqual({ stop: '500' }); // base = anchor
+    expect(byVariant.hover).toEqual({ stop: '600' }); // +1 darker
+    expect(byVariant.active).toEqual({ stop: '700' }); // +2 darker
+    expect(byVariant.surface).toEqual({ stop: '50' });
+    expect(byVariant.muted).toEqual({ stop: '100' });
+    expect(byVariant.border).toEqual({ stop: '200' });
+    expect(byVariant.emphasis).toEqual({ stop: '800' });
+  });
+
+  it('tracks a non-500 anchor for the interaction states', () => {
+    const out = semanticTokens(group({ anchorKey: '300' }));
+    const byVariant = Object.fromEntries(out.map((s) => [s.variant, s.ref]));
+    expect(byVariant['']).toEqual({ stop: '300' });
+    expect(byVariant.hover).toEqual({ stop: '400' });
+    expect(byVariant.active).toEqual({ stop: '500' });
+  });
+
+  it('clamps hover/active at the darkest stop for a near-black anchor', () => {
+    const out = semanticTokens(group({ anchorKey: '900' }));
+    const byVariant = Object.fromEntries(out.map((s) => [s.variant, s.ref]));
+    expect(byVariant['']).toEqual({ stop: '900' });
+    expect(byVariant.hover).toEqual({ stop: '950' });
+    expect(byVariant.active).toEqual({ stop: '950' }); // clamped, not out of range
+  });
+
+  it('appends an on-color literal hex that is the WCAG-higher-contrast of white vs the 950 shade', () => {
+    const out = semanticTokens(group({ anchorKey: '500' }));
+    const on = out.find((s) => s.variant === 'on');
+    expect(on).toBeDefined();
+    if (!on || !('hex' in on.ref)) throw new Error('on-color should be a literal hex');
+    const base = tokens.find((t) => t.key === '500')!.hex;
+    const darkest = tokens[tokens.length - 1].hex;
+    const expected =
+      contrastRatio('#ffffff', base) >= contrastRatio(darkest, base) ? '#ffffff' : darkest;
+    expect(on.ref.hex).toBe(expected);
+  });
+});
+
+describe('semanticVarName', () => {
+  it('names the base bare, suffixes variants, and prefixes the foreground', () => {
+    expect(semanticVarName('primary', '')).toBe('primary');
+    expect(semanticVarName('primary', 'hover')).toBe('primary-hover');
+    expect(semanticVarName('primary', 'on')).toBe('on-primary');
+  });
+});
+
+describe('two-tier CSS serializers (semantic label present)', () => {
+  const tokens = scaleToTokens(buildScale(parseColor('#f4a460'))); // sandy brown
+  const groups: ColorGroup[] = [
+    { name: 'sandy-brown', semantic: 'Primary', anchorKey: '500', tokens },
+  ];
+
+  it('tailwind-v4 emits primitives then a semantic var() alias tier', () => {
+    const out = toTailwindV4(groups, 'hex');
+    expect(out).toContain('/* primitives */');
+    expect(out).toContain('/* semantic */');
+    expect(out).toMatch(/--color-sandy-brown-500: #[0-9a-f]{6};/);
+    expect(out).toContain('--color-primary: var(--color-sandy-brown-500);');
+    expect(out).toContain('--color-primary-hover: var(--color-sandy-brown-600);');
+    expect(out).toContain('--color-primary-surface: var(--color-sandy-brown-50);');
+    expect(out).toMatch(/--color-on-primary: #[0-9a-f]{6};/); // literal, not a var()
+  });
+
+  it('css-vars emits the semantic tier without the color- prefix', () => {
+    const out = toCssVars(groups, 'hex');
+    expect(out).toContain('--primary: var(--sandy-brown-500);');
+    expect(out).toContain('--primary-border: var(--sandy-brown-200);');
+    expect(out).toMatch(/--on-primary: #[0-9a-f]{6};/);
+  });
+
+  it('tailwind-v3 nests the semantic tier as a resolved-hex role group', () => {
+    const out = toTailwindV3(groups, 'hex');
+    expect(out).toContain('semantic (tier 2)');
+    const cfg = evalConfig(out);
+    const colors = cfg.theme.extend.colors;
+    expect(colors['sandy-brown']['500']).toMatch(/^#[0-9a-f]{6}$/);
+    // The semantic base is a snapshot of the primitive anchor's hex.
+    expect(colors.primary.DEFAULT).toBe(colors['sandy-brown']['500']);
+    expect(colors.primary.hover).toBe(colors['sandy-brown']['600']);
+    expect(colors.primary.on).toMatch(/^#[0-9a-f]{6}$/);
+  });
+
+  it('JSON serializers ignore the semantic label (tier-1 only)', () => {
+    expect(Object.keys(JSON.parse(toW3CTokens(groups, 'hex')))).toEqual(['sandy-brown']);
+    expect(Object.keys(JSON.parse(toStyleDictionary(groups, 'hex')).color)).toEqual([
+      'sandy-brown',
+    ]);
+  });
+
+  it('omits the semantic tier (byte-identical legacy output) when no group has a label', () => {
+    const bare: ColorGroup[] = [{ name: 'sandy-brown', tokens }];
+    const out = toTailwindV4(bare, 'hex');
+    expect(out).not.toContain('/* semantic */');
+    expect(out).not.toContain('/* primitives */');
+    expect(out).toBe(`@theme {\n${tokens.map((t) => `  --color-sandy-brown-${t.key}: ${t.hex};`).join('\n')}\n}\n`);
+  });
+});
+
+/** Execute a `module.exports = …` snippet and return the exported value. */
+function evalConfig(src: string): any {
+  const mod = { exports: {} as any };
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval
+  new Function('module', src)(mod);
+  return mod.exports;
+}
+
 describe('dedupeGroupNames', () => {
   const tk = scaleToTokens(buildScale(hex));
   const oklch = (l: number, c: number, h: number) => ({ l, c, h });
@@ -216,27 +343,27 @@ describe('dedupeGroupNames', () => {
   });
 
   describe('OKLCH-derived qualifiers (the descriptive fix)', () => {
-    it('appends light-/dark- when the collision differs in lightness', () => {
+    it('appends -light/-dark when the collision differs in lightness', () => {
       const lighter = dedupeGroupNames([
         { name: 'maroon', tokens: tk, source: oklch(0.4, 0.1, 30) },
         { name: 'maroon', tokens: tk, source: oklch(0.62, 0.1, 30) },
       ]);
-      expect(lighter.map((g) => g.name)).toEqual(['maroon', 'light-maroon']);
+      expect(lighter.map((g) => g.name)).toEqual(['maroon', 'maroon-light']);
 
       const darker = dedupeGroupNames([
         { name: 'maroon', tokens: tk, source: oklch(0.5, 0.1, 30) },
         { name: 'maroon', tokens: tk, source: oklch(0.28, 0.1, 30) },
       ]);
-      expect(darker.map((g) => g.name)).toEqual(['maroon', 'dark-maroon']);
+      expect(darker.map((g) => g.name)).toEqual(['maroon', 'maroon-dark']);
     });
 
-    it('appends muted-/vivid- when the collision differs in chroma', () => {
+    it('appends -muted/-vivid when the collision differs in chroma', () => {
       const out = dedupeGroupNames([
         { name: 'teal', tokens: tk, source: oklch(0.5, 0.05, 195) },
         { name: 'teal', tokens: tk, source: oklch(0.5, 0.2, 195) }, // more chroma
         { name: 'teal', tokens: tk, source: oklch(0.5, 0.01, 195) }, // less chroma
       ]);
-      expect(out.map((g) => g.name)).toEqual(['teal', 'vivid-teal', 'muted-teal']);
+      expect(out.map((g) => g.name)).toEqual(['teal', 'teal-vivid', 'teal-muted']);
     });
 
     it('appends a hue word when the collision differs mainly in hue', () => {
@@ -244,7 +371,7 @@ describe('dedupeGroupNames', () => {
         { name: 'maroon', tokens: tk, source: oklch(0.5, 0.15, 30) }, // red
         { name: 'maroon', tokens: tk, source: oklch(0.5, 0.15, 70) }, // orange
       ]);
-      expect(out.map((g) => g.name)).toEqual(['maroon', 'orange-maroon']);
+      expect(out.map((g) => g.name)).toEqual(['maroon', 'maroon-orange']);
     });
 
     it('numerically suffixes a qualifier that itself collides', () => {
@@ -253,7 +380,7 @@ describe('dedupeGroupNames', () => {
         { name: 'maroon', tokens: tk, source: oklch(0.3, 0.1, 30) }, // dark
         { name: 'maroon', tokens: tk, source: oklch(0.22, 0.1, 30) }, // also dark
       ]);
-      expect(out.map((g) => g.name)).toEqual(['maroon', 'dark-maroon', 'dark-maroon-2']);
+      expect(out.map((g) => g.name)).toEqual(['maroon', 'maroon-dark', 'maroon-dark-2']);
     });
 
     it('falls back to a numeric suffix for perceptually identical swatches', () => {
@@ -270,7 +397,7 @@ describe('dedupeGroupNames', () => {
         { name: 'maroon', tokens: tk, source: oklch(0.3, 0.1, 30) },
       ]);
       const json = JSON.parse(toW3CTokens(deduped, 'hex'));
-      expect(Object.keys(json)).toEqual(['maroon', 'dark-maroon']);
+      expect(Object.keys(json)).toEqual(['maroon', 'maroon-dark']);
     });
   });
 });

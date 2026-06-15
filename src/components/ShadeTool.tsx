@@ -58,6 +58,7 @@ import {
   sanitizeName,
   type ColorGroup,
 } from '../lib/exports/tokens';
+import { STOPS } from '../lib/color/anchors';
 
 /**
  * Top-level React island for the shade tool.
@@ -127,6 +128,15 @@ interface TrayColor {
    * circle and writes it back on a drag. Absent for the default tool.
    */
   point?: { x: number; y: number };
+  /**
+   * True once the user locks this swatch via the band's hover lock icon. A
+   * locked swatch can't be recolored (its picker won't open - it falls back to a
+   * plain select button) or removed (the × is hidden), and in image mode its
+   * sample point can't be dragged or deleted. Toggling the lock off restores all
+   * three. Purely working-tray state: dropped on save like the rest of the
+   * non-color metadata.
+   */
+  locked?: boolean;
 }
 
 /**
@@ -349,10 +359,22 @@ const brandNameCache = new Map<Hex, string>();
 function brandNameForHex(hex: Hex): string {
   const cached = brandNameCache.get(hex);
   if (cached !== undefined) return cached;
-  const slug = findByHex(hex)?.slug ?? nearestNamedSlug(hex);
+  const slug = stripStopSuffix(findByHex(hex)?.slug ?? nearestNamedSlug(hex));
   if (brandNameCache.size > 512) brandNameCache.clear();
   brandNameCache.set(hex, slug);
   return slug;
+}
+
+// Named-color slugs for the Tailwind/Material families carry a stop suffix
+// (`tailwind-indigo-600`, `material-teal-500`). As a primitive *family* name
+// that suffix is noise — and worse, the token serializers append their own
+// `50…950` stop, yielding `--color-tailwind-indigo-600-500`. Strip a trailing
+// `-<stop>` so the family name is just `tailwind-indigo` and the only number in
+// an exported token is its own shade stop. No real color name ends in a number,
+// so this only ever trims the family-scale suffix.
+const STOP_SUFFIX = /-(?:50|100|200|300|400|500|600|700|800|900|950)$/;
+function stripStopSuffix(slug: string): string {
+  return slug.replace(STOP_SUFFIX, '');
 }
 
 // Bare-hex URL: /4040ff, /ff7f50 - i.e. /[hex]. We keep the pathname in
@@ -615,7 +637,10 @@ function ShadeToolInner({
   // arbitrary pick still exports as e.g. `--color-royalblue-50` rather than a
   // generic `brand`. (`named` stays exact-only so the input label never
   // mislabels an arbitrary color as a named one.)
-  const brandName = useMemo(() => named?.slug ?? brandNameForHex(hex), [named, hex]);
+  const brandName = useMemo(
+    () => (named?.slug ? stripStopSuffix(named.slug) : brandNameForHex(hex)),
+    [named, hex],
+  );
 
   // URL sync whenever the hex changes from any source, plus persist the
   // last-used color. The localStorage write is the store for the root-route
@@ -833,17 +858,12 @@ function ShadeToolInner({
     return () => window.clearTimeout(t);
   }, [enterHex]);
 
-  // Token-form family slug per tray slot — the single source for BOTH the
-  // multi-color export token family names and the grid's per-column copy labels
-  // (`var(--<name>-…)` / `bg-<name>-…`), so the copied tokens and the exported
-  // file always agree. Derived from each swatch's EFFECTIVE semantic name — the
-  // user's explicit rename, else the positional default ("Primary"/"Secondary"/
-  // "Accent") or a seeded role (Neutral/Success/…), i.e. exactly what the
-  // preview band header shows — then `sanitizeName`d to a CSS-safe slug
-  // ("Accent 2" → "accent-2"). `sanitizeName` is idempotent, so the export path's own
-  // `dedupeGroupNames`→`sanitizeName` pass is a no-op on these. (The band header
-  // still renders the human form; `brandNameForHex` still derives the
-  // single-color `brandName` below — only multi-color families went semantic.)
+  // Tier-2 (semantic) role slug per tray slot — feeds ONLY the export's semantic
+  // alias layer (`--color-primary: var(--color-<colorname>-…)`). Derived from each
+  // swatch's EFFECTIVE semantic name — the user's explicit rename, else the
+  // positional default ("Primary"/"Secondary"/"Accent") or a seeded role
+  // (Neutral/Success/…), i.e. exactly what the preview band header shows — then
+  // `sanitizeName`d to a CSS-safe slug ("Accent 2" → "accent-2").
   const paletteNames = useMemo(
     () =>
       tray.map((c, i) =>
@@ -851,6 +871,31 @@ function ShadeToolInner({
       ),
     [tray],
   );
+  // Tier-1 (primitive) family slug per tray slot — the color's OWN name
+  // (`sandy-brown`, `tailwind-indigo`, …) via `brandNameForHex` (exact named
+  // slug, else nearest by OKLab). This is the single source for BOTH the export's
+  // primitive ramp keys AND the grid's per-column copy labels (`var(--<name>-…)` /
+  // `bg-<name>-…`), so the copied tokens and the exported primitives always agree.
+  // Deduped here (over the real, non-pending swatches) with each swatch's source
+  // OKLCH so two colors that resolve to the same nearest name get descriptive
+  // qualifiers (`royalblue` + `royalblue-dark`) — and the export reuses these
+  // exact slugs rather than re-deduping. Pending "+" slots get a throwaway name
+  // (never rendered). Single color → the one bare slug.
+  const paletteColorNames = useMemo(() => {
+    const realIdx: number[] = [];
+    const groups: ColorGroup[] = [];
+    tray.forEach((c, i) => {
+      if (c.pending) return;
+      realIdx.push(i);
+      groups.push({ name: brandNameForHex(c.hex), tokens: [], source: toOklch(c.hex) });
+    });
+    const deduped = dedupeGroupNames(groups);
+    const out = tray.map(() => brandName ?? 'brand');
+    realIdx.forEach((ti, k) => {
+      out[ti] = deduped[k].name;
+    });
+    return out;
+  }, [tray, brandName]);
   // Stable hex array for the ramp/scale views. Memoized so the per-color export
   // groups (and the grid) don't rebuild every palette color's ramp on each
   // render just because an inline `.map` produced a fresh array identity.
@@ -870,41 +915,60 @@ function ShadeToolInner({
     [tray],
   );
 
-  // Export groups for the current view + palette, consumed by the shade-grid
-  // export row inside the view component. Multi-column (2+ palette colors) →
-  // one collision-safe group per swatch; else just the active scale or ramp.
-  // `source` is each swatch's own OKLCH so dedupeGroupNames can disambiguate a
-  // name collision descriptively (e.g. `maroon` + `dark-maroon`) rather than
-  // with a bare `-2`.
+  // Export groups for the current view + palette, consumed by the export modal.
+  // Each group is TWO-TIER: `name` is the primitive (color-name) slug — reused
+  // verbatim from `paletteColorNames`, already deduped, so it matches the grid's
+  // copy labels — and `semantic` is the user's role label (tier-2 alias keys).
+  // `anchorKey` is the stop where this swatch is pinned in its own ramp, so the
+  // semantic base (`--color-<role>`) aliases the user's actual color. Multi-column
+  // (2+ palette colors) → one group per swatch; else just the active scale/ramp.
   const exportGroups = useMemo<ColorGroup[]>(() => {
     // Skip any in-flight "+" placeholder column - it has no chosen color yet.
-    const realHexes = paletteHexes.filter((_, i) => !tray[i]?.pending);
-    const realNames = paletteNames.filter((_, i) => !tray[i]?.pending);
-    const multiColumn = realHexes.length >= 2;
-    const groupName = (i: number) => realNames[i] ?? brandName ?? 'brand';
-    if (view === 'ramp') {
-      if (multiColumn) {
-        return dedupeGroupNames(
-          realHexes.map((h, i) => ({
-            name: groupName(i),
-            tokens: rampToTokens(oklchRamp(h)),
-            source: toOklch(h),
-          })),
-        );
-      }
-      return [{ name: brandName ?? 'brand', tokens: rampToTokens(ramp) }];
-    }
-    if (multiColumn) {
-      return dedupeGroupNames(
-        realHexes.map((h, i) => ({
-          name: groupName(i),
-          tokens: scaleToTokens(buildScale(h)),
-          source: toOklch(h),
-        })),
-      );
-    }
-    return [{ name: brandName ?? 'brand', tokens: scaleToTokens(scale) }];
-  }, [view, paletteHexes, paletteNames, brandName, ramp, scale, tray]);
+    const realEntries: { hex: Hex; i: number }[] = [];
+    tray.forEach((c, i) => {
+      if (!c.pending) realEntries.push({ hex: c.hex, i });
+    });
+    const multiColumn = realEntries.length >= 2;
+    // Dedupe the tier-2 role slugs independently (a user could rename two swatches
+    // to the same label) so the semantic vars can never collide.
+    const usedRoles = new Set<string>();
+    const uniqueRole = (slug: string): string => {
+      let role = slug;
+      for (let n = 2; usedRoles.has(role); n++) role = `${slug}-${n}`;
+      usedRoles.add(role);
+      return role;
+    };
+    const isRamp = view === 'ramp';
+
+    const groups = realEntries.map(({ hex, i }) => {
+      // Single color reuses the already-computed active ramp/scale; multi rebuilds
+      // each swatch's own.
+      const r = !multiColumn ? ramp : oklchRamp(hex);
+      const s = !multiColumn ? scale : buildScale(hex);
+      const tokens = isRamp ? rampToTokens(r) : scaleToTokens(s);
+      const anchorKey = isRamp
+        ? String(STOPS[r.inputIndex] ?? 500)
+        : String(s.anchorStop);
+      return {
+        name: paletteColorNames[i] ?? brandName ?? 'brand',
+        semantic: uniqueRole(paletteNames[i] ?? 'primary'),
+        anchorKey,
+        tokens,
+        source: toOklch(hex),
+      } satisfies ColorGroup;
+    });
+
+    return groups.length > 0
+      ? groups
+      : [
+          {
+            name: brandName ?? 'brand',
+            semantic: 'primary',
+            anchorKey: isRamp ? String(STOPS[ramp.inputIndex] ?? 500) : String(scale.anchorStop),
+            tokens: isRamp ? rampToTokens(ramp) : scaleToTokens(scale),
+          },
+        ];
+  }, [view, paletteColorNames, paletteNames, brandName, ramp, scale, tray]);
 
   const handleAddToTray = useCallback(() => {
     // Add the color the preview is currently showing (`activeHex` = the
@@ -1107,6 +1171,9 @@ function ShadeToolInner({
       if (open) {
         const target = tray[index];
         if (!target) return;
+        // A locked swatch can't be recolored. The band already renders it as a
+        // plain select button (no picker), so this is just a defensive backstop.
+        if (target.locked) return;
         editTrayIndexRef.current = index;
         editTrayOriginalHexRef.current = target.hex;
         handleChangeHex(target.hex);
@@ -1118,8 +1185,27 @@ function ShadeToolInner({
   );
 
   const handleRemoveFromTray = useCallback((index: number) => {
-    setTray((prev) => prev.filter((_, i) => i !== index));
+    // A locked swatch can't be removed; the band hides its × so this normally
+    // isn't reachable, but guard anyway so no other path can drop a locked color.
+    setTray((prev) => (prev[index]?.locked ? prev : prev.filter((_, i) => i !== index)));
   }, []);
+
+  // Toggle a swatch's lock. A locked swatch is pinned: it can't be recolored or
+  // removed (and in image mode its sample point can't be dragged) until unlocked.
+  const handleToggleLock = useCallback(
+    (index: number) => {
+      let nowLocked = false;
+      setTray((prev) =>
+        prev.map((c, i) => {
+          if (i !== index) return c;
+          nowLocked = !c.locked;
+          return { ...c, locked: nowLocked };
+        }),
+      );
+      pushToast(nowLocked ? 'Color locked.' : 'Color unlocked.', { durationMs: 2000 });
+    },
+    [pushToast],
+  );
 
   // Rename a swatch's semantic role (Primary, Neutral, …). A blank/whitespace
   // value clears the override so the band reverts to the positional default.
@@ -1169,14 +1255,17 @@ function ShadeToolInner({
   // Live during a drag: rewrite the dragged point's color + location and make it
   // the active color (so the ramp tracks the circle under the cursor).
   const handleImageMovePoint = useCallback((index: number, p: SamplePoint) => {
+    // A locked point is pinned: ignore the drag so it keeps its color/position.
     setTray((prev) =>
-      prev.map((c, i) => (i === index ? { ...c, hex: p.hex, point: { x: p.x, y: p.y } } : c)),
+      prev[index]?.locked
+        ? prev
+        : prev.map((c, i) => (i === index ? { ...c, hex: p.hex, point: { x: p.x, y: p.y } } : c)),
     );
     setHex(p.hex);
   }, []);
 
   const handleImageRemovePoint = useCallback((index: number) => {
-    setTray((prev) => prev.filter((_, i) => i !== index));
+    setTray((prev) => (prev[index]?.locked ? prev : prev.filter((_, i) => i !== index)));
   }, []);
 
   // Keep the active color valid in image mode: after a removal (or any drift)
@@ -1310,6 +1399,7 @@ function ShadeToolInner({
                 tray={tray}
                 onSelectColor={selectTrayColor}
                 onRemove={handleRemoveFromTray}
+                onToggleLock={handleToggleLock}
                 onRenameSemantic={handleRenameSemantic}
                 readOnly
               />
@@ -1456,6 +1546,7 @@ function ShadeToolInner({
                 autoOpenIndex={bandAutoOpenIndex}
                 onAutoOpenConsumed={handleBandAutoOpenConsumed}
                 onRemove={handleRemoveFromTray}
+                onToggleLock={handleToggleLock}
                 onRenameSemantic={handleRenameSemantic}
               />
             </div>
@@ -1470,7 +1561,7 @@ function ShadeToolInner({
                 ramp={ramp}
                 sourceHex={hex}
                 paletteHexes={paletteHexes}
-                paletteNames={paletteNames}
+                paletteNames={paletteColorNames}
                 paletteBoundary={paletteBoundary}
                 palettePendingIndex={palettePendingIndex}
                 paletteEnterHex={enterHex}
@@ -1485,7 +1576,7 @@ function ShadeToolInner({
                 scale={scale}
                 sourceHex={hex}
                 paletteHexes={paletteHexes}
-                paletteNames={paletteNames}
+                paletteNames={paletteColorNames}
                 paletteBoundary={paletteBoundary}
                 palettePendingIndex={palettePendingIndex}
                 paletteEnterHex={enterHex}
@@ -2348,6 +2439,7 @@ function PalettePreviewBar({
   autoOpenIndex,
   onAutoOpenConsumed,
   onRemove,
+  onToggleLock,
   onRenameSemantic,
   readOnly = false,
 }: {
@@ -2384,6 +2476,12 @@ function PalettePreviewBar({
   onAutoOpenConsumed?: () => void;
   /** Reveal an X on hover/focus that removes the swatch; omitted ⇒ no remove. */
   onRemove?: (index: number) => void;
+  /**
+   * Reveal a lock toggle on hover/focus that pins the swatch (no recolor, no
+   * remove, no image-point drag) until unlocked. A locked swatch keeps its lock
+   * icon shown at rest. Omitted ⇒ no lock control.
+   */
+  onToggleLock?: (index: number) => void;
   /** Pencil-click commits a renamed semantic role; omitted ⇒ no rename pencil. */
   onRenameSemantic?: (index: number, name: string) => void;
   /** Image-authoritative mode: suppress double-click edit (remove still works). */
@@ -2570,6 +2668,9 @@ function PalettePreviewBar({
         const textColor = readableTextOn(c.hex);
         const blackLevel = wcagLevel(contrastRatio(c.hex, '#000000'));
         const whiteLevel = wcagLevel(contrastRatio(c.hex, '#ffffff'));
+        // A locked swatch drops out of edit mode: it renders as a plain select
+        // button (clicking just makes it the live color, never opens the picker).
+        const swatchEditable = canEdit && !c.locked;
         // Edit popover placement. On desktop (md+) the picker opens BESIDE the
         // column, never below it: editing a swatch updates its ramp column live,
         // so a popover sitting on top of that column (the old `top-full`) would
@@ -2606,7 +2707,7 @@ function PalettePreviewBar({
             style={{ flexGrow: grows[i], flexBasis: 0 }}
             className={'group relative min-w-0' + gapClass(i)}
           >
-            {canEdit ? (
+            {swatchEditable ? (
               // The swatch IS the picker's trigger, so the popover anchors to it
               // and opens just below the swatch. The trigger fills the column and
               // carries the focus ring; a child span paints the swatch color
@@ -2694,7 +2795,36 @@ function PalettePreviewBar({
               </span>
             </div>
             )}
-            {onRemove && !c.pending && (
+            {/* The lock toggle. Hidden at rest and revealed on hover/focus like
+                the × - EXCEPT once locked, when it stays visible so the pinned
+                state always reads (and gives the user a way back to unlock). */}
+            {onToggleLock && !c.pending && (
+              <button
+                type="button"
+                aria-label={c.locked ? `Unlock ${c.hex}` : `Lock ${c.hex}`}
+                title={c.locked ? 'Unlock color' : 'Lock color'}
+                onClick={() => onToggleLock(i)}
+                className={
+                  'absolute left-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-ink/80 text-paper backdrop-blur-sm transition-opacity duration-150 ease-out hover:bg-ink focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 motion-reduce:transition-none ' +
+                  (c.locked
+                    ? 'pointer-events-auto opacity-100'
+                    : 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100')
+                }
+              >
+                {c.locked ? (
+                  <svg viewBox="0 0 16 16" aria-hidden="true" className="h-3.5 w-3.5">
+                    <rect x="3.5" y="7" width="9" height="6.5" rx="1.2" fill="currentColor" />
+                    <path d="M5.25 7V5a2.75 2.75 0 0 1 5.5 0v2" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 16 16" aria-hidden="true" className="h-3.5 w-3.5">
+                    <rect x="3.5" y="7" width="9" height="6.5" rx="1.2" fill="currentColor" />
+                    <path d="M5.25 7V5a2.75 2.75 0 0 1 5.4-1.1" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                  </svg>
+                )}
+              </button>
+            )}
+            {onRemove && !c.pending && !c.locked && (
               <button
                 type="button"
                 aria-label={`Remove ${c.hex} from palette`}

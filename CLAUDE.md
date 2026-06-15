@@ -58,6 +58,15 @@ This is the codebase's core. The contract lives in `types.ts` - every other modu
 - `anchors.ts`, `contrast.ts`, `format.ts` - anchor stops, WCAG contrast badges, copy-format serialization.
 - `page-data.ts` - `buildColorPageData(canonical)`: assembles the shared `ColorPageData` (ramp + scale + 3-up/3-down neighbors). **Single source of truth** reused by the JSON API, the markdown content-negotiation branch, and the MCP `generate_shades` tool, so all three stay identical. `src/lib/markdown/color-page.ts` (`colorPageMarkdown`) renders it to agent-readable markdown.
 
+### Token exports (`src/lib/exports/`)
+
+`tokens.ts` is the hub: both palette shapes normalize to `ColorGroup[]` (each `{ name, tokens, semantic?, anchorKey?, source? }`), and the six serializers code against that array. The exports are **two-tier** for the three CSS-based formats (`tailwind-v4`, `css-vars`, `tailwind-v3`):
+
+- **Tier 1 — primitives**, keyed by `ColorGroup.name` = the color's own name (`--color-sandy-brown-500`; nearest-named slug, deduped via `dedupeGroupNames`).
+- **Tier 2 — semantic aliases**, emitted only when `ColorGroup.semantic` is set (the user's editable role label, e.g. Primary). `semanticTokens(group)` applies a fixed default variant set — base (`anchorKey` stop) / `hover` (+1) / `active` (+2) / `surface` 50 / `muted` 100 / `border` 200 / `emphasis` 800, plus a WCAG-picked `on-<role>` foreground (`contrastRatio`, white vs the 950 shade). v4/css-vars emit live `var()` aliases; v3 (a JS config) emits resolved-hex snapshots. The three JSON formats (`w3c-tokens`, `figma-vars`, `style-dictionary`) ignore `semantic` and stay tier-1 only.
+
+A group with no `semantic` produces byte-identical legacy single-tier output. In `ShadeTool.tsx`, `paletteColorNames` (deduped color names) feeds BOTH the tier-1 primitives AND the grid's per-column copy labels (`bg-<name>-500`), so on-screen copies resolve against the exported primitives; `paletteNames` (semantic role slugs) feeds only tier 2.
+
 ### React island (`src/components/ShadeTool.tsx`)
 
 Top-level `client:load` island. Owns hex, view selection, and copy/export format preferences. The view selection is a single **Algorithm** toggle (`AlgorithmToggle`) switching between the **Tailwind** 11-stop scale (the default) and the **OKLCH** 11-shade continuous ramp (both keyed to the same `50…950` stops; see `ramp.ts` note above). The underlying state is still `view: 'ramp' | 'scale'` (`'scale'` = Tailwind, `'ramp'` = OKLCH), so the `?view=` URL contract and the `shades.view` localStorage key are unchanged - only the labels and default flipped. There is no longer a separate ramp-mode (oklch/classic) toggle; the classic walk is retired from the UI (see `classic.ts` note below). **Preference precedence is URL > localStorage > server-default**, layered to avoid hydration mismatches: initial render uses what the server saw, then post-hydration localStorage is read; if it disagrees with the URL the URL wins.
