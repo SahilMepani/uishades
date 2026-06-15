@@ -21,7 +21,6 @@ import {
   type ColorGroup,
 } from '../src/lib/exports/tokens';
 import { STOPS } from '../src/lib/color/anchors';
-import { contrastRatio } from '../src/lib/color/contrast';
 import { toTailwindV4 } from '../src/lib/exports/tailwind-v4';
 import { toTailwindV3 } from '../src/lib/exports/tailwind-v3';
 import { toCssVars } from '../src/lib/exports/css-vars';
@@ -231,24 +230,16 @@ describe('semanticTokens (tier-2 default variant set)', () => {
     expect(byVariant.active).toEqual({ stop: '950' }); // clamped, not out of range
   });
 
-  it('appends an on-color literal hex that is the WCAG-higher-contrast of white vs the 950 shade', () => {
+  it('emits no on-color variant', () => {
     const out = semanticTokens(group({ anchorKey: '500' }));
-    const on = out.find((s) => s.variant === 'on');
-    expect(on).toBeDefined();
-    if (!on || !('hex' in on.ref)) throw new Error('on-color should be a literal hex');
-    const base = tokens.find((t) => t.key === '500')!.hex;
-    const darkest = tokens[tokens.length - 1].hex;
-    const expected =
-      contrastRatio('#ffffff', base) >= contrastRatio(darkest, base) ? '#ffffff' : darkest;
-    expect(on.ref.hex).toBe(expected);
+    expect(out.find((s) => s.variant === 'on')).toBeUndefined();
   });
 });
 
 describe('semanticVarName', () => {
-  it('names the base bare, suffixes variants, and prefixes the foreground', () => {
+  it('names the base bare and suffixes variants', () => {
     expect(semanticVarName('primary', '')).toBe('primary');
     expect(semanticVarName('primary', 'hover')).toBe('primary-hover');
-    expect(semanticVarName('primary', 'on')).toBe('on-primary');
   });
 });
 
@@ -266,14 +257,14 @@ describe('two-tier CSS serializers (semantic label present)', () => {
     expect(out).toContain('--color-primary: var(--color-sandy-brown-500);');
     expect(out).toContain('--color-primary-hover: var(--color-sandy-brown-600);');
     expect(out).toContain('--color-primary-surface: var(--color-sandy-brown-50);');
-    expect(out).toMatch(/--color-on-primary: #[0-9a-f]{6};/); // literal, not a var()
+    expect(out).not.toContain('on-primary');
   });
 
   it('css-vars emits the semantic tier without the color- prefix', () => {
     const out = toCssVars(groups, 'hex');
     expect(out).toContain('--primary: var(--sandy-brown-500);');
     expect(out).toContain('--primary-border: var(--sandy-brown-200);');
-    expect(out).toMatch(/--on-primary: #[0-9a-f]{6};/);
+    expect(out).not.toContain('on-primary');
   });
 
   it('tailwind-v3 nests the semantic tier as a resolved-hex role group', () => {
@@ -285,7 +276,7 @@ describe('two-tier CSS serializers (semantic label present)', () => {
     // The semantic base is a snapshot of the primitive anchor's hex.
     expect(colors.primary.DEFAULT).toBe(colors['sandy-brown']['500']);
     expect(colors.primary.hover).toBe(colors['sandy-brown']['600']);
-    expect(colors.primary.on).toMatch(/^#[0-9a-f]{6}$/);
+    expect(colors.primary.on).toBeUndefined();
   });
 
   it('JSON serializers ignore the semantic label (tier-1 only)', () => {

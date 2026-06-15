@@ -15,7 +15,6 @@
 import {
   sanitizeName,
   tokenValue,
-  formatValue,
   semanticTokens,
   semanticVarName,
   type ColorGroup,
@@ -29,24 +28,20 @@ function primitiveBlock(g: ColorGroup, valueMode: ValueMode): string {
     .join('\n');
 }
 
-function semanticBlock(g: ColorGroup, valueMode: ValueMode): string {
+function semanticBlock(g: ColorGroup): string {
   const role = sanitizeName(g.semantic ?? '');
   const slug = sanitizeName(g.name);
   return semanticTokens(g)
-    .map((s) => {
-      const value =
-        'stop' in s.ref
-          ? `var(--${slug}-${s.ref.stop})`
-          : formatValue(s.ref.hex, valueMode);
-      return `  --${semanticVarName(role, s.variant)}: ${value};`;
-    })
+    .map(
+      (s) => `  --${semanticVarName(role, s.variant)}: var(--${slug}-${s.ref.stop});`,
+    )
     .join('\n');
 }
 
 export function toCssVars(groups: ColorGroup[], valueMode: ValueMode): string {
   const primitives = groups.map((g) => primitiveBlock(g, valueMode));
   const semantics = groups
-    .map((g) => semanticBlock(g, valueMode))
+    .map((g) => semanticBlock(g))
     .filter((b) => b.length > 0);
   if (semantics.length === 0) {
     return `:root {\n${primitives.join('\n\n')}\n}\n`;

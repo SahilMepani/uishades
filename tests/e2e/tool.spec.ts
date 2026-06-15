@@ -255,12 +255,12 @@ test.describe('shade tool — smoke', () => {
     const preview = page.locator('pre[data-export-preview="true"]');
     await expect(preview).toBeVisible();
 
-    // Change the export-format dropdown inside the modal.
+    // Change the export format - it's now a pill tab row, not a <select>.
     await page
-      .getByLabel(/^Export as/)
+      .getByRole('tab', { name: /Tailwind v3/i })
       .filter({ visible: true })
       .first()
-      .selectOption('tailwind-v3');
+      .click();
 
     const text = await preview.innerText();
     expect(text).toContain('extend:');
@@ -290,10 +290,10 @@ test.describe('shade tool — smoke', () => {
     // CSS variables shows the value format (hex vs oklch()) inline in each
     // index-based token.
     await page
-      .getByLabel(/^Export as/)
+      .getByRole('tab', { name: /CSS variables/i })
       .filter({ visible: true })
       .first()
-      .selectOption('css-vars');
+      .click();
 
     // The export follows the modal-local "Copy as" picker. Its default is hex,
     // so the tokens emit hex values - no oklch(). Tokens are now keyed to the
@@ -305,12 +305,13 @@ test.describe('shade tool — smoke', () => {
 
     // Switch "Copy as" to oklch() inside the modal; the same export now emits
     // oklch() values live (no need to close/reopen). This is local to the
-    // export - the ramp's own rows keep rendering hex.
+    // export - the ramp's own rows keep rendering hex. "Copy as" is now a pill
+    // tab row, so click the oklch() tab rather than picking a <select> option.
     await page
-      .getByLabel('Copy as', { exact: true })
+      .getByRole('tab', { name: 'oklch()', exact: true })
       .filter({ visible: true })
       .first()
-      .selectOption('oklch');
+      .click();
     await expect(preview).toContainText(/--[\w-]+-50: oklch\(/);
     await expect(preview).toContainText(/--[\w-]+-950: oklch\(/);
 

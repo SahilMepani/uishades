@@ -8,8 +8,8 @@
  *
  * **Two-tier:** when any group carries a `semantic` label, a second set of
  * quoted color keys (the roles — `'primary'`, `'neutral'`, …) is appended, each
- * a nested map (`DEFAULT`/`hover`/`active`/`surface`/`muted`/`border`/`emphasis`/
- * `on`). Because a v3 config is a plain JS object, these can't `var()`-reference
+ * a nested map (`DEFAULT`/`hover`/`active`/`surface`/`muted`/`border`/`emphasis`).
+ * Because a v3 config is a plain JS object, these can't `var()`-reference
  * the primitive keys above — they are *resolved snapshots* of the primitive
  * hexes (a comment in the output says so). v4/css-vars keep live `var()` aliases.
  */
@@ -17,7 +17,6 @@
 import {
   sanitizeName,
   tokenValue,
-  formatValue,
   semanticTokens,
   type ColorGroup,
   type ValueMode,
@@ -41,10 +40,7 @@ function semanticColorBlock(g: ColorGroup, valueMode: ValueMode): string {
   const byKey = new Map(g.tokens.map((t) => [t.key, t]));
   const entries = semanticTokens(g)
     .map((s) => {
-      const value =
-        'stop' in s.ref
-          ? tokenValue(byKey.get(s.ref.stop)!, valueMode)
-          : formatValue(s.ref.hex, valueMode);
+      const value = tokenValue(byKey.get(s.ref.stop)!, valueMode);
       return `          '${semanticKey(s.variant)}': '${value}',`;
     })
     .join('\n');

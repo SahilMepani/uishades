@@ -16,7 +16,6 @@
 
 import type { ContinuousRamp, ExportFormat, Hex, OKLCH, TailwindScale } from '../color/types';
 import { formatForCopy } from '../color/format';
-import { contrastRatio } from '../color/contrast';
 import { ACHROMATIC_CHROMA } from '../color/hue';
 import { STOPS } from '../color/anchors';
 
@@ -142,8 +141,6 @@ export function tokenValue(t: ColorToken, mode: ValueMode): string {
  *   - `surface`/`muted`/`border` are fixed light stops (50/100/200) for tinted
  *     backgrounds and dividers — Radix-style container steps.
  *   - `emphasis` (800) is high-contrast text/icon in the hue.
- * `on` (readable foreground on the base) is appended separately by
- * `semanticTokens` since it's contrast-derived, not a ramp stop.
  *
  * `offset` = steps darker than the anchor (clamped into the ramp); `abs` = an
  * absolute stop number (skipped if that stop isn't present in the ramp).
@@ -160,34 +157,29 @@ const SEMANTIC_VARIANTS: ReadonlyArray<
   { variant: 'emphasis', abs: 800 },
 ];
 
-/** A resolved tier-2 token: a variant of a role, aliasing either a primitive
- * stop (`{ stop }`) or a literal color (`{ hex }`, used for the `on-` foreground
- * which has no primitive of its own). */
+/** A resolved tier-2 token: a variant of a role, aliasing a primitive stop of
+ * the role's own ramp. */
 export interface SemanticToken {
   /** Variant key without the role prefix: '' (the base/DEFAULT), 'hover',
-   * 'active', 'surface', 'muted', 'border', 'emphasis', 'on'. */
+   * 'active', 'surface', 'muted', 'border', 'emphasis'. */
   variant: string;
-  ref: { stop: string } | { hex: Hex };
+  ref: { stop: string };
 }
 
 /**
  * Compose the flat CSS custom-property local name for a semantic variant, e.g.
- * `('primary','')` → `primary`, `('primary','hover')` → `primary-hover`,
- * `('primary','on')` → `on-primary` (the foreground reads naturally as
- * "on primary"). The role is already a sanitized slug.
+ * `('primary','')` → `primary`, `('primary','hover')` → `primary-hover`. The
+ * role is already a sanitized slug.
  */
 export function semanticVarName(role: string, variant: string): string {
   if (variant === '') return role;
-  if (variant === 'on') return `on-${role}`;
   return `${role}-${variant}`;
 }
 
 /**
  * Resolve a group's tier-2 semantic tokens from the default variant set. Returns
- * `[]` when the group has no `semantic` label (tier-1 only). Each stop-backed
- * variant points at a stop of the group's OWN primitive ramp; the appended
- * `on` variant is the WCAG-higher-contrast of white vs the role's darkest shade,
- * measured against the base (anchor) color, emitted as a literal hex.
+ * `[]` when the group has no `semantic` label (tier-1 only). Each variant
+ * points at a stop of the group's OWN primitive ramp.
  */
 export function semanticTokens(group: ColorGroup): SemanticToken[] {
   if (!group.semantic || group.tokens.length === 0) return [];
@@ -210,17 +202,6 @@ export function semanticTokens(group: ColorGroup): SemanticToken[] {
     }
   }
 
-  // Readable foreground on the base: pick whichever of white / the darkest shade
-  // has the higher contrast ratio against the base color.
-  const baseHex = byKey.get(keys[anchorIdx])?.hex;
-  const darkest = group.tokens[group.tokens.length - 1]?.hex;
-  if (baseHex && darkest) {
-    const onHex =
-      contrastRatio('#ffffff', baseHex) >= contrastRatio(darkest, baseHex)
-        ? '#ffffff'
-        : darkest;
-    out.push({ variant: 'on', ref: { hex: onHex } });
-  }
   return out;
 }
 

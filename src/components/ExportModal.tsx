@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import type { CopyFormat, ExportFormat } from '../lib/color/types';
 import type { ColorGroup, ValueMode } from '../lib/exports/tokens';
 import CopyFormatPicker from './CopyFormatPicker';
-import { SELECT_CLASS, SelectChevron } from './control-styles';
 import { toTailwindV4 } from '../lib/exports/tailwind-v4';
 import { toTailwindV3 } from '../lib/exports/tailwind-v3';
 import { toCssVars } from '../lib/exports/css-vars';
@@ -129,7 +128,6 @@ export default function ExportModal({
   }, [text, format, pushToast]);
 
   const dialogRef = useRef<HTMLDivElement | null>(null);
-  const titleId = 'export-modal-title';
 
   // Escape-to-close. Kept separate from the focus/scroll management below so
   // that if `onClose`'s identity ever changes, only this cheap listener
@@ -171,7 +169,11 @@ export default function ExportModal({
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={titleId}
+        aria-label={
+          groups.length === 1
+            ? `Export ${groups[0].name} scale`
+            : `Export palette (${groups.length} colors)`
+        }
         tabIndex={-1}
         className={
           // Fixed height (not max-h) so the centered dialog stays put when the
@@ -181,19 +183,39 @@ export default function ExportModal({
           'shadow-[0_24px_64px_rgba(17,17,16,0.28)] focus:outline-none'
         }
       >
-        <div className="flex items-center justify-between gap-3 border-b border-hairline px-5 py-3.5">
-          <h2 id={titleId} className="font-display text-base text-ink">
-            {groups.length === 1 ? (
-              <>
-                Export <span className="font-mono text-mute">{groups[0].name}</span> scale
-              </>
-            ) : (
-              <>
-                Export palette{' '}
-                <span className="font-mono text-mute">({groups.length} colors)</span>
-              </>
-            )}
-          </h2>
+        {/* Row 1: the export-format picker, now a pill segmented control in the
+            same style as the Algorithm (Tailwind/OKLCH) toggle. The close button
+            shares the row, pinned right. The old "Export palette (N colors)"
+            heading is gone - the dialog is labelled via aria-label below. */}
+        <div className="flex items-start justify-between gap-3 border-b border-hairline px-5 py-3">
+          <div
+            role="tablist"
+            aria-label="Export format"
+            className="flex flex-wrap gap-x-2.5 gap-y-2.5"
+          >
+            {FORMAT_OPTIONS.map((opt) => {
+              const active = opt.value === format;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => onFormatChange(opt.value)}
+                  className={[
+                    'rounded-full px-3 py-1.5 font-mono text-[11px] font-medium uppercase tracking-tight',
+                    'ring-1 transition-colors duration-150 ease-out motion-reduce:transition-none',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
+                    active
+                      ? 'bg-ink text-paper ring-ink shadow-sm'
+                      : 'text-ink/70 ring-ink/15 hover:text-ink hover:ring-ink/30',
+                  ].join(' ')}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
           <button
             type="button"
             onClick={onClose}
@@ -216,38 +238,16 @@ export default function ExportModal({
           </button>
         </div>
 
-        {/* The "Export" format picker plus the modal-local "Copy as" value-format
-            picker (which greys out oklch() for formats that only emit hex). The
-            "Copy as" choice drives only the emitted code below - it does not
-            touch the shared copy format the ramp/shade rows render. */}
+        {/* Row 2: the modal-local "Copy as" value-format picker (which greys out
+            oklch() for formats that only emit hex). It drives only the emitted
+            code below - it does not touch the shared copy format the ramp/shade
+            rows render. */}
         <div className="flex flex-wrap items-center gap-3 border-b border-hairline px-5 py-3">
-          <label className="flex items-center gap-3 text-sm text-ink/80">
-            <span className="eyebrow">Export</span>
-            <span className="relative inline-flex">
-              <select
-                value={format}
-                onChange={(e) => onFormatChange(e.target.value as ExportFormat)}
-                aria-label="Export as"
-                className={SELECT_CLASS}
-              >
-                {FORMAT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <SelectChevron />
-            </span>
-          </label>
-
-          <label className="flex items-center gap-3 text-sm text-ink/80">
-            <span className="eyebrow">Copy as</span>
-            <CopyFormatPicker
-              value={copyFormat}
-              onChange={onCopyFormatChange}
-              exportFormat={format}
-            />
-          </label>
+          <CopyFormatPicker
+            value={copyFormat}
+            onChange={onCopyFormatChange}
+            exportFormat={format}
+          />
         </div>
 
         <div className="relative min-h-0 flex-1">

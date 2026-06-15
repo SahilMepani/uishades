@@ -8,7 +8,7 @@
  *
  * **Two-tier:** when any group carries a `semantic` label the block grows a
  * second tier of `--color-{role}*: var(--color-{primitive}-{stop})` aliases
- * (Tailwind generates `bg-primary`, `text-on-primary`, …) under a `/* semantic *\/`
+ * (Tailwind generates `bg-primary`, `bg-primary-hover`, …) under a `/* semantic *\/`
  * header, with the primitives under `/* primitives *\/`. With no semantic labels
  * the output is byte-for-byte the original single-tier block.
  */
@@ -16,7 +16,6 @@
 import {
   sanitizeName,
   tokenValue,
-  formatValue,
   semanticTokens,
   semanticVarName,
   type ColorGroup,
@@ -30,24 +29,21 @@ function primitiveBlock(g: ColorGroup, valueMode: ValueMode): string {
     .join('\n');
 }
 
-function semanticBlock(g: ColorGroup, valueMode: ValueMode): string {
+function semanticBlock(g: ColorGroup): string {
   const role = sanitizeName(g.semantic ?? '');
   const slug = sanitizeName(g.name);
   return semanticTokens(g)
-    .map((s) => {
-      const value =
-        'stop' in s.ref
-          ? `var(--color-${slug}-${s.ref.stop})`
-          : formatValue(s.ref.hex, valueMode);
-      return `  --color-${semanticVarName(role, s.variant)}: ${value};`;
-    })
+    .map(
+      (s) =>
+        `  --color-${semanticVarName(role, s.variant)}: var(--color-${slug}-${s.ref.stop});`,
+    )
     .join('\n');
 }
 
 export function toTailwindV4(groups: ColorGroup[], valueMode: ValueMode): string {
   const primitives = groups.map((g) => primitiveBlock(g, valueMode));
   const semantics = groups
-    .map((g) => semanticBlock(g, valueMode))
+    .map((g) => semanticBlock(g))
     .filter((b) => b.length > 0);
   if (semantics.length === 0) {
     return `@theme {\n${primitives.join('\n\n')}\n}\n`;

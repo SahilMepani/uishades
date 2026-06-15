@@ -14,7 +14,7 @@ import { test, expect, type Page } from '@playwright/test';
  *  2. The export is TWO-TIER. Tier-1 primitive ramps (`--color-<name>-50…950`)
  *     are keyed by each swatch's own COLOR name (nearest-named slug). Tier-2
  *     semantic aliases (`--color-<role>`, `--color-<role>-hover`,
- *     `--color-on-<role>`, …) are keyed by the swatch's semantic role (the
+ *     `--color-<role>-surface`, …) are keyed by the swatch's semantic role (the
  *     user's rename, else the positional default / seeded role) and `var()`-point
  *     back at the primitives. A rename flows through to the SEMANTIC tier names.
  */
@@ -68,10 +68,11 @@ function familiesIn(text: string): string[] {
   return [...text.matchAll(/--color-([a-z0-9-]+)-500: #/g)].map((m) => m[1]);
 }
 
-/** Tier-2 semantic role slugs, read off the one-per-role `--color-on-<role>:`
- *  foreground token (the cleanest unique marker for each role). */
+/** Tier-2 semantic role slugs, read off the one-per-role `--color-<role>-surface:`
+ *  alias (the cleanest unique marker for each role - `surface` is always emitted
+ *  and, unlike the bare base alias, can't be confused with the other variants). */
 function rolesIn(text: string): string[] {
-  return [...text.matchAll(/--color-on-([a-z0-9-]+):/g)].map((m) => m[1]);
+  return [...text.matchAll(/--color-([a-z0-9-]+)-surface: var\(/g)].map((m) => m[1]);
 }
 
 test.describe('multi-color palette export', () => {
@@ -106,8 +107,9 @@ test.describe('multi-color palette export', () => {
     );
     expect(text).toMatch(/--color-primary: var\(--color-[a-z0-9-]+-\d+\);/);
 
-    // The dialog heading reflects the multi-color palette.
-    await expect(page.getByRole('heading', { name: /Export palette/i })).toBeVisible();
+    // The dialog's accessible name reflects the multi-color palette (the visible
+    // heading was replaced by the format pill row; the name lives on aria-label).
+    await expect(page.getByRole('dialog', { name: /Export palette/i })).toBeVisible();
   });
 
   test('renaming a swatch flows through to the semantic-tier role names', async ({ page }) => {
