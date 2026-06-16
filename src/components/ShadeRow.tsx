@@ -216,13 +216,13 @@ function ShadeRow({
     displayValue,
     shade.stop !== undefined ? String(shade.stop) : '',
     roleLabel ?? '',
-    shade.isInput ? 'source' : '',
+    shade.isInput ? 'base' : '',
   ]
     .filter(Boolean)
     .join(' ');
   const ariaLabel = canCopy
-    ? `${visibleLabel}. Click to copy${shade.isInput ? ' (pinned source)' : ''}`
-    : `${visibleLabel}. Click to view${shade.isInput ? ' (pinned source)' : ''}`;
+    ? `${visibleLabel}. Click to copy${shade.isInput ? ' (pinned base)' : ''}`
+    : `${visibleLabel}. Click to view${shade.isInput ? ' (pinned base)' : ''}`;
 
   return (
     <div className="group relative">

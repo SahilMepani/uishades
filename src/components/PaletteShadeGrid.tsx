@@ -377,7 +377,7 @@ function GridSwatch({
   );
   const ariaLabel = useMemo(
     () =>
-      `${valueLabel}${roleLabel ? ` ${roleLabel}` : ''}${shade.isInput ? ' source' : ''}. Click to copy, double-click or Shift+Enter to use as source`,
+      `${valueLabel}${roleLabel ? ` ${roleLabel}` : ''}${shade.isInput ? ' base' : ''}. Click to copy, double-click or Shift+Enter to use as base`,
     [valueLabel, roleLabel, shade.isInput],
   );
 

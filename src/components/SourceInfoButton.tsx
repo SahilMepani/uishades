@@ -46,7 +46,7 @@ export default function SourceInfoButton({ fg }: { fg: 'white' | 'black' }) {
     >
       <button
         type="button"
-        aria-label="What is the source shade?"
+        aria-label="What is the base shade?"
         aria-expanded={open}
         aria-controls={id}
         onClick={() => setOpen((o) => !o)}
@@ -63,7 +63,7 @@ export default function SourceInfoButton({ fg }: { fg: 'white' | 'black' }) {
         <div
           id={id}
           role="dialog"
-          aria-label="About the source shade"
+          aria-label="About the base shade"
           className={
             'absolute left-0 top-full z-40 mt-2 w-64 max-w-[calc(100vw-2rem)] ' +
             'border border-hairline bg-paper p-3 text-left font-sans text-xs font-normal normal-case leading-relaxed tracking-normal text-ink ' +
@@ -71,7 +71,7 @@ export default function SourceInfoButton({ fg }: { fg: 'white' | 'black' }) {
           }
         >
           <p>
-            The <span className="font-semibold">source</span> is the color you
+            The <span className="font-semibold">base</span> is the color you
             entered. Every other shade is derived from it - lighter tints above,
             darker shades below - so the palette stays consistent with the color
             you picked.
