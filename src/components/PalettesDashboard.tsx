@@ -21,8 +21,6 @@ import type { PaletteSummary } from '../lib/auth/types';
  * so `useToast` resolves here.
  */
 
-const MAX_PALETTES = 100;
-
 interface PalettesResponse {
   palettes: PaletteSummary[];
 }
@@ -176,7 +174,7 @@ function DashboardInner() {
           <h1 className="display text-3xl">Palettes</h1>
           {palettes && (
             <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-              {palettes.length} / {MAX_PALETTES} saved
+              {palettes.length} saved
             </span>
           )}
         </div>

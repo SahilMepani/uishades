@@ -4,9 +4,10 @@
  * as an OKLCH ramp or Tailwind scale.
  *
  * Renders the shared `ColorToolLayout` in `mode="palette"`, which opens the
- * underlying shade tool straight into its multi-color palette view: the tray is
- * pre-seeded with a brand color plus the conventional Neutral / Success /
- * Warning / Error roles (see ShadeTool's `mode` prop and `buildSeededPaletteTray`).
+ * underlying shade tool straight into its palette view, seeded with a single
+ * brand color. The conventional Neutral / Success / Warning / Error roles are
+ * opt-in via the "Status colors" toggle (off by default — see ShadeTool's
+ * `mode` prop and `handleToggleStatusColors`).
  *
  * Like `/image-color-picker`, this page has no canonical color and nothing for
  * agents to content-negotiate, so it stays a plain **prerendered, indexable**

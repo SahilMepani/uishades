@@ -141,12 +141,13 @@ interface TrayColor {
 }
 
 /**
- * Conventional design-token roles auto-seeded the first time a palette becomes
- * multi-color (the user adds a second color). They're ordinary, editable,
- * removable swatches - the user can recolor or delete any of them - but they
- * give a fresh multi-color palette a sensible starting shape instead of two
- * bare brand colors. Hexes are canonical lowercase `#rrggbb`; the common bases
- * are Tailwind's gray-500 / green-500 / amber-500 / red-500.
+ * Conventional design-token roles the user can opt into as a group via the
+ * "Status colors" toggle (off by default - see `handleToggleStatusColors`).
+ * Turning it on appends these as ordinary, editable, removable `fixed` swatches;
+ * turning it off lifts the group out of the tray and stashes it, so re-enabling
+ * restores the user's edits rather than re-seeding (see `handleToggleStatusColors`
+ * / `stashedStatusColors`). Hexes are canonical lowercase `#rrggbb`; the common
+ * bases are Tailwind's gray-500 / green-500 / amber-500 / red-500.
  */
 const DEFAULT_PALETTE_EXTRAS: { hex: Hex; semanticName: string }[] = [
   { hex: '#6b7280', semanticName: 'Neutral' },
@@ -156,30 +157,21 @@ const DEFAULT_PALETTE_EXTRAS: { hex: Hex; semanticName: string }[] = [
 ];
 
 /**
- * Build the tray a `mode="palette"` page opens into: the page's brand color as
- * the Primary swatch, followed by the conventional Neutral/Success/Warning/Error
- * roles - i.e. the exact shape a first "Add to palette" produces (see
- * `handleAddToTray`'s 0 → 1 branch). Seeded synchronously in the tray's
- * `useState` initializer so the multi-color palette is what SSR renders and what
- * the first client paint hydrates - no empty-tray flash. Any fixed role that
- * collides with the seed hex is dropped so the tray keeps hexes unique.
+ * Build the status-colors group (`fixed` swatches) to append to a tray, skipping
+ * any hex already present so the tray keeps hexes unique.
  */
-function buildSeededPaletteTray(
-  seedHex: Hex,
+function buildStatusColorGroup(
+  used: Set<Hex>,
   view: View,
   copyFormat: CopyFormat,
 ): TrayColor[] {
-  const used = new Set<Hex>([seedHex]);
-  const extras: TrayColor[] = DEFAULT_PALETTE_EXTRAS.filter(
-    (e) => !used.has(e.hex),
-  ).map((e) => ({
+  return DEFAULT_PALETTE_EXTRAS.filter((e) => !used.has(e.hex)).map((e) => ({
     hex: e.hex,
     view,
     copyFormat,
     semanticName: e.semanticName,
     fixed: true,
   }));
-  return [{ hex: seedHex, view, copyFormat }, ...extras];
 }
 
 // Diagonal-stripe fill for an in-flight "+" placeholder column (band + shade
@@ -837,14 +829,16 @@ function ShadeToolInner({
   // touches the URL or localStorage, so `/` and `/[hex]` stay identical and `/`
   // is only promoted to `/[hex]` on a real color change.
   // `mode="palette"` (`/color-palette-generator`) opens straight into the
-  // multi-color palette, so its tray is seeded synchronously here - same shape a
-  // first "Add to palette" produces. SSR therefore renders the palette layout
-  // and the first client paint hydrates it with no empty-tray flash (`view` /
-  // `copyFormat` are still their SSR seeds at initializer time, so the snapshot
-  // matches). Default / image modes start empty as before.
+  // palette layout, so its tray is seeded synchronously here with the page's
+  // brand color. SSR therefore renders the palette layout and the first client
+  // paint hydrates it with no empty-tray flash (`view` / `copyFormat` are still
+  // their SSR seeds at initializer time, so the snapshot matches). The
+  // conventional Neutral/Success/Warning/Error roles are NOT seeded - they're
+  // opt-in via the "Status colors" toggle (off by default). Default / image
+  // modes start empty as before.
   const [tray, setTray] = useState<TrayColor[]>(() =>
     isPalette
-      ? buildSeededPaletteTray(normalizeHexInput(initialHex), view, copyFormat)
+      ? [{ hex: normalizeHexInput(initialHex), view, copyFormat }]
       : [],
   );
 
@@ -1014,36 +1008,50 @@ function ShadeToolInner({
       // duplicate add never re-animates the existing column.
       setEnterHex(addHex);
       const added: TrayColor = { hex: addHex, view, copyFormat };
-      // First time the palette opens (0 → 1): seed the conventional
-      // design-token roles alongside the user's first color, so the palette
-      // opens as Primary + Neutral/Success/Warning/Error rather than
-      // a single bare swatch. Adding one color now switches straight to the
-      // multi-color palette layout. Any fixed color whose hex collides with an
-      // existing swatch is skipped (the tray keeps hexes unique). Default tool
-      // only - image mode owns its extracted palette and adds via
-      // `handleImageAddPoint`, never here.
-      if (prev.length === 0) {
-        const used = new Set([...prev.map((c) => c.hex), addHex]);
-        const extras: TrayColor[] = DEFAULT_PALETTE_EXTRAS.filter(
-          (e) => !used.has(e.hex),
-        ).map((e) => ({
-          hex: e.hex,
-          view,
-          copyFormat,
-          semanticName: e.semanticName,
-          fixed: true,
-        }));
-        pushToast(`Added ${addHex} to the palette.`);
-        return [...prev, added, ...extras];
-      }
-      // Later adds: drop the new brand color in just before the fixed block so
-      // Primary + Accents stay grouped ahead of Neutral/…
       pushToast(`Added ${addHex} to the palette.`);
+      // Drop the new brand color in just before the status-colors block (if the
+      // user has opted into it) so Primary + Accents stay grouped ahead of
+      // Neutral/Success/Warning/Error.
       const firstFixed = prev.findIndex((c) => c.fixed);
       if (firstFixed === -1) return [...prev, added];
       return [...prev.slice(0, firstFixed), added, ...prev.slice(firstFixed)];
     });
   }, [activeHex, view, copyFormat, pushToast]);
+
+  // Whether the status-colors group is currently present (drives the toggle's
+  // on/off state).
+  const statusColorsOn = useMemo(() => tray.some((c) => c.fixed), [tray]);
+  // The status swatches as they were when last toggled OFF, so toggling back ON
+  // restores the user's edits instead of re-seeding bare defaults. `null` until
+  // the group has been turned off at least once. Held outside the tray while off
+  // so the export and PNG (both tray-derived) never include the hidden group.
+  const [stashedStatusColors, setStashedStatusColors] = useState<TrayColor[] | null>(null);
+
+  // Bulk add/remove the conventional Neutral/Success/Warning/Error roles as a
+  // group (the "Status colors" toggle). Turning it OFF lifts the `fixed`
+  // swatches out of the tray entirely - so they're excluded from the export and
+  // the PNG, which both derive from the tray - and stashes them (edits and all).
+  // Turning it back ON restores that stash so the user picks up exactly where
+  // they left off; the very first time on (no stash yet) it seeds the defaults.
+  // The group is always reinstated as the suffix after the user's brand colors,
+  // and any hex that now collides with a brand color is dropped (hexes stay
+  // unique). Freely toggleable.
+  const handleToggleStatusColors = useCallback(() => {
+    if (statusColorsOn) {
+      // Off: stash the current status swatches (with edits) and drop them.
+      setStashedStatusColors(tray.filter((c) => c.fixed));
+      setTray((prev) => prev.filter((c) => !c.fixed));
+      return;
+    }
+    // On: restore the stash (edits preserved) or seed defaults the first time.
+    setTray((prev) => {
+      const used = new Set(prev.map((c) => c.hex));
+      const group = (
+        stashedStatusColors ?? buildStatusColorGroup(used, view, copyFormat)
+      ).filter((c) => !used.has(c.hex));
+      return [...prev, ...group];
+    });
+  }, [statusColorsOn, tray, stashedStatusColors, view, copyFormat]);
 
   // The left-rail / mobile preview swatches each own a ColorPicker for editing
   // the live page color. Separate refs per column (desktop rail / mobile panel)
@@ -1331,10 +1339,6 @@ function ShadeToolInner({
           pushToast('Sign in to save palettes.', { durationMs: 3000 });
           return;
         }
-        if (res.status === 403) {
-          pushToast("You've reached the saved-palette limit.", { durationMs: 3000 });
-          return;
-        }
         if (!res.ok) {
           pushToast("Couldn't save the palette.", { durationMs: 3000 });
           return;
@@ -1506,6 +1510,18 @@ function ShadeToolInner({
           <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-hairline pb-2">
             <div className="flex items-center gap-3">
               <AlgorithmToggle view={view} onChange={setView} compact />
+              {/* Opt-in Neutral/Success/Warning/Error group. Only relevant once a
+                  palette exists, and not in image mode (the image owns its
+                  colors). Freely toggleable on/off. */}
+              {!isImage && tray.length >= 1 && (
+                <>
+                  <span aria-hidden="true" className="font-mono text-[11px] text-mute">·</span>
+                  <StatusColorsToggle
+                    on={statusColorsOn}
+                    onToggle={handleToggleStatusColors}
+                  />
+                </>
+              )}
               <span aria-hidden="true" className="font-mono text-[11px] text-mute">·</span>
               {view === 'ramp' ? (
                 <DownloadPngButton
@@ -2087,6 +2103,133 @@ function PickerIcon({ className }: { className?: string }) {
       <path d="M11.2 1.6a2.2 2.2 0 0 1 3.1 3.1l-1.4 1.4-3.1-3.1 1.4-1.4Z" fill="currentColor"/>
       <path d="m9.1 3.7 3.1 3.1-6.6 6.6-3.1-.5L2 9.8 9.1 3.7Z" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round"/>
     </svg>
+  );
+}
+
+/**
+ * On/off switch for the opt-in "Status colors" group (Neutral / Success /
+ * Warning / Error). Sits next to the algorithm toggle. Freely toggleable -
+ * turning it off drops the whole group, turning it back on re-seeds the defaults.
+ */
+function StatusColorsToggle({
+  on,
+  onToggle,
+}: {
+  on: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-label="Status colors"
+        onClick={onToggle}
+        title={
+          on
+            ? 'Hide the generated Neutral / Success / Warning / Error colors'
+            : 'Generate Neutral / Success / Warning / Error colors'
+        }
+        className="group inline-flex items-center gap-2 rounded-full focus-visible:outline-none"
+      >
+        <span
+          className={[
+            'font-mono font-medium uppercase tracking-tight text-xs',
+            on ? 'text-ink' : 'text-ink/70 group-hover:text-ink',
+          ].join(' ')}
+        >
+          Status colors
+        </span>
+        <span
+          aria-hidden="true"
+          className={[
+            'relative inline-block h-5 w-9 rounded-full ring-1 ring-ink/10 transition-colors duration-200 ease-out motion-reduce:transition-none',
+            'group-focus-visible:ring-2 group-focus-visible:ring-accent/60',
+            on ? 'bg-ink' : 'bg-paper-2',
+          ].join(' ')}
+        >
+          <span
+            className={[
+              'absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-paper shadow-sm transition-transform duration-200 ease-out motion-reduce:transition-none',
+              on ? 'translate-x-4' : 'translate-x-0',
+            ].join(' ')}
+          />
+        </span>
+      </button>
+      <StatusColorsInfoButton />
+    </div>
+  );
+}
+
+/**
+ * `?` info button + popover explaining the opt-in Status-colors group. Same
+ * click-to-toggle / outside-click / Escape pattern as `AlgorithmInfoButton`.
+ */
+function StatusColorsInfoButton() {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const id = 'status-colors-info-popover';
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: globalThis.MouseEvent) => {
+      if (!wrapRef.current) return;
+      if (!wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={wrapRef} className="relative inline-flex">
+      <button
+        type="button"
+        aria-label="About status colors"
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen((o) => !o)}
+        className={
+          'inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] ' +
+          'font-semibold leading-none text-mute ring-1 ring-ink/20 ' +
+          'hover:text-ink hover:ring-ink/40 ' +
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60'
+        }
+      >
+        ?
+      </button>
+      {open && (
+        <div
+          id={id}
+          role="dialog"
+          aria-label="Status colors info"
+          className={
+            'absolute left-0 top-full z-40 mt-2 w-72 max-w-[calc(100vw-2rem)] ' +
+            'border border-hairline bg-paper p-3 text-xs leading-relaxed text-ink ' +
+            'shadow-[0_10px_30px_rgba(17,17,16,0.12)]'
+          }
+        >
+          <p className="mb-2">
+            <span className="font-mono font-semibold">Status colors</span> adds a ready-made
+            set of UI state roles to your palette — <strong>Neutral</strong>,{' '}
+            <strong>Success</strong>, <strong>Warning</strong>, and <strong>Error</strong> —
+            each as a full 50–950 ramp you can export alongside your brand colors.
+          </p>
+          <p>
+            They start as sensible defaults — recolor, rename, or remove any of them like any
+            other swatch. Toggle it off to drop the group from your export and PNG; toggle it
+            back on and your edits return right where you left them.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 

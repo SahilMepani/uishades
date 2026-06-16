@@ -16,13 +16,22 @@
  * Chroma bell curve: 1.0 at L=0.5, ~0.3 at L=0 or L=1. Smooth parabola
  * `0.3 + 0.7 * (1 - 4 * (L - 0.5)^2)`. Prevents washed-out clipping at
  * the lightness extremes where the sRGB gamut is narrow.
+ *
+ * Chroma is normalized **relative to the input's snap step**, the same as
+ * the Tailwind scale (`scale.ts`): the input's measured chroma is treated
+ * as the bell value at its own lightness, and every other step scales by
+ * the ratio of bell multipliers. Without this, a low-chroma input (a light
+ * pastel, a near-white) would only ever scale its already-tiny chroma
+ * *down*, so the whole ramp collapsed to muddy grays whose dark end was
+ * indistinguishable. Normalizing lets a desaturated input still produce a
+ * ramp with readable hue through the mid/dark stops.
  */
 
 import { oklchToHex, toOklch } from './parse';
 import type { ContinuousRamp, Hex, OKLCH, Shade } from './types';
 
 const INNER_STEPS = 11;
-const L_TOP = 0.95; // L of the lightest inner step (achromatic → #eeeeee)
+const L_TOP = 0.97; // L of the lightest inner step (achromatic → #f5f5f5). Kept close to white so very light inputs (a pastel at L≈0.93) still snap *below* the top step and leave a lighter tint above them, instead of pinning to index 0 with nothing lighter.
 const L_BOTTOM = 0.205; // L of the darkest inner step, matched to the Tailwind 950 anchor (achromatic → #171717) so the darkest shade keeps visible hue instead of collapsing to near-black
 
 function chromaBellMultiplier(l: number): number {
@@ -75,12 +84,19 @@ export function oklchRamp(input: Hex): ContinuousRamp {
   // hex literally there.
   const snapInner = nearestIndex(inputOklch.l, stepLs);
 
+  // Treat the input's chroma as the bell value at *its own* snapped L, then
+  // scale every other step by the ratio of bell multipliers. This mirrors
+  // the Tailwind scale's `inputC * cMul / anchorCMul` normalization, so a
+  // desaturated input (light pastel / near-white) still yields vivid mids
+  // and a hue-bearing dark end rather than a stack of muddy grays.
+  const anchorMul = chromaBellMultiplier(stepLs[snapInner]);
+
   const shades: Shade[] = stepLs.map((l, i) => {
     if (i === snapInner) {
       return { hex: input, oklch: inputOklch, isInput: true };
     }
     const cMul = chromaBellMultiplier(l);
-    const c = inputC * cMul;
+    const c = anchorMul > 0 ? (inputC * cMul) / anchorMul : inputC * cMul;
     const oklch: OKLCH = { l, c, h: Number.isFinite(h) ? h : NaN };
     const hex = oklchToHex({ l, c, h: hForCompute });
     return { hex, oklch };

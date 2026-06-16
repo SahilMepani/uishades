@@ -12,7 +12,6 @@ export const prerender = false;
 
 import { env } from 'cloudflare:workers';
 import {
-  countPalettes,
   createPalette,
   listLikedPalettesByUser,
   listPalettesByUser,
@@ -24,7 +23,6 @@ import type { CopyFormat, Hex } from '../../lib/color/types';
 import { isProfane } from '../../lib/moderation';
 import { COPY_VALUES } from '../../lib/url-prefs';
 
-const MAX_PALETTES = 100;
 const MIN_COLORS = 1;
 const MAX_COLORS = 8;
 
@@ -79,10 +77,6 @@ export const POST = withUser(async ({ request }, userId) => {
       : 'hex';
     // role is left to the DB's position default (bg/surface/accent/text/extra).
     colors.push({ hex, view, copyFormat });
-  }
-
-  if ((await countPalettes(env.DB, userId)) >= MAX_PALETTES) {
-    return jsonNoStore({ error: 'limit_reached' }, 400);
   }
 
   // slug = kebab(name) + 4-char base36 suffix; stable from creation. The

@@ -471,10 +471,8 @@ test.describe('shade tool — smoke', () => {
     await page.goto('/4040ff');
 
     // The tray starts empty. Adding the landing color (#4040ff) opens the palette
-    // immediately: the first "Add to palette" seeds the four design-token roles
-    // alongside it, so the band reveals with five swatches (brand + Neutral +
-    // Success + Warning + Error). Editable swatches are "Adjust #..." pickers;
-    // the plain "Use #..." select form is image mode's read-only band.
+    // immediately with a single Primary swatch. Editable swatches are "Adjust #..."
+    // pickers; the plain "Use #..." select form is image mode's read-only band.
     await page
       .getByRole('button', { name: 'Add to palette' })
       .filter({ visible: true })
@@ -482,6 +480,11 @@ test.describe('shade tool — smoke', () => {
       .click();
     const bar = page.getByRole('list', { name: 'Palette preview' });
     await expect(bar).toBeVisible();
+    await expect(bar.getByRole('button', { name: /^Adjust #/ })).toHaveCount(1);
+
+    // The Neutral/Success/Warning/Error roles are opt-in: toggling "Status colors"
+    // on appends them as a group, so the band grows to five swatches.
+    await page.getByRole('switch', { name: 'Status colors' }).filter({ visible: true }).first().click();
     await expect(bar.getByRole('button', { name: /^Adjust #/ })).toHaveCount(5);
     await expect(bar.getByRole('button', { name: /^Remove #/ })).toHaveCount(5);
 
@@ -490,7 +493,7 @@ test.describe('shade tool — smoke', () => {
     // pending column and auto-opens that column's picker. Set it to #ff0000.
     await addBandColor(page, 'ff0000');
 
-    // The second brand color slots in ahead of the seeded roles: six swatches.
+    // The second brand color slots in ahead of the status roles: six swatches.
     await expect(bar.getByRole('button', { name: /^Adjust #/ })).toHaveCount(6);
     await expect(bar.getByRole('button', { name: /^Remove #/ })).toHaveCount(6);
     await expect(bar.getByRole('button', { name: /^Adjust #ff0000/ })).toBeVisible();
@@ -504,8 +507,8 @@ test.describe('shade tool — smoke', () => {
     await page.goto('/4040ff');
 
     // The tray starts empty: adding the landing color (#4040ff) opens the band
-    // (brand + 4 seeded roles = 5 swatches), then a second distinct color via the
-    // band "+" control makes 6.
+    // (a single Primary swatch), then a second distinct color via the band "+"
+    // control makes 2.
     await page
       .getByRole('button', { name: 'Add to palette' })
       .filter({ visible: true })
@@ -514,7 +517,7 @@ test.describe('shade tool — smoke', () => {
     const bar = page.getByRole('list', { name: 'Palette preview' });
     await expect(bar).toBeVisible();
     await addBandColor(page, 'ff0000');
-    await expect(bar.getByRole('button', { name: /^Adjust #/ })).toHaveCount(6);
+    await expect(bar.getByRole('button', { name: /^Adjust #/ })).toHaveCount(2);
 
     // Hover the swatch to surface its × (it's pointer-events-none until shown),
     // then remove #ff0000.
@@ -522,8 +525,8 @@ test.describe('shade tool — smoke', () => {
     await bar.getByRole('button', { name: 'Remove #ff0000 from palette' }).click();
 
     // #ff0000 is gone from the palette everywhere (the tray drives both the band
-    // and the grid); the band stays visible on the remaining five swatches.
-    await expect(bar.getByRole('button', { name: /^Adjust #/ })).toHaveCount(5);
+    // and the grid); the band stays visible on the remaining swatch.
+    await expect(bar.getByRole('button', { name: /^Adjust #/ })).toHaveCount(1);
     await expect(page.getByRole('button', { name: /^Adjust #ff0000/ })).toHaveCount(0);
   });
 

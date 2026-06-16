@@ -6,11 +6,10 @@ import { test, expect, type Page } from '@playwright/test';
  * Two concerns:
  *  1. Once a color is added the shade view becomes a column-per-color grid, and
  *     the export must emit EVERY palette color (the original bug only exported
- *     the active one). The FIRST "Add to palette" auto-seeds the conventional
- *     design-token roles (Neutral/Success/Warning/Error - see
- *     `DEFAULT_PALETTE_EXTRAS`), so a single color opens as FIVE columns and a
- *     two-color palette opens as SIX: Primary + Accent 1 + the four seeded
- *     roles.
+ *     the active one). The conventional design-token roles
+ *     (Neutral/Success/Warning/Error - see `DEFAULT_PALETTE_EXTRAS`) are opt-in
+ *     via the "Status colors" toggle (off by default), so these tests enable it
+ *     to exercise the six-column Primary + Accent 1 + four-role palette.
  *  2. The export is TWO-TIER. Tier-1 primitive ramps (`--color-<name>-50…950`)
  *     are keyed by each swatch's own COLOR name (nearest-named slug). Tier-2
  *     semantic aliases (`--color-<role>`, `--color-<role>-hover`,
@@ -19,18 +18,22 @@ import { test, expect, type Page } from '@playwright/test';
  *     back at the primitives. A rename flows through to the SEMANTIC tier names.
  */
 
-/** Seed the default two-color palette (#4040ff + #ff7f50), which auto-expands to
- *  the six-column grid. Returns once the grid is visible. */
+/** Seed the default two-color palette (#4040ff + #ff7f50) plus the four opt-in
+ *  status roles, producing the six-column grid. Returns once the grid is visible. */
 async function seedTwoColorPalette(page: Page) {
   await page.goto('/4040ff');
 
   // The tray starts empty: add the landing color (#4040ff) - this first add
-  // seeds the conventional roles and flips the tray to the column-per-color grid.
+  // flips the tray to the palette layout (a single Primary swatch).
   await page
     .getByRole('button', { name: /^Add to palette$/ })
     .filter({ visible: true })
     .first()
     .click();
+
+  // Opt into the Neutral/Success/Warning/Error roles (off by default), so the
+  // palette becomes Primary + the four roles.
+  await page.getByRole('switch', { name: 'Status colors' }).filter({ visible: true }).first().click();
 
   // The left rail (with its color input) is dropped once the band is open, so a
   // second brand color is added via the band's "+" control: it inserts a pending
